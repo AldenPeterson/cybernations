@@ -84,8 +84,15 @@ interface AidRecommendation {
 
 interface NationCategories {
   farms: number;
-  cashRecipients: number;
   banks: number;
+  none: number;
+}
+
+interface SlotCounts {
+  totalGetCash: number;
+  totalGetTech: number;
+  totalSendCash: number;
+  totalSendTech: number;
 }
 
 const AllianceDashboard: React.FC = () => {
@@ -96,6 +103,7 @@ const AllianceDashboard: React.FC = () => {
   const [allianceAidStats, setAllianceAidStats] = useState<AllianceAidStats[]>([]);
   const [recommendations, setRecommendations] = useState<AidRecommendation[]>([]);
   const [nationCategories, setNationCategories] = useState<NationCategories | null>(null);
+  const [slotCounts, setSlotCounts] = useState<SlotCounts | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'recommendations'>('overview');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -195,6 +203,7 @@ const AllianceDashboard: React.FC = () => {
       if (data.success) {
         setRecommendations(data.recommendations);
         setNationCategories(data.nationCategories);
+        setSlotCounts(data.slotCounts);
       }
     } catch (err) {
       console.error('Failed to fetch recommendations:', err);
@@ -739,22 +748,53 @@ const AllianceDashboard: React.FC = () => {
               borderRadius: '8px',
               border: '1px solid #ddd'
             }}>
-              <h3>Nation Categories</h3>
+              <h3>Nation Categories Summary</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
                 <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
                   <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32' }}>{nationCategories.farms}</div>
                   <div style={{ color: '#666' }}>Farms</div>
                   <div style={{ fontSize: '12px', color: '#666' }}>&lt; 500 tech, &gt; 3000 infra</div>
                 </div>
-                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#fff3cd', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f57c00' }}>{nationCategories.cashRecipients}</div>
-                  <div style={{ color: '#666' }}>Cash Recipients</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>&lt; 3000 infra</div>
-                </div>
                 <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#e3f2fd', borderRadius: '4px' }}>
                   <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1976d2' }}>{nationCategories.banks}</div>
                   <div style={{ color: '#666' }}>Banks</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>All others</div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>&gt;= 3000 infra</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#666' }}>{nationCategories.none}</div>
+                  <div style={{ color: '#666' }}>None</div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>Other categories</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Slot Counts Summary */}
+          {slotCounts && (
+            <div style={{ 
+              marginBottom: '20px', 
+              padding: '15px', 
+              backgroundColor: 'transparent', 
+              borderRadius: '8px',
+              border: '1px solid #ddd'
+            }}>
+              <h3>Total Slot Types</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
+                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
+                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#2e7d32' }}>{slotCounts.totalGetCash}</div>
+                  <div style={{ color: '#666', fontSize: '14px' }}>Get Cash</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#e3f2fd', borderRadius: '4px' }}>
+                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1976d2' }}>{slotCounts.totalGetTech}</div>
+                  <div style={{ color: '#666', fontSize: '14px' }}>Get Tech</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#fff3cd', borderRadius: '4px' }}>
+                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#f57c00' }}>{slotCounts.totalSendCash}</div>
+                  <div style={{ color: '#666', fontSize: '14px' }}>Send Cash</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#f3e5f5', borderRadius: '4px' }}>
+                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#7b1fa2' }}>{slotCounts.totalSendTech}</div>
+                  <div style={{ color: '#666', fontSize: '14px' }}>Send Tech</div>
                 </div>
               </div>
             </div>

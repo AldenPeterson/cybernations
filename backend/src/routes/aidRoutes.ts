@@ -440,10 +440,20 @@ aidRoutes.get('/alliances/:allianceId/recommendations', async (req, res) => {
     // Sort recommendations by priority
     recommendations.sort((a, b) => a.priority - b.priority);
 
+    // Calculate total slot counts
+    const slotCounts = {
+      totalGetCash: categorizedNations.reduce((sum, nation) => sum + nation.slots.getCash, 0),
+      totalGetTech: categorizedNations.reduce((sum, nation) => sum + nation.slots.getTech, 0),
+      totalSendCash: categorizedNations.reduce((sum, nation) => sum + nation.slots.sendCash, 0),
+      totalSendTech: categorizedNations.reduce((sum, nation) => sum + nation.slots.sendTech, 0)
+    };
+
     res.json({
       success: true,
       allianceId,
-      recommendations: recommendations.slice(0, 50) // Limit to 50 recommendations
+      recommendations: recommendations, // Return all recommendations
+      nationCategories: getCategoryCounts(categorizedNations),
+      slotCounts
     });
   } catch (error) {
     console.error('Error fetching aid recommendations:', error);

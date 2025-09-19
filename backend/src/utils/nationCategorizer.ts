@@ -62,54 +62,51 @@ export function categorizeNation(nation: any): CategorizedNation {
   // Check if nation exists in JSON data and get has_dra flag
   const { exists: isInJson, has_dra } = getNationFromJson(nationId);
   
-  // Determine category
-  if (tech < 500 && infra > 3000) {
-    category = NationCategory.FARM;
-  } else if (infra >= 3000) {
-    category = NationCategory.BANK;
-  }
-  
   // Default all nations to 6 slots
   const slots: AidSlots = {
-    sendTech: 6,
-    sendCash: 6,
-    getTech: 6,
-    getCash: 6
+    sendTech: 0,
+    sendCash: 0,
+    getTech: 0,
+    getCash: 0
   };
   
-  // Only overwrite slots if the nation is present in the JSON data
+  let maxSlots = 6;
+  // Only overwrite max slots if the nation is present in the JSON data
   if (isInJson) {
-    const maxSlots = has_dra ? 6 : 5;
-    
-    // Reset all slots to 0 first
-    slots.sendTech = 0;
-    slots.sendCash = 0;
-    slots.getTech = 0;
-    slots.getCash = 0;
-    
-    if (infra < 3000) {
-      // Nations with < 3000 infra get full cash
-      slots.getCash = maxSlots;
-    } else if (infra >= 3000 && tech < 1000) {
-      // Nations with >3000 infra and < 1000 tech get max send tech
-      slots.sendTech = maxSlots;
-    } else if (tech >= 1000 && tech < 25000) {
-      // Nations between 1000 and 25000 tech get max tech
-      slots.getTech = maxSlots;
-    } else if (tech >= 25000 && tech < 30000) {
-      // Nations between 25000 and 30000 tech get 5 tech, 1 cash send
-      slots.getTech = Math.min(5, maxSlots);
-      slots.sendCash = Math.min(1, maxSlots - slots.getTech);
-    } else if (tech >= 30000 && tech < 35000) {
-      // Nations between 30000 and 35000 have get 4 tech, 2 cash send
-      slots.getTech = Math.min(4, maxSlots);
-      slots.sendCash = Math.min(2, maxSlots - slots.getTech);
-    } else if (tech >= 35000) {
-      // Nations greater than 35000 technology have 3 get tech and 3 cash send
-      slots.getTech = Math.min(3, maxSlots);
-      slots.sendCash = Math.min(3, maxSlots - slots.getTech);
-    }
+    maxSlots = has_dra ? 6 : 5;
   }
+
+  // Assign slots based on tech and infra levels
+  if (infra < 3000) {
+    // Nations with < 3000 infra get full cash
+    slots.getCash = maxSlots;
+  } else if (infra >= 3000 && tech < 1000) {
+    // Nations with >3000 infra and < 1000 tech get max send tech
+    slots.sendTech = maxSlots;
+  } else if (tech >= 1000 && tech < 25000) {
+    // Nations between 1000 and 25000 tech get max tech
+    slots.getTech = maxSlots;
+  } else if (tech >= 25000 && tech < 30000) {
+    // Nations between 25000 and 30000 tech get 5 tech, 1 cash send
+    slots.getTech = Math.min(5, maxSlots);
+    slots.sendCash = Math.min(1, maxSlots - slots.getTech);
+  } else if (tech >= 30000 && tech < 35000) {
+    // Nations between 30000 and 35000 have get 4 tech, 2 cash send
+    slots.getTech = Math.min(4, maxSlots);
+    slots.sendCash = Math.min(2, maxSlots - slots.getTech);
+  } else if (tech >= 35000) {
+    // Nations greater than 35000 technology have 3 get tech and 3 cash send
+    slots.getTech = Math.min(3, maxSlots);
+    slots.sendCash = Math.min(3, maxSlots - slots.getTech);
+  }
+
+  // Determine category based on slot assignments
+  if (slots.getCash > 0 || slots.getTech > 0) {
+    category = NationCategory.FARM;
+  } else if (slots.sendCash > 0 || slots.sendTech > 0) {
+    category = NationCategory.BANK;
+  }
+
   
   return {
     ...nation,
