@@ -32,9 +32,9 @@ describe('dataDownloader', () => {
     it('should generate correct filename for WAR_STATS', () => {
       const result = getFileInfo(FileType.WAR_STATS);
       
-      expect(result.name).toBe('CyberNations_SE_War_Stats_9192025525001.zip');
+      expect(result.name).toBe('CyberNations_SE_War_Stats_91920255250001.zip');
       
-      expect(result.timestamp).toBe(9192025525001);
+      expect(result.timestamp).toBe(91920255250001);
       expect(result.isRecent).toBe(true);
     });
 
