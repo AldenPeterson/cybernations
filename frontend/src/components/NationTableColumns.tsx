@@ -39,6 +39,8 @@ interface ColumnProps {
   handleSlotChange: (nationId: number, slotType: keyof NationSlots, value: number) => void;
   saveNation: (nationId: number) => void;
   saving: number | null;
+  hasUnsavedChanges: (nationId: number) => boolean;
+  hasValidationErrors: (nationId: number) => boolean;
 }
 
 const columnHelper = createColumnHelper<NationConfig>();
@@ -51,6 +53,8 @@ export const createNationTableColumns = ({
   handleSlotChange,
   saveNation,
   saving,
+  hasUnsavedChanges,
+  hasValidationErrors,
 }: ColumnProps) => [
   // Index column (read-only)
   columnHelper.display({
@@ -67,7 +71,7 @@ export const createNationTableColumns = ({
         {row.index + 1}
       </div>
     ),
-    size: 'auto',
+    size: 50,
     enableSorting: true,
     sortingFn: (rowA, rowB) => rowA.index - rowB.index,
   }),
@@ -77,7 +81,7 @@ export const createNationTableColumns = ({
     id: 'nation',
     header: 'Nation / Ruler',
     cell: ({ row }) => <NationCell nation={row.original} />,
-    size: 'auto',
+    size: 50,
     enableSorting: false,
   }),
 
@@ -137,7 +141,7 @@ export const createNationTableColumns = ({
         />
       </div>
     ),
-    size: 'auto',
+    size: 50,
     enableSorting: true,
   }),
 
@@ -149,17 +153,34 @@ export const createNationTableColumns = ({
         <div>Tech</div>
       </div>
     ),
-    cell: ({ getValue, row }) => (
-      <div style={{ textAlign: 'center' }}>
-        <EditableNumberInput
-          value={getValue()}
-          onChange={(value) => handleSlotChange(row.original.nation_id, 'sendTech', value)}
-          min={0}
-          max={6}
-        />
-      </div>
-    ),
-    size: 'auto',
+    cell: ({ getValue, row }) => {
+      const hasErrors = hasValidationErrors(row.original.nation_id);
+      const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
+                        row.original.slots.getTech + row.original.slots.getCash;
+      const expectedTotal = row.original.has_dra ? 6 : 5;
+      
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <EditableNumberInput
+            value={getValue()}
+            onChange={(value) => handleSlotChange(row.original.nation_id, 'sendTech', value)}
+            min={0}
+            max={6}
+          />
+          {hasErrors && (
+            <div style={{ 
+              fontSize: '10px', 
+              color: '#ef4444', 
+              marginTop: '2px',
+              fontWeight: '600'
+            }}>
+              {totalSlots}/{expectedTotal}
+            </div>
+          )}
+        </div>
+      );
+    },
+    size: 50,
     minSize: SLOT_COLUMN_SIZE,
     enableSorting: true,
   }),
@@ -172,17 +193,34 @@ export const createNationTableColumns = ({
         <div>Cash</div>
       </div>
     ),
-    cell: ({ getValue, row }) => (
-      <div style={{ textAlign: 'center' }}>
-        <EditableNumberInput
-          value={getValue()}
-          onChange={(value) => handleSlotChange(row.original.nation_id, 'sendCash', value)}
-          min={0}
-          max={6}
-        />
-      </div>
-    ),
-    size: 'auto',
+    cell: ({ getValue, row }) => {
+      const hasErrors = hasValidationErrors(row.original.nation_id);
+      const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
+                        row.original.slots.getTech + row.original.slots.getCash;
+      const expectedTotal = row.original.has_dra ? 6 : 5;
+      
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <EditableNumberInput
+            value={getValue()}
+            onChange={(value) => handleSlotChange(row.original.nation_id, 'sendCash', value)}
+            min={0}
+            max={6}
+          />
+          {hasErrors && (
+            <div style={{ 
+              fontSize: '10px', 
+              color: '#ef4444', 
+              marginTop: '2px',
+              fontWeight: '600'
+            }}>
+              {totalSlots}/{expectedTotal}
+            </div>
+          )}
+        </div>
+      );
+    },
+    size: 50,
     minSize: SLOT_COLUMN_SIZE,
     enableSorting: true,
   }),
@@ -195,17 +233,34 @@ export const createNationTableColumns = ({
         <div>Tech</div>
       </div>
     ),
-    cell: ({ getValue, row }) => (
-      <div style={{ textAlign: 'center' }}>
-        <EditableNumberInput
-          value={getValue()}
-          onChange={(value) => handleSlotChange(row.original.nation_id, 'getTech', value)}
-          min={0}
-          max={6}
-        />
-      </div>
-    ),
-    size: 'auto',
+    cell: ({ getValue, row }) => {
+      const hasErrors = hasValidationErrors(row.original.nation_id);
+      const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
+                        row.original.slots.getTech + row.original.slots.getCash;
+      const expectedTotal = row.original.has_dra ? 6 : 5;
+      
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <EditableNumberInput
+            value={getValue()}
+            onChange={(value) => handleSlotChange(row.original.nation_id, 'getTech', value)}
+            min={0}
+            max={6}
+          />
+          {hasErrors && (
+            <div style={{ 
+              fontSize: '10px', 
+              color: '#ef4444', 
+              marginTop: '2px',
+              fontWeight: '600'
+            }}>
+              {totalSlots}/{expectedTotal}
+            </div>
+          )}
+        </div>
+      );
+    },
+    size: 50,
     minSize: SLOT_COLUMN_SIZE,
     enableSorting: true,
   }),
@@ -218,17 +273,34 @@ export const createNationTableColumns = ({
         <div>Cash</div>
       </div>
     ),
-    cell: ({ getValue, row }) => (
-      <div style={{ textAlign: 'center' }}>
-        <EditableNumberInput
-          value={getValue()}
-          onChange={(value) => handleSlotChange(row.original.nation_id, 'getCash', value)}
-          min={0}
-          max={6}
-        />
-      </div>
-    ),
-    size: 'auto',
+    cell: ({ getValue, row }) => {
+      const hasErrors = hasValidationErrors(row.original.nation_id);
+      const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
+                        row.original.slots.getTech + row.original.slots.getCash;
+      const expectedTotal = row.original.has_dra ? 6 : 5;
+      
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <EditableNumberInput
+            value={getValue()}
+            onChange={(value) => handleSlotChange(row.original.nation_id, 'getCash', value)}
+            min={0}
+            max={6}
+          />
+          {hasErrors && (
+            <div style={{ 
+              fontSize: '10px', 
+              color: '#ef4444', 
+              marginTop: '2px',
+              fontWeight: '600'
+            }}>
+              {totalSlots}/{expectedTotal}
+            </div>
+          )}
+        </div>
+      );
+    },
+    size: 50,
     minSize: SLOT_COLUMN_SIZE,
     enableSorting: true,
   }),
@@ -242,11 +314,13 @@ export const createNationTableColumns = ({
         <SaveButton
           nationId={row.original.nation_id}
           isSaving={saving === row.original.nation_id}
+          hasChanges={hasUnsavedChanges(row.original.nation_id)}
+          hasValidationErrors={hasValidationErrors(row.original.nation_id)}
           onSave={saveNation}
         />
       </div>
     ),
     enableSorting: false,
-    size: 'auto',
+    size: 50,
   }),
 ];

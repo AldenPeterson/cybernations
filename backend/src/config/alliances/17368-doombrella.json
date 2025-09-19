@@ -18,7 +18,7 @@
         "infrastructure": "16,999.99",
         "strength": "173377.731"
       },
-      "notes": "hihihi"
+      "notes": ""
     },
     "101493": {
       "ruler_name": "ak47don",
@@ -227,7 +227,7 @@
         "sendTech": 0,
         "sendCash": 3,
         "getTech": 3,
-        "getCash": 0
+        "getCash": 1
       },
       "current_stats": {
         "technology": "119,787.43",

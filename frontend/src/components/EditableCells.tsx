@@ -157,16 +157,39 @@ export const StrengthCell: React.FC<StrengthCellProps> = ({ strength }) => (
 interface SaveButtonProps {
   nationId: number;
   isSaving: boolean;
+  hasChanges: boolean;
+  hasValidationErrors: boolean;
   onSave: (nationId: number) => void;
 }
 
-export const SaveButton: React.FC<SaveButtonProps> = ({ nationId, isSaving, onSave }) => (
-  <button
-    onClick={() => onSave(nationId)}
-    disabled={isSaving}
-    className="save-button"
-    style={tableStyles.saveButton}
-  >
-    {isSaving ? 'Saving...' : 'Save'}
-  </button>
-);
+export const SaveButton: React.FC<SaveButtonProps> = ({ nationId, isSaving, hasChanges, hasValidationErrors, onSave }) => {
+  const isDisabled = isSaving || !hasChanges || hasValidationErrors;
+  
+  let buttonText = 'Save';
+  let backgroundColor = '#3b82f6';
+  
+  if (isSaving) {
+    buttonText = 'Saving...';
+  } else if (hasValidationErrors) {
+    buttonText = 'Fix Errors';
+    backgroundColor = '#ef4444';
+  } else if (!hasChanges) {
+    buttonText = 'No Changes';
+    backgroundColor = '#94a3b8';
+  }
+  
+  return (
+    <button
+      onClick={() => onSave(nationId)}
+      disabled={isDisabled}
+      className="save-button"
+      style={{
+        ...tableStyles.saveButton,
+        opacity: isDisabled ? 0.5 : 1,
+        backgroundColor: backgroundColor,
+      }}
+    >
+      {buttonText}
+    </button>
+  );
+};

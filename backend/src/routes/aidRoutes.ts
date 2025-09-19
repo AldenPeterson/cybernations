@@ -608,6 +608,7 @@ aidRoutes.get('/alliances/:allianceId/nations-config', async (req, res) => {
 // Update a specific nation's data in alliance files
 aidRoutes.put('/alliances/:allianceId/nations/:nationId', async (req, res) => {
   try {
+    console.log('updateNation called with:', req.params.allianceId, req.params.nationId, req.params.notes);
     const allianceId = parseInt(req.params.allianceId);
     const nationId = parseInt(req.params.nationId);
     

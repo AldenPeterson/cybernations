@@ -17,6 +17,7 @@ interface NationEditorProps {
 
 export default function NationEditor({ allianceId }: NationEditorProps) {
   const [nations, setNations] = useState<NationConfig[]>([]);
+  const [originalNations, setOriginalNations] = useState<NationConfig[]>([]);
   const [allianceExists, setAllianceExists] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
@@ -52,6 +53,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       });
       
       setNations(sortedNations);
+      setOriginalNations(sortedNations);
     } catch (err) {
       console.error('Error fetching nations config:', err);
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
@@ -63,7 +65,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
   const updateNation = async (nationId: number, updates: Partial<NationConfig>) => {
     try {
       setSaving(nationId);
-      
+      console.log('updateNation called with:', { updates });
       const response = await fetch(`http://localhost:3001/api/alliances/${allianceId}/nations/${nationId}`, {
         method: 'PUT',
         headers: {
@@ -86,6 +88,18 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
             : nation
         )
       );
+      
+      // Update the original nations state to reflect the saved changes
+      setOriginalNations(prevOriginal => 
+        prevOriginal.map(nation => 
+          nation.nation_id === nationId 
+            ? { ...nation, ...updates }
+            : nation
+        )
+      );
+      
+      // Show success feedback
+      console.log('Nation updated successfully');
     } catch (err) {
       console.error('Error updating nation:', err);
       alert(`Error updating nation: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -122,14 +136,78 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
 
   const saveNation = (nationId: number) => {
     const nation = nations.find(n => n.nation_id === nationId);
-    if (nation) {
-      updateNation(nationId, {
-        discord_handle: nation.discord_handle,
-        has_dra: nation.has_dra,
-        notes: nation.notes,
-        slots: nation.slots
-      });
+    const originalNation = originalNations.find(n => n.nation_id === nationId);
+    
+    if (nation && originalNation) {
+      // Check for validation errors first
+      if (hasValidationErrors(nationId)) {
+        alert('Cannot save: Validation errors exist. Please fix the slot totals before saving.');
+        return;
+      }
+      
+      const updates: Partial<NationConfig> = {};
+      
+      // Only include fields that have actually changed
+      if (nation.discord_handle !== originalNation.discord_handle) {
+        updates.discord_handle = nation.discord_handle;
+      }
+      
+      if (nation.has_dra !== originalNation.has_dra) {
+        updates.has_dra = nation.has_dra;
+      }
+      
+      if (nation.notes !== originalNation.notes) {
+        updates.notes = nation.notes;
+      }
+      
+      // Check if slots have changed
+      const slotsChanged = nation.slots.sendTech !== originalNation.slots.sendTech ||
+                          nation.slots.sendCash !== originalNation.slots.sendCash ||
+                          nation.slots.getTech !== originalNation.slots.getTech ||
+                          nation.slots.getCash !== originalNation.slots.getCash;
+      
+      if (slotsChanged) {
+        updates.slots = nation.slots;
+      }
+      
+      // Only make the API call if there are actual changes
+      if (Object.keys(updates).length > 0) {
+        updateNation(nationId, updates);
+      } else {
+        console.log('No changes detected for nation', nationId);
+      }
     }
+  };
+
+  // Helper function to check if a nation has unsaved changes
+  const hasUnsavedChanges = (nationId: number) => {
+    const nation = nations.find(n => n.nation_id === nationId);
+    const originalNation = originalNations.find(n => n.nation_id === nationId);
+    
+    if (!nation || !originalNation) return false;
+    
+    return nation.discord_handle !== originalNation.discord_handle ||
+           nation.has_dra !== originalNation.has_dra ||
+           nation.notes !== originalNation.notes ||
+           nation.slots.sendTech !== originalNation.slots.sendTech ||
+           nation.slots.sendCash !== originalNation.slots.sendCash ||
+           nation.slots.getTech !== originalNation.slots.getTech ||
+           nation.slots.getCash !== originalNation.slots.getCash;
+  };
+
+  // Helper function to check if a nation has validation errors
+  const hasValidationErrors = (nationId: number) => {
+    const nation = nations.find(n => n.nation_id === nationId);
+    
+    if (!nation) return false;
+    
+    // Calculate total slots
+    const totalSlots = nation.slots.sendTech + nation.slots.sendCash + nation.slots.getTech + nation.slots.getCash;
+    
+    // Expected total: 5 if no DRA, 6 if DRA
+    const expectedTotal = nation.has_dra ? 6 : 5;
+    
+    return totalSlots !== expectedTotal;
   };
 
   // Create columns with handlers
@@ -138,7 +216,9 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     handleSlotChange,
     saveNation,
     saving,
-  }), [saving]);
+    hasUnsavedChanges,
+    hasValidationErrors,
+  }), [saving, nations, originalNations]);
 
   // Initialize TanStack Table
   const table = useReactTable({
@@ -268,26 +348,34 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
               ))}
             </thead>
             <tbody>
-              {table.getRowModel().rows.map(row => (
-                <tr 
-                  key={row.id} 
-                  className="nation-table-row"
-                  style={tableStyles.dataRow}>
-                  {row.getVisibleCells().map(cell => (
-                    <td 
-                      key={cell.id}
-                      style={combineStyles(
-                        tableStyles.dataCell,
-                        { 
-                          textAlign: getTextAlignment(cell.column.id),
-                          width: cell.column.getSize()
-                        }
-                      )}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {table.getRowModel().rows.map(row => {
+                const hasErrors = hasValidationErrors(row.original.nation_id);
+                return (
+                  <tr 
+                    key={row.id} 
+                    className="nation-table-row"
+                    style={{
+                      ...tableStyles.dataRow,
+                      backgroundColor: hasErrors ? '#fef2f2' : undefined,
+                      borderLeft: hasErrors ? '4px solid #ef4444' : undefined,
+                    }}>
+                    {row.getVisibleCells().map(cell => (
+                      <td 
+                        key={cell.id}
+                        style={combineStyles(
+                          tableStyles.dataCell,
+                          { 
+                            textAlign: getTextAlignment(cell.column.id),
+                            width: cell.column.getSize(),
+                            backgroundColor: hasErrors ? '#fef2f2' : undefined,
+                          }
+                        )}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
         </table>
       </div>

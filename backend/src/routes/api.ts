@@ -22,35 +22,6 @@ apiRoutes.get('/users', (req, res) => {
   ]);
 });
 
-apiRoutes.get('/users/:id', (req, res) => {
-  const { id } = req.params;
-  res.json({
-    id: parseInt(id),
-    name: 'John Doe',
-    email: 'john@example.com'
-  });
-});
-
-apiRoutes.post('/users', (req, res) => {
-  const { name, email } = req.body;
-  
-  if (!name || !email) {
-    return res.status(400).json({ error: 'Name and email are required' });
-  }
-  
-  res.status(201).json({
-    id: Math.floor(Math.random() * 1000),
-    name,
-    email,
-    createdAt: new Date().toISOString()
-  });
-});
-
-// Example protected route
-apiRoutes.get('/protected', (req, res) => {
-  // In a real app, you'd check authentication here
-  res.json({ message: 'This is a protected route', user: 'authenticated' });
-});
 
 // Stats decode endpoint - extract zip files from raw_data folder
 apiRoutes.post('/stats/decode', async (req, res) => {
