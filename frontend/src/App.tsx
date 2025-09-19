@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './App.css'
 import AidDashboard from './components/AidDashboard'
 import AllianceDashboard from './components/AllianceDashboard'
 
 function App() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'by-alliance' | 'shame-offers' | 'admin-tools'>('by-alliance');
 
   const checkHealth = async () => {
@@ -44,7 +43,6 @@ function App() {
   };
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
