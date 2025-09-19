@@ -868,8 +868,8 @@ const AllianceDashboard: React.FC = () => {
                                 paddingBottom: recIndex < group.recipients.length - 1 ? '8px' : '0',
                                 borderBottom: recIndex < group.recipients.length - 1 ? '1px solid #eee' : 'none'
                               }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                                     <span style={{ 
                                       fontSize: '11px', 
                                       padding: '1px 4px', 
@@ -884,7 +884,7 @@ const AllianceDashboard: React.FC = () => {
                                     <span style={{ fontWeight: 'bold', marginRight: '6px', fontSize: '12px' }}>
                                       {rec.aidType === 'cash' ? '💰' : '🔬'}
                                     </span>
-                                    <strong style={{ fontSize: '13px' }}>
+                                    <strong style={{ fontSize: '13px', marginRight: '6px' }}>
                                       <a 
                                         href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${rec.recipient.id}`}
                                         target="_blank"
@@ -899,6 +899,14 @@ const AllianceDashboard: React.FC = () => {
                                         {rec.recipient.nationName}
                                       </a>
                                     </strong>
+                                    <span style={{ 
+                                      fontSize: '11px', 
+                                      color: '#666', 
+                                      fontStyle: 'italic',
+                                      marginRight: '6px'
+                                    }}>
+                                      {rec.recipient.rulerName} • {rec.reason}
+                                    </span>
                                   </div>
                                   <span style={{ 
                                     fontSize: '10px', 
@@ -911,14 +919,6 @@ const AllianceDashboard: React.FC = () => {
                                   }}>
                                     {rec.recipient.category.replace('_', ' ')}
                                   </span>
-                                </div>
-                                <div style={{ 
-                                  fontSize: '11px', 
-                                  color: '#666', 
-                                  fontStyle: 'italic',
-                                  marginLeft: '2px'
-                                }}>
-                                  {rec.recipient.rulerName} • {rec.reason}
                                 </div>
                               </div>
                             ))}
