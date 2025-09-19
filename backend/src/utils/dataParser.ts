@@ -10,6 +10,8 @@ export interface Nation {
   team: string;
   strength: number;
   activity: string;
+  technology: string;
+  infrastructure: string;
 }
 
 export interface AidOffer {
@@ -72,7 +74,9 @@ export function parseNationStats(filePath: string): Nation[] {
           allianceId: parseInt(values[4]) || 0,
           team: values[9] || '',
           strength: parseFloat(values[17]) || 0,
-          activity: values[24] || ''
+          activity: values[24] || '',
+          technology: values[11] || '0',
+          infrastructure: values[12] || '0'
         };
         nations.push(nation);
       }

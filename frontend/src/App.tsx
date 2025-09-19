@@ -1,38 +1,12 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import AidDashboard from './components/AidDashboard'
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-}
+import AllianceDashboard from './components/AllianceDashboard'
 
 function App() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users'>('dashboard');
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/users');
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-      const data = await response.json();
-      setUsers(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [activeTab, setActiveTab] = useState<'all-small-aid' | 'by-alliance' | 'admin-tools'>('all-small-aid');
 
   const checkHealth = async () => {
     try {
@@ -74,42 +48,58 @@ function App() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>CyberNations - Full Stack App</h1>
+      <h1>CyberNations Aid Management Dashboard</h1>
       
       {/* Tab Navigation */}
       <div style={{ marginBottom: '20px', borderBottom: '1px solid #ddd' }}>
         <button 
-          onClick={() => setActiveTab('dashboard')}
+          onClick={() => setActiveTab('all-small-aid')}
           style={{ 
             padding: '10px 20px', 
             marginRight: '10px',
-            backgroundColor: activeTab === 'dashboard' ? '#007bff' : '#f8f9fa',
-            color: activeTab === 'dashboard' ? 'white' : '#333',
+            backgroundColor: activeTab === 'all-small-aid' ? '#007bff' : '#f8f9fa',
+            color: activeTab === 'all-small-aid' ? 'white' : '#333',
             border: '1px solid #ddd',
             borderRadius: '4px 4px 0 0',
             cursor: 'pointer'
           }}
         >
-          Aid Dashboard
+          All Small Aid Offers
         </button>
         <button 
-          onClick={() => setActiveTab('users')}
+          onClick={() => setActiveTab('by-alliance')}
           style={{ 
-            padding: '10px 20px',
-            backgroundColor: activeTab === 'users' ? '#007bff' : '#f8f9fa',
-            color: activeTab === 'users' ? 'white' : '#333',
+            padding: '10px 20px', 
+            marginRight: '10px',
+            backgroundColor: activeTab === 'by-alliance' ? '#007bff' : '#f8f9fa',
+            color: activeTab === 'by-alliance' ? 'white' : '#333',
             border: '1px solid #ddd',
             borderRadius: '4px 4px 0 0',
             cursor: 'pointer'
           }}
         >
-          Users & Tools
+          By Alliance
+        </button>
+        <button 
+          onClick={() => setActiveTab('admin-tools')}
+          style={{ 
+            padding: '10px 20px',
+            backgroundColor: activeTab === 'admin-tools' ? '#007bff' : '#f8f9fa',
+            color: activeTab === 'admin-tools' ? 'white' : '#333',
+            border: '1px solid #ddd',
+            borderRadius: '4px 4px 0 0',
+            cursor: 'pointer'
+          }}
+        >
+          Admin Tools
         </button>
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'dashboard' ? (
+      {activeTab === 'all-small-aid' ? (
         <AidDashboard />
+      ) : activeTab === 'by-alliance' ? (
+        <AllianceDashboard />
       ) : (
         <div>
           <div style={{ marginBottom: '20px' }}>
@@ -124,17 +114,6 @@ function App() {
             }}>
               Check Backend Health
             </button>
-            <button onClick={fetchUsers} style={{ 
-              padding: '10px 20px',
-              marginRight: '10px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}>
-              Refresh Users
-            </button>
             <button onClick={decodeStats} style={{ 
               padding: '10px 20px',
               backgroundColor: '#ff6b35',
@@ -147,21 +126,8 @@ function App() {
             </button>
           </div>
 
-          <h2>Users from Backend API:</h2>
-          <div style={{ display: 'grid', gap: '10px' }}>
-            {users.map(user => (
-              <div key={user.id} style={{ 
-                border: '1px solid #ddd', 
-                padding: '15px', 
-                borderRadius: '8px',
-                backgroundColor: '#f9f9f9'
-              }}>
-                <h3>{user.name}</h3>
-                <p>Email: {user.email}</p>
-                <p>ID: {user.id}</p>
-              </div>
-            ))}
-          </div>
+          <h2>Admin Tools</h2>
+          <p>Use the tools above to manage the backend and extract data files.</p>
         </div>
       )}
     </div>
