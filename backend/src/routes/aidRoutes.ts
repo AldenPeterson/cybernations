@@ -359,6 +359,7 @@ aidRoutes.get('/alliances/:allianceId/recommendations', async (req, res) => {
                 id: sender.id,
                 rulerName: sender.rulerName,
                 nationName: sender.nationName,
+                discord_handle: sender.discord_handle,
                 slots: sender.slots,
                 currentAidCount: nationAidCounts.get(sender.id) || 0
               },
@@ -403,6 +404,7 @@ aidRoutes.get('/alliances/:allianceId/recommendations', async (req, res) => {
                 id: sender.id,
                 rulerName: sender.rulerName,
                 nationName: sender.nationName,
+                discord_handle: sender.discord_handle,
                 slots: sender.slots,
                 currentAidCount: nationAidCounts.get(sender.id) || 0
               },

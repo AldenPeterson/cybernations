@@ -8,6 +8,7 @@ import {
   Alliance
 } from '../utils/dataParser.js';
 import { aidRoutes } from './aidRoutes.js';
+import { syncAllianceFilesWithNewData } from '../utils/allianceSync.js';
 
 export const apiRoutes = Router();
 
@@ -127,6 +128,38 @@ apiRoutes.get('/alliances/:allianceId/stats', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching alliance stats:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Manual sync endpoint for alliance files
+apiRoutes.post('/sync/alliances', async (req, res) => {
+  try {
+    console.log('Manual alliance sync requested');
+    
+    // Get the latest nation data
+    const { nations } = await loadDataFromFilesWithUpdate();
+    
+    if (nations.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No nation data available for sync'
+      });
+    }
+    
+    // Sync alliance files
+    await syncAllianceFilesWithNewData(nations);
+    
+    res.json({
+      success: true,
+      message: 'Alliance files synchronized successfully',
+      nationsProcessed: nations.length
+    });
+  } catch (error) {
+    console.error('Error syncing alliance files:', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

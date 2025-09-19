@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as https from 'https';
 import { extractZipFile } from './zipExtractor.js';
+import { syncAllianceFilesWithNewData } from './allianceSync.js';
 
 export enum FileType {
   NATION_STATS = 'Nation_Stats',
@@ -135,6 +136,7 @@ export async function ensureRecentFiles(): Promise<void> {
   }
   
   const fileTypes: FileType[] = [FileType.NATION_STATS, FileType.AID_STATS, FileType.WAR_STATS];
+  let anyFilesUpdated = false;
   
   for (const fileType of fileTypes) {
     try {
@@ -166,9 +168,28 @@ export async function ensureRecentFiles(): Promise<void> {
       fs.unlinkSync(zipPath);
       
       console.log(`${fileType} updated successfully`);
+      anyFilesUpdated = true;
     } catch (error) {
       console.error(`Error updating ${fileType}:`, error);
       // Continue with other files even if one fails
+    }
+  }
+  
+  // If any files were updated, sync alliance files
+  if (anyFilesUpdated) {
+    try {
+      console.log('Files were updated, syncing alliance files...');
+      // Import and call the data parser to get the new nation data
+      const { loadDataFromFiles } = await import('./dataParser.js');
+      const { nations } = loadDataFromFiles();
+      
+      if (nations.length > 0) {
+        await syncAllianceFilesWithNewData(nations);
+      } else {
+        console.log('No nation data found, skipping alliance sync');
+      }
+    } catch (error) {
+      console.error('Error syncing alliance files:', error);
     }
   }
 }

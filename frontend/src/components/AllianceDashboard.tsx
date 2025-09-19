@@ -68,6 +68,7 @@ interface AidRecommendation {
     id: number;
     nationName: string;
     rulerName: string;
+    discord_handle: string;
     strength: number;
   };
   recipient: {
@@ -76,7 +77,7 @@ interface AidRecommendation {
     rulerName: string;
     strength: number;
   };
-  aidType: 'cash' | 'tech';
+  type: string;
   priority: number;
   reason: string;
 }
@@ -259,6 +260,59 @@ const AllianceDashboard: React.FC = () => {
     if (days === 9) return '9 days';
     if (days === 10) return '10 days';
     return 'expired'; // Anything beyond 10 days is expired
+  };
+
+  const generateDiscordText = (): string => {
+    if (recommendations.length === 0) {
+      return 'No aid recommendations available.';
+    }
+
+    // Group recommendations by sender
+    const groupedBySender = recommendations.reduce((acc, rec) => {
+      const senderId = rec.sender.id;
+      if (!acc[senderId]) {
+        acc[senderId] = {
+          sender: rec.sender,
+          recipients: []
+        };
+      }
+      acc[senderId].recipients.push(rec);
+      return acc;
+    }, {} as Record<number, { sender: any, recipients: any[] }>);
+
+    const discordLines: string[] = [];
+    
+    Object.values(groupedBySender).forEach(group => {
+      // Use discord_handle if available, otherwise fall back to rulerName
+      const handle = group.sender.discord_handle || group.sender.rulerName;
+      discordLines.push(`@${handle}`);
+      group.recipients.forEach(rec => {
+        // Map the type field to the appropriate aid type
+        let aidType = 'UNKNOWN';
+        if (rec.type) {
+          if (rec.type.includes('cash')) {
+            aidType = 'CASH';
+          } else if (rec.type.includes('tech')) {
+            aidType = 'TECH';
+          }
+        }
+        discordLines.push(`send ${aidType}  https://www.cybernations.net/aid_form.asp?Nation_ID=${rec.recipient.id}&bynation=${rec.sender.id}`)
+      });
+      discordLines.push('');
+    });
+
+    return discordLines.join('\n');
+  };
+
+  const copyDiscordText = async () => {
+    const text = generateDiscordText();
+    
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      alert('Failed to copy text to clipboard');
+    }
   };
 
   const getFilteredAidSlots = (): NationAidSlots[] => {
@@ -792,7 +846,33 @@ const AllianceDashboard: React.FC = () => {
               borderRadius: '8px',
               border: '1px solid #ddd'
             }}>
-              <h3>Aid Recommendations</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0 }}>Aid Recommendations</h3>
+                <button
+                  onClick={copyDiscordText}
+                  style={{
+                    backgroundColor: '#5865F2',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#4752C4';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#5865F2';
+                  }}
+                >
+                  📋 Copy Discord Text
+                </button>
+              </div>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ 
                   width: '100%', 
@@ -899,7 +979,7 @@ const AllianceDashboard: React.FC = () => {
                                       P{rec.priority}
                                     </span>
                                     <span style={{ fontWeight: 'bold', marginRight: '6px', fontSize: '12px' }}>
-                                      {rec.aidType === 'cash' ? '💰' : '🔬'}
+                                      {rec.type && rec.type.includes('cash') ? '💰' : '🔬'}
                                     </span>
                                     <strong style={{ fontSize: '13px', marginRight: '6px' }}>
                                       <a 

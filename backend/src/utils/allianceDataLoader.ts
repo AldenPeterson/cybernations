@@ -221,6 +221,7 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
       nation_id: parseInt(nationId),
       rulerName: nationData.ruler_name,
       nationName: nationData.nation_name,
+      discord_handle: nationData.discord_handle,
       alliance: allianceData.alliance_name,
       allianceId: allianceId,
       team: '', // Not available in JSON
