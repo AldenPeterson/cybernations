@@ -41,6 +41,7 @@ interface ColumnProps {
   saving: number | null;
   hasUnsavedChanges: (nationId: number) => boolean;
   hasValidationErrors: (nationId: number) => boolean;
+  hasValidationWarnings: (nationId: number) => boolean;
 }
 
 const columnHelper = createColumnHelper<NationConfig>();
@@ -55,6 +56,7 @@ export const createNationTableColumns = ({
   saving,
   hasUnsavedChanges,
   hasValidationErrors,
+  hasValidationWarnings,
 }: ColumnProps) => [
   // Index column (read-only)
   columnHelper.accessor((_, index) => index, {
@@ -173,6 +175,7 @@ export const createNationTableColumns = ({
     ),
     cell: ({ getValue, row }) => {
       const hasErrors = hasValidationErrors(row.original.nation_id);
+      const hasWarnings = hasValidationWarnings(row.original.nation_id);
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash;
       const expectedTotal = row.original.has_dra ? 6 : 5;
@@ -185,10 +188,10 @@ export const createNationTableColumns = ({
             min={0}
             max={6}
           />
-          {hasErrors && (
+          {(hasErrors || hasWarnings) && (
             <div style={{ 
               fontSize: '10px', 
-              color: '#ef4444', 
+              color: hasErrors ? '#ef4444' : '#f59e0b', 
               marginTop: '2px',
               fontWeight: '600'
             }}>
@@ -213,6 +216,7 @@ export const createNationTableColumns = ({
     ),
     cell: ({ getValue, row }) => {
       const hasErrors = hasValidationErrors(row.original.nation_id);
+      const hasWarnings = hasValidationWarnings(row.original.nation_id);
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash;
       const expectedTotal = row.original.has_dra ? 6 : 5;
@@ -225,10 +229,10 @@ export const createNationTableColumns = ({
             min={0}
             max={6}
           />
-          {hasErrors && (
+          {(hasErrors || hasWarnings) && (
             <div style={{ 
               fontSize: '10px', 
-              color: '#ef4444', 
+              color: hasErrors ? '#ef4444' : '#f59e0b', 
               marginTop: '2px',
               fontWeight: '600'
             }}>
@@ -253,6 +257,7 @@ export const createNationTableColumns = ({
     ),
     cell: ({ getValue, row }) => {
       const hasErrors = hasValidationErrors(row.original.nation_id);
+      const hasWarnings = hasValidationWarnings(row.original.nation_id);
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash;
       const expectedTotal = row.original.has_dra ? 6 : 5;
@@ -265,10 +270,10 @@ export const createNationTableColumns = ({
             min={0}
             max={6}
           />
-          {hasErrors && (
+          {(hasErrors || hasWarnings) && (
             <div style={{ 
               fontSize: '10px', 
-              color: '#ef4444', 
+              color: hasErrors ? '#ef4444' : '#f59e0b', 
               marginTop: '2px',
               fontWeight: '600'
             }}>
@@ -293,6 +298,7 @@ export const createNationTableColumns = ({
     ),
     cell: ({ getValue, row }) => {
       const hasErrors = hasValidationErrors(row.original.nation_id);
+      const hasWarnings = hasValidationWarnings(row.original.nation_id);
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash;
       const expectedTotal = row.original.has_dra ? 6 : 5;
@@ -305,10 +311,10 @@ export const createNationTableColumns = ({
             min={0}
             max={6}
           />
-          {hasErrors && (
+          {(hasErrors || hasWarnings) && (
             <div style={{ 
               fontSize: '10px', 
-              color: '#ef4444', 
+              color: hasErrors ? '#ef4444' : '#f59e0b', 
               marginTop: '2px',
               fontWeight: '600'
             }}>

@@ -178,9 +178,8 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     const localChange = localChanges.get(nationId);
     
     if (nation && originalNation) {
-      // Check for validation errors first
+      // Check for validation errors first (blocks saving)
       if (hasValidationErrors(nationId)) {
-        alert('Cannot save: Validation errors exist. Please fix the slot totals before saving.');
         return;
       }
       
@@ -258,7 +257,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
            nation.slots.getCash !== originalNation.slots.getCash;
   };
 
-  // Helper function to check if a nation has validation errors
+  // Helper function to check if a nation has validation errors (blocks saving)
   const hasValidationErrors = (nationId: number) => {
     const nation = nations.find(n => n.nation_id === nationId);
     
@@ -270,7 +269,24 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     // Expected total: 5 if no DRA, 6 if DRA
     const expectedTotal = nation.has_dra ? 6 : 5;
     
-    return totalSlots !== expectedTotal;
+    // Only block saving if slots are too high (exceed expected total)
+    return totalSlots > expectedTotal;
+  };
+
+  // Helper function to check if a nation has validation warnings (shows warning but allows saving)
+  const hasValidationWarnings = (nationId: number) => {
+    const nation = nations.find(n => n.nation_id === nationId);
+    
+    if (!nation) return false;
+    
+    // Calculate total slots
+    const totalSlots = nation.slots.sendTech + nation.slots.sendCash + nation.slots.getTech + nation.slots.getCash;
+    
+    // Expected total: 5 if no DRA, 6 if DRA
+    const expectedTotal = nation.has_dra ? 6 : 5;
+    
+    // Show warning if slots are too low (below expected total)
+    return totalSlots < expectedTotal;
   };
 
   // Create columns with handlers
@@ -281,6 +297,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     saving,
     hasUnsavedChanges,
     hasValidationErrors,
+    hasValidationWarnings,
   }), [saving, localChanges]);
 
   // Initialize TanStack Table
@@ -413,14 +430,15 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
             <tbody>
               {table.getRowModel().rows.map(row => {
                 const hasErrors = hasValidationErrors(row.original.nation_id);
+                const hasWarnings = hasValidationWarnings(row.original.nation_id);
                 return (
                   <tr 
                     key={row.id} 
                     className="nation-table-row"
                     style={{
                       ...tableStyles.dataRow,
-                      backgroundColor: hasErrors ? '#fef2f2' : undefined,
-                      borderLeft: hasErrors ? '4px solid #ef4444' : undefined,
+                      backgroundColor: hasErrors ? '#fef2f2' : hasWarnings ? '#fffbeb' : undefined,
+                      borderLeft: hasErrors ? '4px solid #ef4444' : hasWarnings ? '4px solid #f59e0b' : undefined,
                     }}>
                     {row.getVisibleCells().map(cell => (
                       <td 
@@ -430,7 +448,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
                           { 
                             textAlign: getTextAlignment(cell.column.id),
                             width: cell.column.getSize(),
-                            backgroundColor: hasErrors ? '#fef2f2' : undefined,
+                            backgroundColor: hasErrors ? '#fef2f2' : hasWarnings ? '#fffbeb' : undefined,
                           }
                         )}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}

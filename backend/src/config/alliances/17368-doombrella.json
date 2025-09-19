@@ -29,7 +29,7 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 0,
+        "getTech": 6,
         "getCash": 0
       },
       "current_stats": {
@@ -47,7 +47,7 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 0,
+        "getTech": 6,
         "getCash": 0
       },
       "current_stats": {
@@ -97,7 +97,7 @@
       "nation_name": "New Budsland",
       "discord_handle": "bud8808",
       "has_dra": true,
-      "notes": "",
+      "notes": "AFK",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
@@ -135,7 +135,7 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0
@@ -191,7 +191,7 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 0,
+        "getTech": 6,
         "getCash": 0
       },
       "current_stats": {
@@ -234,7 +234,7 @@
         "infrastructure": "32,299.99",
         "strength": "743086.177"
       },
-      "notes": "hi try again asdf"
+      "notes": ""
     },
     "334182": {
       "ruler_name": "st6mm",
@@ -277,7 +277,7 @@
       "nation_name": "Rabbitopia",
       "discord_handle": "",
       "has_dra": true,
-      "notes": "",
+      "notes": "DS",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
@@ -297,7 +297,7 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0
@@ -351,7 +351,7 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0
@@ -369,7 +369,7 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0
@@ -387,7 +387,7 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0
@@ -405,7 +405,7 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0
@@ -423,8 +423,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 3,
-        "getTech": 3,
+        "sendCash": 0,
+        "getTech": 0,
         "getCash": 0
       },
       "current_stats": {
@@ -432,7 +432,7 @@
         "infrastructure": "19,999.99",
         "strength": "437389.679"
       },
-      "notes": ""
+      "notes": "DS"
     },
     "481103": {
       "ruler_name": "AzureShadow",
@@ -441,7 +441,7 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0
@@ -531,7 +531,7 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0
@@ -547,7 +547,7 @@
       "nation_name": "Soaring Eagle",
       "discord_handle": "",
       "has_dra": true,
-      "notes": "",
+      "notes": "DS",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
@@ -641,7 +641,7 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 0,
+        "getTech": 6,
         "getCash": 0
       },
       "current_stats": {
@@ -658,7 +658,7 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 6,
+        "getTech": 0,
         "getCash": 0
       },
       "current_stats": {
@@ -666,7 +666,7 @@
         "infrastructure": "19,973.90",
         "strength": "172730.11"
       },
-      "notes": ""
+      "notes": "DS"
     },
     "634284": {
       "ruler_name": "mikeymikes",
@@ -675,7 +675,7 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0
