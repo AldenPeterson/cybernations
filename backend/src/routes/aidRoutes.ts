@@ -6,7 +6,8 @@ import {
   loadAllianceById, 
   saveAllianceData, 
   updateNationData,
-  AllianceData 
+  AllianceData,
+  loadAllianceDataWithJsonPriority
 } from '../utils/allianceDataLoader.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -96,10 +97,9 @@ aidRoutes.get('/alliances/:allianceId/alliance-aid-stats', async (req, res) => {
       });
     }
 
-    const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
-    const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
+    const { nations, aidOffers, useJsonData } = await loadAllianceDataWithJsonPriority(allianceId);
     
-    if (allianceNations.length === 0) {
+    if (nations.length === 0) {
       return res.json({
         success: true,
         allianceId,
@@ -117,8 +117,9 @@ aidRoutes.get('/alliances/:allianceId/alliance-aid-stats', async (req, res) => {
       });
     }
 
-    // Categorize nations
-    const categorizedNations = categorizeNations(allianceNations);
+    // If using JSON data, nations already have slots assigned
+    // If using raw data, need to categorize them
+    const categorizedNations = useJsonData ? nations : categorizeNations(nations);
     const slotStatistics = getSlotStatistics(categorizedNations);
     
     // Get existing aid offers (exclude expired)
@@ -140,7 +141,7 @@ aidRoutes.get('/alliances/:allianceId/alliance-aid-stats', async (req, res) => {
       success: true,
       allianceId,
       stats: {
-        totalNations: allianceNations.length,
+        totalNations: nations.length,
         totalOutgoingAid: outgoingOffers.length,
         totalIncomingAid: incomingOffers.length,
         totalMoneyOut: outgoingOffers.reduce((sum, offer) => sum + offer.money, 0),
@@ -179,10 +180,9 @@ aidRoutes.get('/alliances/:allianceId/recommendations', async (req, res) => {
       });
     }
 
-    const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
-    const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
+    const { nations, aidOffers, useJsonData } = await loadAllianceDataWithJsonPriority(allianceId);
     
-    if (allianceNations.length === 0) {
+    if (nations.length === 0) {
       return res.json({
         success: true,
         allianceId,
@@ -190,8 +190,9 @@ aidRoutes.get('/alliances/:allianceId/recommendations', async (req, res) => {
       });
     }
 
-    // Categorize nations
-    const categorizedNations = categorizeNations(allianceNations);
+    // If using JSON data, nations already have slots assigned
+    // If using raw data, need to categorize them
+    const categorizedNations = useJsonData ? nations : categorizeNations(nations);
     
     // Debug logging
     categorizedNations.forEach(nation => {
@@ -525,10 +526,9 @@ aidRoutes.get('/alliances/:allianceId/categorized-nations', async (req, res) => 
       });
     }
 
-    const { nations } = await loadDataFromFilesWithUpdate();
-    const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
+    const { nations, useJsonData } = await loadAllianceDataWithJsonPriority(allianceId);
     
-    if (allianceNations.length === 0) {
+    if (nations.length === 0) {
       return res.json({
         success: true,
         allianceId,
@@ -536,8 +536,9 @@ aidRoutes.get('/alliances/:allianceId/categorized-nations', async (req, res) => 
       });
     }
 
-    // Categorize nations
-    const categorizedNations = categorizeNations(allianceNations);
+    // If using JSON data, nations already have slots assigned
+    // If using raw data, need to categorize them
+    const categorizedNations = useJsonData ? nations : categorizeNations(nations);
     
     res.json({
       success: true,
@@ -608,7 +609,7 @@ aidRoutes.get('/alliances/:allianceId/nations-config', async (req, res) => {
 // Update a specific nation's data in alliance files
 aidRoutes.put('/alliances/:allianceId/nations/:nationId', async (req, res) => {
   try {
-    console.log('updateNation called with:', req.params.allianceId, req.params.nationId, req.params.notes);
+    console.log('updateNation called with:', req.params.allianceId, req.params.nationId, req.body);
     const allianceId = parseInt(req.params.allianceId);
     const nationId = parseInt(req.params.nationId);
     

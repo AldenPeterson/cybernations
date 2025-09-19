@@ -96,12 +96,30 @@ export const createNationTableColumns = ({
         <StrengthCell strength={getValue()} />
       </div>
     ),
-    size: 45,
+    size: 35,
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
       const strengthA = parseFloat((rowA.original.current_stats?.strength || '0').replace(/,/g, ''));
       const strengthB = parseFloat((rowB.original.current_stats?.strength || '0').replace(/,/g, ''));
       return strengthA - strengthB;
+    },
+  }),
+
+  // Infra (Infrastructure) column (read-only)
+  columnHelper.accessor('current_stats.infrastructure', {
+    id: 'infrastructure',
+    header: 'Infra',
+    cell: ({ getValue }) => (
+      <div style={{ ...tableStyles.dataCell, textAlign: 'right' }}>
+        <StrengthCell strength={getValue()} />
+      </div>
+    ),
+    size: 35,
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => {
+      const infraA = parseFloat((rowA.original.current_stats?.infrastructure || '0').replace(/,/g, ''));
+      const infraB = parseFloat((rowB.original.current_stats?.infrastructure || '0').replace(/,/g, ''));
+      return infraA - infraB;
     },
   }),
 
@@ -114,7 +132,7 @@ export const createNationTableColumns = ({
         <StrengthCell strength={getValue()} />
       </div>
     ),
-    size: 45,
+    size: 35,
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
       const techA = parseFloat((rowA.original.current_stats?.technology || '0').replace(/,/g, ''));

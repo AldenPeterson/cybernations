@@ -133,9 +133,9 @@
       "nation_name": "Elisabethan",
       "discord_handle": "",
       "has_dra": true,
-      "notes": "",
+      "notes": "TBD",
       "slots": {
-        "sendTech": 6,
+        "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0
@@ -423,7 +423,7 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 3,
         "getTech": 0,
         "getCash": 0
       },
@@ -687,8 +687,8 @@
       }
     },
     "635159": {
-      "ruler_name": "anri__",
-      "nation_name": "anri__",
+      "ruler_name": "xAnri",
+      "nation_name": "xRoan",
       "discord_handle": "anri__",
       "has_dra": true,
       "slots": {

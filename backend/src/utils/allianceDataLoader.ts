@@ -202,3 +202,59 @@ export function getAllNationsFlat(): NationData[] {
   
   return nations;
 }
+
+/**
+ * Load alliance data with JSON priority - uses JSON config if available, falls back to raw data
+ */
+export async function loadAllianceDataWithJsonPriority(allianceId: number): Promise<{
+  nations: any[];
+  aidOffers: any[];
+  useJsonData: boolean;
+}> {
+  // First try to load from JSON configuration
+  const allianceData = loadAllianceById(allianceId);
+  
+  if (allianceData) {
+    // Convert JSON data to the format expected by the frontend
+    const nationsArray = Object.entries(allianceData.nations).map(([nationId, nationData]) => ({
+      id: parseInt(nationId),
+      nation_id: parseInt(nationId),
+      rulerName: nationData.ruler_name,
+      nationName: nationData.nation_name,
+      alliance: allianceData.alliance_name,
+      allianceId: allianceId,
+      team: '', // Not available in JSON
+      strength: parseFloat(nationData.current_stats?.strength?.replace(/,/g, '') || '0'),
+      activity: '', // Not available in JSON
+      technology: nationData.current_stats?.technology || '0',
+      infrastructure: nationData.current_stats?.infrastructure || '0',
+      slots: nationData.slots || {
+        sendTech: 0,
+        sendCash: 0,
+        getTech: 0,
+        getCash: 0
+      }
+    }));
+
+    // Still need aid offers from raw data
+    const { loadDataFromFilesWithUpdate } = await import('./dataParser.js');
+    const { aidOffers } = await loadDataFromFilesWithUpdate();
+    
+    return {
+      nations: nationsArray,
+      aidOffers,
+      useJsonData: true
+    };
+  }
+  
+  // Fall back to raw data if no JSON config exists
+  const { loadDataFromFilesWithUpdate } = await import('./dataParser.js');
+  const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
+  const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
+  
+  return {
+    nations: allianceNations,
+    aidOffers,
+    useJsonData: false
+  };
+}
