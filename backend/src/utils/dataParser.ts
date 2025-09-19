@@ -74,7 +74,7 @@ export function parseNationStats(filePath: string): Nation[] {
           alliance: values[3] || '',
           allianceId: parseInt(values[4]) || 0,
           team: values[9] || '',
-          strength: parseFloat(values[17]) || 0,
+          strength: parseFloat(values[18]?.replace(/,/g, '')) || 0,
           activity: values[24] || '',
           technology: values[11] || '0',
           infrastructure: values[12] || '0'

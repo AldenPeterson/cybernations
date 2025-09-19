@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import NationEditor from './NationEditor';
 
 interface Alliance {
   id: number;
@@ -67,14 +68,12 @@ interface AidRecommendation {
     id: number;
     nationName: string;
     rulerName: string;
-    category: string;
     strength: number;
   };
   recipient: {
     id: number;
     nationName: string;
     rulerName: string;
-    category: string;
     strength: number;
   };
   aidType: 'cash' | 'tech';
@@ -82,11 +81,7 @@ interface AidRecommendation {
   reason: string;
 }
 
-interface NationCategories {
-  farms: number;
-  banks: number;
-  none: number;
-}
+// Nation categories removed - replaced with slot-based statistics
 
 interface SlotCounts {
   totalGetCash: number;
@@ -102,9 +97,9 @@ const AllianceDashboard: React.FC = () => {
   const [allianceStats, setAllianceStats] = useState<AllianceStats | null>(null);
   const [allianceAidStats, setAllianceAidStats] = useState<AllianceAidStats[]>([]);
   const [recommendations, setRecommendations] = useState<AidRecommendation[]>([]);
-  const [nationCategories, setNationCategories] = useState<NationCategories | null>(null);
+  // Nation categories removed - using slot-based statistics instead
   const [slotCounts, setSlotCounts] = useState<SlotCounts | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'recommendations'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'recommendations' | 'nations'>('overview');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expirationFilter, setExpirationFilter] = useState<string[]>(['empty', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days']);
@@ -202,7 +197,7 @@ const AllianceDashboard: React.FC = () => {
       
       if (data.success) {
         setRecommendations(data.recommendations);
-        setNationCategories(data.nationCategories);
+        // Nation categories removed
         setSlotCounts(data.slotCounts);
       }
     } catch (err) {
@@ -372,6 +367,22 @@ const AllianceDashboard: React.FC = () => {
             >
               Aid Recommendations
             </button>
+            <button
+              onClick={() => setActiveTab('nations')}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: activeTab === 'nations' ? '#007bff' : 'transparent',
+                color: activeTab === 'nations' ? 'white' : '#333',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                borderTopLeftRadius: '4px',
+                borderTopRightRadius: '4px'
+              }}
+            >
+              Nation Editor
+            </button>
           </div>
         </div>
       )}
@@ -391,8 +402,8 @@ const AllianceDashboard: React.FC = () => {
               <h3>Alliance Statistics</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
                 <div><strong>Total Nations:</strong> {allianceStats.totalNations}</div>
-                <div><strong>Outgoing Aid:</strong> {allianceStats.totalOutgoingAid}</div>
-                <div><strong>Incoming Aid:</strong> {allianceStats.totalIncomingAid}</div>
+                <div><strong>Sent Aid:</strong> {allianceStats.totalOutgoingAid}</div>
+                <div><strong>Received Aid:</strong> {allianceStats.totalIncomingAid}</div>
                 <div><strong>Money Out:</strong> ${formatNumber(allianceStats.totalMoneyOut)}</div>
                 <div><strong>Money In:</strong> ${formatNumber(allianceStats.totalMoneyIn)}</div>
                 <div><strong>Tech Out:</strong> {allianceStats.totalTechOut}</div>
@@ -441,7 +452,7 @@ const AllianceDashboard: React.FC = () => {
                         color: 'black',
                         fontWeight: 'bold'
                       }}>
-                        Incoming
+                        Received
                       </th>
                       <th style={{ 
                         padding: '12px', 
@@ -451,7 +462,7 @@ const AllianceDashboard: React.FC = () => {
                         color: 'black',
                         fontWeight: 'bold'
                       }}>
-                        Outgoing
+                        Sent
                       </th>
                       <th style={{ 
                         padding: '12px', 
@@ -739,35 +750,7 @@ const AllianceDashboard: React.FC = () => {
       {/* Recommendations Tab Content */}
       {activeTab === 'recommendations' && selectedAllianceId && (
         <div>
-          {/* Nation Categories Summary */}
-          {nationCategories && (
-            <div style={{ 
-              marginBottom: '20px', 
-              padding: '15px', 
-              backgroundColor: 'transparent', 
-              borderRadius: '8px',
-              border: '1px solid #ddd'
-            }}>
-              <h3>Nation Categories Summary</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
-                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32' }}>{nationCategories.farms}</div>
-                  <div style={{ color: '#666' }}>Farms</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>&lt; 500 tech, &gt; 3000 infra</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#e3f2fd', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1976d2' }}>{nationCategories.banks}</div>
-                  <div style={{ color: '#666' }}>Banks</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>&gt;= 3000 infra</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#666' }}>{nationCategories.none}</div>
-                  <div style={{ color: '#666' }}>None</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>Other categories</div>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Nation categories removed - showing slot counts instead */}
 
           {/* Slot Counts Summary */}
           {slotCounts && (
@@ -886,17 +869,7 @@ const AllianceDashboard: React.FC = () => {
                               <br />
                               <small style={{ color: '#666' }}>{group.sender.rulerName}</small>
                               <br />
-                              <span style={{ 
-                                fontSize: '12px', 
-                                padding: '2px 6px', 
-                                borderRadius: '3px',
-                                backgroundColor: group.sender.category === 'farm' ? '#e8f5e8' : 
-                                              group.sender.category === 'cash_recipient' ? '#fff3cd' : '#e3f2fd',
-                                color: group.sender.category === 'farm' ? '#2e7d32' : 
-                                       group.sender.category === 'cash_recipient' ? '#f57c00' : '#1976d2'
-                              }}>
-                                {group.sender.category.replace('_', ' ')}
-                              </span>
+                              {/* Category badge removed */}
                             </div>
                           </td>
                           <td style={{ 
@@ -952,17 +925,7 @@ const AllianceDashboard: React.FC = () => {
                                       {rec.recipient.rulerName} • {rec.reason}
                                     </span>
                                   </div>
-                                  <span style={{ 
-                                    fontSize: '10px', 
-                                    padding: '1px 4px', 
-                                    borderRadius: '2px',
-                                    backgroundColor: rec.recipient.category === 'farm' ? '#e8f5e8' : 
-                                                  rec.recipient.category === 'cash_recipient' ? '#fff3cd' : '#e3f2fd',
-                                    color: rec.recipient.category === 'farm' ? '#2e7d32' : 
-                                           rec.recipient.category === 'cash_recipient' ? '#f57c00' : '#1976d2'
-                                  }}>
-                                    {rec.recipient.category.replace('_', ' ')}
-                                  </span>
+                                  {/* Category badge removed */}
                                 </div>
                               </div>
                             ))}
@@ -982,6 +945,11 @@ const AllianceDashboard: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Nation Editor Tab Content */}
+      {activeTab === 'nations' && selectedAllianceId && (
+        <NationEditor allianceId={selectedAllianceId} />
       )}
 
       {/* Show message when no alliance is selected */}
