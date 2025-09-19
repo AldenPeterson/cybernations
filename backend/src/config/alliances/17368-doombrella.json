@@ -227,14 +227,14 @@
         "sendTech": 0,
         "sendCash": 3,
         "getTech": 3,
-        "getCash": 1
+        "getCash": 0
       },
       "current_stats": {
         "technology": "119,787.43",
         "infrastructure": "32,299.99",
         "strength": "743086.177"
       },
-      "notes": ""
+      "notes": "hi try again asdf"
     },
     "334182": {
       "ruler_name": "st6mm",

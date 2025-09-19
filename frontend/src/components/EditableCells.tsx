@@ -1,5 +1,23 @@
 import type React from 'react';
+import { useState, useEffect } from 'react';
 import { tableStyles } from '../styles/tableStyles';
+
+// Custom hook for debouncing values
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 interface EditableTextInputProps {
   value: string;
@@ -13,16 +31,33 @@ export const EditableTextInput: React.FC<EditableTextInputProps> = ({
   onChange,
   placeholder,
   className = 'input-field'
-}) => (
-  <input
-    type="text"
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    className={className}
-    placeholder={placeholder}
-    style={{ ...tableStyles.inputField, width: '100%' }}
-  />
-);
+}) => {
+  const [localValue, setLocalValue] = useState(value);
+  const debouncedValue = useDebounce(localValue, 500);
+
+  // Update local value when prop value changes (e.g., from external updates)
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  // Call onChange when debounced value changes
+  useEffect(() => {
+    if (debouncedValue !== value) {
+      onChange(debouncedValue);
+    }
+  }, [debouncedValue, onChange, value]);
+
+  return (
+    <input
+      type="text"
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      className={className}
+      placeholder={placeholder}
+      style={{ ...tableStyles.inputField, width: '100%' }}
+    />
+  );
+};
 
 interface EditableTextareaProps {
   value: string;
@@ -36,21 +71,38 @@ export const EditableTextarea: React.FC<EditableTextareaProps> = ({
   onChange,
   placeholder,
   className = 'input-field'
-}) => (
-  <textarea
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    className={className}
-    placeholder={placeholder}
-    style={{ 
-      ...tableStyles.inputField,
-      width: '100%',
-      height: '40px',
-      resize: 'none',
-      fontFamily: 'inherit'
-    }}
-  />
-);
+}) => {
+  const [localValue, setLocalValue] = useState(value);
+  const debouncedValue = useDebounce(localValue, 500);
+
+  // Update local value when prop value changes (e.g., from external updates)
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  // Call onChange when debounced value changes
+  useEffect(() => {
+    if (debouncedValue !== value) {
+      onChange(debouncedValue);
+    }
+  }, [debouncedValue, onChange, value]);
+
+  return (
+    <textarea
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      className={className}
+      placeholder={placeholder}
+      style={{ 
+        ...tableStyles.inputField,
+        width: '100%',
+        height: '40px',
+        resize: 'none',
+        fontFamily: 'inherit'
+      }}
+    />
+  );
+};
 
 interface EditableNumberInputProps {
   value: number;
@@ -139,18 +191,34 @@ interface StrengthCellProps {
   strength?: string;
 }
 
+const formatStrength = (strength: string): string => {
+  // Remove commas before parsing to handle comma-separated numbers
+  const value = parseFloat(strength.replace(/,/g, ''));
+  
+  if (isNaN(value) || value === 0) {
+    return '0';
+  }
+  
+  if (value >= 10000) {
+    // For values >= 10,000, show as whole thousands (e.g., 742,203 -> 742k)
+    return Math.floor(value / 1000) + 'k';
+  } else if (value >= 1000) {
+    // For values >= 1,000 but < 10,000, show with 2 significant digits (e.g., 1200 -> 1.2k)
+    const thousands = value / 1000;
+    return thousands.toFixed(1) + 'k';
+  } else {
+    // For values < 1,000, show the actual amount (e.g., 500 -> 500)
+    return Math.floor(value).toString();
+  }
+};
+
 export const StrengthCell: React.FC<StrengthCellProps> = ({ strength }) => (
   <div style={{
     fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
     fontWeight: '600',
     fontSize: '14px'
   }}>
-    {strength ? 
-      parseFloat(strength).toLocaleString(undefined, {
-        maximumFractionDigits: 0
-      }) : 
-      '0'
-    }
+    {strength ? formatStrength(strength) : '0'}
   </div>
 );
 

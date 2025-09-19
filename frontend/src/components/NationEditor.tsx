@@ -18,6 +18,7 @@ interface NationEditorProps {
 export default function NationEditor({ allianceId }: NationEditorProps) {
   const [nations, setNations] = useState<NationConfig[]>([]);
   const [originalNations, setOriginalNations] = useState<NationConfig[]>([]);
+  const [localChanges, setLocalChanges] = useState<Map<number, Partial<NationConfig>>>(new Map());
   const [allianceExists, setAllianceExists] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
@@ -98,6 +99,13 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
         )
       );
       
+      // Clear local changes for this nation
+      setLocalChanges(prev => {
+        const newChanges = new Map(prev);
+        newChanges.delete(nationId);
+        return newChanges;
+      });
+      
       // Show success feedback
       console.log('Nation updated successfully');
     } catch (err) {
@@ -109,6 +117,15 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
   };
 
   const handleFieldChange = (nationId: number, field: string, value: any) => {
+    // Update local changes immediately for save button state
+    setLocalChanges(prev => {
+      const newChanges = new Map(prev);
+      const existingChanges = newChanges.get(nationId) || {};
+      newChanges.set(nationId, { ...existingChanges, [field]: value });
+      return newChanges;
+    });
+
+    // Update the main state (this will be debounced by the input components)
     setNations(prevNations => 
       prevNations.map(nation => 
         nation.nation_id === nationId 
@@ -119,6 +136,27 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
   };
 
   const handleSlotChange = (nationId: number, slotType: keyof NationConfig['slots'], value: number) => {
+    // Update local changes immediately for save button state
+    setLocalChanges(prev => {
+      const newChanges = new Map(prev);
+      const existingChanges = newChanges.get(nationId) || {};
+      const existingSlots = existingChanges.slots || {
+        sendTech: 0,
+        sendCash: 0,
+        getTech: 0,
+        getCash: 0
+      };
+      newChanges.set(nationId, { 
+        ...existingChanges, 
+        slots: { 
+          ...existingSlots, 
+          [slotType]: value 
+        } 
+      });
+      return newChanges;
+    });
+
+    // Update the main state
     setNations(prevNations => 
       prevNations.map(nation => 
         nation.nation_id === nationId 
@@ -137,6 +175,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
   const saveNation = (nationId: number) => {
     const nation = nations.find(n => n.nation_id === nationId);
     const originalNation = originalNations.find(n => n.nation_id === nationId);
+    const localChange = localChanges.get(nationId);
     
     if (nation && originalNation) {
       // Check for validation errors first
@@ -147,27 +186,30 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       
       const updates: Partial<NationConfig> = {};
       
+      // Use local changes if available, otherwise fall back to main state
+      const currentNation = localChange ? { ...nation, ...localChange } : nation;
+      
       // Only include fields that have actually changed
-      if (nation.discord_handle !== originalNation.discord_handle) {
-        updates.discord_handle = nation.discord_handle;
+      if (currentNation.discord_handle !== originalNation.discord_handle) {
+        updates.discord_handle = currentNation.discord_handle;
       }
       
-      if (nation.has_dra !== originalNation.has_dra) {
-        updates.has_dra = nation.has_dra;
+      if (currentNation.has_dra !== originalNation.has_dra) {
+        updates.has_dra = currentNation.has_dra;
       }
       
-      if (nation.notes !== originalNation.notes) {
-        updates.notes = nation.notes;
+      if (currentNation.notes !== originalNation.notes) {
+        updates.notes = currentNation.notes;
       }
       
       // Check if slots have changed
-      const slotsChanged = nation.slots.sendTech !== originalNation.slots.sendTech ||
-                          nation.slots.sendCash !== originalNation.slots.sendCash ||
-                          nation.slots.getTech !== originalNation.slots.getTech ||
-                          nation.slots.getCash !== originalNation.slots.getCash;
+      const slotsChanged = currentNation.slots.sendTech !== originalNation.slots.sendTech ||
+                          currentNation.slots.sendCash !== originalNation.slots.sendCash ||
+                          currentNation.slots.getTech !== originalNation.slots.getTech ||
+                          currentNation.slots.getCash !== originalNation.slots.getCash;
       
       if (slotsChanged) {
-        updates.slots = nation.slots;
+        updates.slots = currentNation.slots;
       }
       
       // Only make the API call if there are actual changes
@@ -183,9 +225,30 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
   const hasUnsavedChanges = (nationId: number) => {
     const nation = nations.find(n => n.nation_id === nationId);
     const originalNation = originalNations.find(n => n.nation_id === nationId);
+    const localChange = localChanges.get(nationId);
     
     if (!nation || !originalNation) return false;
     
+    // Check if there are any local changes (immediate feedback)
+    if (localChange) {
+      // Check for field changes
+      if (localChange.discord_handle !== undefined && localChange.discord_handle !== originalNation.discord_handle) return true;
+      if (localChange.has_dra !== undefined && localChange.has_dra !== originalNation.has_dra) return true;
+      if (localChange.notes !== undefined && localChange.notes !== originalNation.notes) return true;
+      
+      // Check for slot changes
+      if (localChange.slots) {
+        const originalSlots = originalNation.slots;
+        if (localChange.slots.sendTech !== undefined && localChange.slots.sendTech !== originalSlots.sendTech) return true;
+        if (localChange.slots.sendCash !== undefined && localChange.slots.sendCash !== originalSlots.sendCash) return true;
+        if (localChange.slots.getTech !== undefined && localChange.slots.getTech !== originalSlots.getTech) return true;
+        if (localChange.slots.getCash !== undefined && localChange.slots.getCash !== originalSlots.getCash) return true;
+      }
+      
+      return false;
+    }
+    
+    // Fallback to checking main state changes
     return nation.discord_handle !== originalNation.discord_handle ||
            nation.has_dra !== originalNation.has_dra ||
            nation.notes !== originalNation.notes ||
@@ -218,7 +281,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     saving,
     hasUnsavedChanges,
     hasValidationErrors,
-  }), [saving, nations, originalNations]);
+  }), [saving, localChanges]);
 
   // Initialize TanStack Table
   const table = useReactTable({

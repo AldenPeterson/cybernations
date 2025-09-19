@@ -57,10 +57,10 @@ export const createNationTableColumns = ({
   hasValidationErrors,
 }: ColumnProps) => [
   // Index column (read-only)
-  columnHelper.display({
+  columnHelper.accessor((_, index) => index, {
     id: 'index',
     header: '#',
-    cell: ({ row }) => (
+    cell: ({ getValue }) => (
       <div style={{
         ...tableStyles.dataCell,
         color: '#64748b',
@@ -68,7 +68,7 @@ export const createNationTableColumns = ({
         fontWeight: '600',
         fontSize: '14px'
       }}>
-        {row.index + 1}
+        {getValue() + 1}
       </div>
     ),
     size: 50,
@@ -86,20 +86,38 @@ export const createNationTableColumns = ({
   }),
 
   // NS (Nation Strength) column (read-only)
-  columnHelper.display({
+  columnHelper.accessor('current_stats.strength', {
     id: 'strength',
     header: 'NS',
-    cell: ({ row }) => (
+    cell: ({ getValue }) => (
       <div style={{ ...tableStyles.dataCell, textAlign: 'right' }}>
-        <StrengthCell strength={row.original.current_stats?.strength} />
+        <StrengthCell strength={getValue()} />
       </div>
     ),
-    size: 100,
+    size: 45,
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
-      const strengthA = parseFloat(rowA.original.current_stats?.strength || '0');
-      const strengthB = parseFloat(rowB.original.current_stats?.strength || '0');
+      const strengthA = parseFloat((rowA.original.current_stats?.strength || '0').replace(/,/g, ''));
+      const strengthB = parseFloat((rowB.original.current_stats?.strength || '0').replace(/,/g, ''));
       return strengthA - strengthB;
+    },
+  }),
+
+  // Tech (Technology) column (read-only)
+  columnHelper.accessor('current_stats.technology', {
+    id: 'technology',
+    header: 'Tech',
+    cell: ({ getValue }) => (
+      <div style={{ ...tableStyles.dataCell, textAlign: 'right' }}>
+        <StrengthCell strength={getValue()} />
+      </div>
+    ),
+    size: 45,
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => {
+      const techA = parseFloat((rowA.original.current_stats?.technology || '0').replace(/,/g, ''));
+      const techB = parseFloat((rowB.original.current_stats?.technology || '0').replace(/,/g, ''));
+      return techA - techB;
     },
   }),
 
