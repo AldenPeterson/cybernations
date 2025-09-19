@@ -47,7 +47,8 @@ interface ColumnProps {
 const columnHelper = createColumnHelper<NationConfig>();
 
 // Column size constants
-const SLOT_COLUMN_SIZE = 100;
+const SLOT_COLUMN_SIZE = 35;
+const STAT_COLUMN_SIZE = 25;
 
 export const createNationTableColumns = ({
   handleFieldChange,
@@ -73,7 +74,7 @@ export const createNationTableColumns = ({
         {getValue() + 1}
       </div>
     ),
-    size: 50,
+    size: 20,
     enableSorting: true,
     sortingFn: (rowA, rowB) => rowA.index - rowB.index,
   }),
@@ -83,7 +84,7 @@ export const createNationTableColumns = ({
     id: 'nation',
     header: 'Nation / Ruler',
     cell: ({ row }) => <NationCell nation={row.original} />,
-    size: 50,
+    size: 40,
     enableSorting: false,
   }),
 
@@ -96,7 +97,7 @@ export const createNationTableColumns = ({
         <StrengthCell strength={getValue()} />
       </div>
     ),
-    size: 35,
+    size: STAT_COLUMN_SIZE,
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
       const strengthA = parseFloat((rowA.original.current_stats?.strength || '0').replace(/,/g, ''));
@@ -114,7 +115,7 @@ export const createNationTableColumns = ({
         <StrengthCell strength={getValue()} />
       </div>
     ),
-    size: 35,
+    size: STAT_COLUMN_SIZE,
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
       const infraA = parseFloat((rowA.original.current_stats?.infrastructure || '0').replace(/,/g, ''));
@@ -132,7 +133,7 @@ export const createNationTableColumns = ({
         <StrengthCell strength={getValue()} />
       </div>
     ),
-    size: 35,
+    size: STAT_COLUMN_SIZE,
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
       const techA = parseFloat((rowA.original.current_stats?.technology || '0').replace(/,/g, ''));
@@ -151,7 +152,7 @@ export const createNationTableColumns = ({
         placeholder="Enter Discord handle..."
       />
     ),
-    size: 250,
+    size: 200,
     enableSorting: true,
   }),
 
@@ -219,8 +220,8 @@ export const createNationTableColumns = ({
         </div>
       );
     },
-    size: 50,
-    minSize: SLOT_COLUMN_SIZE,
+    size: SLOT_COLUMN_SIZE,
+    maxSize: SLOT_COLUMN_SIZE,
     enableSorting: true,
   }),
 
@@ -260,8 +261,7 @@ export const createNationTableColumns = ({
         </div>
       );
     },
-    size: 50,
-    minSize: SLOT_COLUMN_SIZE,
+    size: SLOT_COLUMN_SIZE,
     enableSorting: true,
   }),
 
@@ -301,8 +301,7 @@ export const createNationTableColumns = ({
         </div>
       );
     },
-    size: 50,
-    minSize: SLOT_COLUMN_SIZE,
+    size: SLOT_COLUMN_SIZE,
     enableSorting: true,
   }),
 
@@ -342,8 +341,7 @@ export const createNationTableColumns = ({
         </div>
       );
     },
-    size: 50,
-    minSize: SLOT_COLUMN_SIZE,
+    size: SLOT_COLUMN_SIZE,
     enableSorting: true,
   }),
 

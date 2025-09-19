@@ -8,7 +8,8 @@ export const tableStyles: Record<string, CSSProperties> = {
     backgroundColor: '#f8fafc',
     minHeight: '100vh',
     width: '100%',
-    maxWidth: 'none'
+    maxWidth: '100vw',
+    overflowX: 'auto' as const
   },
 
   // Card wrapper styles
@@ -74,18 +75,21 @@ export const tableStyles: Record<string, CSSProperties> = {
     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
     backgroundColor: 'white',
     width: '100%',
-    maxWidth: 'none'
+    maxWidth: '100%',
+    height: '90vh',
+    overflowY: 'auto' as const,
+    position: 'relative'
   },
 
   // Table styles
   table: {
     width: '100%',
-    minWidth: '1200px',
+    minWidth: '1000px',
     borderCollapse: 'separate' as const,
     borderSpacing: 0,
     backgroundColor: 'white',
     borderRadius: '12px',
-    overflow: 'hidden' as const
+    overflow: 'visible' as const
   },
 
   // Header row styles
@@ -105,7 +109,7 @@ export const tableStyles: Record<string, CSSProperties> = {
     cursor: 'pointer',
     userSelect: 'none',
     transition: 'all 0.2s ease',
-    position: 'relative'
+    backgroundColor: '#f8fafc'
   },
 
   headerCellSmall: {
@@ -149,7 +153,7 @@ export const tableStyles: Record<string, CSSProperties> = {
 
   // Data cell styles
   dataCell: {
-    padding: '16px 12px',
+    padding: '2px 2px',
     color: '#1e293b',
     borderBottom: '1px solid #f1f5f9'
   },
@@ -358,7 +362,6 @@ export const tableCSS = `
     cursor: pointer;
     user-select: none;
     transition: all 0.2s ease;
-    position: relative;
   }
   .sortable-header:hover {
     background-color: #f1f5f9;
@@ -366,6 +369,12 @@ export const tableCSS = `
   }
   .sortable-header:active {
     transform: translateY(0);
+  }
+  .sticky-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
   }
 `;
 
@@ -376,14 +385,14 @@ export const combineStyles = (...styles: any[]) => {
 
 // Helper function to get text alignment based on column type
 export const getTextAlignment = (columnId: string) => {
-  if (columnId === 'strength') return 'right';
+  if (['strength', 'infrastructure', 'technology'].includes(columnId)) return 'right';
   if (['sendTech', 'sendCash', 'getTech', 'getCash', 'has_dra', 'actions'].includes(columnId)) return 'center';
   return 'left';
 };
 
 // Helper function to get header content alignment
 export const getHeaderContentAlignment = (columnId: string) => {
-  if (columnId === 'strength') return 'flex-end';
+  if (['strength', 'infrastructure', 'technology'].includes(columnId)) return 'flex-end';
   if (['sendTech', 'sendCash', 'getTech', 'getCash', 'has_dra', 'actions'].includes(columnId)) return 'center';
   return 'flex-start';
 };

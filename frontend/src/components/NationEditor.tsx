@@ -371,7 +371,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
         <table style={tableStyles.table}>
             <thead>
               {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id} style={tableStyles.headerRow}>
+                <tr key={headerGroup.id} style={tableStyles.headerRow} className="sticky-header">
                   {headerGroup.headers.map(header => (
                     <th 
                       key={header.id} 
@@ -381,11 +381,10 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
                           textAlign: getTextAlignment(header.id),
                           fontSize: header.id.includes('send') || header.id.includes('get') ? '12px' : '14px',
                           width: header.getSize(),
-                          cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                          position: 'relative'
+                          cursor: header.column.getCanSort() ? 'pointer' : 'default'
                         }
                       )}
-                      className={header.column.getCanSort() ? 'sortable-header' : ''}
+                      className={`sticky-header ${header.column.getCanSort() ? 'sortable-header' : ''}`}
                       onClick={header.column.getToggleSortingHandler()}
                     >
                       <div style={combineStyles(
