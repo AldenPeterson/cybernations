@@ -77,22 +77,22 @@ const AidDashboard: React.FC = () => {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>All Small Aid Offers (&lt; 6M &amp; &lt; 100 Tech)</h1>
+      <h1>Shame Offers (&lt; 6M &amp; &lt; 100 Tech)</h1>
       <p style={{ marginBottom: '20px', color: '#666' }}>
         Showing all small aid offers across all alliances ({globalSmallAidOffers.length} total)
       </p>
       
       {globalSmallAidOffers.length > 0 ? (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            border: '1px solid #ddd',
-            fontSize: '14px',
-            backgroundColor: 'white'
-          }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f8f9fa' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ 
+              width: '100%', 
+              borderCollapse: 'collapse', 
+              border: '1px solid #ddd',
+              fontSize: '14px',
+              backgroundColor: 'white'
+            }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f8f9fa' }}>
                 <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>Sender</th>
                 <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>Sender Alliance</th>
                 <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>Recipient</th>
@@ -100,45 +100,45 @@ const AidDashboard: React.FC = () => {
                 <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center' }}>Aid Value</th>
                 <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>Reason</th>
                 <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center' }}>Date</th>
-              </tr>
-            </thead>
-            <tbody>
+                </tr>
+              </thead>
+              <tbody>
               {globalSmallAidOffers.map((offer) => (
                 <tr key={offer.aidId} style={{ backgroundColor: 'white' }}>
                   <td style={{ padding: '10px', border: '1px solid #ddd' }}>
                     <a 
                       href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.declaringNation.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ 
-                        color: '#007bff', 
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ 
+                              color: '#007bff', 
                         textDecoration: 'none',
                         fontWeight: 'bold'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                      onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-                    >
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                          >
                       {offer.declaringNation.name}
-                    </a>
-                    <br />
+                          </a>
+                        <br />
                     <small style={{ color: '#666' }}>{offer.declaringNation.ruler}</small>
                   </td>
                   <td style={{ padding: '10px', border: '1px solid #ddd', fontWeight: 'bold', color: '#1976d2' }}>
                     {offer.declaringNation.alliance}
-                  </td>
+                    </td>
                   <td style={{ padding: '10px', border: '1px solid #ddd' }}>
                     <a 
                       href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.receivingNation.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ 
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ 
                         color: '#007bff', 
                         textDecoration: 'none',
                         fontWeight: 'bold'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                      onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-                    >
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                              >
                       {offer.receivingNation.name}
                     </a>
                     <br />
@@ -148,27 +148,27 @@ const AidDashboard: React.FC = () => {
                     {offer.receivingNation.alliance}
                   </td>
                   <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>
-                    <span style={{ 
-                      color: '#2c5530', 
-                      fontWeight: 'bold',
-                      backgroundColor: '#e8f5e8',
+                              <span style={{ 
+                                color: '#2c5530', 
+                                fontWeight: 'bold',
+                                backgroundColor: '#e8f5e8',
                       padding: '4px 8px',
                       borderRadius: '4px'
-                    }}>
+                              }}>
                       {formatAidValue(offer.money, offer.technology, offer.soldiers)}
-                    </span>
+                              </span>
                   </td>
                   <td style={{ padding: '10px', border: '1px solid #ddd', fontSize: '13px' }}>
                     {offer.reason || 'No reason provided'}
                   </td>
                   <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center', fontSize: '13px' }}>
                     {new Date(offer.date).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
       ) : (
         <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
           {loading ? 'Loading small aid offers...' : 'No small aid offers found.'}

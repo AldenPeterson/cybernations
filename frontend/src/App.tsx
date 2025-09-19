@@ -6,7 +6,7 @@ import AllianceDashboard from './components/AllianceDashboard'
 function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'all-small-aid' | 'by-alliance' | 'admin-tools'>('all-small-aid');
+  const [activeTab, setActiveTab] = useState<'by-alliance' | 'shame-offers' | 'admin-tools'>('by-alliance');
 
   const checkHealth = async () => {
     try {
@@ -53,20 +53,6 @@ function App() {
       {/* Tab Navigation */}
       <div style={{ marginBottom: '20px', borderBottom: '1px solid #ddd' }}>
         <button 
-          onClick={() => setActiveTab('all-small-aid')}
-          style={{ 
-            padding: '10px 20px', 
-            marginRight: '10px',
-            backgroundColor: activeTab === 'all-small-aid' ? '#007bff' : '#f8f9fa',
-            color: activeTab === 'all-small-aid' ? 'white' : '#333',
-            border: '1px solid #ddd',
-            borderRadius: '4px 4px 0 0',
-            cursor: 'pointer'
-          }}
-        >
-          All Small Aid Offers
-        </button>
-        <button 
           onClick={() => setActiveTab('by-alliance')}
           style={{ 
             padding: '10px 20px', 
@@ -79,6 +65,20 @@ function App() {
           }}
         >
           By Alliance
+        </button>
+        <button 
+          onClick={() => setActiveTab('shame-offers')}
+          style={{ 
+            padding: '10px 20px', 
+            marginRight: '10px',
+            backgroundColor: activeTab === 'shame-offers' ? '#007bff' : '#f8f9fa',
+            color: activeTab === 'shame-offers' ? 'white' : '#333',
+            border: '1px solid #ddd',
+            borderRadius: '4px 4px 0 0',
+            cursor: 'pointer'
+          }}
+        >
+          Shame Offers
         </button>
         <button 
           onClick={() => setActiveTab('admin-tools')}
@@ -96,10 +96,10 @@ function App() {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'all-small-aid' ? (
-        <AidDashboard />
-      ) : activeTab === 'by-alliance' ? (
+      {activeTab === 'by-alliance' ? (
         <AllianceDashboard />
+      ) : activeTab === 'shame-offers' ? (
+        <AidDashboard />
       ) : (
         <div>
           <div style={{ marginBottom: '20px' }}>

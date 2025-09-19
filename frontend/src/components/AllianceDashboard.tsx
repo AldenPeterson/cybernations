@@ -399,7 +399,7 @@ const AllianceDashboard: React.FC = () => {
               borderRadius: '8px',
               border: '1px solid #ddd'
             }}>
-              <h3>Alliance-to-Alliance Aid Statistics</h3>
+              <h3>{alliances.find(a => a.id === selectedAllianceId)?.name || 'Selected Alliance'} Aid Offers, by receiving/sending alliance</h3>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ 
                   width: '100%', 
