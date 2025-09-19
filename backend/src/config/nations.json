@@ -1,227 +1,266 @@
-[
-  {
-    "nation_id": 101493,
-    "discord_handle": "hazard.0.0.0",
-    "has_dra": true
-  },
-  {
-    "nation_id": 566736,
-    "discord_handle": "amossio1989",
-    "has_dra": true
-  },
-  {
-    "nation_id": 502087,
-    "discord_handle": "astryl",
-    "has_dra": true
-  },
-  {
-    "nation_id": 433854,
-    "discord_handle": "auctorofwyrdgar",
-    "has_dra": true
-  },
-  {
-    "nation_id": 481103,
-    "discord_handle": "teaspoon",
-    "has_dra": true
-  },
-  {
-    "nation_id": 199494,
-    "discord_handle": "baxterbomber",
-    "has_dra": true
-  },
-  {
-    "nation_id": 626860,
-    "discord_handle": "ferdasol",
-    "has_dra": true
-  },
-  {
-    "nation_id": 148460,
-    "discord_handle": "bud8808",
-    "has_dra": true
-  },
-  {
-    "nation_id": 645571,
-    "discord_handle": "pricklypickles",
-    "has_dra": true
-  },
-  {
-    "nation_id": 645427,
-    "discord_handle": "sammy8874",
-    "has_dra": true
-  },
-  {
-    "nation_id": 374321,
-    "discord_handle": "clash6107",
-    "has_dra": true
-  },
-  {
-    "nation_id": 142120,
-    "discord_handle": "commander_thrawn",
-    "has_dra": true
-  },
-  {
-    "nation_id": 623822,
-    "discord_handle": "baronofbadnews",
-    "has_dra": true
-  },
-  {
-    "nation_id": 66883,
-    "discord_handle": "tygaland",
-    "has_dra": true
-  },
-  {
-    "nation_id": 426185,
-    "discord_handle": "deathadder777",
-    "has_dra": true
-  },
-  {
-    "nation_id": 484851,
-    "discord_handle": "ender.dev",
-    "has_dra": true
-  },
-  {
-    "nation_id": 619806,
-    "discord_handle": "epimetheustalks",
-    "has_dra": true
-  },
-  {
-    "nation_id": 184514,
-    "discord_handle": "win9x",
-    "has_dra": true
-  },
-  {
-    "nation_id": 646947,
-    "discord_handle": "hawggystyle",
-    "has_dra": true
-  },
-  {
-    "nation_id": 646307,
-    "discord_handle": "hermessobserver",
-    "has_dra": true
-  },
-  {
-    "nation_id": 139809,
-    "discord_handle": "jo_sl0pz",
-    "has_dra": true
-  },
-  {
-    "nation_id": 356682,
-    "discord_handle": "kyanize.",
-    "has_dra": true
-  },
-  {
-    "nation_id": 144708,
-    "discord_handle": "matthewpk",
-    "has_dra": true
-  },
-  {
-    "nation_id": 634284,
-    "discord_handle": "mikey_mikes1",
-    "has_dra": true
-  },
-  {
-    "nation_id": 202255,
-    "discord_handle": "plazma81",
-    "has_dra": true
-  },
-  {
-    "nation_id": 470323,
-    "discord_handle": "plaw44",
-    "has_dra": true
-  },
-  {
-    "nation_id": 645236,
-    "discord_handle": "_hwan_",
-    "has_dra": true
-  },
-  {
-    "nation_id": 582974,
-    "discord_handle": "seeker9980",
-    "has_dra": true
-  },
-  {
-    "nation_id": 645768,
-    "discord_handle": "sitthemdown",
-    "has_dra": true
-  },
-  {
-    "nation_id": 503436,
-    "discord_handle": "stevieg2005",
-    "has_dra": true
-  },
-  {
-    "nation_id": 342967,
-    "discord_handle": "tayloj6931",
-    "has_dra": true
-  },
-  {
-    "nation_id": 646975,
-    "discord_handle": "imthomass",
-    "has_dra": true
-  },
-  {
-    "nation_id": 446109,
-    "discord_handle": "walkonin_109102",
-    "has_dra": true
-  },
-  {
-    "nation_id": 646870,
-    "discord_handle": "waffless_10180",
-    "has_dra": true
-  },
-  {
-    "nation_id": 187132,
-    "discord_handle": "whitemajik",
-    "has_dra": true
-  },
-  {
-    "nation_id": 635159,
-    "discord_handle": "anri__",
-    "has_dra": true
-  },
-  {
-    "nation_id": 151268,
-    "discord_handle": "zerileous",
-    "has_dra": true
-  },
-  {
-    "nation_id": 402492,
-    "discord_handle": "zeddyoz aka NikolaP",
-    "has_dra": true
-  },
-  {
-    "nation_id": 647449,
-    "discord_handle": "N33rg",
-    "has_dra": true
-  },
-  {
-    "nation_id": 647502,
-    "discord_handle": "twitchanswers",
-    "has_dra": true
-  },
-  {
-    "nation_id": 230799,
-    "discord_handle": "NA",
-    "has_dra": true
-  },
-  {
-    "nation_id": 541774,
-    "discord_handle": "adamawaggoner",
-    "has_dra": true
-  },
-  {
-    "nation_id": 334182,
-    "discord_handle": "st6mm",
-    "has_dra": true
-  },
-  {
-    "nation_id": 585631,
-    "discord_handle": "NA",
-    "has_dra": true
-  },
-  {
-    "nation_id": 340559,
-    "discord_handle": "rc4265",
-    "has_dra": true
+{
+  "17368": {
+    "alliance_name": "Doombrella",
+    "nations": [
+      {
+        "nation_id": 66883,
+        "ruler_name": "Crown Prince Mishka",
+        "nation_name": "Tygaland",
+        "discord_handle": "tygaland",
+        "has_dra": true
+      },
+      {
+        "nation_id": 95044,
+        "ruler_name": "Allnighte",
+        "nation_name": "Allnighteica",
+        "discord_handle": "allnighte",
+        "has_dra": true
+      },
+      {
+        "nation_id": 127226,
+        "ruler_name": "LJ Scott",
+        "nation_name": "Republic of Jutland",
+        "discord_handle": "ljscott",
+        "has_dra": true
+      },
+      {
+        "nation_id": 142120,
+        "ruler_name": "Commander Thrawn",
+        "nation_name": "Csilla",
+        "discord_handle": "commander_thrawn",
+        "has_dra": true
+      },
+      {
+        "nation_id": 144708,
+        "ruler_name": "Matthew PK",
+        "nation_name": "Commonwealth of LoL",
+        "discord_handle": "matthewpk",
+        "has_dra": true
+      },
+      {
+        "nation_id": 151268,
+        "ruler_name": "Zerileous",
+        "nation_name": "Monkey Time",
+        "discord_handle": "zerileous",
+        "has_dra": true
+      },
+      {
+        "nation_id": 184514,
+        "ruler_name": "Franz Ferdinand",
+        "nation_name": "L252beck",
+        "discord_handle": "franzferdinand",
+        "has_dra": true
+      },
+      {
+        "nation_id": 187132,
+        "ruler_name": "White Majik",
+        "nation_name": "VSOP United",
+        "discord_handle": "whitemajik",
+        "has_dra": true
+      },
+      {
+        "nation_id": 202255,
+        "ruler_name": "onelove",
+        "nation_name": "We Are One Love",
+        "discord_handle": "onelove",
+        "has_dra": true
+      },
+      {
+        "nation_id": 230799,
+        "ruler_name": "Raymond Jaeger",
+        "nation_name": "New Alabama",
+        "discord_handle": "raymondjaeger",
+        "has_dra": true
+      },
+      {
+        "nation_id": 334182,
+        "ruler_name": "st6mm",
+        "nation_name": "Northern Reich",
+        "discord_handle": "st6mm",
+        "has_dra": true
+      },
+      {
+        "nation_id": 340559,
+        "ruler_name": "rc4265",
+        "nation_name": "rc4265",
+        "discord_handle": "rc4265",
+        "has_dra": true
+      },
+      {
+        "nation_id": 374321,
+        "ruler_name": "Clash",
+        "nation_name": "Discord",
+        "discord_handle": "clash",
+        "has_dra": true
+      },
+      {
+        "nation_id": 402492,
+        "ruler_name": "Zeddyoz aka NikolaP",
+        "nation_name": "Zeddyoz aka NikolaP",
+        "discord_handle": "zeddyoz",
+        "has_dra": true
+      },
+      {
+        "nation_id": 416695,
+        "ruler_name": "pmacdaddy",
+        "nation_name": "Sanctuary",
+        "discord_handle": "pmacdaddy",
+        "has_dra": true
+      },
+      {
+        "nation_id": 470323,
+        "ruler_name": "plaw44",
+        "nation_name": "infinite desire",
+        "discord_handle": "plaw44",
+        "has_dra": true
+      },
+      {
+        "nation_id": 484851,
+        "ruler_name": "enderland",
+        "nation_name": "Fields of Elysium",
+        "discord_handle": "enderland",
+        "has_dra": true
+      },
+      {
+        "nation_id": 502087,
+        "ruler_name": "Astryl",
+        "nation_name": "Ethereal",
+        "discord_handle": "astryl",
+        "has_dra": true
+      },
+      {
+        "nation_id": 503436,
+        "ruler_name": "StevieG",
+        "nation_name": "Dinglebay",
+        "discord_handle": "stevieg",
+        "has_dra": true
+      },
+      {
+        "nation_id": 541774,
+        "ruler_name": "Das Blitzkrieger",
+        "nation_name": "Leistungsstarke",
+        "discord_handle": "dasblitzkrieger",
+        "has_dra": true
+      },
+      {
+        "nation_id": 582974,
+        "ruler_name": "seeker9980",
+        "nation_name": "seeker9980",
+        "discord_handle": "seeker9980",
+        "has_dra": true
+      },
+      {
+        "nation_id": 585631,
+        "ruler_name": "Srivatsan",
+        "nation_name": "MAHANADU",
+        "discord_handle": "srivatsan",
+        "has_dra": true
+      },
+      {
+        "nation_id": 615966,
+        "ruler_name": "tehol",
+        "nation_name": "Lether",
+        "discord_handle": "tehol",
+        "has_dra": true
+      },
+      {
+        "nation_id": 619806,
+        "ruler_name": "epimetheustalks",
+        "nation_name": "epimetheustalks",
+        "discord_handle": "epimetheustalks",
+        "has_dra": true
+      },
+      {
+        "nation_id": 623822,
+        "ruler_name": "Comrade Marx",
+        "nation_name": "GreaterGoonSyndicate",
+        "discord_handle": "comrademarx",
+        "has_dra": true
+      },
+      {
+        "nation_id": 627592,
+        "ruler_name": "Lord Xamaeron",
+        "nation_name": "Celtic Forest",
+        "discord_handle": "lordxamaeron",
+        "has_dra": true
+      },
+      {
+        "nation_id": 635159,
+        "ruler_name": "anri__",
+        "nation_name": "anri__",
+        "discord_handle": "anri",
+        "has_dra": true
+      },
+      {
+        "nation_id": 645236,
+        "ruler_name": "Roq Fanclub Presiden",
+        "nation_name": "Roq Fanclub",
+        "discord_handle": "roqfanclub",
+        "has_dra": true
+      },
+      {
+        "nation_id": 645427,
+        "ruler_name": "Clank",
+        "nation_name": "Clank",
+        "discord_handle": "clank",
+        "has_dra": true
+      },
+      {
+        "nation_id": 645571,
+        "ruler_name": "cantbelieveimback",
+        "nation_name": "Techlandia",
+        "discord_handle": "cantbelieveimback",
+        "has_dra": true
+      },
+      {
+        "nation_id": 645768,
+        "ruler_name": "Sitthemdown",
+        "nation_name": "Emperor Protects",
+        "discord_handle": "sitthemdown",
+        "has_dra": true
+      },
+      {
+        "nation_id": 646307,
+        "ruler_name": "Hermes Observer",
+        "nation_name": "Radchaai",
+        "discord_handle": "hermesobserver",
+        "has_dra": true
+      },
+      {
+        "nation_id": 646870,
+        "ruler_name": "Waffless",
+        "nation_name": "Wafflandia",
+        "discord_handle": "waffless",
+        "has_dra": true
+      },
+      {
+        "nation_id": 646947,
+        "ruler_name": "Hawggystyle",
+        "nation_name": "Djibigbouti",
+        "discord_handle": "hawggystyle",
+        "has_dra": true
+      },
+      {
+        "nation_id": 646975,
+        "ruler_name": "Thomassh",
+        "nation_name": "HighGateHaven",
+        "discord_handle": "thomassh",
+        "has_dra": true
+      },
+      {
+        "nation_id": 647449,
+        "ruler_name": "thelostsoul",
+        "nation_name": "TheLostNation",
+        "discord_handle": "thelostsoul",
+        "has_dra": false
+      },
+      {
+        "nation_id": 647502,
+        "ruler_name": "twitchanswers",
+        "nation_name": "Twitch",
+        "discord_handle": "twitchanswers",
+        "has_dra": false
+      }
+    ]
   }
-]
+}

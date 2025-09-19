@@ -39,9 +39,10 @@ const AidDashboard: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        setGlobalSmallAidOffers(data.smallAidOffers);
+        setGlobalSmallAidOffers(data.smallAidOffers || []);
       } else {
         setError(data.error);
+        setGlobalSmallAidOffers([]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch global small aid offers');
@@ -103,11 +104,11 @@ const AidDashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-              {globalSmallAidOffers.map((offer) => (
+              {globalSmallAidOffers?.map((offer) => (
                 <tr key={offer.aidId} style={{ backgroundColor: 'white' }}>
                   <td style={{ padding: '10px', border: '1px solid #ddd' }}>
                     <a 
-                      href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.declaringNation.id}`}
+                      href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.declaringNation?.id || ''}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{ 
@@ -118,17 +119,17 @@ const AidDashboard: React.FC = () => {
                             onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
                             onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
                           >
-                      {offer.declaringNation.name}
+                      {offer.declaringNation?.name || 'Unknown'}
                           </a>
                         <br />
-                    <small style={{ color: '#666' }}>{offer.declaringNation.ruler}</small>
+                    <small style={{ color: '#666' }}>{offer.declaringNation?.ruler || 'Unknown'}</small>
                   </td>
                   <td style={{ padding: '10px', border: '1px solid #ddd', fontWeight: 'bold', color: '#1976d2' }}>
-                    {offer.declaringNation.alliance}
+                    {offer.declaringNation?.alliance || 'Unknown'}
                     </td>
                   <td style={{ padding: '10px', border: '1px solid #ddd' }}>
                     <a 
-                      href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.receivingNation.id}`}
+                      href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.receivingNation?.id || ''}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{ 
@@ -139,13 +140,13 @@ const AidDashboard: React.FC = () => {
                                 onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
                                 onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
                               >
-                      {offer.receivingNation.name}
+                      {offer.receivingNation?.name || 'Unknown'}
                     </a>
                     <br />
-                    <small style={{ color: '#666' }}>{offer.receivingNation.ruler}</small>
+                    <small style={{ color: '#666' }}>{offer.receivingNation?.ruler || 'Unknown'}</small>
                   </td>
                   <td style={{ padding: '10px', border: '1px solid #ddd', fontWeight: 'bold', color: '#7b1fa2' }}>
-                    {offer.receivingNation.alliance}
+                    {offer.receivingNation?.alliance || 'Unknown'}
                   </td>
                   <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>
                               <span style={{ 

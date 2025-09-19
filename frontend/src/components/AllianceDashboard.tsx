@@ -176,10 +176,14 @@ const AllianceDashboard: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        setAllianceAidStats(data.allianceAidStats);
+        setAllianceAidStats(data.allianceAidStats || []);
+      } else {
+        console.error('Failed to fetch alliance aid stats:', data.error);
+        setAllianceAidStats([]);
       }
     } catch (err) {
       console.error('Failed to fetch alliance aid stats:', err);
+      setAllianceAidStats([]);
     }
   };
 
@@ -391,7 +395,7 @@ const AllianceDashboard: React.FC = () => {
           )}
 
           {/* Alliance-to-Alliance Aid Statistics */}
-          {allianceAidStats.length > 0 && (
+          {allianceAidStats && allianceAidStats.length > 0 && (
             <div style={{ 
               marginBottom: '20px', 
               padding: '15px', 
@@ -453,7 +457,7 @@ const AllianceDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {allianceAidStats.map((stats) => (
+                    {allianceAidStats?.map((stats) => (
                       <tr key={stats.allianceId} style={{ backgroundColor: 'white' }}>
                         <td style={{ 
                           padding: '8px', 
