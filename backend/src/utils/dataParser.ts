@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { ensureRecentFiles } from './dataDownloader.js';
 
 export interface Nation {
   id: number;
@@ -207,6 +208,7 @@ export function getAidSlotsForAlliance(allianceId: number, nations: Nation[], ai
   return allianceNations.map(nation => createAidSlotsForNation(nation, aidOffers));
 }
 
+
 export function loadDataFromFiles(): { nations: Nation[], aidOffers: AidOffer[] } {
   const rawDataPath = path.join(process.cwd(), 'src', 'raw_data', 'extracted');
   
@@ -244,4 +246,12 @@ export function loadDataFromFiles(): { nations: Nation[], aidOffers: AidOffer[] 
   }
 
   return { nations, aidOffers };
+}
+
+export async function loadDataFromFilesWithUpdate(): Promise<{ nations: Nation[], aidOffers: AidOffer[] }> {
+  // First ensure we have the most recent files
+  await ensureRecentFiles();
+  
+  // Then load the data as usual
+  return loadDataFromFiles();
 }

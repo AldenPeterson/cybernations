@@ -3,6 +3,7 @@ import * as path from 'path';
 import { extractAllZipFiles } from '../utils/zipExtractor.js';
 import { 
   loadDataFromFiles, 
+  loadDataFromFilesWithUpdate,
   groupNationsByAlliance, 
   getAidSlotsForAlliance,
   Alliance,
@@ -92,9 +93,9 @@ apiRoutes.post('/stats/decode', async (req, res) => {
 });
 
 // Dashboard API endpoints
-apiRoutes.get('/alliances', (req, res) => {
+apiRoutes.get('/alliances', async (req, res) => {
   try {
-    const { nations } = loadDataFromFiles();
+    const { nations } = await loadDataFromFilesWithUpdate();
     const alliances = groupNationsByAlliance(nations);
     
     res.json({
@@ -114,7 +115,7 @@ apiRoutes.get('/alliances', (req, res) => {
   }
 });
 
-apiRoutes.get('/alliances/:allianceId/aid-slots', (req, res) => {
+apiRoutes.get('/alliances/:allianceId/aid-slots', async (req, res) => {
   try {
     const allianceId = parseInt(req.params.allianceId);
     
@@ -125,7 +126,7 @@ apiRoutes.get('/alliances/:allianceId/aid-slots', (req, res) => {
       });
     }
 
-    const { nations, aidOffers } = loadDataFromFiles();
+    const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
     const aidSlots = getAidSlotsForAlliance(allianceId, nations, aidOffers);
     
     res.json({
@@ -167,7 +168,7 @@ apiRoutes.get('/alliances/:allianceId/aid-slots', (req, res) => {
   }
 });
 
-apiRoutes.get('/alliances/:allianceId/stats', (req, res) => {
+apiRoutes.get('/alliances/:allianceId/stats', async (req, res) => {
   try {
     const allianceId = parseInt(req.params.allianceId);
     
@@ -178,7 +179,7 @@ apiRoutes.get('/alliances/:allianceId/stats', (req, res) => {
       });
     }
 
-    const { nations, aidOffers } = loadDataFromFiles();
+    const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
     const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
     const allianceAidOffers = aidOffers.filter(offer => 
       (offer.declaringAllianceId === allianceId || offer.receivingAllianceId === allianceId) && 
@@ -212,7 +213,7 @@ apiRoutes.get('/alliances/:allianceId/stats', (req, res) => {
   }
 });
 
-apiRoutes.get('/alliances/:allianceId/alliance-aid-stats', (req, res) => {
+apiRoutes.get('/alliances/:allianceId/alliance-aid-stats', async (req, res) => {
   try {
     const allianceId = parseInt(req.params.allianceId);
     
@@ -223,7 +224,7 @@ apiRoutes.get('/alliances/:allianceId/alliance-aid-stats', (req, res) => {
       });
     }
 
-    const { nations, aidOffers } = loadDataFromFiles();
+    const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
     const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
     
     if (allianceNations.length === 0) {
@@ -313,7 +314,7 @@ apiRoutes.get('/alliances/:allianceId/alliance-aid-stats', (req, res) => {
   }
 });
 
-apiRoutes.get('/alliances/:allianceId/recommendations', (req, res) => {
+apiRoutes.get('/alliances/:allianceId/recommendations', async (req, res) => {
   try {
     const allianceId = parseInt(req.params.allianceId);
     
@@ -324,7 +325,7 @@ apiRoutes.get('/alliances/:allianceId/recommendations', (req, res) => {
       });
     }
 
-    const { nations, aidOffers } = loadDataFromFiles();
+    const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
     const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
     
     if (allianceNations.length === 0) {
@@ -616,9 +617,9 @@ apiRoutes.get('/alliances/:allianceId/recommendations', (req, res) => {
 });
 
 // Get small aid offers for all alliances
-apiRoutes.get('/small-aid-offers', (req, res) => {
+apiRoutes.get('/small-aid-offers', async (req, res) => {
   try {
-    const { nations, aidOffers } = loadDataFromFiles();
+    const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
     
     // Filter for small aid offers (less than 6M money and less than 100 tech)
     const smallAidOffers = aidOffers.filter(offer => 

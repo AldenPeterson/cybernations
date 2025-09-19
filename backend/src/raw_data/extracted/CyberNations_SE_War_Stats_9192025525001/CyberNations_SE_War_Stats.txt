@@ -1,4 +1,5 @@
 Declaring ID|Declaring Ruler|Declaring Nation|Declaring Alliance|Declaring Alliance ID|Declaring Team|Receiving ID|Receiving Ruler|Receiving Nation|Receiving Alliance|Receiving Alliance ID|Receiving Team|War Status|Begin Date|End Date|Reason|War ID|Destruction|Attack Percent|Defend Percent|
+396041|Joseph Black|Rural Route 3|Freehold of The Wolves|15157|White|325202|murtibing|Fluens|Axiom of Regularity|17122|Black|Active|9/19/2025 1:14:59 AM|9/26/2025 1:14:59 AM|Rohan will answer |871428|126.47|0|100|
 647508|SupernovaChase|Eryndor|NATO|10037|Black|647317|JFK360noscope|the devided states|Nuclear Proliferation League|17228|Brown|Active|9/18/2025 2:38:52 PM|9/25/2025 2:38:52 PM|Your existence disgusts me.|871427|153.90|0|100|
 573111|Al Bundy|bundyville|The Wolves|16660|Maroon|114282|akiller|Pholand|World Task Force|10053|Blue|Active|9/18/2025 7:48:28 AM|9/25/2025 7:48:28 AM|Been a while! |871426|428.51|0|100|
 634256|I Win You Lose|I Win You Loose|The Phoenix Federation|17385|Black|259695|OTTOTTO|OTTOTTO||0|Red|Active|9/18/2025 5:38:13 AM|9/25/2025 5:38:13 AM|A general dispute|871425|189.45|0|100|
@@ -11,25 +12,25 @@ Declaring ID|Declaring Ruler|Declaring Nation|Declaring Alliance|Declaring Allia
 647060|CAMOM|CAMOM EMPIRE|The Phoenix Federation|17385|Red|647179|Victon|Francewww5||0|Brown|Active|9/17/2025 7:55:40 AM|9/24/2025 7:55:40 AM|A general dispute|871418|298.31|0|100|
 645787|wetsandwich|High Cold River|Deathblow|17387|None|647504|Mao Mao|The Country of Li|New Pacific Order|10000|Red|Active|9/17/2025 7:17:26 AM|9/24/2025 7:17:26 AM|A general dispute|871417|247.46|20|79|
 36287|SirWilliam|Blissfields|Post Grunge Supergroup|16367|Brown|644426|Bram Walt Schirkophf|Texkentuck|Catholic Reich|17311|Black|Active|9/16/2025 9:29:55 AM|9/23/2025 9:29:55 AM|You&#226;&#8364;&#8482;re existence offends me|871416|675.98|0|100|
-644426|Bram Walt Schirkophf|Texkentuck|Catholic Reich|17311|Black|627063|Apollon007|Kingdom of Byzantium|Post Grunge Supergroup|16367|Brown|Active|9/16/2025 9:14:34 AM|9/23/2025 9:14:34 AM|Welcome to war!|871415|1,576.15|59|40|
-325202|murtibing|Fluens|Axiom of Regularity|17122|White|549386|ghostofgod|Apocalyptica|The Order Of The Black Rose|10045|Black|Active|9/15/2025 11:56:06 PM|9/22/2025 11:56:06 PM|Roses always in bloom|871414|10,801.43|32|67|
+644426|Bram Walt Schirkophf|Texkentuck|Catholic Reich|17311|Black|627063|Apollon007|Kingdom of Byzantium|Post Grunge Supergroup|16367|Brown|Active|9/16/2025 9:14:34 AM|9/23/2025 9:14:34 AM|Welcome to war!|871415|1,790.40|64|35|
+325202|murtibing|Fluens|Axiom of Regularity|17122|White|549386|ghostofgod|Apocalyptica|The Order Of The Black Rose|10045|Black|Active|9/15/2025 11:56:06 PM|9/22/2025 11:56:06 PM|Roses always in bloom|871414|12,600.94|42|57|
 647405|Victorboss|Victorcon|Nuclear Proliferation League|17228|White|647087|Meow22Meow22|Miwso||0|Black|Peace|9/15/2025 6:45:10 PM|9/22/2025 6:45:10 PM|A general dispute|871413|732.33|34|65|
 647405|Victorboss|Victorcon|Nuclear Proliferation League|17228|White|643607|Aspen|Silus|Union Of Communist Republics|10060|Brown|Active|9/15/2025 6:06:57 PM|9/22/2025 6:06:57 PM|A general dispute|871412|641.06|32|67|
 621029|Le Trout|Lambo Lambo Lambo|Post Grunge Supergroup|16367|Brown|644426|Bram Walt Schirkophf|Texkentuck|Catholic Reich|17311|Black|Active|9/15/2025 3:06:59 PM|9/22/2025 3:06:59 PM|YEET|871411|1,800.66|0|100|
 633062|SoloRocket|Rocket Republic|Post Grunge Supergroup|16367|Brown|644426|Bram Walt Schirkophf|Texkentuck|Catholic Reich|17311|Black|Active|9/15/2025 3:05:33 PM|9/22/2025 3:05:33 PM|LSF Retribution|871410|1,804.92|1|98|
 633062|SoloRocket|Rocket Republic|Post Grunge Supergroup|16367|Brown|644638|AbundantAura420|You Have No Aura|Catholic Reich|17311|Black|Peace|9/15/2025 3:01:15 PM|9/22/2025 3:01:15 PM|LSF Retribution|871409|827.27|0|100|
 633062|SoloRocket|Rocket Republic|Post Grunge Supergroup|16367|Brown|644571|Juno02|Mystic Land|Catholic Reich|17311|Black|Peace|9/15/2025 3:01:04 PM|9/22/2025 3:01:04 PM|LSF Retribution|871408|1,272.77|44|55|
-644426|Bram Walt Schirkophf|Texkentuck|Catholic Reich|17311|Black|418455|Sabcat|Sabcat Island|Libertarian Socialist Federation|10027|Brown|Active|9/15/2025 12:53:30 PM|9/22/2025 12:53:30 PM|Test Nuke on Commy|871407|8,661.27|98|1|
+644426|Bram Walt Schirkophf|Texkentuck|Catholic Reich|17311|Black|418455|Sabcat|Sabcat Island|Libertarian Socialist Federation|10027|Brown|Active|9/15/2025 12:53:30 PM|9/22/2025 12:53:30 PM|Test Nuke on Commy|871407|10,532.30|98|1|
 373428|Brian|The Looking Glass|Christian Coalition Of Countries|10028|Maroon|555983|tongkzalot|PEARL OF THE OCEAN|Christian Coalition Of Countries|10028|Blue|Active|9/15/2025 8:27:20 AM|9/22/2025 8:27:20 AM|Please log back in &#240;&#376;&#732;&#352;|871406|0.00|0|0|
 645787|wetsandwich|High Cold River|Deathblow|17387|None|647467|LeBonkMan|Arkhtograd||0|White|Active|9/14/2025 2:01:35 PM|9/21/2025 2:01:35 PM|A general dispute|871405|157.09|0|100|
-647426|Johnnie Stark|Gorbals||0|Green|647465|Corona I|Azuretopia||0|Blue|Active|9/14/2025 8:44:01 AM|9/21/2025 8:44:01 AM|Raid|871404|347.97|0|100|
-636950|Sir Percival|Galles|Knights Of The Round Table|10092|Green|647458|Tenic|New Tabattnia||0|None|Active|9/13/2025 6:43:06 AM|9/20/2025 6:43:06 AM|Sword of Justice|871403|387.92|0|100|
+647426|Johnnie Stark|Gorbals||0|Green|647465|Corona I|Azuretopia||0|Blue|Active|9/14/2025 8:44:01 AM|9/21/2025 8:44:01 AM|Raid|871404|374.89|0|100|
+636950|Sir Percival|Galles|Knights Of The Round Table|10092|Green|647458|Tenic|New Tabattnia||0|None|Active|9/13/2025 6:43:06 AM|9/20/2025 6:43:06 AM|Sword of Justice|871403|396.22|0|100|
 647341|Danger Robinson|French Harbor||0|None|647458|Tenic|New Tabattnia||0|None|Active|9/13/2025 12:26:54 AM|9/20/2025 12:26:54 AM|A general dispute|871402|602.77|21|78|
 647458|Tenic|New Tabattnia||0|None|637412|Dantele|Seresland|New Pacific Order|10000|Red|Active|9/12/2025 9:56:08 PM|9/19/2025 9:56:08 PM|Territorial expansion|871401|469.45|0|100|
 647458|Tenic|New Tabattnia||0|None|647390|Godwin of wessex|The land of Wessex|Knights Of The Round Table|10092|Green|Active|9/12/2025 5:49:41 PM|9/19/2025 5:49:41 PM|Territorial expansion|871400|815.71|19|80|
-634256|I Win You Lose|I Win You Loose|The Phoenix Federation|17385|Black|586628|Jammus|Dyussus|NonAligned Countries|17156|Black|Active|9/11/2025 8:36:16 PM|9/18/2025 8:36:16 PM|A general dispute|871398|7,160.63|5|94|
-626860|BringMeTheHorizon|Dakotas|Doombrella|17368|Black|471818|karanot|Slovakia|World Task Force|10053|Aqua|Peace|9/11/2025 8:04:17 AM|9/18/2025 8:04:17 AM|A general dispute|871397|3,541.49|0|100|
-634256|I Win You Lose|I Win You Loose|The Phoenix Federation|17385|Black|167138|Wad of Lint|Back Pocket|New Sith Order|17430|White|Peace|9/11/2025 5:17:37 AM|9/18/2025 5:17:37 AM|Again |871395|245.01|0|100|
+634256|I Win You Lose|I Win You Loose|The Phoenix Federation|17385|Black|586628|Jammus|Dyussus|NonAligned Countries|17156|Black|Expired|9/11/2025 8:36:16 PM|9/18/2025 8:36:16 PM|A general dispute|871398|7,160.63|5|94|
+626860|BringMeTheHorizon|Dakotas|Doombrella|17368|Black|471818|karanot|Slovakia|World Task Force|10053|Aqua|Expired|9/11/2025 8:04:17 AM|9/18/2025 8:04:17 AM|A general dispute|871397|3,541.49|0|100|
+634256|I Win You Lose|I Win You Loose|The Phoenix Federation|17385|Black|167138|Wad of Lint|Back Pocket|New Sith Order|17430|White|Expired|9/11/2025 5:17:37 AM|9/18/2025 5:17:37 AM|Again |871395|245.01|0|100|
 626860|BringMeTheHorizon|Dakotas|Doombrella|17368|Black|416885|rakbors|SouthSea|World Task Force|10053|Aqua|Expired|9/10/2025 6:50:20 PM|9/17/2025 6:50:20 PM|A general dispute|871394|17,871.03|48|51|
 646672|Radio Dial|Cartesian||0|Brown|647428|MadCPT|Legio IX Hispana||0|None|Expired|9/10/2025 6:00:47 PM|9/17/2025 6:00:47 PM|A general dispute|871393|513.41|0|100|
 647405|Victorboss|Victorcon|Nuclear Proliferation League|17228|White|646860|Henry Jones Sr|Rev Rep Sandy Staat||0|Green|Expired|9/10/2025 2:47:54 PM|9/17/2025 2:47:54 PM|A general dispute|871392|596.12|13|86|
@@ -82,7 +83,6 @@ Declaring ID|Declaring Ruler|Declaring Nation|Declaring Alliance|Declaring Allia
 647060|CAMOM|CAMOM EMPIRE|The Phoenix Federation|17385|Red|647275|MrDisposable|DiscountTires||0|None|Expired|8/27/2025 5:03:44 PM|9/3/2025 5:03:44 PM|Sorry... Dm for peace|871332|1,348.88|83|16|
 647060|CAMOM|CAMOM EMPIRE|The Phoenix Federation|17385|Red|646965|becked|Selvatro||0|Red|Expired|8/27/2025 4:55:45 PM|9/3/2025 4:55:45 PM|A general dispute|871331|367.07|14|85|
 535013|Deadwartin|Republic of SOS|Freehold of The Wolves|15157|White|646209|My Name Is KMob|KMobs Territory|Deathblow|17387|Black|Expired|8/26/2025 7:51:43 PM|9/2/2025 7:51:43 PM| NG&amp;CCC off limits|871330|923.05|0|100|
-646672|Radio Dial|Cartesian||0|Brown|647317|JFK360noscope|the devided states||0|Blue|Expired|8/26/2025 2:10:19 PM|9/2/2025 2:10:19 PM|A general dispute|871328|210.49|0|100|
 645787|wetsandwich|High Cold River|Deathblow|17387|Black|647326|MyntHD|Mynton|Christian Coalition Of Countries|10028|Purple|Expired|8/26/2025 12:04:59 PM|9/2/2025 12:04:59 PM|A general dispute|871327|269.23|80|19|
 588320|RUB10|Establishmentaria|Non Grata|10097|Maroon|624094|Sikor|Swaree||0|Black|Expired|8/26/2025 11:11:21 AM|9/2/2025 11:11:21 AM|Casualty raid|871326|6,133.15|0|100|
 573111|Al Bundy|bundyville|The Wolves|16660|Maroon|624094|Sikor|Swaree||0|Black|Expired|8/25/2025 11:49:33 PM|9/1/2025 11:49:33 PM|A Raid|871324|3,724.60|0|100|
@@ -226,6 +226,3 @@ Declaring ID|Declaring Ruler|Declaring Nation|Declaring Alliance|Declaring Allia
 645787|wetsandwich|High Cold River|Deathblow|17387|Black|646808|Siccicbat|Centerra|Global Alliance And Treaty Organization|10003|Brown|Expired|6/22/2025 6:11:33 AM|6/29/2025 6:11:33 AM|A general dispute|871052|294.95|0|100|
 344317|Caeiro|Ascardia|The Legion|10020|Purple|588320|RUB10|Establishmentaria||0|Maroon|Expired|6/21/2025 2:27:14 PM|6/28/2025 2:27:14 PM|A general dispute|871051|8,023.19|47|52|
 187132|White Majik|VSOP United|Doombrella|17368|Black|178265|Xoirun|Lost Hill Bunkers|Mushroom Kingdom|17088|Maroon|Expired|6/21/2025 10:20:57 AM|6/28/2025 10:20:57 AM|DoomHouse is Calling you home|871050|1,641.49|0|100|
-646145|ScootDootson|UnitedPeoplesOfDoot|Goldenrod Accords|17406|Green|644690|kylelandia|Kylelandia|Nuclear Proliferation League|17228|Aqua|Expired|6/20/2025 11:58:22 PM|6/27/2025 11:58:22 PM|A general dispute|871045|1,578.49|70|29|
-187132|White Majik|VSOP United|Doombrella|17368|Black|272453|Jay Booler|Nouveau America|Federation Of Buccaneers|10109|Black|Expired|6/20/2025 11:27:04 PM|6/27/2025 11:27:04 PM|PM for peace|871044|6,565.98|0|100|
-187132|White Majik|VSOP United|Doombrella|17368|Black|557585|Maboroshi|Motavia|LoSS|15565|Black|Expired|6/20/2025 9:40:44 PM|6/27/2025 9:40:44 PM|PM Ghost for Peacd|871043|3,928.20|16|83|
