@@ -26,11 +26,16 @@ function getDownloadNumberSlug(file_flag: string): string {
   // For simplicity, we'll use a fixed offset of UTC-6 (CST)
   // In production, you'd want to use a proper timezone library like date-fns-tz
   const utcHour = now.getUTCHours();
-  const centralHour = (utcHour - 6 + 24) % 24; // Convert UTC to CST (UTC-6)
+  const centralHour = (utcHour - 5 + 24) % 24; // Convert UTC to CST (UTC-6)
   
   // Determine if it's between 6am and 6pm Central Time
   const isDaytime = centralHour >= 6 && centralHour < 18;
   const timeSuffix = isDaytime ? '1' : '2';
+
+  console.log(`isDaytime: ${isDaytime}`);
+  console.log(`centralHour: ${centralHour}`);
+  console.log(`timeSuffix: ${timeSuffix}`);
+  console.log(`utcHour: ${utcHour}`);
   
   // Format: MMDDYYYYXXXX where XXXX is 4-digit file identifier + toggle
   // Example: 91820250002 (9/18/2025, file 0002, daytime=1)
@@ -145,6 +150,8 @@ export async function ensureRecentFiles(): Promise<void> {
       const extractDir = path.join(extractedPath, fileInfo.name.replace('.zip', ''));
       const txtFile = path.join(extractDir, `CyberNations_SE_${fileType}.txt`);
       
+      console.log(`Checking ${txtFile} file...`);
+
       // Check if we already have the most recent file
       if (fs.existsSync(txtFile)) {
         console.log(`${fileType} file is up to date`);

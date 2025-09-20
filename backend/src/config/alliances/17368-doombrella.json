@@ -158,9 +158,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "26,180.33",
+        "technology": "26,280.33",
         "infrastructure": "14,999.99",
-        "strength": "198036.84"
+        "strength": "198536.84"
       },
       "notes": ""
     },
@@ -393,9 +393,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "106.53",
+        "technology": "6.53",
         "infrastructure": "10,516.99",
-        "strength": "55329.372"
+        "strength": "54829.372"
       }
     },
     "446109": {
@@ -447,9 +447,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "100.46",
+        "technology": "300.46",
         "infrastructure": "4,999.99",
-        "strength": "24512.993"
+        "strength": "25012.993"
       }
     },
     "484851": {
@@ -506,6 +506,24 @@
       },
       "notes": ""
     },
+    "520285": {
+      "ruler_name": "Banned",
+      "nation_name": "Lacedaemon",
+      "discord_handle": "",
+      "has_dra": false,
+      "notes": "DS",
+      "slots": {
+        "sendTech": 0,
+        "sendCash": 0,
+        "getTech": 0,
+        "getCash": 0
+      },
+      "current_stats": {
+        "technology": "40,526.04",
+        "infrastructure": "14,999.99",
+        "strength": "282000.453"
+      }
+    },
     "541774": {
       "ruler_name": "Das Blitzkrieger",
       "nation_name": "Leistungsstarke",
@@ -518,9 +536,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "57,978.45",
+        "technology": "58,078.45",
         "infrastructure": "20,999.99",
-        "strength": "380666.24"
+        "strength": "381166.24"
       },
       "notes": ""
     },
@@ -590,9 +608,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "55,849.07",
+        "technology": "55,949.07",
         "infrastructure": "25,999.99",
-        "strength": "401138.586"
+        "strength": "401638.586"
       },
       "notes": ""
     },
