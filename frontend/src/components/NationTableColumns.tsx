@@ -3,7 +3,6 @@ import {
 } from '@tanstack/react-table';
 import {
   EditableTextInput,
-  EditableTextarea,
   EditableNumberInput,
   EditableCheckbox,
   NationCell,
@@ -160,9 +159,10 @@ export const createNationTableColumns = ({
   columnHelper.accessor('notes', {
     header: 'Notes',
     cell: ({ getValue, row }) => (
-      <EditableTextarea
+      <EditableTextInput
         value={getValue() || ''}
         onChange={(value) => handleFieldChange(row.original.nation_id, 'notes', value)}
+        placeholder="Enter notes..."
       />
     ),
     size: 400,

@@ -54,7 +54,11 @@ export const EditableTextInput: React.FC<EditableTextInputProps> = ({
       onChange={(e) => setLocalValue(e.target.value)}
       className={className}
       placeholder={placeholder}
-      style={{ ...tableStyles.inputField, width: '100%' }}
+      style={{ 
+        ...tableStyles.inputField, 
+        width: '100%',
+        height: '40px'
+      }}
     />
   );
 };
@@ -98,7 +102,9 @@ export const EditableTextarea: React.FC<EditableTextareaProps> = ({
         width: '100%',
         height: '40px',
         resize: 'none',
-        fontFamily: 'inherit'
+        fontFamily: 'inherit',
+        paddingTop: '8px',
+        paddingBottom: '8px'
       }}
     />
   );
@@ -126,7 +132,11 @@ export const EditableNumberInput: React.FC<EditableNumberInputProps> = ({
     className={className}
     min={min}
     max={max}
-    style={{ ...tableStyles.inputField, ...tableStyles.numberInput }}
+    style={{ 
+      ...tableStyles.inputField, 
+      ...tableStyles.numberInput,
+      height: '40px'
+    }}
   />
 );
 

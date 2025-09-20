@@ -140,7 +140,8 @@ export const tableStyles: Record<string, CSSProperties> = {
   // Data row styles
   dataRow: {
     backgroundColor: 'white',
-    borderBottom: '1px solid #f1f5f9'
+    borderBottom: '1px solid #f1f5f9',
+    minHeight: '60px'
   },
 
   dataRowEven: {
@@ -155,21 +156,23 @@ export const tableStyles: Record<string, CSSProperties> = {
   dataCell: {
     padding: '2px 2px',
     color: '#1e293b',
-    borderBottom: '1px solid #f1f5f9'
+    borderBottom: '1px solid #f1f5f9',
+    verticalAlign: 'middle'
   },
 
   // Input field styles
   inputField: {
     border: '2px solid #e2e8f0',
     borderRadius: '8px',
-    padding: '10px 12px',
+    padding: '8px 12px',
     fontSize: '14px',
     transition: 'all 0.2s ease',
     backgroundColor: '#ffffff',
     color: '#1e293b',
     wordBreak: 'break-word',
     overflowWrap: 'break-word',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
+    lineHeight: '1.4'
   },
 
   inputFieldFocus: {

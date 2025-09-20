@@ -475,6 +475,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
                           tableStyles.dataCell,
                           { 
                             textAlign: getTextAlignment(cell.column.id),
+                            verticalAlign: 'middle',
                             width: cell.column.getSize(),
                             backgroundColor: hasErrors ? '#fef2f2' : hasWarnings ? '#fffbeb' : undefined,
                           }
