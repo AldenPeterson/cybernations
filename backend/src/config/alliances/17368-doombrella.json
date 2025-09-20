@@ -225,7 +225,7 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 3,
+        "sendCash": 0,
         "getTech": 3,
         "getCash": 0
       },
@@ -234,7 +234,7 @@
         "infrastructure": "32,299.99",
         "strength": "743086.177"
       },
-      "notes": ""
+      "notes": "broke ass"
     },
     "334182": {
       "ruler_name": "st6mm",
@@ -510,7 +510,7 @@
       "ruler_name": "Banned",
       "nation_name": "Lacedaemon",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "DS",
       "slots": {
         "sendTech": 0,
@@ -854,10 +854,10 @@
       "discord_handle": "imthomass",
       "has_dra": true,
       "slots": {
-        "sendTech": 6,
+        "sendTech": 4,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 2
       },
       "current_stats": {
         "technology": "188.86",

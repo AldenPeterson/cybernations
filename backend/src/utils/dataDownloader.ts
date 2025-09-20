@@ -187,8 +187,8 @@ export async function ensureRecentFiles(): Promise<void> {
     try {
       console.log('Files were updated, syncing alliance files...');
       // Import and call the data parser to get the new nation data
-      const { loadDataFromFiles } = await import('./dataParser.js');
-      const { nations } = loadDataFromFiles();
+      const { loadDataFromFiles } = await import('../services/dataProcessingService.js');
+      const { nations } = await loadDataFromFiles();
       
       if (nations.length > 0) {
         await syncAllianceFilesWithNewData(nations);

@@ -487,13 +487,13 @@ const AllianceDashboard: React.FC = () => {
                   backgroundColor: 'white'
                 }}>
                   <thead>
-                    <tr style={{ backgroundColor: 'white' }}>
+                    <tr style={{ backgroundColor: '#343a40' }}>
                       <th style={{ 
                         padding: '12px', 
                         border: '1px solid #ddd', 
                         textAlign: 'left',
-                        backgroundColor: 'white',
-                        color: 'black',
+                        backgroundColor: '#343a40',
+                        color: 'white',
                         fontWeight: 'bold'
                       }}>
                         Alliance
@@ -502,8 +502,8 @@ const AllianceDashboard: React.FC = () => {
                         padding: '12px', 
                         border: '1px solid #ddd', 
                         textAlign: 'center',
-                        backgroundColor: 'white',
-                        color: 'black',
+                        backgroundColor: '#343a40',
+                        color: 'white',
                         fontWeight: 'bold'
                       }}>
                         Received
@@ -512,8 +512,8 @@ const AllianceDashboard: React.FC = () => {
                         padding: '12px', 
                         border: '1px solid #ddd', 
                         textAlign: 'center',
-                        backgroundColor: 'white',
-                        color: 'black',
+                        backgroundColor: '#343a40',
+                        color: 'white',
                         fontWeight: 'bold'
                       }}>
                         Sent
@@ -522,8 +522,8 @@ const AllianceDashboard: React.FC = () => {
                         padding: '12px', 
                         border: '1px solid #ddd', 
                         textAlign: 'center',
-                        backgroundColor: 'white',
-                        color: 'black',
+                        backgroundColor: '#343a40',
+                        color: 'white',
                         fontWeight: 'bold'
                       }}>
                         Total
@@ -676,15 +676,15 @@ const AllianceDashboard: React.FC = () => {
                   fontSize: '14px'
                 }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#f8f9fa' }}>
-                      <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>
+                    <tr style={{ backgroundColor: '#343a40' }}>
+                      <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>
                         Nation
                       </th>
                       {[1, 2, 3, 4, 5, 6].map(slotNum => (
-                        <th key={slotNum} style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center' }}>
+                        <th key={slotNum} style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
                           Slot {slotNum}
                           <br />
-                          <small style={{ color: '#666' }}>
+                          <small style={{ color: '#e0e0e0' }}>
                             Aid Offer
                           </small>
                         </th>
@@ -702,7 +702,7 @@ const AllianceDashboard: React.FC = () => {
                           <div>
                             <strong>
                               <a 
-                                href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nationAidSlots.nation.id}`}
+                                href={`https://www.cybernations.net/search_aid.asp?search=${nationAidSlots.nation.id}&Extended=1`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{ 
@@ -723,14 +723,19 @@ const AllianceDashboard: React.FC = () => {
                         </td>
                         {nationAidSlots.aidSlots.map((slot) => {
                           const isExpired = slot.aidOffer ? isOfferExpired(slot.aidOffer.date) : false;
+                          const hasDRA = nationAidSlots.aidSlots.length === 6;
+                          const isBlackCell = !hasDRA && slot.slotNumber > 5;
+                          
                           return (
                           <td key={slot.slotNumber} style={{ 
                             padding: '8px', 
                             border: '1px solid #ddd', 
                             textAlign: 'center',
-                            backgroundColor: slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#fafafa'
+                            backgroundColor: isBlackCell ? '#000000' : (slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff')
                           }}>
-                            {slot.aidOffer ? (
+                            {isBlackCell ? (
+                              <span style={{ color: '#ffffff' }}>N/A</span>
+                            ) : slot.aidOffer ? (
                               <div style={{ fontSize: '12px' }}>
                                 <div style={{ 
                                   fontWeight: 'bold', 
@@ -739,7 +744,7 @@ const AllianceDashboard: React.FC = () => {
                                 }}>
                                   {slot.isOutgoing ? '→ ' : '← '}
                                   <a 
-                                    href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.aidOffer.targetId || 'undefined'}`}
+                                    href={`https://www.cybernations.net/search_aid.asp?search=${slot.aidOffer.targetId || 'undefined'}&Extended=1`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     style={{ 
@@ -882,13 +887,13 @@ const AllianceDashboard: React.FC = () => {
                   backgroundColor: 'white'
                 }}>
                   <thead>
-                    <tr style={{ backgroundColor: 'white' }}>
+                    <tr style={{ backgroundColor: '#343a40' }}>
                       <th style={{ 
                         padding: '12px', 
                         border: '1px solid #ddd', 
                         textAlign: 'left',
-                        backgroundColor: 'white',
-                        color: 'black',
+                        backgroundColor: '#343a40',
+                        color: 'white',
                         fontWeight: 'bold'
                       }}>
                         Sender
@@ -897,8 +902,8 @@ const AllianceDashboard: React.FC = () => {
                         padding: '12px', 
                         border: '1px solid #ddd', 
                         textAlign: 'left',
-                        backgroundColor: 'white',
-                        color: 'black',
+                        backgroundColor: '#343a40',
+                        color: 'white',
                         fontWeight: 'bold'
                       }}>
                         Recipients

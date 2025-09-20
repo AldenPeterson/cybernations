@@ -238,7 +238,7 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
     }));
 
     // Still need aid offers from raw data
-    const { loadDataFromFilesWithUpdate } = await import('./dataParser.js');
+    const { loadDataFromFilesWithUpdate } = await import('../services/dataProcessingService.js');
     const { aidOffers } = await loadDataFromFilesWithUpdate();
     
     return {
@@ -249,7 +249,7 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
   }
   
   // Fall back to raw data if no JSON config exists
-  const { loadDataFromFilesWithUpdate } = await import('./dataParser.js');
+  const { loadDataFromFilesWithUpdate } = await import('../services/dataProcessingService.js');
   const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
   const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
   

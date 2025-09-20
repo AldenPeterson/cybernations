@@ -93,14 +93,14 @@ const AidDashboard: React.FC = () => {
               backgroundColor: 'white'
             }}>
               <thead>
-                <tr style={{ backgroundColor: '#f8f9fa' }}>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>Sender</th>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>Sender Alliance</th>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>Recipient</th>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>Recipient Alliance</th>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center' }}>Aid Value</th>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left' }}>Reason</th>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center' }}>Date</th>
+                <tr style={{ backgroundColor: '#343a40' }}>
+                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>Sender</th>
+                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>Sender Alliance</th>
+                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>Recipient</th>
+                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>Recipient Alliance</th>
+                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>Aid Value</th>
+                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>Reason</th>
+                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>Date</th>
                 </tr>
               </thead>
               <tbody>
