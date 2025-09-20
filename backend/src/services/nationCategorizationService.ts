@@ -11,7 +11,7 @@ export function getNationFromJson(nationId: number): { exists: boolean; has_dra:
   if (result) {
     return { exists: true, has_dra: result.nation.has_dra };
   }
-  return { exists: false, has_dra: false };
+  return { exists: false, has_dra: true };
 }
 
 /**
@@ -57,9 +57,6 @@ export function categorizeNation(nation: any): CategorizedNation {
     defaultSlots.sendCash = 2;
     defaultSlots.getTech = 4;
   }
-
-  console.log(`${nation.id} ${nation.nationName}${nation.infrastructure} ${typeof nation.technology} ${nation.infrastructure} ${nation.technology} ${defaultSlots.sendTech} ${defaultSlots.sendCash} ${defaultSlots.getTech} ${defaultSlots.getCash}`);
-
 
   // Fallback to default slots
   return {

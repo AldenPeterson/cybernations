@@ -11,9 +11,14 @@ export class AllianceController {
       const { nations } = await loadDataFromFilesWithUpdate();
       const alliances = groupNationsByAlliance(nations);
       
+      // Filter out alliances with no name and sort by nation count (descending - most nations first)
+      const filteredAndSortedAlliances = alliances
+        .filter(alliance => alliance.name && alliance.name.trim() !== '')
+        .sort((a, b) => b.nations.length - a.nations.length);
+      
       res.json({
         success: true,
-        alliances: alliances.map(alliance => ({
+        alliances: filteredAndSortedAlliances.map(alliance => ({
           id: alliance.id,
           name: alliance.name,
           nationCount: alliance.nations.length

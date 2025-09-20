@@ -31,11 +31,6 @@ function getDownloadNumberSlug(file_flag: string): string {
   // Determine if it's between 6am and 6pm Central Time
   const isDaytime = centralHour >= 6 && centralHour < 18;
   const timeSuffix = isDaytime ? '1' : '2';
-
-  console.log(`isDaytime: ${isDaytime}`);
-  console.log(`centralHour: ${centralHour}`);
-  console.log(`timeSuffix: ${timeSuffix}`);
-  console.log(`utcHour: ${utcHour}`);
   
   // Format: MMDDYYYYXXXX where XXXX is 4-digit file identifier + toggle
   // Example: 91820250002 (9/18/2025, file 0002, daytime=1)
