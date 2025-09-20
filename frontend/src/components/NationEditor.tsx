@@ -10,6 +10,7 @@ import {
 } from '@tanstack/react-table';
 import { createNationTableColumns, type NationConfig } from './NationTableColumns';
 import { tableStyles, tableCSS, combineStyles, getTextAlignment, getHeaderContentAlignment } from '../styles/tableStyles';
+import SlotCountsSummary from './SlotCountsSummary';
 
 interface NationEditorProps {
   allianceId: number;
@@ -27,6 +28,32 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
   // TanStack Table state
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
+  // Calculate slot counts from nations data
+  const slotCounts = useMemo(() => {
+    const counts = nations.reduce((acc, nation) => {
+      acc.totalGetCash += nation.slots.getCash;
+      acc.totalGetTech += nation.slots.getTech;
+      acc.totalSendCash += nation.slots.sendCash;
+      acc.totalSendTech += nation.slots.sendTech;
+      
+      // Calculate total possible slots for this nation
+      const totalPossibleSlots = nation.has_dra ? 6 : 5;
+      const assignedSlots = nation.slots.getCash + nation.slots.getTech + 
+                           nation.slots.sendCash + nation.slots.sendTech;
+      acc.totalUnassigned += totalPossibleSlots - assignedSlots;
+      
+      return acc;
+    }, {
+      totalGetCash: 0,
+      totalGetTech: 0,
+      totalSendCash: 0,
+      totalSendTech: 0,
+      totalUnassigned: 0
+    });
+    
+    return counts;
+  }, [nations]);
 
   useEffect(() => {
     fetchNationsConfig();
@@ -365,7 +392,9 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
   }
 
   return (
-    <div style={tableStyles.container}>
+    <div style={{ ...tableStyles.container, backgroundColor: '#000000' }}>
+      <SlotCountsSummary slotCounts={slotCounts} />
+
       <div style={tableStyles.tableWrapper}>
         <style>{tableCSS}</style>
         <table style={tableStyles.table}>

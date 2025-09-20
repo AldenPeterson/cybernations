@@ -21,6 +21,8 @@ export interface CategorizedNation {
   infrastructure: string;
   strength: string;
   activity: string;
+  has_dra: boolean;
+  discord_handle?: string;
   slots: AidSlots;
 }
 

@@ -226,7 +226,7 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 3,
+        "getTech": 0,
         "getCash": 0
       },
       "current_stats": {
@@ -275,13 +275,13 @@
     "342957": {
       "ruler_name": "tayloj7",
       "nation_name": "Rabbitopia",
-      "discord_handle": "",
+      "discord_handle": "tayloj6931",
       "has_dra": true,
-      "notes": "DS",
+      "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 0,
+        "getTech": 6,
         "getCash": 0
       },
       "current_stats": {

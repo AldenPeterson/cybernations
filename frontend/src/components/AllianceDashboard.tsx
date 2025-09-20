@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import NationEditor from './NationEditor';
+import SlotCountsSummary from './SlotCountsSummary';
 
 interface Alliance {
   id: number;
@@ -812,35 +813,7 @@ const AllianceDashboard: React.FC = () => {
           {/* Nation categories removed - showing slot counts instead */}
 
           {/* Slot Counts Summary */}
-          {slotCounts && (
-            <div style={{ 
-              marginBottom: '20px', 
-              padding: '15px', 
-              backgroundColor: 'transparent', 
-              borderRadius: '8px',
-              border: '1px solid #ddd'
-            }}>
-              <h3>Total Slot Types</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
-                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#2e7d32' }}>{slotCounts.totalGetCash}</div>
-                  <div style={{ color: '#666', fontSize: '14px' }}>Get Cash</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#e3f2fd', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1976d2' }}>{slotCounts.totalGetTech}</div>
-                  <div style={{ color: '#666', fontSize: '14px' }}>Get Tech</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#fff3cd', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#f57c00' }}>{slotCounts.totalSendCash}</div>
-                  <div style={{ color: '#666', fontSize: '14px' }}>Send Cash</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#f3e5f5', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#7b1fa2' }}>{slotCounts.totalSendTech}</div>
-                  <div style={{ color: '#666', fontSize: '14px' }}>Send Tech</div>
-                </div>
-              </div>
-            </div>
-          )}
+          {slotCounts && <SlotCountsSummary slotCounts={slotCounts} />}
 
           {/* Recommendations Table */}
           {recommendations.length > 0 && (

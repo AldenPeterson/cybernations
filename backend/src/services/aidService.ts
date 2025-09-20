@@ -4,7 +4,6 @@ import {
 } from './dataProcessingService.js';
 import { 
   categorizeNations, 
-  getSlotStatistics, 
   getNationsThatShouldGetCash,
   getNationsThatShouldSendTechnology,
   getNationsThatShouldGetTechnology,
@@ -45,7 +44,6 @@ export class AidService {
     // If using JSON data, nations already have slots assigned
     // If using raw data, need to categorize them
     const categorizedNations = useJsonData ? nations : categorizeNations(nations);
-    const slotStatistics = getSlotStatistics(categorizedNations);
     
     // Get existing aid offers (exclude expired)
     const existingOffers = aidOffers.filter(offer => 
@@ -72,7 +70,6 @@ export class AidService {
       totalTechIn: incomingOffers.reduce((sum, offer) => sum + offer.technology, 0),
       totalSoldiersOut: outgoingOffers.reduce((sum, offer) => sum + offer.soldiers, 0),
       totalSoldiersIn: incomingOffers.reduce((sum, offer) => sum + offer.soldiers, 0),
-      slotStatistics: slotStatistics,
       aidDirections: {
         shouldGetCash: nationsThatShouldGetCash.length,
         shouldSendTechnology: nationsThatShouldSendTechnology.length,
@@ -91,7 +88,6 @@ export class AidService {
     if (nations.length === 0) {
       return {
         recommendations: [],
-        slotStatistics: null,
         slotCounts: null
       };
     }
@@ -382,12 +378,17 @@ export class AidService {
       totalGetCash: categorizedNations.reduce((sum, nation) => sum + nation.slots.getCash, 0),
       totalGetTech: categorizedNations.reduce((sum, nation) => sum + nation.slots.getTech, 0),
       totalSendCash: categorizedNations.reduce((sum, nation) => sum + nation.slots.sendCash, 0),
-      totalSendTech: categorizedNations.reduce((sum, nation) => sum + nation.slots.sendTech, 0)
+      totalSendTech: categorizedNations.reduce((sum, nation) => sum + nation.slots.sendTech, 0),
+      totalUnassigned: categorizedNations.reduce((sum, nation) => {
+        const totalPossibleSlots = nation.has_dra ? 6 : 5;
+        const assignedSlots = nation.slots.getCash + nation.slots.getTech + 
+                             nation.slots.sendCash + nation.slots.sendTech;
+        return sum + (totalPossibleSlots - assignedSlots);
+      }, 0)
     };
 
     return {
       recommendations,
-      slotStatistics: getSlotStatistics(categorizedNations),
       slotCounts
     };
   }

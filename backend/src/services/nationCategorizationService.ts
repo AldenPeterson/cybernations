@@ -27,7 +27,7 @@ export function categorizeNation(nation: any): CategorizedNation {
   const jsonData = getNationFromJson(nation.id);
   
   // Default slots if not found in JSON
-  const defaultSlots: AidSlots = {
+  let defaultSlots: AidSlots = {
     sendTech: 0,
     sendCash: 0,
     getTech: 0,
@@ -40,14 +40,32 @@ export function categorizeNation(nation: any): CategorizedNation {
     if (result && result.nation.slots) {
       return {
         ...nation,
+        has_dra: result.nation.has_dra,
+        discord_handle: result.nation.discord_handle,
         slots: result.nation.slots
       };
     }
   }
+
   
+  // Use the parsed values instead of re-parsing
+  if (infra > 3000 && tech < 500) {
+    defaultSlots.sendTech = 6;
+  } else if (infra <= 3000 && tech < 500) {
+    defaultSlots.getCash = 6;
+  } else if (tech >= 500) {
+    defaultSlots.sendCash = 2;
+    defaultSlots.getTech = 4;
+  }
+
+  console.log(`${nation.id} ${nation.nationName}${nation.infrastructure} ${typeof nation.technology} ${nation.infrastructure} ${nation.technology} ${defaultSlots.sendTech} ${defaultSlots.sendCash} ${defaultSlots.getTech} ${defaultSlots.getCash}`);
+
+
   // Fallback to default slots
   return {
     ...nation,
+    has_dra: jsonData.has_dra,
+    discord_handle: undefined,
     slots: defaultSlots
   };
 }
@@ -61,27 +79,6 @@ export function categorizeNations(nations: any[]): CategorizedNation[] {
   return nations.map(nation => categorizeNation(nation));
 }
 
-/**
- * Gets slot statistics for categorized nations
- * @param nations - Array of categorized nations
- * @returns Object with slot statistics
- */
-export function getSlotStatistics(nations: CategorizedNation[]) {
-  const totalNations = nations.length;
-  const totalGetCash = nations.reduce((sum, nation) => sum + nation.slots.getCash, 0);
-  const totalGetTech = nations.reduce((sum, nation) => sum + nation.slots.getTech, 0);
-  const totalSendCash = nations.reduce((sum, nation) => sum + nation.slots.sendCash, 0);
-  const totalSendTech = nations.reduce((sum, nation) => sum + nation.slots.sendTech, 0);
-  
-  return {
-    totalNations,
-    totalGetCash,
-    totalGetTech,
-    totalSendCash,
-    totalSendTech,
-    totalSlots: totalGetCash + totalGetTech + totalSendCash + totalSendTech
-  };
-}
 
 /**
  * Gets nations that should receive cash aid

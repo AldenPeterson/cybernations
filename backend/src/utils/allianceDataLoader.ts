@@ -229,6 +229,7 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
       activity: '', // Not available in JSON
       technology: nationData.current_stats?.technology || '0',
       infrastructure: nationData.current_stats?.infrastructure || '0',
+      has_dra: nationData.has_dra,
       slots: nationData.slots || {
         sendTech: 0,
         sendCash: 0,

@@ -6,6 +6,58 @@ import { AidOffer } from '../models/AidOffer.js';
 import { Alliance } from '../models/Alliance.js';
 import { AidSlot, NationAidSlots } from '../models/AidSlot.js';
 
+/**
+ * Decodes HTML entities in a string
+ * @param str - String that may contain HTML entities
+ * @returns Decoded string
+ */
+function decodeHtmlEntities(str: string): string {
+  if (!str) return str;
+  
+  // Common HTML entities mapping
+  const htmlEntities: { [key: string]: string } = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'",
+    '&#x27;': "'",
+    '&#x2F;': '/',
+    '&#x60;': '`',
+    '&#x3D;': '=',
+    '&#228;': 'ä',
+    '&#229;': 'å',
+    '&#246;': 'ö',
+    '&#196;': 'Ä',
+    '&#197;': 'Å',
+    '&#214;': 'Ö',
+    '&#252;': 'ü',
+    '&#220;': 'Ü',
+    '&#223;': 'ß',
+    '&#233;': 'é',
+    '&#232;': 'è',
+    '&#224;': 'à',
+    '&#225;': 'á',
+    '&#226;': 'â',
+    '&#227;': 'ã',
+    '&#231;': 'ç',
+    '&#237;': 'í',
+    '&#238;': 'î',
+    '&#239;': 'ï',
+    '&#243;': 'ó',
+    '&#244;': 'ô',
+    '&#245;': 'õ',
+    '&#250;': 'ú',
+    '&#251;': 'û',
+    '&#253;': 'ý',
+    '&#255;': 'ÿ'
+  };
+  
+  return str.replace(/&#?\w+;/g, (entity) => {
+    return htmlEntities[entity] || entity;
+  });
+}
+
 export function parseNationStats(filePath: string): Nation[] {
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
@@ -23,9 +75,9 @@ export function parseNationStats(filePath: string): Nation[] {
       if (values.length >= header.length) {
         const nation: Nation = {
           id: parseInt(values[0]) || 0,
-          rulerName: values[1] || '',
-          nationName: values[2] || '',
-          alliance: values[3] || '',
+          rulerName: decodeHtmlEntities(values[1] || ''),
+          nationName: decodeHtmlEntities(values[2] || ''),
+          alliance: decodeHtmlEntities(values[3] || ''),
           allianceId: parseInt(values[4]) || 0,
           team: values[9] || '',
           strength: parseFloat(values[18]?.replace(/,/g, '')) || 0,
@@ -62,14 +114,14 @@ export function parseAidStats(filePath: string): AidOffer[] {
         const aidOffer: AidOffer = {
           aidId: parseInt(values[18]) || 0, // Aid ID is the last column
           declaringId: parseInt(values[0]) || 0, // Declaring ID is first
-          declaringRuler: values[1] || '',
-          declaringNation: values[2] || '',
-          declaringAlliance: values[3] || '',
+          declaringRuler: decodeHtmlEntities(values[1] || ''),
+          declaringNation: decodeHtmlEntities(values[2] || ''),
+          declaringAlliance: decodeHtmlEntities(values[3] || ''),
           declaringAllianceId: parseInt(values[4]) || 0,
           receivingId: parseInt(values[6]) || 0,
-          receivingRuler: values[7] || '',
-          receivingNation: values[8] || '',
-          receivingAlliance: values[9] || '',
+          receivingRuler: decodeHtmlEntities(values[7] || ''),
+          receivingNation: decodeHtmlEntities(values[8] || ''),
+          receivingAlliance: decodeHtmlEntities(values[9] || ''),
           receivingAllianceId: parseInt(values[10]) || 0,
           status: values[12] || '',
           money: parseFloat(values[13]?.replace(/,/g, '')) || 0,
@@ -107,14 +159,14 @@ export function parseWarStats(filePath: string): any[] {
         const war = {
           warId: parseInt(values[0]) || 0,
           declaringId: parseInt(values[1]) || 0,
-          declaringRuler: values[2] || '',
-          declaringNation: values[3] || '',
-          declaringAlliance: values[4] || '',
+          declaringRuler: decodeHtmlEntities(values[2] || ''),
+          declaringNation: decodeHtmlEntities(values[3] || ''),
+          declaringAlliance: decodeHtmlEntities(values[4] || ''),
           declaringAllianceId: parseInt(values[5]) || 0,
           receivingId: parseInt(values[6]) || 0,
-          receivingRuler: values[7] || '',
-          receivingNation: values[8] || '',
-          receivingAlliance: values[9] || '',
+          receivingRuler: decodeHtmlEntities(values[7] || ''),
+          receivingNation: decodeHtmlEntities(values[8] || ''),
+          receivingAlliance: decodeHtmlEntities(values[9] || ''),
           receivingAllianceId: parseInt(values[10]) || 0,
           status: values[11] || '',
           date: values[12] || ''
