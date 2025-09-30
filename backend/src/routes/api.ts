@@ -14,6 +14,7 @@ apiRoutes.post('/stats/decode', StatsController.decodeStats);
 // Dashboard API endpoints
 apiRoutes.get('/alliances', AllianceController.getAlliances);
 apiRoutes.get('/alliances/:allianceId/stats', AllianceController.getAllianceStats);
+apiRoutes.get('/alliances/:allianceId/nuclear-stats', AllianceController.getNuclearWeaponStats);
 apiRoutes.post('/sync/alliances', AllianceController.syncAlliances);
 
 

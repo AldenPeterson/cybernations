@@ -9,6 +9,8 @@ export interface Nation {
   activity: string;
   technology: string;
   infrastructure: string;
+  nuclearWeapons: number;
+  warStatus: string;
 }
 
 export interface CategorizedNation {
@@ -24,6 +26,7 @@ export interface CategorizedNation {
   has_dra: boolean;
   discord_handle?: string;
   slots: AidSlots;
+  warStatus: string;
 }
 
 export interface AidSlots {

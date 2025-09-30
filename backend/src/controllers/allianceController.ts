@@ -128,6 +128,97 @@ export class AllianceController {
   }
 
   /**
+   * Get nuclear weapon statistics for an alliance
+   */
+  static async getNuclearWeaponStats(req: Request, res: Response) {
+    try {
+      const allianceId = parseInt(req.params.allianceId);
+      
+      if (isNaN(allianceId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid alliance ID'
+        });
+      }
+
+      const { nations } = await loadDataFromFilesWithUpdate();
+      
+      // Filter nations by alliance ID
+      const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
+      
+      if (allianceNations.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'No nations found for this alliance'
+        });
+      }
+
+      // Categorize nations by nuclear weapon count
+      const stats = {
+        totalNations: allianceNations.length,
+        noNuclearWeapons: allianceNations.filter(nation => nation.nuclearWeapons === 0),
+        hasNuclearWeaponsButLessThan25: allianceNations.filter(nation => nation.nuclearWeapons > 0 && nation.nuclearWeapons < 25),
+        has25NuclearWeapons: allianceNations.filter(nation => nation.nuclearWeapons === 25),
+        hasMoreThan25NuclearWeapons: allianceNations.filter(nation => nation.nuclearWeapons > 25)
+      };
+
+      // Get alliance name from first nation
+      const allianceName = allianceNations[0]?.alliance || 'Unknown Alliance';
+
+      res.json({
+        success: true,
+        allianceId,
+        allianceName,
+        stats: {
+          totalNations: stats.totalNations,
+          noNuclearWeapons: {
+            count: stats.noNuclearWeapons.length,
+            nations: stats.noNuclearWeapons.map(nation => ({
+              id: nation.id,
+              rulerName: nation.rulerName,
+              nationName: nation.nationName,
+              nuclearWeapons: nation.nuclearWeapons
+            }))
+          },
+          hasNuclearWeaponsButLessThan25: {
+            count: stats.hasNuclearWeaponsButLessThan25.length,
+            nations: stats.hasNuclearWeaponsButLessThan25.map(nation => ({
+              id: nation.id,
+              rulerName: nation.rulerName,
+              nationName: nation.nationName,
+              nuclearWeapons: nation.nuclearWeapons
+            }))
+          },
+          has25NuclearWeapons: {
+            count: stats.has25NuclearWeapons.length,
+            nations: stats.has25NuclearWeapons.map(nation => ({
+              id: nation.id,
+              rulerName: nation.rulerName,
+              nationName: nation.nationName,
+              nuclearWeapons: nation.nuclearWeapons
+            }))
+          },
+          hasMoreThan25NuclearWeapons: {
+            count: stats.hasMoreThan25NuclearWeapons.length,
+            nations: stats.hasMoreThan25NuclearWeapons.map(nation => ({
+              id: nation.id,
+              rulerName: nation.rulerName,
+              nationName: nation.nationName,
+              nuclearWeapons: nation.nuclearWeapons
+            }))
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching nuclear weapon stats:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  /**
    * Update a specific nation's data in alliance files
    */
   static async updateNation(req: Request, res: Response) {

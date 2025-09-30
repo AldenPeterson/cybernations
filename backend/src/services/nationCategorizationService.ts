@@ -42,7 +42,8 @@ export function categorizeNation(nation: any): CategorizedNation {
         ...nation,
         has_dra: result.nation.has_dra,
         discord_handle: result.nation.discord_handle,
-        slots: result.nation.slots
+        slots: result.nation.slots,
+        warStatus: nation.warStatus || 'Peace Mode'
       };
     }
   }
@@ -63,7 +64,8 @@ export function categorizeNation(nation: any): CategorizedNation {
     ...nation,
     has_dra: jsonData.has_dra,
     discord_handle: undefined,
-    slots: defaultSlots
+    slots: defaultSlots,
+    warStatus: nation.warStatus || 'Peace Mode'
   };
 }
 

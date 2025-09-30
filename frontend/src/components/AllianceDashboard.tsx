@@ -35,6 +35,7 @@ interface NationAidSlots {
     nationName: string;
     strength: number;
     activity: string;
+    warStatus: string;
   };
   aidSlots: AidSlot[];
 }
@@ -297,7 +298,7 @@ const AllianceDashboard: React.FC = () => {
             aidType = 'TECH';
           }
         }
-        discordLines.push(`send ${aidType}  https://www.cybernations.net/aid_form.asp?Nation_ID=${rec.recipient.id}&bynation=${rec.sender.id}`)
+        discordLines.push(`send ${aidType} to ${rec.recipient.rulerName} https://www.cybernations.net/aid_form.asp?Nation_ID=${rec.recipient.id}&bynation=${rec.sender.id}`)
       });
       discordLines.push('');
     });
@@ -345,6 +346,26 @@ const AllianceDashboard: React.FC = () => {
       return '#f8d7da'; // Light red
     }
     return '#f8f9fa'; // Default light gray
+  };
+
+  const getWarStatusColor = (warStatus: string): string => {
+    if (!warStatus) return '#28a745'; // Default to green for peace mode if warStatus is undefined/null
+    const warStatusLower = warStatus.toLowerCase();
+    if (warStatusLower.includes('war')) {
+      return '#dc3545'; // Red for war mode
+    } else {
+      return '#28a745'; // Green for peace mode
+    }
+  };
+
+  const getWarStatusIcon = (warStatus: string): string => {
+    if (!warStatus) return '🕊️'; // Default to dove for peace mode if warStatus is undefined/null
+    const warStatusLower = warStatus.toLowerCase();
+    if (warStatusLower.includes('war')) {
+      return '⚔️'; // Sword for war mode
+    } else {
+      return '🕊️'; // Dove for peace mode
+    }
   };
 
   if (loading && alliances.length === 0) {
@@ -719,6 +740,13 @@ const AllianceDashboard: React.FC = () => {
                             <br />
                             <small style={{ color: '#666' }}>
                               {nationAidSlots.nation.rulerName}
+                            </small>
+                            <br />
+                            <small style={{ 
+                              color: getWarStatusColor(nationAidSlots.nation.warStatus),
+                              fontWeight: 'bold'
+                            }}>
+                              {getWarStatusIcon(nationAidSlots.nation.warStatus)} {nationAidSlots.nation.warStatus}
                             </small>
                           </div>
                         </td>
