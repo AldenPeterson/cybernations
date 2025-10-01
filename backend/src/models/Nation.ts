@@ -11,6 +11,8 @@ export interface Nation {
   infrastructure: string;
   nuclearWeapons: number;
   warStatus: string;
+  attackingCasualties?: number;
+  defensiveCasualties?: number;
 }
 
 export interface CategorizedNation {

@@ -111,7 +111,7 @@ export class AllianceController {
         });
       }
 
-      const config = AllianceService.getNationsConfig(allianceId);
+      const config = await AllianceService.getNationsConfig(allianceId);
 
       res.json({
         success: true,

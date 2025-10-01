@@ -85,7 +85,9 @@ export function parseNationStats(filePath: string): Nation[] {
           technology: values[11] || '0',
           infrastructure: values[12] || '0',
           nuclearWeapons: parseInt(values[23]) || 0,
-          warStatus: values[14] || 'Peace Mode'
+          warStatus: values[14] || 'Peace Mode',
+          attackingCasualties: parseInt(values[35]?.replace(/,/g, '')) || 0,
+          defensiveCasualties: parseInt(values[36]?.replace(/,/g, '')) || 0
         };
         nations.push(nation);
       }
