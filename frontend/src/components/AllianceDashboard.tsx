@@ -72,12 +72,14 @@ interface AidRecommendation {
     rulerName: string;
     discord_handle: string;
     strength: number;
+    warStatus?: string;
   };
   recipient: {
     id: number;
     nationName: string;
     rulerName: string;
     strength: number;
+    warStatus?: string;
   };
   type: string;
   priority: number;
@@ -955,6 +957,18 @@ const AllianceDashboard: React.FC = () => {
                               <br />
                               <small style={{ color: '#666' }}>{group.sender.rulerName}</small>
                               <br />
+                              {group.sender.warStatus === 'Peace Mode' && (
+                                <span style={{ 
+                                  fontSize: '10px', 
+                                  padding: '2px 6px', 
+                                  borderRadius: '3px',
+                                  backgroundColor: '#ffebee',
+                                  color: '#d32f2f',
+                                  fontWeight: 'bold'
+                                }}>
+                                  PEACE MODE
+                                </span>
+                              )}
                               {/* Category badge removed */}
                             </div>
                           </td>
@@ -1010,6 +1024,19 @@ const AllianceDashboard: React.FC = () => {
                                     }}>
                                       {rec.recipient.rulerName} • {rec.reason}
                                     </span>
+                                    {rec.recipient.warStatus === 'Peace Mode' && (
+                                      <span style={{ 
+                                        fontSize: '9px', 
+                                        padding: '1px 4px', 
+                                        borderRadius: '2px',
+                                        backgroundColor: '#ffebee',
+                                        color: '#d32f2f',
+                                        fontWeight: 'bold',
+                                        marginLeft: '4px'
+                                      }}>
+                                        PEACE
+                                      </span>
+                                    )}
                                   </div>
                                   {/* Category badge removed */}
                                 </div>

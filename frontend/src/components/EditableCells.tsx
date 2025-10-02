@@ -165,6 +165,7 @@ interface NationCellProps {
     nation_id: number;
     nation_name: string;
     ruler_name: string;
+    warStatus?: string;
   };
 }
 
@@ -194,6 +195,20 @@ export const NationCell: React.FC<NationCellProps> = ({ nation }) => (
     }}>
       {nation.ruler_name}
     </div>
+    {nation.warStatus === 'Peace Mode' && (
+      <div style={{ 
+        fontSize: '10px', 
+        padding: '2px 6px', 
+        borderRadius: '3px',
+        backgroundColor: '#ffebee',
+        color: '#d32f2f',
+        fontWeight: 'bold',
+        marginTop: '4px',
+        display: 'inline-block'
+      }}>
+        PEACE MODE
+      </div>
+    )}
   </div>
 );
 

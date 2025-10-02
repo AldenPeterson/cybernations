@@ -96,10 +96,8 @@ export class AidService {
     // If using raw data, need to categorize them
     const categorizedNations = useJsonData ? nations : categorizeNations(nations);
     
-    // Filter out nations in peace mode - they cannot send or receive aid
-    const activeNations = categorizedNations.filter(nation => 
-      nation.warStatus !== 'Peace Mode'
-    );
+    // Don't filter out peace mode nations - only senders are restricted, not recipients
+    const activeNations = categorizedNations;
     
     // Get existing aid offers (exclude expired)
     const existingOffers = aidOffers.filter(offer => 
@@ -236,6 +234,14 @@ export class AidService {
     const nationsThatShouldSendTechnology = getNationsThatShouldSendTechnology(activeNations);
     const nationsThatShouldGetTechnology = getNationsThatShouldGetTechnology(activeNations);
     const nationsThatShouldSendCash = getNationsThatShouldSendCash(activeNations);
+    
+    // Filter out peace mode nations from sender lists only (recipients can receive in peace mode)
+    const activeNationsThatShouldSendCash = nationsThatShouldSendCash.filter(nation => 
+      nation.warStatus !== 'Peace Mode'
+    );
+    const activeNationsThatShouldSendTechnology = nationsThatShouldSendTechnology.filter(nation => 
+      nation.warStatus !== 'Peace Mode'
+    );
 
     // Priority 0: Re-establish expired offers based on slot availability
     expiredOffers.forEach(offer => {
@@ -243,7 +249,7 @@ export class AidService {
         const sender = activeNations.find(n => n.id === offer.declaringId);
         const recipient = activeNations.find(n => n.id === offer.receivingId);
         
-        if (sender && recipient) {
+        if (sender && recipient && sender.warStatus !== 'Peace Mode') {
           const pair = `${Math.min(offer.declaringId, offer.receivingId)}-${Math.max(offer.declaringId, offer.receivingId)}`;
           
           // Re-establish expired cash aid
@@ -258,14 +264,16 @@ export class AidService {
                 nationName: sender.nationName,
                 discord_handle: sender.discord_handle,
                 slots: sender.slots,
-                currentAidCount: nationAidCounts.get(sender.id) || 0
+                currentAidCount: nationAidCounts.get(sender.id) || 0,
+                warStatus: sender.warStatus
               },
               recipient: {
                 id: recipient.id,
                 rulerName: recipient.rulerName,
                 nationName: recipient.nationName,
                 slots: recipient.slots,
-                currentAidCount: nationAidCounts.get(recipient.id) || 0
+                currentAidCount: nationAidCounts.get(recipient.id) || 0,
+                warStatus: recipient.warStatus
               },
               reason: `Re-establish expired cash aid: ${sender.nationName} → ${recipient.nationName}`,
               previousOffer: {
@@ -290,14 +298,16 @@ export class AidService {
                 nationName: sender.nationName,
                 discord_handle: sender.discord_handle,
                 slots: sender.slots,
-                currentAidCount: nationAidCounts.get(sender.id) || 0
+                currentAidCount: nationAidCounts.get(sender.id) || 0,
+                warStatus: sender.warStatus
               },
               recipient: {
                 id: recipient.id,
                 rulerName: recipient.rulerName,
                 nationName: recipient.nationName,
                 slots: recipient.slots,
-                currentAidCount: nationAidCounts.get(recipient.id) || 0
+                currentAidCount: nationAidCounts.get(recipient.id) || 0,
+                warStatus: recipient.warStatus
               },
               reason: `Re-establish expired tech aid: ${sender.nationName} → ${recipient.nationName}`,
               previousOffer: {
@@ -314,7 +324,7 @@ export class AidService {
     });
 
     // Priority 1: New cash aid recommendations (banks to farms)
-    nationsThatShouldSendCash.forEach(sender => {
+    activeNationsThatShouldSendCash.forEach(sender => {
       nationsThatShouldGetCash.forEach(recipient => {
         const pair = `${Math.min(sender.id, recipient.id)}-${Math.max(sender.id, recipient.id)}`;
         
@@ -328,14 +338,16 @@ export class AidService {
               nationName: sender.nationName,
               discord_handle: sender.discord_handle,
               slots: sender.slots,
-              currentAidCount: nationAidCounts.get(sender.id) || 0
+              currentAidCount: nationAidCounts.get(sender.id) || 0,
+              warStatus: sender.warStatus
             },
             recipient: {
               id: recipient.id,
               rulerName: recipient.rulerName,
               nationName: recipient.nationName,
               slots: recipient.slots,
-              currentAidCount: nationAidCounts.get(recipient.id) || 0
+              currentAidCount: nationAidCounts.get(recipient.id) || 0,
+              warStatus: recipient.warStatus
             },
             reason: `New cash aid: ${sender.nationName} → ${recipient.nationName}`
           });
@@ -345,7 +357,7 @@ export class AidService {
     });
 
     // Priority 2: New tech aid recommendations
-    nationsThatShouldSendTechnology.forEach(sender => {
+    activeNationsThatShouldSendTechnology.forEach(sender => {
       nationsThatShouldGetTechnology.forEach(recipient => {
         const pair = `${Math.min(sender.id, recipient.id)}-${Math.max(sender.id, recipient.id)}`;
         
@@ -359,14 +371,16 @@ export class AidService {
               nationName: sender.nationName,
               discord_handle: sender.discord_handle,
               slots: sender.slots,
-              currentAidCount: nationAidCounts.get(sender.id) || 0
+              currentAidCount: nationAidCounts.get(sender.id) || 0,
+              warStatus: sender.warStatus
             },
             recipient: {
               id: recipient.id,
               rulerName: recipient.rulerName,
               nationName: recipient.nationName,
               slots: recipient.slots,
-              currentAidCount: nationAidCounts.get(recipient.id) || 0
+              currentAidCount: nationAidCounts.get(recipient.id) || 0,
+              warStatus: recipient.warStatus
             },
             reason: `New tech aid: ${sender.nationName} → ${recipient.nationName}`
           });
@@ -378,13 +392,15 @@ export class AidService {
     // Sort recommendations by priority
     recommendations.sort((a, b) => a.priority - b.priority);
 
-    // Calculate total slot counts
+    // Calculate total slot counts (include all nations since recipients can receive in peace mode)
     const slotCounts = {
-      totalGetCash: activeNations.reduce((sum, nation) => sum + nation.slots.getCash, 0),
-      totalGetTech: activeNations.reduce((sum, nation) => sum + nation.slots.getTech, 0),
-      totalSendCash: activeNations.reduce((sum, nation) => sum + nation.slots.sendCash, 0),
-      totalSendTech: activeNations.reduce((sum, nation) => sum + nation.slots.sendTech, 0),
-      totalUnassigned: activeNations.reduce((sum, nation) => {
+      totalGetCash: categorizedNations.reduce((sum, nation) => sum + nation.slots.getCash, 0),
+      totalGetTech: categorizedNations.reduce((sum, nation) => sum + nation.slots.getTech, 0),
+      totalSendCash: categorizedNations.reduce((sum, nation) => 
+        nation.warStatus !== 'Peace Mode' ? sum + nation.slots.sendCash : sum, 0),
+      totalSendTech: categorizedNations.reduce((sum, nation) => 
+        nation.warStatus !== 'Peace Mode' ? sum + nation.slots.sendTech : sum, 0),
+      totalUnassigned: categorizedNations.reduce((sum, nation) => {
         const totalPossibleSlots = nation.has_dra ? 6 : 5;
         const assignedSlots = nation.slots.getCash + nation.slots.getTech + 
                              nation.slots.sendCash + nation.slots.sendTech;
@@ -412,17 +428,14 @@ export class AidService {
     // If using raw data, need to categorize them
     const categorizedNations = useJsonData ? nations : categorizeNations(nations);
     
-    // Filter out nations in peace mode - they cannot send or receive aid
-    const activeNations = categorizedNations.filter(nation => 
-      nation.warStatus !== 'Peace Mode'
-    );
-    
-    return activeNations.map(nation => ({
+    // Don't filter out peace mode nations - let the UI show them with indicators
+    return categorizedNations.map(nation => ({
       id: nation.id,
       rulerName: nation.rulerName,
       nationName: nation.nationName,
       technology: nation.technology,
       infrastructure: nation.infrastructure,
+      warStatus: nation.warStatus,
       slots: nation.slots
     }));
   }

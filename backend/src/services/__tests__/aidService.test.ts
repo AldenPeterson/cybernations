@@ -36,6 +36,10 @@ describe('AidService', () => {
           alliance: 'Test Alliance',
           allianceId: 123,
           warStatus: 'Active',
+          technology: '1000',
+          infrastructure: '2000',
+          strength: '3000',
+          activity: 'Active',
           slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
           has_dra: false,
         },
@@ -46,6 +50,10 @@ describe('AidService', () => {
           alliance: 'Test Alliance',
           allianceId: 123,
           warStatus: 'Peace Mode',
+          technology: '500',
+          infrastructure: '1500',
+          strength: '2000',
+          activity: 'Active',
           slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
           has_dra: false,
         },
@@ -56,12 +64,16 @@ describe('AidService', () => {
           alliance: 'Test Alliance',
           allianceId: 123,
           warStatus: 'War',
+          technology: '800',
+          infrastructure: '1200',
+          strength: '2500',
+          activity: 'Active',
           slots: { sendCash: 0, sendTech: 0, getCash: 6, getTech: 0 },
           has_dra: false,
         },
       ];
 
-      const mockAidOffers = [];
+      const mockAidOffers: any[] = [];
 
       // Mock the alliance service to return our test data
       const { AllianceService } = await import('../allianceService.js');
@@ -87,30 +99,25 @@ describe('AidService', () => {
 
       const result = await AidService.getAidRecommendations(123);
 
-      // Verify that peace mode nation (id: 2) is not included in slot counts
-      expect(result.slotCounts.totalSendCash).toBe(2); // Only from active nation (id: 1)
-      expect(result.slotCounts.totalGetCash).toBe(6); // Only from active nation (id: 3)
-      expect(result.slotCounts.totalSendTech).toBe(0);
-      expect(result.slotCounts.totalGetTech).toBe(4); // From active nation (id: 1)
+      // Verify slot counts - peace mode nations can receive but not send
+      expect(result.slotCounts?.totalSendCash).toBe(2); // Only from active nation (id: 1), peace mode (id: 2) excluded
+      expect(result.slotCounts?.totalGetCash).toBe(6); // From active nation (id: 3) - recipients can receive in peace mode
+      expect(result.slotCounts?.totalSendTech).toBe(0);
+      expect(result.slotCounts?.totalGetTech).toBe(4); // From active nation (id: 1) - recipients can receive in peace mode
 
-      // Verify that the categorization functions were called with only active nations
+      // Verify that the categorization functions were called with all nations (including peace mode)
       expect(getNationsThatShouldSendCash).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({ id: 1, warStatus: 'Active' }),
+          expect.objectContaining({ id: 2, warStatus: 'Peace Mode' }),
           expect.objectContaining({ id: 3, warStatus: 'War' }),
         ])
       );
       expect(getNationsThatShouldGetCash).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({ id: 1, warStatus: 'Active' }),
-          expect.objectContaining({ id: 3, warStatus: 'War' }),
-        ])
-      );
-
-      // Verify that peace mode nation is not included in the filtered list
-      expect(getNationsThatShouldSendCash).not.toHaveBeenCalledWith(
-        expect.arrayContaining([
           expect.objectContaining({ id: 2, warStatus: 'Peace Mode' }),
+          expect.objectContaining({ id: 3, warStatus: 'War' }),
         ])
       );
     });
@@ -124,6 +131,10 @@ describe('AidService', () => {
           alliance: 'Test Alliance',
           allianceId: 123,
           warStatus: 'Peace Mode',
+          technology: '500',
+          infrastructure: '1500',
+          strength: '2000',
+          activity: 'Active',
           slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
           has_dra: false,
         },
@@ -134,12 +145,16 @@ describe('AidService', () => {
           alliance: 'Test Alliance',
           allianceId: 123,
           warStatus: 'Peace Mode',
+          technology: '800',
+          infrastructure: '1200',
+          strength: '2500',
+          activity: 'Active',
           slots: { sendCash: 0, sendTech: 0, getCash: 6, getTech: 0 },
           has_dra: false,
         },
       ];
 
-      const mockAidOffers = [];
+      const mockAidOffers: any[] = [];
 
       const { AllianceService } = await import('../allianceService.js');
       vi.mocked(AllianceService.getAllianceDataWithJsonPriority).mockResolvedValue({
@@ -163,12 +178,13 @@ describe('AidService', () => {
 
       const result = await AidService.getAidRecommendations(123);
 
-      // All slot counts should be 0 since no active nations
-      expect(result.slotCounts.totalSendCash).toBe(0);
-      expect(result.slotCounts.totalGetCash).toBe(0);
-      expect(result.slotCounts.totalSendTech).toBe(0);
-      expect(result.slotCounts.totalGetTech).toBe(0);
-      expect(result.slotCounts.totalUnassigned).toBe(0);
+      // Send slot counts should be 0 since all nations are in peace mode (can't send)
+      // But get slot counts should include all nations since recipients can receive in peace mode
+      expect(result.slotCounts?.totalSendCash).toBe(0);
+      expect(result.slotCounts?.totalGetCash).toBe(6); // Peace mode nations can receive
+      expect(result.slotCounts?.totalSendTech).toBe(0);
+      expect(result.slotCounts?.totalGetTech).toBe(4); // Peace mode nations can receive
+      expect(result.slotCounts?.totalUnassigned).toBe(0);
 
       // No recommendations should be generated
       expect(result.recommendations).toHaveLength(0);

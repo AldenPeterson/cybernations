@@ -26,6 +26,7 @@ export interface NationConfig {
   has_dra: boolean;
   notes?: string;
   slots: NationSlots;
+  warStatus?: string;
   current_stats?: {
     technology: string;
     infrastructure: string;
