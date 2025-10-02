@@ -43,7 +43,7 @@ export function categorizeNation(nation: any): CategorizedNation {
         has_dra: result.nation.has_dra,
         discord_handle: result.nation.discord_handle,
         slots: result.nation.slots,
-        warStatus: nation.warStatus || 'Peace Mode'
+        inWarMode: nation.inWarMode || false
       };
     }
   }
@@ -65,7 +65,7 @@ export function categorizeNation(nation: any): CategorizedNation {
     has_dra: jsonData.has_dra,
     discord_handle: undefined,
     slots: defaultSlots,
-    warStatus: nation.warStatus || 'Peace Mode'
+    inWarMode: nation.inWarMode || false
   };
 }
 

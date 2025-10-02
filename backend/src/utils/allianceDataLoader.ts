@@ -219,10 +219,10 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
     const { loadDataFromFilesWithUpdate } = await import('../services/dataProcessingService.js');
     const { nations: rawNations } = await loadDataFromFilesWithUpdate();
     
-    // Create a map of nation IDs to their warStatus from raw data
-    const warStatusMap = new Map<number, string>();
+    // Create a map of nation IDs to their war mode status from raw data
+    const warModeMap = new Map<number, boolean>();
     rawNations.forEach(nation => {
-      warStatusMap.set(nation.id, nation.warStatus);
+      warModeMap.set(nation.id, nation.inWarMode);
     });
 
     // Convert JSON data to the format expected by the frontend
@@ -239,7 +239,7 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
       activity: '', // Not available in JSON
       technology: nationData.current_stats?.technology || '0',
       infrastructure: nationData.current_stats?.infrastructure || '0',
-      warStatus: warStatusMap.get(parseInt(nationId)) || 'Peace Mode', // Get from raw data
+      inWarMode: warModeMap.get(parseInt(nationId)) || false, // Get from raw data
       has_dra: nationData.has_dra,
       slots: nationData.slots || {
         sendTech: 0,

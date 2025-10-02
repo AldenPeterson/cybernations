@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NationEditor from './NationEditor';
 import SlotCountsSummary from './SlotCountsSummary';
+import WarStatusBadge from './WarStatusBadge';
 
 interface Alliance {
   id: number;
@@ -35,7 +36,7 @@ interface NationAidSlots {
     nationName: string;
     strength: number;
     activity: string;
-    warStatus: string;
+    inWarMode: boolean;
   };
   aidSlots: AidSlot[];
 }
@@ -72,14 +73,14 @@ interface AidRecommendation {
     rulerName: string;
     discord_handle: string;
     strength: number;
-    warStatus?: string;
+    inWarMode: boolean;
   };
   recipient: {
     id: number;
     nationName: string;
     rulerName: string;
     strength: number;
-    warStatus?: string;
+    inWarMode: boolean;
   };
   type: string;
   priority: number;
@@ -350,24 +351,12 @@ const AllianceDashboard: React.FC = () => {
     return '#f8f9fa'; // Default light gray
   };
 
-  const getWarStatusColor = (warStatus: string): string => {
-    if (!warStatus) return '#28a745'; // Default to green for peace mode if warStatus is undefined/null
-    const warStatusLower = warStatus.toLowerCase();
-    if (warStatusLower.includes('war')) {
-      return '#dc3545'; // Red for war mode
-    } else {
-      return '#28a745'; // Green for peace mode
-    }
+  const getWarStatusColor = (inWarMode: boolean): string => {
+    return inWarMode ? '#dc3545' : '#28a745'; // Red for war mode, green for peace mode
   };
 
-  const getWarStatusIcon = (warStatus: string): string => {
-    if (!warStatus) return '🕊️'; // Default to dove for peace mode if warStatus is undefined/null
-    const warStatusLower = warStatus.toLowerCase();
-    if (warStatusLower.includes('war')) {
-      return '⚔️'; // Sword for war mode
-    } else {
-      return '🕊️'; // Dove for peace mode
-    }
+  const getWarStatusIcon = (inWarMode: boolean): string => {
+    return inWarMode ? '⚔️' : '🕊️'; // Sword for war mode, dove for peace mode
   };
 
   if (loading && alliances.length === 0) {
@@ -745,10 +734,10 @@ const AllianceDashboard: React.FC = () => {
                             </small>
                             <br />
                             <small style={{ 
-                              color: getWarStatusColor(nationAidSlots.nation.warStatus),
+                              color: getWarStatusColor(nationAidSlots.nation.inWarMode),
                               fontWeight: 'bold'
                             }}>
-                              {getWarStatusIcon(nationAidSlots.nation.warStatus)} {nationAidSlots.nation.warStatus}
+                              {getWarStatusIcon(nationAidSlots.nation.inWarMode)} {nationAidSlots.nation.inWarMode ? 'War Mode' : 'Peace Mode'}
                             </small>
                           </div>
                         </td>
@@ -957,18 +946,7 @@ const AllianceDashboard: React.FC = () => {
                               <br />
                               <small style={{ color: '#666' }}>{group.sender.rulerName}</small>
                               <br />
-                              {group.sender.warStatus === 'Peace Mode' && (
-                                <span style={{ 
-                                  fontSize: '10px', 
-                                  padding: '2px 6px', 
-                                  borderRadius: '3px',
-                                  backgroundColor: '#ffebee',
-                                  color: '#d32f2f',
-                                  fontWeight: 'bold'
-                                }}>
-                                  PEACE MODE
-                                </span>
-                              )}
+                              <WarStatusBadge inWarMode={group.sender.inWarMode} />
                               {/* Category badge removed */}
                             </div>
                           </td>
@@ -1024,19 +1002,7 @@ const AllianceDashboard: React.FC = () => {
                                     }}>
                                       {rec.recipient.rulerName} • {rec.reason}
                                     </span>
-                                    {rec.recipient.warStatus === 'Peace Mode' && (
-                                      <span style={{ 
-                                        fontSize: '9px', 
-                                        padding: '1px 4px', 
-                                        borderRadius: '2px',
-                                        backgroundColor: '#ffebee',
-                                        color: '#d32f2f',
-                                        fontWeight: 'bold',
-                                        marginLeft: '4px'
-                                      }}>
-                                        PEACE
-                                      </span>
-                                    )}
+                                    <WarStatusBadge inWarMode={rec.recipient.inWarMode} variant="compact" />
                                   </div>
                                   {/* Category badge removed */}
                                 </div>

@@ -35,7 +35,7 @@ describe('AidService', () => {
           nationName: 'Active Nation',
           alliance: 'Test Alliance',
           allianceId: 123,
-          warStatus: 'Active',
+          inWarMode: true,
           technology: '1000',
           infrastructure: '2000',
           strength: '3000',
@@ -49,7 +49,7 @@ describe('AidService', () => {
           nationName: 'Peace Nation',
           alliance: 'Test Alliance',
           allianceId: 123,
-          warStatus: 'Peace Mode',
+          inWarMode: false,
           technology: '500',
           infrastructure: '1500',
           strength: '2000',
@@ -63,7 +63,7 @@ describe('AidService', () => {
           nationName: 'Another Active Nation',
           alliance: 'Test Alliance',
           allianceId: 123,
-          warStatus: 'War',
+          inWarMode: true,
           technology: '800',
           infrastructure: '1200',
           strength: '2500',
@@ -103,21 +103,21 @@ describe('AidService', () => {
       expect(result.slotCounts?.totalSendCash).toBe(2); // Only from active nation (id: 1), peace mode (id: 2) excluded
       expect(result.slotCounts?.totalGetCash).toBe(6); // From active nation (id: 3) - recipients can receive in peace mode
       expect(result.slotCounts?.totalSendTech).toBe(0);
-      expect(result.slotCounts?.totalGetTech).toBe(4); // From active nation (id: 1) - recipients can receive in peace mode
+      expect(result.slotCounts?.totalGetTech).toBe(8); // From both active nation (id: 1, getTech: 4) and peace mode nation (id: 2, getTech: 4) - recipients can receive in peace mode
 
       // Verify that the categorization functions were called with all nations (including peace mode)
       expect(getNationsThatShouldSendCash).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ id: 1, warStatus: 'Active' }),
-          expect.objectContaining({ id: 2, warStatus: 'Peace Mode' }),
-          expect.objectContaining({ id: 3, warStatus: 'War' }),
+          expect.objectContaining({ id: 1, inWarMode: true }),
+          expect.objectContaining({ id: 2, inWarMode: false }),
+          expect.objectContaining({ id: 3, inWarMode: true }),
         ])
       );
       expect(getNationsThatShouldGetCash).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ id: 1, warStatus: 'Active' }),
-          expect.objectContaining({ id: 2, warStatus: 'Peace Mode' }),
-          expect.objectContaining({ id: 3, warStatus: 'War' }),
+          expect.objectContaining({ id: 1, inWarMode: true }),
+          expect.objectContaining({ id: 2, inWarMode: false }),
+          expect.objectContaining({ id: 3, inWarMode: true }),
         ])
       );
     });
@@ -130,7 +130,7 @@ describe('AidService', () => {
           nationName: 'Peace Nation 1',
           alliance: 'Test Alliance',
           allianceId: 123,
-          warStatus: 'Peace Mode',
+          inWarMode: false,
           technology: '500',
           infrastructure: '1500',
           strength: '2000',
@@ -144,7 +144,7 @@ describe('AidService', () => {
           nationName: 'Peace Nation 2',
           alliance: 'Test Alliance',
           allianceId: 123,
-          warStatus: 'Peace Mode',
+          inWarMode: false,
           technology: '800',
           infrastructure: '1200',
           strength: '2500',
@@ -184,7 +184,7 @@ describe('AidService', () => {
       expect(result.slotCounts?.totalGetCash).toBe(6); // Peace mode nations can receive
       expect(result.slotCounts?.totalSendTech).toBe(0);
       expect(result.slotCounts?.totalGetTech).toBe(4); // Peace mode nations can receive
-      expect(result.slotCounts?.totalUnassigned).toBe(0);
+      expect(result.slotCounts?.totalUnassigned).toBe(-2); // Both nations have more assigned slots than total possible (6 > 5 each)
 
       // No recommendations should be generated
       expect(result.recommendations).toHaveLength(0);
@@ -192,7 +192,7 @@ describe('AidService', () => {
   });
 
   describe('getCategorizedNations', () => {
-    it('should filter out peace mode nations from categorized nations', async () => {
+    it('should include both war mode and peace mode nations for UI display', async () => {
       const mockNations = [
         {
           id: 1,
@@ -200,7 +200,7 @@ describe('AidService', () => {
           nationName: 'Active Nation',
           alliance: 'Test Alliance',
           allianceId: 123,
-          warStatus: 'Active',
+          inWarMode: true,
           slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
           has_dra: false,
         },
@@ -210,7 +210,7 @@ describe('AidService', () => {
           nationName: 'Peace Nation',
           alliance: 'Test Alliance',
           allianceId: 123,
-          warStatus: 'Peace Mode',
+          inWarMode: false,
           slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
           has_dra: false,
         },
@@ -225,19 +225,31 @@ describe('AidService', () => {
 
       const result = await AidService.getCategorizedNations(123);
 
-      // Should only return the active nation
-      expect(result).toHaveLength(1);
+      // Should return both nations (peace mode nations are included for UI display)
+      expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         id: 1,
         rulerName: 'Active Ruler',
         nationName: 'Active Nation',
         technology: undefined,
         infrastructure: undefined,
+        inWarMode: true,
         slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
       });
 
-      // Peace mode nation should not be included
-      expect(result.find(n => n.id === 2)).toBeUndefined();
+      expect(result[1]).toEqual({
+        id: 2,
+        rulerName: 'Peace Ruler',
+        nationName: 'Peace Nation',
+        technology: undefined,
+        infrastructure: undefined,
+        inWarMode: false,
+        slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
+      });
+
+      // Both nations should be included for UI display
+      expect(result.find(n => n.id === 1)).toBeDefined();
+      expect(result.find(n => n.id === 2)).toBeDefined();
     });
   });
 });

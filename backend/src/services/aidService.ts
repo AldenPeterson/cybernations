@@ -236,11 +236,12 @@ export class AidService {
     const nationsThatShouldSendCash = getNationsThatShouldSendCash(activeNations);
     
     // Filter out peace mode nations from sender lists only (recipients can receive in peace mode)
+    // Sending nations must be in war mode, receiving nations can be in either mode
     const activeNationsThatShouldSendCash = nationsThatShouldSendCash.filter(nation => 
-      nation.warStatus !== 'Peace Mode'
+      nation.inWarMode
     );
     const activeNationsThatShouldSendTechnology = nationsThatShouldSendTechnology.filter(nation => 
-      nation.warStatus !== 'Peace Mode'
+      nation.inWarMode
     );
 
     // Priority 0: Re-establish expired offers based on slot availability
@@ -249,7 +250,7 @@ export class AidService {
         const sender = activeNations.find(n => n.id === offer.declaringId);
         const recipient = activeNations.find(n => n.id === offer.receivingId);
         
-        if (sender && recipient && sender.warStatus !== 'Peace Mode') {
+        if (sender && recipient && sender.inWarMode) {
           const pair = `${Math.min(offer.declaringId, offer.receivingId)}-${Math.max(offer.declaringId, offer.receivingId)}`;
           
           // Re-establish expired cash aid
@@ -265,7 +266,7 @@ export class AidService {
                 discord_handle: sender.discord_handle,
                 slots: sender.slots,
                 currentAidCount: nationAidCounts.get(sender.id) || 0,
-                warStatus: sender.warStatus
+                inWarMode: sender.inWarMode
               },
               recipient: {
                 id: recipient.id,
@@ -273,7 +274,7 @@ export class AidService {
                 nationName: recipient.nationName,
                 slots: recipient.slots,
                 currentAidCount: nationAidCounts.get(recipient.id) || 0,
-                warStatus: recipient.warStatus
+                inWarMode: recipient.inWarMode
               },
               reason: `Re-establish expired cash aid: ${sender.nationName} → ${recipient.nationName}`,
               previousOffer: {
@@ -299,7 +300,7 @@ export class AidService {
                 discord_handle: sender.discord_handle,
                 slots: sender.slots,
                 currentAidCount: nationAidCounts.get(sender.id) || 0,
-                warStatus: sender.warStatus
+                inWarMode: sender.inWarMode
               },
               recipient: {
                 id: recipient.id,
@@ -307,7 +308,7 @@ export class AidService {
                 nationName: recipient.nationName,
                 slots: recipient.slots,
                 currentAidCount: nationAidCounts.get(recipient.id) || 0,
-                warStatus: recipient.warStatus
+                inWarMode: recipient.inWarMode
               },
               reason: `Re-establish expired tech aid: ${sender.nationName} → ${recipient.nationName}`,
               previousOffer: {
@@ -339,7 +340,7 @@ export class AidService {
               discord_handle: sender.discord_handle,
               slots: sender.slots,
               currentAidCount: nationAidCounts.get(sender.id) || 0,
-              warStatus: sender.warStatus
+              inWarMode: sender.inWarMode
             },
             recipient: {
               id: recipient.id,
@@ -347,7 +348,7 @@ export class AidService {
               nationName: recipient.nationName,
               slots: recipient.slots,
               currentAidCount: nationAidCounts.get(recipient.id) || 0,
-              warStatus: recipient.warStatus
+              inWarMode: recipient.inWarMode
             },
             reason: `New cash aid: ${sender.nationName} → ${recipient.nationName}`
           });
@@ -372,7 +373,7 @@ export class AidService {
               discord_handle: sender.discord_handle,
               slots: sender.slots,
               currentAidCount: nationAidCounts.get(sender.id) || 0,
-              warStatus: sender.warStatus
+              inWarMode: sender.inWarMode
             },
             recipient: {
               id: recipient.id,
@@ -380,7 +381,7 @@ export class AidService {
               nationName: recipient.nationName,
               slots: recipient.slots,
               currentAidCount: nationAidCounts.get(recipient.id) || 0,
-              warStatus: recipient.warStatus
+              inWarMode: recipient.inWarMode
             },
             reason: `New tech aid: ${sender.nationName} → ${recipient.nationName}`
           });
@@ -397,9 +398,9 @@ export class AidService {
       totalGetCash: categorizedNations.reduce((sum, nation) => sum + nation.slots.getCash, 0),
       totalGetTech: categorizedNations.reduce((sum, nation) => sum + nation.slots.getTech, 0),
       totalSendCash: categorizedNations.reduce((sum, nation) => 
-        nation.warStatus !== 'Peace Mode' ? sum + nation.slots.sendCash : sum, 0),
+        nation.inWarMode ? sum + nation.slots.sendCash : sum, 0),
       totalSendTech: categorizedNations.reduce((sum, nation) => 
-        nation.warStatus !== 'Peace Mode' ? sum + nation.slots.sendTech : sum, 0),
+        nation.inWarMode ? sum + nation.slots.sendTech : sum, 0),
       totalUnassigned: categorizedNations.reduce((sum, nation) => {
         const totalPossibleSlots = nation.has_dra ? 6 : 5;
         const assignedSlots = nation.slots.getCash + nation.slots.getTech + 
@@ -435,7 +436,7 @@ export class AidService {
       nationName: nation.nationName,
       technology: nation.technology,
       infrastructure: nation.infrastructure,
-      warStatus: nation.warStatus,
+      inWarMode: nation.inWarMode,
       slots: nation.slots
     }));
   }

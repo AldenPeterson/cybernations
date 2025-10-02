@@ -1,5 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import csv from 'csv-parser';
+import { createReadStream } from 'fs';
 import { ensureRecentFiles } from '../utils/dataDownloader.js';
 import { Nation } from '../models/Nation.js';
 import { AidOffer } from '../models/AidOffer.js';
@@ -58,132 +60,153 @@ function decodeHtmlEntities(str: string): string {
   });
 }
 
-export function parseNationStats(filePath: string): Nation[] {
-  try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').filter(line => line.trim());
-    
-    if (lines.length < 2) {
-      throw new Error('Invalid nation stats file format');
-    }
-
-    const header = lines[0].split('|');
+export function parseNationStats(filePath: string): Promise<Nation[]> {
+  return new Promise((resolve, reject) => {
     const nations: Nation[] = [];
+    let headerColumns: string[] = [];
+    let isFirstRow = true;
 
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split('|');
-      if (values.length >= header.length) {
+    createReadStream(filePath)
+      .pipe(csv({
+        separator: '|'
+      }))
+      .on('headers', (headers: string[]) => {
+        headerColumns = headers;
+      })
+      .on('data', (row: any) => {
+        if (isFirstRow) {
+          // Skip header row
+          isFirstRow = false;
+          return;
+        }
+
+        // Use row object directly with column names as keys
         const nation: Nation = {
-          id: parseInt(values[0]) || 0,
-          rulerName: decodeHtmlEntities(values[1] || ''),
-          nationName: decodeHtmlEntities(values[2] || ''),
-          alliance: decodeHtmlEntities(values[3] || ''),
-          allianceId: parseInt(values[4]) || 0,
-          team: values[9] || '',
-          strength: parseFloat(values[18]?.replace(/,/g, '')) || 0,
-          activity: values[24] || '',
-          technology: values[11] || '0',
-          infrastructure: values[12] || '0',
-          nuclearWeapons: parseInt(values[23]) || 0,
-          warStatus: values[14] || 'Peace Mode',
-          attackingCasualties: parseInt(values[35]?.replace(/,/g, '')) || 0,
-          defensiveCasualties: parseInt(values[36]?.replace(/,/g, '')) || 0
+          id: parseInt(row['Nation ID'] as string) || 0,
+          rulerName: decodeHtmlEntities(row['Ruler Name'] as string || ''),
+          nationName: decodeHtmlEntities(row['Nation Name'] as string || ''),
+          alliance: decodeHtmlEntities(row['Alliance'] as string || ''),
+          allianceId: parseInt(row['Alliance ID'] as string) || 0,
+          team: row['Team'] as string || '',
+          strength: parseFloat((row['Strength'] as string)?.replace(/,/g, '')) || 0,
+          activity: row['Activity'] as string || '',
+          technology: row['Technology'] as string || '0',
+          infrastructure: row['Infrastructure'] as string || '0',
+          nuclearWeapons: parseInt(row['Nukes'] as string) || 0,
+          inWarMode: row['War Status'] ? (row['War Status'] as string).toLowerCase().includes('war') : false,
+          attackingCasualties: parseInt((row['Attacking Casualties'] as string)?.replace(/,/g, '')) || 0,
+          defensiveCasualties: parseInt((row['Defensive Casualties'] as string)?.replace(/,/g, '')) || 0
         };
         nations.push(nation);
-      }
-    }
-
-    return nations;
-  } catch (error) {
-    console.error('Error parsing nation stats:', error);
-    return [];
-  }
+      })
+      .on('end', () => {
+        resolve(nations);
+      })
+      .on('error', (error) => {
+        console.error('Error parsing nation stats:', error);
+        reject(error);
+      });
+  });
 }
 
-export function parseAidStats(filePath: string): AidOffer[] {
-  try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').filter(line => line.trim());
-    
-    if (lines.length < 2) {
-      throw new Error('Invalid aid stats file format');
-    }
-
-    const header = lines[0].split('|');
+export function parseAidStats(filePath: string): Promise<AidOffer[]> {
+  return new Promise((resolve, reject) => {
     const aidOffers: AidOffer[] = [];
+    let headerColumns: string[] = [];
+    let isFirstRow = true;
 
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split('|');
-      if (values.length >= header.length) {
+    createReadStream(filePath)
+      .pipe(csv({
+        separator: '|'
+      }))
+      .on('headers', (headers: string[]) => {
+        headerColumns = headers;
+      })
+      .on('data', (row: any) => {
+        if (isFirstRow) {
+          // Skip header row
+          isFirstRow = false;
+          return;
+        }
+
+        // Use row object directly with column names as keys
         const aidOffer: AidOffer = {
-          aidId: parseInt(values[18]) || 0, // Aid ID is the last column
-          declaringId: parseInt(values[0]) || 0, // Declaring ID is first
-          declaringRuler: decodeHtmlEntities(values[1] || ''),
-          declaringNation: decodeHtmlEntities(values[2] || ''),
-          declaringAlliance: decodeHtmlEntities(values[3] || ''),
-          declaringAllianceId: parseInt(values[4]) || 0,
-          receivingId: parseInt(values[6]) || 0,
-          receivingRuler: decodeHtmlEntities(values[7] || ''),
-          receivingNation: decodeHtmlEntities(values[8] || ''),
-          receivingAlliance: decodeHtmlEntities(values[9] || ''),
-          receivingAllianceId: parseInt(values[10]) || 0,
-          status: values[12] || '',
-          money: parseFloat(values[13]?.replace(/,/g, '')) || 0,
-          technology: parseFloat(values[14]?.replace(/,/g, '')) || 0,
-          soldiers: parseFloat(values[15]?.replace(/,/g, '')) || 0,
-          date: values[16] || '',
-          reason: values[17] || ''
+          aidId: parseInt(row['Aid ID'] as string) || 0,
+          declaringId: parseInt(row['Declaring ID'] as string) || 0,
+          declaringRuler: decodeHtmlEntities(row['Declaring Ruler'] as string || ''),
+          declaringNation: decodeHtmlEntities(row['Declaring Nation'] as string || ''),
+          declaringAlliance: decodeHtmlEntities(row['Declaring Alliance'] as string || ''),
+          declaringAllianceId: parseInt(row['Declaring Alliance ID'] as string) || 0,
+          receivingId: parseInt(row['Receiving ID'] as string) || 0,
+          receivingRuler: decodeHtmlEntities(row['Receiving Ruler'] as string || ''),
+          receivingNation: decodeHtmlEntities(row['Receiving Nation'] as string || ''),
+          receivingAlliance: decodeHtmlEntities(row['Receiving Alliance'] as string || ''),
+          receivingAllianceId: parseInt(row['Receiving Alliance ID'] as string) || 0,
+          status: row['Status'] as string || '',
+          money: parseFloat((row['Money'] as string)?.replace(/,/g, '')) || 0,
+          technology: parseFloat((row['Technology'] as string)?.replace(/,/g, '')) || 0,
+          soldiers: parseFloat((row['Soldiers'] as string)?.replace(/,/g, '')) || 0,
+          date: row['Date'] as string || '',
+          reason: row['Reason'] as string || ''
         };
         aidOffers.push(aidOffer);
-      }
-    }
-
-    return aidOffers;
-  } catch (error) {
-    console.error('Error parsing aid stats:', error);
-    return [];
-  }
+      })
+      .on('end', () => {
+        resolve(aidOffers);
+      })
+      .on('error', (error) => {
+        console.error('Error parsing aid stats:', error);
+        reject(error);
+      });
+  });
 }
 
-export function parseWarStats(filePath: string): any[] {
-  try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').filter(line => line.trim());
-    
-    if (lines.length < 2) {
-      throw new Error('Invalid war stats file format');
-    }
-
-    const header = lines[0].split('|');
+export function parseWarStats(filePath: string): Promise<any[]> {
+  return new Promise((resolve, reject) => {
     const wars: any[] = [];
+    let headerColumns: string[] = [];
+    let isFirstRow = true;
 
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split('|');
-      if (values.length >= header.length) {
+    createReadStream(filePath)
+      .pipe(csv({
+        separator: '|'
+      }))
+      .on('headers', (headers: string[]) => {
+        headerColumns = headers;
+      })
+      .on('data', (row: any) => {
+        if (isFirstRow) {
+          // Skip header row
+          isFirstRow = false;
+          return;
+        }
+
+        // Use row object directly with column names as keys
         const war = {
-          warId: parseInt(values[0]) || 0,
-          declaringId: parseInt(values[1]) || 0,
-          declaringRuler: decodeHtmlEntities(values[2] || ''),
-          declaringNation: decodeHtmlEntities(values[3] || ''),
-          declaringAlliance: decodeHtmlEntities(values[4] || ''),
-          declaringAllianceId: parseInt(values[5]) || 0,
-          receivingId: parseInt(values[6]) || 0,
-          receivingRuler: decodeHtmlEntities(values[7] || ''),
-          receivingNation: decodeHtmlEntities(values[8] || ''),
-          receivingAlliance: decodeHtmlEntities(values[9] || ''),
-          receivingAllianceId: parseInt(values[10]) || 0,
-          status: values[11] || '',
-          date: values[12] || ''
+          warId: parseInt(row['War ID'] as string) || 0,
+          declaringId: parseInt(row['Declaring ID'] as string) || 0,
+          declaringRuler: decodeHtmlEntities(row['Declaring Ruler'] as string || ''),
+          declaringNation: decodeHtmlEntities(row['Declaring Nation'] as string || ''),
+          declaringAlliance: decodeHtmlEntities(row['Declaring Alliance'] as string || ''),
+          declaringAllianceId: parseInt(row['Declaring Alliance ID'] as string) || 0,
+          receivingId: parseInt(row['Receiving ID'] as string) || 0,
+          receivingRuler: decodeHtmlEntities(row['Receiving Ruler'] as string || ''),
+          receivingNation: decodeHtmlEntities(row['Receiving Nation'] as string || ''),
+          receivingAlliance: decodeHtmlEntities(row['Receiving Alliance'] as string || ''),
+          receivingAllianceId: parseInt(row['Receiving Alliance ID'] as string) || 0,
+          status: row['War Status'] as string || '',
+          date: row['Begin Date'] as string || ''
         };
         wars.push(war);
-      }
-    }
-
-    return wars;
-  } catch (error) {
-    console.error('Error parsing war stats:', error);
-    return [];
-  }
+      })
+      .on('end', () => {
+        resolve(wars);
+      })
+      .on('error', (error) => {
+        console.error('Error parsing war stats:', error);
+        reject(error);
+      });
+  });
 }
 
 export async function loadDataFromFiles(): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {
@@ -209,13 +232,13 @@ export async function loadDataFromFiles(): Promise<{ nations: Nation[]; aidOffer
       const filePath = path.join(dirPath, file);
       
       if (file.includes('Nation_Stats')) {
-        const nationData = parseNationStats(filePath);
+        const nationData = await parseNationStats(filePath);
         nations.push(...nationData);
       } else if (file.includes('Aid_Stats')) {
-        const aidData = parseAidStats(filePath);
+        const aidData = await parseAidStats(filePath);
         aidOffers.push(...aidData);
       } else if (file.includes('War_Stats')) {
-        const warData = parseWarStats(filePath);
+        const warData = await parseWarStats(filePath);
         wars.push(...warData);
       }
     }

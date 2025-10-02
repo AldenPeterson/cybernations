@@ -60,7 +60,7 @@
       "ruler_name": "LiquidMercury",
       "nation_name": "FallenSeraphim",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -69,9 +69,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "72,435.74",
+        "technology": "72,603.87",
         "infrastructure": "26,732.89",
-        "strength": "488082.153"
+        "strength": "488840.024"
       }
     },
     "142120": {
@@ -124,8 +124,8 @@
       },
       "current_stats": {
         "technology": "7,899.25",
-        "infrastructure": "2,356.80",
-        "strength": "49330.212"
+        "infrastructure": "2,269.05",
+        "strength": "46313.404"
       }
     },
     "151268": {
@@ -194,9 +194,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "36,140.94",
+        "technology": "36,336.93",
         "infrastructure": "11,611.95",
-        "strength": "255076.12"
+        "strength": "255866.383"
       },
       "notes": ""
     },
@@ -284,9 +284,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "4,307.83",
-        "infrastructure": "10,886.07",
-        "strength": "56799.771"
+        "technology": "4,314.49",
+        "infrastructure": "10,748.19",
+        "strength": "65231.992"
       },
       "notes": ""
     },
@@ -321,9 +321,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "315.37",
-        "infrastructure": "5,164.82",
-        "strength": "22921.23"
+        "technology": "326.82",
+        "infrastructure": "4,965.15",
+        "strength": "22294.125"
       }
     },
     "374321": {
@@ -340,7 +340,7 @@
       "current_stats": {
         "technology": "41,276.38",
         "infrastructure": "24,499.99",
-        "strength": "348095.586"
+        "strength": "347935.586"
       },
       "notes": ""
     },
@@ -375,9 +375,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "69.25",
-        "infrastructure": "6,373.48",
-        "strength": "23267.83"
+        "technology": "67.72",
+        "infrastructure": "6,347.57",
+        "strength": "23045.916"
       }
     },
     "433854": {
@@ -393,9 +393,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "44.76",
+        "technology": "1.26",
         "infrastructure": "4,217.43",
-        "strength": "14299.289"
+        "strength": "12911.789"
       }
     },
     "445021": {
@@ -411,9 +411,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "242.67",
-        "infrastructure": "8,512.52",
-        "strength": "31899.637"
+        "technology": "232.03",
+        "infrastructure": "8,431.63",
+        "strength": "31485.699"
       }
     },
     "446109": {
@@ -429,9 +429,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "1,306.15",
-        "infrastructure": "6,301.25",
-        "strength": "37118.948"
+        "technology": "1,295.39",
+        "infrastructure": "6,258.21",
+        "strength": "44296.919"
       }
     },
     "470323": {
@@ -591,9 +591,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "13,066.85",
-        "infrastructure": "5,218.00",
-        "strength": "84922.184"
+        "technology": "12,793.87",
+        "infrastructure": "3,906.80",
+        "strength": "78252.748"
       }
     },
     "582974": {
@@ -700,7 +700,7 @@
       "current_stats": {
         "technology": "13,862.28",
         "infrastructure": "16,271.96",
-        "strength": "156391.889"
+        "strength": "157186.889"
       },
       "notes": "DS"
     },
@@ -717,9 +717,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "646.75",
-        "infrastructure": "8,302.70",
-        "strength": "37332.352"
+        "technology": "628.61",
+        "infrastructure": "8,215.92",
+        "strength": "36744.552"
       }
     },
     "635159": {
@@ -896,9 +896,9 @@
         "getCash": 5
       },
       "current_stats": {
-        "technology": "75.80",
-        "infrastructure": "859.60",
-        "strength": "4103.392"
+        "technology": "63.47",
+        "infrastructure": "746.20",
+        "strength": "3111.744"
       },
       "notes": ""
     },
@@ -914,9 +914,9 @@
         "getCash": 5
       },
       "current_stats": {
-        "technology": "196.49",
-        "infrastructure": "1,564.26",
-        "strength": "8428.329"
+        "technology": "196.22",
+        "infrastructure": "1,928.05",
+        "strength": "9487.178"
       },
       "notes": ""
     }
