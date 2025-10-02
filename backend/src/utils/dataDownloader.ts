@@ -20,7 +20,7 @@ function getDownloadNumberSlug(file_flag: string): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1; // No padding
-  const day = String(now.getDate()).padStart(2, '0');
+  const day = String(now.getDate());
   
   // Convert to Central Time (UTC-6 or UTC-5 depending on DST)
   // For simplicity, we'll use a fixed offset of UTC-6 (CST)
@@ -62,7 +62,7 @@ function downloadFile(url: string, filePath: string): Promise<void> {
     
     https.get(url, (response) => {
       if (response.statusCode !== 200) {
-        reject(new Error(`Failed to download file: ${response.statusCode}`));
+        reject(new Error(`Failed to download file from ${url}: ${response.statusCode}`));
         return;
       }
       
@@ -172,7 +172,7 @@ export async function ensureRecentFiles(): Promise<void> {
       console.log(`${fileType} updated successfully`);
       anyFilesUpdated = true;
     } catch (error) {
-      console.error(`Error updating ${fileType}:`, error);
+      console.error(`Error updating ${fileType} :`, error);
       // Continue with other files even if one fails
     }
   }

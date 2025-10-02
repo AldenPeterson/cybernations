@@ -96,6 +96,11 @@ export class AidService {
     // If using raw data, need to categorize them
     const categorizedNations = useJsonData ? nations : categorizeNations(nations);
     
+    // Filter out nations in peace mode - they cannot send or receive aid
+    const activeNations = categorizedNations.filter(nation => 
+      nation.warStatus !== 'Peace Mode'
+    );
+    
     // Get existing aid offers (exclude expired)
     const existingOffers = aidOffers.filter(offer => 
       offer.status !== 'Expired' && 
@@ -157,7 +162,7 @@ export class AidService {
 
     // Total slot capacity by nation
     const totalSlotsByNation = new Map<number, number>();
-    categorizedNations.forEach(n => {
+    activeNations.forEach(n => {
       const total = n.slots.getCash + n.slots.getTech + n.slots.sendCash + n.slots.sendTech;
       totalSlotsByNation.set(n.id, total);
     });
@@ -227,16 +232,16 @@ export class AidService {
     const recommendations: any[] = [];
 
     // Get nations by aid direction
-    const nationsThatShouldGetCash = getNationsThatShouldGetCash(categorizedNations);
-    const nationsThatShouldSendTechnology = getNationsThatShouldSendTechnology(categorizedNations);
-    const nationsThatShouldGetTechnology = getNationsThatShouldGetTechnology(categorizedNations);
-    const nationsThatShouldSendCash = getNationsThatShouldSendCash(categorizedNations);
+    const nationsThatShouldGetCash = getNationsThatShouldGetCash(activeNations);
+    const nationsThatShouldSendTechnology = getNationsThatShouldSendTechnology(activeNations);
+    const nationsThatShouldGetTechnology = getNationsThatShouldGetTechnology(activeNations);
+    const nationsThatShouldSendCash = getNationsThatShouldSendCash(activeNations);
 
     // Priority 0: Re-establish expired offers based on slot availability
     expiredOffers.forEach(offer => {
       if (offer.declaringAllianceId === allianceId) {
-        const sender = categorizedNations.find(n => n.id === offer.declaringId);
-        const recipient = categorizedNations.find(n => n.id === offer.receivingId);
+        const sender = activeNations.find(n => n.id === offer.declaringId);
+        const recipient = activeNations.find(n => n.id === offer.receivingId);
         
         if (sender && recipient) {
           const pair = `${Math.min(offer.declaringId, offer.receivingId)}-${Math.max(offer.declaringId, offer.receivingId)}`;
@@ -375,11 +380,11 @@ export class AidService {
 
     // Calculate total slot counts
     const slotCounts = {
-      totalGetCash: categorizedNations.reduce((sum, nation) => sum + nation.slots.getCash, 0),
-      totalGetTech: categorizedNations.reduce((sum, nation) => sum + nation.slots.getTech, 0),
-      totalSendCash: categorizedNations.reduce((sum, nation) => sum + nation.slots.sendCash, 0),
-      totalSendTech: categorizedNations.reduce((sum, nation) => sum + nation.slots.sendTech, 0),
-      totalUnassigned: categorizedNations.reduce((sum, nation) => {
+      totalGetCash: activeNations.reduce((sum, nation) => sum + nation.slots.getCash, 0),
+      totalGetTech: activeNations.reduce((sum, nation) => sum + nation.slots.getTech, 0),
+      totalSendCash: activeNations.reduce((sum, nation) => sum + nation.slots.sendCash, 0),
+      totalSendTech: activeNations.reduce((sum, nation) => sum + nation.slots.sendTech, 0),
+      totalUnassigned: activeNations.reduce((sum, nation) => {
         const totalPossibleSlots = nation.has_dra ? 6 : 5;
         const assignedSlots = nation.slots.getCash + nation.slots.getTech + 
                              nation.slots.sendCash + nation.slots.sendTech;
@@ -407,7 +412,12 @@ export class AidService {
     // If using raw data, need to categorize them
     const categorizedNations = useJsonData ? nations : categorizeNations(nations);
     
-    return categorizedNations.map(nation => ({
+    // Filter out nations in peace mode - they cannot send or receive aid
+    const activeNations = categorizedNations.filter(nation => 
+      nation.warStatus !== 'Peace Mode'
+    );
+    
+    return activeNations.map(nation => ({
       id: nation.id,
       rulerName: nation.rulerName,
       nationName: nation.nationName,
