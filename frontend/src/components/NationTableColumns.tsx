@@ -10,31 +10,10 @@ import {
   SaveButton,
 } from './EditableCells';
 import { tableStyles } from '../styles/tableStyles';
+import { type NationConfig, type NationSlots } from '../types/nation';
 
-export interface NationSlots {
-  sendTech: number;
-  sendCash: number;
-  getTech: number;
-  getCash: number;
-  send_priority: number;
-  receive_priority: number;
-}
-
-export interface NationConfig {
-  nation_id: number;
-  ruler_name: string;
-  nation_name: string;
-  discord_handle: string;
-  has_dra: boolean;
-  notes?: string;
-  slots: NationSlots;
-  inWarMode: boolean;
-  current_stats?: {
-    technology: string;
-    infrastructure: string;
-    strength: string;
-  };
-}
+// Re-export types for backward compatibility
+export type { NationConfig, NationSlots };
 
 interface ColumnProps {
   handleFieldChange: (nationId: number, field: string, value: any) => void;

@@ -8,18 +8,27 @@ import {
   type SortingState,
   type ColumnFiltersState,
 } from '@tanstack/react-table';
-import { createNationTableColumns, type NationConfig } from './NationTableColumns';
+import { createNationTableColumns } from './NationTableColumns';
+import { type NationConfig } from '../types/nation';
 import { tableStyles, tableCSS, combineStyles, getTextAlignment, getHeaderContentAlignment } from '../styles/tableStyles';
 import SlotCountsSummary from './SlotCountsSummary';
+import { useNationForm } from '../hooks/useNationForm';
 
 interface NationEditorProps {
   allianceId: number;
 }
 
 export default function NationEditor({ allianceId }: NationEditorProps) {
-  const [nations, setNations] = useState<NationConfig[]>([]);
-  const [originalNations, setOriginalNations] = useState<NationConfig[]>([]);
-  const [localChanges, setLocalChanges] = useState<Map<number, Partial<NationConfig>>>(new Map());
+  const {
+    nations,
+    setNationsData,
+    updateNationField,
+    updateNationSlot,
+    hasChanges,
+    getChangedFieldsForNation,
+    markNationAsSaved,
+  } = useNationForm();
+  
   const [allianceExists, setAllianceExists] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
@@ -80,8 +89,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
         return strengthB - strengthA;
       });
       
-      setNations(sortedNations);
-      setOriginalNations(sortedNations);
+      setNationsData(sortedNations);
     } catch (err) {
       console.error('Error fetching nations config:', err);
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
@@ -111,32 +119,8 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
         throw new Error(data.error || 'Failed to update nation');
       }
       
-      // Update the local state with the complete updated nation data from backend
-      if (data.nation) {
-        setNations(prevNations => 
-          prevNations.map(nation => 
-            nation.nation_id === nationId 
-              ? { ...nation, ...data.nation }
-              : nation
-          )
-        );
-        
-        // Update the original nations state to reflect the saved changes
-        setOriginalNations(prevOriginal => 
-          prevOriginal.map(nation => 
-            nation.nation_id === nationId 
-              ? { ...nation, ...data.nation }
-              : nation
-          )
-        );
-      }
-      
-      // Clear local changes for this nation
-      setLocalChanges(prev => {
-        const newChanges = new Map(prev);
-        newChanges.delete(nationId);
-        return newChanges;
-      });
+      // Mark the nation as saved (this updates the original data)
+      markNationAsSaved(nationId);
       
       // Show success feedback
       console.log('Nation updated successfully');
@@ -149,179 +133,32 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
   };
 
   const handleFieldChange = (nationId: number, field: string, value: any) => {
-    // Update local changes immediately for save button state
-    setLocalChanges(prev => {
-      const newChanges = new Map(prev);
-      const existingChanges = newChanges.get(nationId) || {};
-      newChanges.set(nationId, { ...existingChanges, [field]: value });
-      return newChanges;
-    });
-
-    // Update the main state (this will be debounced by the input components)
-    setNations(prevNations => 
-      prevNations.map(nation => 
-        nation.nation_id === nationId 
-          ? { ...nation, [field]: value }
-          : nation
-      )
-    );
+    updateNationField(nationId, field, value);
   };
 
   const handleSlotChange = (nationId: number, slotType: keyof NationConfig['slots'], value: number) => {
-    // Update local changes immediately for save button state
-    setLocalChanges(prev => {
-      const newChanges = new Map(prev);
-      const existingChanges = newChanges.get(nationId) || {};
-      const existingSlots = existingChanges.slots || {};
-      
-      // Only track the specific slot field that changed
-      newChanges.set(nationId, { 
-        ...existingChanges, 
-        slots: { 
-          ...existingSlots, 
-          [slotType]: value 
-        } as any
-      });
-      return newChanges;
-    });
-
-    // Update the main state
-    setNations(prevNations => 
-      prevNations.map(nation => 
-        nation.nation_id === nationId 
-          ? { 
-              ...nation, 
-              slots: { 
-                ...nation.slots, 
-                [slotType]: value 
-              } 
-            }
-          : nation
-      )
-    );
+    updateNationSlot(nationId, slotType, value);
   };
 
   const saveNation = (nationId: number) => {
-    const nation = nations.find(n => n.nation_id === nationId);
-    const originalNation = originalNations.find(n => n.nation_id === nationId);
-    const localChange = localChanges.get(nationId);
+    // Check for validation errors first (blocks saving)
+    if (hasValidationErrors(nationId)) {
+      return;
+    }
     
-    if (nation && originalNation) {
-      // Check for validation errors first (blocks saving)
-      if (hasValidationErrors(nationId)) {
-        return;
-      }
-      
-      const updates: Partial<NationConfig> = {};
-      
-      // Use local changes if available, otherwise fall back to main state
-      const currentNation = localChange ? { ...nation, ...localChange } : nation;
-      
-      // Only include fields that have actually changed
-      if (currentNation.discord_handle !== originalNation.discord_handle) {
-        updates.discord_handle = currentNation.discord_handle;
-      }
-      
-      if (currentNation.has_dra !== originalNation.has_dra) {
-        updates.has_dra = currentNation.has_dra;
-      }
-      
-      if (currentNation.notes !== originalNation.notes) {
-        updates.notes = currentNation.notes;
-      }
-      
-      // Check if slots have changed (including priority fields)
-      const slotsChanged = currentNation.slots.sendTech !== originalNation.slots.sendTech ||
-                          currentNation.slots.sendCash !== originalNation.slots.sendCash ||
-                          currentNation.slots.getTech !== originalNation.slots.getTech ||
-                          currentNation.slots.getCash !== originalNation.slots.getCash ||
-                          currentNation.slots.send_priority !== originalNation.slots.send_priority ||
-                          currentNation.slots.receive_priority !== originalNation.slots.receive_priority;
-      
-      if (slotsChanged) {
-        // Only include the slots that have actually changed from localChanges
-        if (localChange && localChange.slots) {
-          updates.slots = localChange.slots;
-        } else {
-          // Filter out undefined priority values when sending full slots
-          const filteredSlots: any = {};
-          if (currentNation.slots.sendTech !== undefined) filteredSlots.sendTech = currentNation.slots.sendTech;
-          if (currentNation.slots.sendCash !== undefined) filteredSlots.sendCash = currentNation.slots.sendCash;
-          if (currentNation.slots.getTech !== undefined) filteredSlots.getTech = currentNation.slots.getTech;
-          if (currentNation.slots.getCash !== undefined) filteredSlots.getCash = currentNation.slots.getCash;
-          if (currentNation.slots.send_priority !== undefined) filteredSlots.send_priority = currentNation.slots.send_priority;
-          if (currentNation.slots.receive_priority !== undefined) filteredSlots.receive_priority = currentNation.slots.receive_priority;
-          
-          updates.slots = filteredSlots;
-        }
-      }
-      
-      // Only make the API call if there are actual changes
-      if (Object.keys(updates).length > 0) {
-        updateNation(nationId, updates);
-      } else {
-        console.log('No changes detected for nation', nationId);
-      }
+    // Get only the changed fields
+    const updates = getChangedFieldsForNation(nationId);
+    
+    // Only make the API call if there are actual changes
+    if (Object.keys(updates).length > 0) {
+      updateNation(nationId, updates);
+    } else {
+      console.log('No changes detected for nation', nationId);
     }
   };
 
-  // Helper function to check if a nation has unsaved changes
-  const hasUnsavedChanges = (nationId: number) => {
-    const nation = nations.find(n => n.nation_id === nationId);
-    const originalNation = originalNations.find(n => n.nation_id === nationId);
-    const localChange = localChanges.get(nationId);
-    
-    if (!nation || !originalNation) return false;
-    
-    // Debug logging
-    console.log('=== hasUnsavedChanges Debug ===');
-    console.log('Nation ID:', nationId);
-    console.log('Local change:', localChange);
-    console.log('Current nation:', nation);
-    console.log('Original nation:', originalNation);
-    
-    // Check if there are any local changes (immediate feedback)
-    if (localChange) {
-      console.log('Checking local changes...');
-      // Check for field changes
-      if (localChange.discord_handle !== undefined && localChange.discord_handle !== originalNation.discord_handle) {
-        console.log('Discord handle changed:', localChange.discord_handle, 'vs', originalNation.discord_handle);
-        return true;
-      }
-      if (localChange.has_dra !== undefined && localChange.has_dra !== originalNation.has_dra) {
-        console.log('Has DRA changed:', localChange.has_dra, 'vs', originalNation.has_dra);
-        return true;
-      }
-      if (localChange.notes !== undefined && localChange.notes !== originalNation.notes) {
-        console.log('Notes changed:', localChange.notes, 'vs', originalNation.notes);
-        return true;
-      }
-      
-      // Check for slot changes
-      if (localChange.slots) {
-        const originalSlots = originalNation.slots;
-        if (localChange.slots.sendTech !== undefined && localChange.slots.sendTech !== originalSlots.sendTech) return true;
-        if (localChange.slots.sendCash !== undefined && localChange.slots.sendCash !== originalSlots.sendCash) return true;
-        if (localChange.slots.getTech !== undefined && localChange.slots.getTech !== originalSlots.getTech) return true;
-        if (localChange.slots.getCash !== undefined && localChange.slots.getCash !== originalSlots.getCash) return true;
-        if (localChange.slots.send_priority !== undefined && localChange.slots.send_priority !== originalSlots.send_priority) return true;
-        if (localChange.slots.receive_priority !== undefined && localChange.slots.receive_priority !== originalSlots.receive_priority) return true;
-      }
-      
-      return false;
-    }
-    
-    // Fallback to checking main state changes
-    return nation.discord_handle !== originalNation.discord_handle ||
-           nation.has_dra !== originalNation.has_dra ||
-           nation.notes !== originalNation.notes ||
-           nation.slots.sendTech !== originalNation.slots.sendTech ||
-           nation.slots.sendCash !== originalNation.slots.sendCash ||
-           nation.slots.getTech !== originalNation.slots.getTech ||
-           nation.slots.getCash !== originalNation.slots.getCash ||
-           nation.slots.send_priority !== originalNation.slots.send_priority ||
-           nation.slots.receive_priority !== originalNation.slots.receive_priority;
-  };
+  // Use the hasChanges function from the hook
+  const hasUnsavedChanges = hasChanges;
 
   // Helper function to check if a nation has validation errors (blocks saving)
   const hasValidationErrors = (nationId: number) => {
@@ -365,7 +202,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     saveNation,
     saving,
     hasUnsavedChanges,
-  }), [saving, localChanges]);
+  }), [saving, hasUnsavedChanges]);
 
 
   // Initialize TanStack Table

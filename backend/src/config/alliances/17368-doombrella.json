@@ -10,10 +10,10 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 0,
+        "getTech": 6,
         "getCash": 0,
-        "receive_priority": 2,
-        "send_priority": 2
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "20,952.78",
@@ -73,7 +73,7 @@
         "sendCash": 3,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
+        "send_priority": 1,
         "receive_priority": 2
       },
       "current_stats": {
@@ -112,7 +112,7 @@
         "sendCash": 2,
         "getTech": 4,
         "getCash": 0,
-        "send_priority": 2,
+        "send_priority": 1,
         "receive_priority": 2
       },
       "current_stats": {
@@ -190,10 +190,10 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 3,
+        "getTech": 6,
         "getCash": 0,
-        "receive_priority": 2,
-        "send_priority": 2
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "26,680.33",
@@ -209,10 +209,10 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
-        "getTech": 0,
+        "sendCash": 3,
+        "getTech": 3,
         "getCash": 0,
-        "send_priority": 2,
+        "send_priority": 1,
         "receive_priority": 2
       },
       "current_stats": {
@@ -293,7 +293,7 @@
         "getTech": 3,
         "getCash": 0,
         "send_priority": 2,
-        "receive_priority": 2
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "91,284.22",
@@ -331,10 +331,10 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 0,
+        "getTech": 4,
         "getCash": 0,
-        "receive_priority": 2,
-        "send_priority": 2
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "22,696.90",
@@ -372,7 +372,7 @@
         "sendCash": 3,
         "getTech": 3,
         "getCash": 0,
-        "send_priority": 2,
+        "send_priority": 1,
         "receive_priority": 2
       },
       "current_stats": {
@@ -492,7 +492,7 @@
         "sendCash": 3,
         "getTech": 3,
         "getCash": 0,
-        "send_priority": 2,
+        "send_priority": 1,
         "receive_priority": 2
       },
       "current_stats": {
@@ -532,7 +532,7 @@
         "sendCash": 1,
         "getTech": 5,
         "getCash": 0,
-        "send_priority": 2,
+        "send_priority": 1,
         "receive_priority": 2
       },
       "current_stats": {
@@ -550,10 +550,10 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 0,
+        "getTech": 6,
         "getCash": 0,
-        "receive_priority": 2,
-        "send_priority": 2
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "27,544.68",
@@ -729,11 +729,11 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
-        "getTech": 0,
+        "sendCash": 2,
+        "getTech": 4,
         "getCash": 0,
-        "receive_priority": 2,
-        "send_priority": 2
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "18,200.11",
