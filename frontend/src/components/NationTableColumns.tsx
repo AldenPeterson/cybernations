@@ -49,8 +49,8 @@ interface ColumnProps {
 const columnHelper = createColumnHelper<NationConfig>();
 
 // Column size constants
-const SLOT_COLUMN_SIZE = 35;
-const STAT_COLUMN_SIZE = 25;
+const SLOT_COLUMN_SIZE = 20;
+const STAT_COLUMN_SIZE = 20;
 
 export const createNationTableColumns = ({
   handleFieldChange,
@@ -74,7 +74,7 @@ export const createNationTableColumns = ({
         {getValue() + 1}
       </div>
     ),
-    size: 20,
+    size: 15,
     enableSorting: true,
     sortingFn: (rowA, rowB) => rowA.index - rowB.index,
   }),
@@ -84,7 +84,7 @@ export const createNationTableColumns = ({
     id: 'nation',
     header: 'Nation / Ruler',
     cell: ({ row }) => <NationCell nation={row.original} />,
-    size: 40,
+    size: undefined,
     enableSorting: false,
   }),
 
@@ -152,7 +152,7 @@ export const createNationTableColumns = ({
         placeholder="Enter Discord handle..."
       />
     ),
-    size: 200,
+    size: 240,
     enableSorting: true,
   }),
 
@@ -166,7 +166,7 @@ export const createNationTableColumns = ({
         placeholder="Enter notes..."
       />
     ),
-    size: 400,
+    size: 500,
     enableSorting: false,
   }),
 
@@ -181,7 +181,7 @@ export const createNationTableColumns = ({
         />
       </div>
     ),
-    size: 50,
+    size: 35,
     enableSorting: true,
   }),
 
@@ -203,7 +203,7 @@ export const createNationTableColumns = ({
         />
       </div>
     ),
-    size: 60,
+    size: 32,
     enableSorting: true,
   }),
 
@@ -225,7 +225,7 @@ export const createNationTableColumns = ({
         />
       </div>
     ),
-    size: 60,
+    size: 32,
     enableSorting: true,
   }),
 
@@ -423,6 +423,6 @@ export const createNationTableColumns = ({
       </div>
     ),
     enableSorting: false,
-    size: 50,
+    size: 35,
   }),
 ];

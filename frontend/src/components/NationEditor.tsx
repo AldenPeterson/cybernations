@@ -273,12 +273,29 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     
     if (!nation || !originalNation) return false;
     
+    // Debug logging
+    console.log('=== hasUnsavedChanges Debug ===');
+    console.log('Nation ID:', nationId);
+    console.log('Local change:', localChange);
+    console.log('Current nation:', nation);
+    console.log('Original nation:', originalNation);
+    
     // Check if there are any local changes (immediate feedback)
     if (localChange) {
+      console.log('Checking local changes...');
       // Check for field changes
-      if (localChange.discord_handle !== undefined && localChange.discord_handle !== originalNation.discord_handle) return true;
-      if (localChange.has_dra !== undefined && localChange.has_dra !== originalNation.has_dra) return true;
-      if (localChange.notes !== undefined && localChange.notes !== originalNation.notes) return true;
+      if (localChange.discord_handle !== undefined && localChange.discord_handle !== originalNation.discord_handle) {
+        console.log('Discord handle changed:', localChange.discord_handle, 'vs', originalNation.discord_handle);
+        return true;
+      }
+      if (localChange.has_dra !== undefined && localChange.has_dra !== originalNation.has_dra) {
+        console.log('Has DRA changed:', localChange.has_dra, 'vs', originalNation.has_dra);
+        return true;
+      }
+      if (localChange.notes !== undefined && localChange.notes !== originalNation.notes) {
+        console.log('Notes changed:', localChange.notes, 'vs', originalNation.notes);
+        return true;
+      }
       
       // Check for slot changes
       if (localChange.slots) {
@@ -287,6 +304,8 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
         if (localChange.slots.sendCash !== undefined && localChange.slots.sendCash !== originalSlots.sendCash) return true;
         if (localChange.slots.getTech !== undefined && localChange.slots.getTech !== originalSlots.getTech) return true;
         if (localChange.slots.getCash !== undefined && localChange.slots.getCash !== originalSlots.getCash) return true;
+        if (localChange.slots.send_priority !== undefined && localChange.slots.send_priority !== originalSlots.send_priority) return true;
+        if (localChange.slots.receive_priority !== undefined && localChange.slots.receive_priority !== originalSlots.receive_priority) return true;
       }
       
       return false;
@@ -299,7 +318,9 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
            nation.slots.sendTech !== originalNation.slots.sendTech ||
            nation.slots.sendCash !== originalNation.slots.sendCash ||
            nation.slots.getTech !== originalNation.slots.getTech ||
-           nation.slots.getCash !== originalNation.slots.getCash;
+           nation.slots.getCash !== originalNation.slots.getCash ||
+           nation.slots.send_priority !== originalNation.slots.send_priority ||
+           nation.slots.receive_priority !== originalNation.slots.receive_priority;
   };
 
   // Helper function to check if a nation has validation errors (blocks saving)
@@ -364,8 +385,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       sorting: [{ id: 'strength', desc: true }], // Default sort by strength descending
     },
     enableSorting: true,
-    enableColumnResizing: true,
-    columnResizeMode: 'onChange',
+    enableColumnResizing: false,
   });
 
   if (loading) {
@@ -429,8 +449,9 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
                         {
                           textAlign: getTextAlignment(header.id),
                           fontSize: header.id.includes('send') || header.id.includes('get') ? '12px' : '14px',
-                          width: header.getSize(),
-                          cursor: header.column.getCanSort() ? 'pointer' : 'default'
+                          width: `${header.getSize()}px`,
+                          cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                          padding: header.getSize() < 40 ? '16px 4px' : '16px 12px'
                         }
                       )}
                       className={`sticky-header ${header.column.getCanSort() ? 'sortable-header' : ''}`}
@@ -453,23 +474,6 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
                           </span>
                         )}
                       </div>
-                      {header.column.getCanResize() && (
-                        <div
-                          onMouseDown={header.getResizeHandler()}
-                          onTouchStart={header.getResizeHandler()}
-                          style={{
-                            position: 'absolute',
-                            right: 0,
-                            top: 0,
-                            height: '100%',
-                            width: '4px',
-                            background: 'rgba(0, 0, 0, 0.1)',
-                            cursor: 'col-resize',
-                            userSelect: 'none',
-                            touchAction: 'none',
-                          }}
-                        />
-                      )}
                     </th>
                   ))}
                 </tr>
@@ -498,7 +502,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
                           { 
                             textAlign: getTextAlignment(cell.column.id),
                             verticalAlign: 'middle',
-                            width: cell.column.getSize(),
+                            width: `${cell.column.getSize()}px`,
                             backgroundColor: hasErrors ? '#fef2f2' : hasWarnings ? '#fffbeb' : undefined,
                           }
                         )}>

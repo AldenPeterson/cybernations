@@ -269,18 +269,18 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 3,
+        "sendCash": 4,
         "getTech": 0,
         "getCash": 0,
         "send_priority": 2,
-        "receive_priority": 2
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "120,087.43",
         "infrastructure": "32,299.99",
         "strength": "744586.177"
       },
-      "notes": "broke ass"
+      "notes": "broke boi"
     },
     "334182": {
       "ruler_name": "st6mm",
