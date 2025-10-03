@@ -178,6 +178,25 @@ export function updateNationData(
   
   // Update the nation data
   const nation = alliance.nations[nationId];
+  
+  // Handle slots updates specially to merge instead of overwrite
+  if (updates.slots) {
+    // Ensure the nation has all required slot fields with defaults
+    const defaultSlots = {
+      sendTech: 0,
+      sendCash: 0,
+      getTech: 0,
+      getCash: 0,
+      send_priority: 3,
+      receive_priority: 3
+    };
+    
+    // Start with defaults, then apply existing values, then apply updates
+    nation.slots = { ...defaultSlots, ...nation.slots, ...updates.slots };
+    delete updates.slots;
+  }
+  
+  // Update other fields normally
   Object.assign(nation, updates);
   
   // Save the updated alliance data

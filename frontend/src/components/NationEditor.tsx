@@ -93,7 +93,10 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
   const updateNation = async (nationId: number, updates: Partial<NationConfig>) => {
     try {
       setSaving(nationId);
-      console.log('updateNation called with:', { updates });
+      console.log('=== FRONTEND DEBUG ===');
+      console.log('Updates being sent:', updates);
+      console.log('Slots being sent:', updates.slots);
+      console.log('========================');
       const response = await fetch(`http://localhost:3001/api/alliances/${allianceId}/nations/${nationId}`, {
         method: 'PUT',
         headers: {
@@ -167,18 +170,15 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     setLocalChanges(prev => {
       const newChanges = new Map(prev);
       const existingChanges = newChanges.get(nationId) || {};
-      const existingSlots = existingChanges.slots || {
-        sendTech: 0,
-        sendCash: 0,
-        getTech: 0,
-        getCash: 0
-      };
+      const existingSlots = existingChanges.slots || {};
+      
+      // Only track the specific slot field that changed
       newChanges.set(nationId, { 
         ...existingChanges, 
         slots: { 
           ...existingSlots, 
           [slotType]: value 
-        } 
+        } as any
       });
       return newChanges;
     });
@@ -228,14 +228,30 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
         updates.notes = currentNation.notes;
       }
       
-      // Check if slots have changed
+      // Check if slots have changed (including priority fields)
       const slotsChanged = currentNation.slots.sendTech !== originalNation.slots.sendTech ||
                           currentNation.slots.sendCash !== originalNation.slots.sendCash ||
                           currentNation.slots.getTech !== originalNation.slots.getTech ||
-                          currentNation.slots.getCash !== originalNation.slots.getCash;
+                          currentNation.slots.getCash !== originalNation.slots.getCash ||
+                          currentNation.slots.send_priority !== originalNation.slots.send_priority ||
+                          currentNation.slots.receive_priority !== originalNation.slots.receive_priority;
       
       if (slotsChanged) {
-        updates.slots = currentNation.slots;
+        // Only include the slots that have actually changed from localChanges
+        if (localChange && localChange.slots) {
+          updates.slots = localChange.slots;
+        } else {
+          // Filter out undefined priority values when sending full slots
+          const filteredSlots: any = {};
+          if (currentNation.slots.sendTech !== undefined) filteredSlots.sendTech = currentNation.slots.sendTech;
+          if (currentNation.slots.sendCash !== undefined) filteredSlots.sendCash = currentNation.slots.sendCash;
+          if (currentNation.slots.getTech !== undefined) filteredSlots.getTech = currentNation.slots.getTech;
+          if (currentNation.slots.getCash !== undefined) filteredSlots.getCash = currentNation.slots.getCash;
+          if (currentNation.slots.send_priority !== undefined) filteredSlots.send_priority = currentNation.slots.send_priority;
+          if (currentNation.slots.receive_priority !== undefined) filteredSlots.receive_priority = currentNation.slots.receive_priority;
+          
+          updates.slots = filteredSlots;
+        }
       }
       
       // Only make the API call if there are actual changes
@@ -296,7 +312,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     // Expected total: 5 if no DRA, 6 if DRA
     const expectedTotal = nation.has_dra ? 6 : 5;
     
-    // Only block saving if slots are too high (exceed expected total)
+    // Block saving if slots exceed expected total (over-assignment)
     return totalSlots > expectedTotal;
   };
 
@@ -312,8 +328,11 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     // Expected total: 5 if no DRA, 6 if DRA
     const expectedTotal = nation.has_dra ? 6 : 5;
     
-    // Show warning if slots are too low (below expected total)
-    return totalSlots < expectedTotal;
+    // Show warning if slots are too low (below expected total) - this highlights the row
+    const hasWarning = totalSlots < expectedTotal;
+    
+    
+    return hasWarning;
   };
 
   // Create columns with handlers
@@ -323,9 +342,8 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     saveNation,
     saving,
     hasUnsavedChanges,
-    hasValidationErrors,
-    hasValidationWarnings,
   }), [saving, localChanges]);
+
 
   // Initialize TanStack Table
   const table = useReactTable({
@@ -459,6 +477,8 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
               {table.getRowModel().rows.map(row => {
                 const hasErrors = hasValidationErrors(row.original.nation_id);
                 const hasWarnings = hasValidationWarnings(row.original.nation_id);
+                
+                
                 return (
                   <tr 
                     key={row.id} 

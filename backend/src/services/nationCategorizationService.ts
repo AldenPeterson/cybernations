@@ -31,7 +31,9 @@ export function categorizeNation(nation: any): CategorizedNation {
     sendTech: 0,
     sendCash: 0,
     getTech: 0,
-    getCash: 0
+    getCash: 0,
+    send_priority: 3,
+    receive_priority: 3
   };
   
   // If nation exists in JSON config, use those slots

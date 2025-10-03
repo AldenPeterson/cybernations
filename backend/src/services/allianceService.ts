@@ -97,11 +97,25 @@ export class AllianceService {
     for (const nationId in allianceData.nations) {
       const nationData = allianceData.nations[nationId];
       const nationIdNum = Number(nationId);
-      nationsArray.push({
+      
+      // Ensure all slot fields have default values
+      const defaultSlots = {
+        sendTech: 0,
+        sendCash: 0,
+        getTech: 0,
+        getCash: 0,
+        send_priority: 3,
+        receive_priority: 3
+      };
+      
+      const completeNationData = {
         nation_id: nationIdNum,
         ...nationData,
+        slots: { ...defaultSlots, ...nationData.slots }, // Merge defaults with existing slots
         inWarMode: rawNationsDict[nationIdNum]?.inWarMode ?? false
-      });
+      };
+      
+      nationsArray.push(completeNationData);
     }
 
     return {

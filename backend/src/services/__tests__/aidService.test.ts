@@ -40,7 +40,7 @@ describe('AidService', () => {
           infrastructure: '2000',
           strength: '3000',
           activity: 'Active',
-          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
+          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
         {
@@ -54,7 +54,7 @@ describe('AidService', () => {
           infrastructure: '1500',
           strength: '2000',
           activity: 'Active',
-          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
+          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
         {
@@ -68,7 +68,7 @@ describe('AidService', () => {
           infrastructure: '1200',
           strength: '2500',
           activity: 'Active',
-          slots: { sendCash: 0, sendTech: 0, getCash: 6, getTech: 0 },
+          slots: { sendCash: 0, sendTech: 0, getCash: 6, getTech: 0, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
       ];
@@ -135,7 +135,7 @@ describe('AidService', () => {
           infrastructure: '1500',
           strength: '2000',
           activity: 'Active',
-          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
+          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
         {
@@ -149,7 +149,7 @@ describe('AidService', () => {
           infrastructure: '1200',
           strength: '2500',
           activity: 'Active',
-          slots: { sendCash: 0, sendTech: 0, getCash: 6, getTech: 0 },
+          slots: { sendCash: 0, sendTech: 0, getCash: 6, getTech: 0, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
       ];
@@ -201,7 +201,7 @@ describe('AidService', () => {
           alliance: 'Test Alliance',
           allianceId: 123,
           inWarMode: true,
-          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
+          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
         {
@@ -211,7 +211,7 @@ describe('AidService', () => {
           alliance: 'Test Alliance',
           allianceId: 123,
           inWarMode: false,
-          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
+          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
       ];

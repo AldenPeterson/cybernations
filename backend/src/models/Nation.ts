@@ -36,6 +36,8 @@ export interface AidSlots {
   sendCash: number;
   getTech: number;
   getCash: number;
+  send_priority: number;
+  receive_priority: number;
 }
 
 export enum AidType {

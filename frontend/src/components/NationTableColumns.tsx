@@ -16,6 +16,8 @@ export interface NationSlots {
   sendCash: number;
   getTech: number;
   getCash: number;
+  send_priority: number;
+  receive_priority: number;
 }
 
 export interface NationConfig {
@@ -40,8 +42,8 @@ interface ColumnProps {
   saveNation: (nationId: number) => void;
   saving: number | null;
   hasUnsavedChanges: (nationId: number) => boolean;
-  hasValidationErrors: (nationId: number) => boolean;
-  hasValidationWarnings: (nationId: number) => boolean;
+  hasValidationErrors?: (nationId: number) => boolean;
+  hasValidationWarnings?: (nationId: number) => boolean;
 }
 
 const columnHelper = createColumnHelper<NationConfig>();
@@ -56,8 +58,6 @@ export const createNationTableColumns = ({
   saveNation,
   saving,
   hasUnsavedChanges,
-  hasValidationErrors,
-  hasValidationWarnings,
 }: ColumnProps) => [
   // Index column (read-only)
   columnHelper.accessor((_, index) => index, {
@@ -185,6 +185,50 @@ export const createNationTableColumns = ({
     enableSorting: true,
   }),
 
+  // Send Priority column (editable)
+  columnHelper.accessor('slots.send_priority', {
+    header: () => (
+      <div style={{ lineHeight: '1.2', textAlign: 'center' }}>
+        <div>Send</div>
+        <div>Priority</div>
+      </div>
+    ),
+    cell: ({ getValue, row }) => (
+      <div style={{ textAlign: 'center' }}>
+        <EditableNumberInput
+          value={getValue()}
+          onChange={(value) => handleSlotChange(row.original.nation_id, 'send_priority', value)}
+          min={1}
+          max={3}
+        />
+      </div>
+    ),
+    size: 60,
+    enableSorting: true,
+  }),
+
+  // Receive Priority column (editable)
+  columnHelper.accessor('slots.receive_priority', {
+    header: () => (
+      <div style={{ lineHeight: '1.2', textAlign: 'center' }}>
+        <div>Receive</div>
+        <div>Priority</div>
+      </div>
+    ),
+    cell: ({ getValue, row }) => (
+      <div style={{ textAlign: 'center' }}>
+        <EditableNumberInput
+          value={getValue()}
+          onChange={(value) => handleSlotChange(row.original.nation_id, 'receive_priority', value)}
+          min={1}
+          max={3}
+        />
+      </div>
+    ),
+    size: 60,
+    enableSorting: true,
+  }),
+
   // Send Tech column (editable)
   columnHelper.accessor('slots.sendTech', {
     header: () => (
@@ -194,11 +238,14 @@ export const createNationTableColumns = ({
       </div>
     ),
     cell: ({ getValue, row }) => {
-      const hasErrors = hasValidationErrors(row.original.nation_id);
-      const hasWarnings = hasValidationWarnings(row.original.nation_id);
+      // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash;
       const expectedTotal = row.original.has_dra ? 6 : 5;
+      
+      // Calculate validation directly
+      const hasErrors = totalSlots > expectedTotal; // Over-assignment blocks saving
+      const hasWarnings = totalSlots < expectedTotal; // Under-assignment shows warning
       
       return (
         <div style={{ textAlign: 'center' }}>
@@ -235,11 +282,14 @@ export const createNationTableColumns = ({
       </div>
     ),
     cell: ({ getValue, row }) => {
-      const hasErrors = hasValidationErrors(row.original.nation_id);
-      const hasWarnings = hasValidationWarnings(row.original.nation_id);
+      // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash;
       const expectedTotal = row.original.has_dra ? 6 : 5;
+      
+      // Calculate validation directly
+      const hasErrors = totalSlots > expectedTotal; // Over-assignment blocks saving
+      const hasWarnings = totalSlots < expectedTotal; // Under-assignment shows warning
       
       return (
         <div style={{ textAlign: 'center' }}>
@@ -275,11 +325,14 @@ export const createNationTableColumns = ({
       </div>
     ),
     cell: ({ getValue, row }) => {
-      const hasErrors = hasValidationErrors(row.original.nation_id);
-      const hasWarnings = hasValidationWarnings(row.original.nation_id);
+      // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash;
       const expectedTotal = row.original.has_dra ? 6 : 5;
+      
+      // Calculate validation directly
+      const hasErrors = totalSlots > expectedTotal; // Over-assignment blocks saving
+      const hasWarnings = totalSlots < expectedTotal; // Under-assignment shows warning
       
       return (
         <div style={{ textAlign: 'center' }}>
@@ -315,11 +368,14 @@ export const createNationTableColumns = ({
       </div>
     ),
     cell: ({ getValue, row }) => {
-      const hasErrors = hasValidationErrors(row.original.nation_id);
-      const hasWarnings = hasValidationWarnings(row.original.nation_id);
+      // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash;
       const expectedTotal = row.original.has_dra ? 6 : 5;
+      
+      // Calculate validation directly
+      const hasErrors = totalSlots > expectedTotal; // Over-assignment blocks saving
+      const hasWarnings = totalSlots < expectedTotal; // Under-assignment shows warning
       
       return (
         <div style={{ textAlign: 'center' }}>
@@ -356,7 +412,12 @@ export const createNationTableColumns = ({
           nationId={row.original.nation_id}
           isSaving={saving === row.original.nation_id}
           hasChanges={hasUnsavedChanges(row.original.nation_id)}
-          hasValidationErrors={hasValidationErrors(row.original.nation_id)}
+          hasValidationErrors={(() => {
+            const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
+                              row.original.slots.getTech + row.original.slots.getCash;
+            const expectedTotal = row.original.has_dra ? 6 : 5;
+            return totalSlots > expectedTotal;
+          })()}
           onSave={saveNation}
         />
       </div>

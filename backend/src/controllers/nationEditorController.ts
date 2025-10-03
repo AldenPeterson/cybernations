@@ -50,17 +50,57 @@ export class NationEditorController {
 
       const { discord_handle, has_dra, notes, slots } = req.body;
       
-      // Validate slots structure
-      if (slots && (
-        typeof slots.sendTech !== 'number' ||
-        typeof slots.sendCash !== 'number' ||
-        typeof slots.getTech !== 'number' ||
-        typeof slots.getCash !== 'number'
-      )) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid slots data structure'
-        });
+      // Validate slots structure - only validate fields that are present
+      if (slots) {
+        if (slots.sendTech !== undefined && typeof slots.sendTech !== 'number') {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid sendTech value. Must be a number'
+          });
+        }
+        if (slots.sendCash !== undefined && typeof slots.sendCash !== 'number') {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid sendCash value. Must be a number'
+          });
+        }
+        if (slots.getTech !== undefined && typeof slots.getTech !== 'number') {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid getTech value. Must be a number'
+          });
+        }
+        if (slots.getCash !== undefined && typeof slots.getCash !== 'number') {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid getCash value. Must be a number'
+          });
+        }
+      }
+
+      // Validate priority fields if they exist in slots
+      if (slots && slots.send_priority !== undefined) {
+        const sendPriority = typeof slots.send_priority === 'string' ? parseInt(slots.send_priority) : slots.send_priority;
+        if (isNaN(sendPriority) || sendPriority < 1 || sendPriority > 3) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid send_priority value. Must be 1, 2, or 3'
+          });
+        }
+        // Convert to number if it was a string
+        slots.send_priority = sendPriority;
+      }
+
+      if (slots && slots.receive_priority !== undefined) {
+        const receivePriority = typeof slots.receive_priority === 'string' ? parseInt(slots.receive_priority) : slots.receive_priority;
+        if (isNaN(receivePriority) || receivePriority < 1 || receivePriority > 3) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid receive_priority value. Must be 1, 2, or 3'
+          });
+        }
+        // Convert to number if it was a string
+        slots.receive_priority = receivePriority;
       }
 
       const allianceData = AllianceService.getAllianceById(allianceId);
@@ -97,12 +137,7 @@ export class NationEditorController {
       }
       
       if (slots) {
-        updates.slots = {
-          sendTech: slots.sendTech,
-          sendCash: slots.sendCash,
-          getTech: slots.getTech,
-          getCash: slots.getCash
-        };
+        updates.slots = slots;
       }
 
       // Update using the service
