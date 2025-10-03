@@ -14,6 +14,44 @@ import { tableStyles, tableCSS, combineStyles, getTextAlignment, getHeaderConten
 import SlotCountsSummary from './SlotCountsSummary';
 import { useNationForm } from '../hooks/useNationForm';
 
+interface AidOffer {
+  aidId: number;
+  declaringId: number;
+  declaringRuler: string;
+  declaringNation: string;
+  declaringAlliance: string;
+  declaringAllianceId: number;
+  receivingId: number;
+  receivingRuler: string;
+  receivingNation: string;
+  receivingAlliance: string;
+  receivingAllianceId: number;
+  status: string;
+  money: number;
+  technology: number;
+  soldiers: number;
+  date: string;
+  reason: string;
+}
+
+interface AidSlot {
+  slotNumber: number;
+  aidOffer: AidOffer | null;
+  isOutgoing: boolean;
+}
+
+interface NationAidSlots {
+  nation: {
+    id: number;
+    rulerName: string;
+    nationName: string;
+    strength: number;
+    activity: string;
+    inWarMode: boolean;
+  };
+  aidSlots: AidSlot[];
+}
+
 interface NationEditorProps {
   allianceId: number;
 }
@@ -33,18 +71,25 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState<number | null>(null);
+  const [aidSlots, setAidSlots] = useState<NationAidSlots[]>([]);
 
   // TanStack Table state
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  // Calculate slot counts from nations data
+  // Calculate slot counts from nations data and active aid offers
   const slotCounts = useMemo(() => {
     const counts = nations.reduce((acc, nation) => {
       acc.totalGetCash += nation.slots.getCash;
       acc.totalGetTech += nation.slots.getTech;
       acc.totalSendCash += nation.slots.sendCash;
       acc.totalSendTech += nation.slots.sendTech;
+      
+      // Track peace mode send slots
+      if (!nation.inWarMode) {
+        acc.totalSendCashPeaceMode += nation.slots.sendCash;
+        acc.totalSendTechPeaceMode += nation.slots.sendTech;
+      }
       
       // Calculate total possible slots for this nation
       const totalPossibleSlots = nation.has_dra ? 6 : 5;
@@ -58,15 +103,64 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       totalGetTech: 0,
       totalSendCash: 0,
       totalSendTech: 0,
-      totalUnassigned: 0
+      totalSendCashPeaceMode: 0,
+      totalSendTechPeaceMode: 0,
+      totalUnassigned: 0,
+      activeGetCash: 0,
+      activeGetTech: 0,
+      activeSendCash: 0,
+      activeSendTech: 0
+    });
+
+    // Calculate active aid counts from aid slots
+    aidSlots.forEach(nationAidSlots => {
+      nationAidSlots.aidSlots.forEach(slot => {
+        if (slot.aidOffer && slot.aidOffer.status !== 'Expired') {
+          const offer = slot.aidOffer;
+          const isCash = offer.money > 0 && offer.technology === 0;
+          const isTech = offer.technology > 0;
+          
+          if (slot.isOutgoing) {
+            // Outgoing aid (sending)
+            if (isCash) {
+              counts.activeSendCash++;
+            } else if (isTech) {
+              counts.activeSendTech++;
+            }
+          } else {
+            // Incoming aid (receiving)
+            if (isCash) {
+              counts.activeGetCash++;
+            } else if (isTech) {
+              counts.activeGetTech++;
+            }
+          }
+        }
+      });
     });
     
     return counts;
-  }, [nations]);
+  }, [nations, aidSlots]);
 
   useEffect(() => {
     fetchNationsConfig();
+    fetchAidSlots();
   }, [allianceId]);
+
+  const fetchAidSlots = async () => {
+    try {
+      const response = await fetch(`/api/alliances/${allianceId}/aid-slots`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setAidSlots(data.aidSlots);
+      } else {
+        console.error('Failed to fetch aid slots:', data.error);
+      }
+    } catch (err) {
+      console.error('Failed to fetch aid slots:', err);
+    }
+  };
 
   const fetchNationsConfig = async () => {
     try {

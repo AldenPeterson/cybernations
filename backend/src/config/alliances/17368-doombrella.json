@@ -70,7 +70,7 @@
       "notes": "",
       "slots": {
         "sendTech": 0,
-        "sendCash": 3,
+        "sendCash": 6,
         "getTech": 0,
         "getCash": 0,
         "send_priority": 1,

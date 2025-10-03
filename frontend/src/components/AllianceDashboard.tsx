@@ -94,6 +94,12 @@ interface SlotCounts {
   totalGetTech: number;
   totalSendCash: number;
   totalSendTech: number;
+  totalSendCashPeaceMode?: number;
+  totalSendTechPeaceMode?: number;
+  activeGetCash?: number;
+  activeGetTech?: number;
+  activeSendCash?: number;
+  activeSendTech?: number;
 }
 
 const AllianceDashboard: React.FC = () => {

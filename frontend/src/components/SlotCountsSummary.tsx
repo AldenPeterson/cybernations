@@ -5,6 +5,12 @@ interface SlotCounts {
   totalGetTech: number;
   totalSendCash: number;
   totalSendTech: number;
+  totalSendCashPeaceMode?: number;
+  totalSendTechPeaceMode?: number;
+  activeGetCash?: number;
+  activeGetTech?: number;
+  activeSendCash?: number;
+  activeSendTech?: number;
   totalUnassigned?: number;
 }
 
@@ -109,7 +115,39 @@ const SlotCountsSummary: React.FC<SlotCountsSummaryProps> = ({
               ...valueStyle,
               color: slotType.textColor
             }}>
-              {slotCounts[slotType.key] || 0}
+              {(() => {
+                const total = slotCounts[slotType.key] || 0;
+                
+                // Handle send slots with peace mode info
+                if (slotType.key === 'totalSendCash' && slotCounts.totalSendCashPeaceMode !== undefined) {
+                  const peaceMode = slotCounts.totalSendCashPeaceMode;
+                  const active = slotCounts.activeSendCash || 0;
+                  let display = total.toString();
+                  if (peaceMode > 0) display += ` (${peaceMode} in PM)`;
+                  if (active > 0) display += ` [${active} active]`;
+                  return display;
+                }
+                if (slotType.key === 'totalSendTech' && slotCounts.totalSendTechPeaceMode !== undefined) {
+                  const peaceMode = slotCounts.totalSendTechPeaceMode;
+                  const active = slotCounts.activeSendTech || 0;
+                  let display = total.toString();
+                  if (peaceMode > 0) display += ` (${peaceMode} in PM)`;
+                  if (active > 0) display += ` [${active} active]`;
+                  return display;
+                }
+                
+                // Handle get slots with active aid info
+                if (slotType.key === 'totalGetCash') {
+                  const active = slotCounts.activeGetCash || 0;
+                  return active > 0 ? `${total} [${active} active]` : total;
+                }
+                if (slotType.key === 'totalGetTech') {
+                  const active = slotCounts.activeGetTech || 0;
+                  return active > 0 ? `${total} [${active} active]` : total;
+                }
+                
+                return total;
+              })()}
             </div>
             <div style={labelStyle}>
               {slotType.label}

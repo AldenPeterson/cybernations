@@ -431,12 +431,29 @@ export class AidService {
         nation.inWarMode ? sum + nation.slots.sendCash : sum, 0),
       totalSendTech: categorizedNations.reduce((sum, nation) => 
         nation.inWarMode ? sum + nation.slots.sendTech : sum, 0),
+      totalSendCashPeaceMode: categorizedNations.reduce((sum, nation) => 
+        !nation.inWarMode ? sum + nation.slots.sendCash : sum, 0),
+      totalSendTechPeaceMode: categorizedNations.reduce((sum, nation) => 
+        !nation.inWarMode ? sum + nation.slots.sendTech : sum, 0),
       totalUnassigned: categorizedNations.reduce((sum, nation) => {
         const totalPossibleSlots = nation.has_dra ? 6 : 5;
         const assignedSlots = nation.slots.getCash + nation.slots.getTech + 
                              nation.slots.sendCash + nation.slots.sendTech;
         return sum + (totalPossibleSlots - assignedSlots);
-      }, 0)
+      }, 0),
+      // Active aid offer counts by type
+      activeGetCash: existingOffers.filter(offer => 
+        offer.receivingAllianceId === allianceId && offer.money > 0 && offer.technology === 0
+      ).length,
+      activeGetTech: existingOffers.filter(offer => 
+        offer.receivingAllianceId === allianceId && offer.technology > 0
+      ).length,
+      activeSendCash: existingOffers.filter(offer => 
+        offer.declaringAllianceId === allianceId && offer.money > 0 && offer.technology === 0
+      ).length,
+      activeSendTech: existingOffers.filter(offer => 
+        offer.declaringAllianceId === allianceId && offer.technology > 0
+      ).length
     };
 
     return {
