@@ -31,6 +31,7 @@ export async function syncAllianceFilesWithNewData(nations: Nation[]): Promise<v
   // Get all alliance JSON files
   const allianceFiles = fs.readdirSync(alliancesDir).filter(file => file.endsWith('.json'));
   
+  console.log('Alliance files:', allianceFiles);
   if (allianceFiles.length === 0) {
     console.log('No alliance files found, skipping sync');
     return;
