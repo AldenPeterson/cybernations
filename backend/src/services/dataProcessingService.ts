@@ -268,6 +268,20 @@ export function groupNationsByAlliance(nations: Nation[]): Alliance[] {
   return Array.from(allianceMap.values());
 }
 
+/**
+ * Converts raw nations array to a dictionary keyed by nation ID for efficient lookups
+ * @param rawNations - Array of raw nation data
+ * @returns Dictionary of nation ID to nation data
+ */
+export function createNationsDictionary(rawNations: Nation[]): Record<number, Nation> {
+  const nationsDict: Record<number, Nation> = {};
+  rawNations.forEach(nation => {
+    nationsDict[nation.id] = nation;
+  });
+  return nationsDict;
+}
+
+
 export async function getAidSlotsForAlliance(allianceId: number, nations: Nation[], aidOffers: AidOffer[]): Promise<NationAidSlots[]> {
   const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
   

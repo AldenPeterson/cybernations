@@ -6,7 +6,10 @@ import {
   loadAllianceDataWithJsonPriority
 } from '../utils/allianceDataLoader.js';
 import { syncAllianceFilesWithNewData as syncAllianceFilesUtil } from '../utils/allianceSync.js';
-import { loadDataFromFilesWithUpdate } from './dataProcessingService.js';
+import { 
+  loadDataFromFilesWithUpdate,
+  createNationsDictionary
+} from './dataProcessingService.js';
 import { Nation } from '../models/Nation.js';
 
 export class AllianceService {
@@ -75,7 +78,7 @@ export class AllianceService {
   /**
    * Get alliance nations configuration
    */
-  static getNationsConfig(allianceId: number) {
+  static async getNationsConfig(allianceId: number) {
     const allianceData = loadAllianceById(allianceId);
     
     if (!allianceData) {
@@ -85,11 +88,21 @@ export class AllianceService {
       };
     }
 
-    // Convert nations object back to array format for compatibility
-    const nationsArray = Object.entries(allianceData.nations).map(([nationId, nationData]) => ({
-      nation_id: parseInt(nationId),
-      ...nationData
-    }));
+    // Get raw nations data and convert to dictionary for efficient lookups
+    const { nations: rawNations } = await loadDataFromFilesWithUpdate();
+    const rawNationsDict = createNationsDictionary(rawNations);
+
+    // Convert nations object back to array format and enrich with war mode status
+    const nationsArray: any[] = [];
+    for (const nationId in allianceData.nations) {
+      const nationData = allianceData.nations[nationId];
+      const nationIdNum = Number(nationId);
+      nationsArray.push({
+        nation_id: nationIdNum,
+        ...nationData,
+        inWarMode: rawNationsDict[nationIdNum]?.inWarMode ?? false
+      });
+    }
 
     return {
       allianceExists: true,

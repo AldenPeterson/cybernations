@@ -9,7 +9,7 @@ export interface AllianceData {
   alliance_id: number;
   alliance_name: string;
   nations: {
-    [nationId: string]: {
+    [nationId: number]: {
       ruler_name: string;
       nation_name: string;
       discord_handle: string;
@@ -54,7 +54,7 @@ export interface NationData {
  * Get the path to the alliances directory
  */
 function getAlliancesDirectory(): string {
-  return path.join(__dirname, '../config/alliances');
+  return path.join(process.cwd(), 'src', 'config', 'alliances');
 }
 
 /**
@@ -147,7 +147,7 @@ export function findNationById(nationId: number): { alliance: AllianceData; nati
   const alliances = loadAllAlliances();
   
   for (const alliance of alliances.values()) {
-    const nation = alliance.nations[nationId.toString()];
+    const nation = alliance.nations[nationId];
     if (nation) {
       return {
         alliance,
@@ -172,12 +172,12 @@ export function updateNationData(
 ): boolean {
   const alliance = loadAllianceById(allianceId);
   
-  if (!alliance || !alliance.nations[nationId.toString()]) {
+  if (!alliance || !alliance.nations[nationId]) {
     return false;
   }
   
   // Update the nation data
-  const nation = alliance.nations[nationId.toString()];
+  const nation = alliance.nations[nationId];
   Object.assign(nation, updates);
   
   // Save the updated alliance data
@@ -216,16 +216,16 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
   
   if (allianceData) {
     // Get raw data to extract warStatus for peace mode filtering
-    const { loadDataFromFilesWithUpdate } = await import('../services/dataProcessingService.js');
-    const { nations: rawNations } = await loadDataFromFilesWithUpdate();
+    const { 
+      loadDataFromFilesWithUpdate, 
+      createNationsDictionary
+    } = await import('../services/dataProcessingService.js');
+    const { nations: rawNations, aidOffers } = await loadDataFromFilesWithUpdate();
     
-    // Create a map of nation IDs to their war mode status from raw data
-    const warModeMap = new Map<number, boolean>();
-    rawNations.forEach(nation => {
-      warModeMap.set(nation.id, nation.inWarMode);
-    });
+    // Create a dictionary of raw nations keyed by nation ID for efficient lookups
+    const rawNationsDict = createNationsDictionary(rawNations);
 
-    // Convert JSON data to the format expected by the frontend
+    // Convert JSON data to the format expected by the frontend and enrich with war mode status
     const nationsArray = Object.entries(allianceData.nations).map(([nationId, nationData]) => ({
       id: parseInt(nationId),
       nation_id: parseInt(nationId),
@@ -239,7 +239,7 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
       activity: '', // Not available in JSON
       technology: nationData.current_stats?.technology || '0',
       infrastructure: nationData.current_stats?.infrastructure || '0',
-      inWarMode: warModeMap.get(parseInt(nationId)) || false, // Get from raw data
+      inWarMode: rawNationsDict[parseInt(nationId)]?.inWarMode ?? false,
       has_dra: nationData.has_dra,
       slots: nationData.slots || {
         sendTech: 0,
@@ -248,9 +248,6 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
         getCash: 0
       }
     }));
-
-    // Still need aid offers from raw data
-    const { aidOffers } = await loadDataFromFilesWithUpdate();
     
     return {
       nations: nationsArray,

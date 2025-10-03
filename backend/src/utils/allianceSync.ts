@@ -97,12 +97,12 @@ async function syncAllianceData(allianceData: AllianceData, newNations: Nation[]
   // 1. Add new nations to the alliance
   const addedNations: string[] = [];
   for (const newNation of newNations) {
-    const nationIdStr = newNation.id.toString();
+    const nationId = newNation.id;
     
-    if (!allianceData.nations[nationIdStr]) {
+    if (!allianceData.nations[nationId]) {
        console.log(`  Adding new nation: ${newNation.nationName}`);
       // Add new nation with default values
-      updatedAlliance.nations[nationIdStr] = {
+      updatedAlliance.nations[nationId] = {
         ruler_name: newNation.rulerName,
         nation_name: newNation.nationName,
         discord_handle: '', // Will need to be filled in manually
@@ -132,8 +132,8 @@ async function syncAllianceData(allianceData: AllianceData, newNations: Nation[]
   const removedNations: string[] = [];
   for (const currentNationId of currentNationIds) {
     if (!newNationIds.has(currentNationId)) {
-      const nationName = allianceData.nations[currentNationId.toString()]?.nation_name || `ID: ${currentNationId}`;
-      delete updatedAlliance.nations[currentNationId.toString()];
+      const nationName = allianceData.nations[currentNationId]?.nation_name || `ID: ${currentNationId}`;
+      delete updatedAlliance.nations[currentNationId];
       console.log(`  Removed nation: ${nationName}`);
       removedNations.push(nationName);
     }
@@ -146,8 +146,8 @@ async function syncAllianceData(allianceData: AllianceData, newNations: Nation[]
   // 3. Update existing nations with new data
   const updatedNations: string[] = [];
   for (const newNation of newNations) {
-    const nationIdStr = newNation.id.toString();
-    const existingNation = updatedAlliance.nations[nationIdStr];
+    const nationId = newNation.id;
+    const existingNation = updatedAlliance.nations[nationId];
     
     if (existingNation) {
       let hasChanges = false;
