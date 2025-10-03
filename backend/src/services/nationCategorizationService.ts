@@ -84,35 +84,43 @@ export function categorizeNations(nations: any[]): CategorizedNation[] {
 /**
  * Gets nations that should receive cash aid
  * @param nations - Array of categorized nations
- * @returns Array of nations that should get cash
+ * @returns Array of nations that should get cash, sorted by receive_priority (1 = highest priority)
  */
 export function getNationsThatShouldGetCash(nations: CategorizedNation[]): CategorizedNation[] {
-  return nations.filter(nation => nation.slots.getCash > 0);
+  return nations
+    .filter(nation => nation.slots.getCash > 0)
+    .sort((a, b) => a.slots.receive_priority - b.slots.receive_priority);
 }
 
 /**
  * Gets nations that should send technology aid
  * @param nations - Array of categorized nations
- * @returns Array of nations that should send tech
+ * @returns Array of nations that should send tech, sorted by send_priority (1 = highest priority)
  */
 export function getNationsThatShouldSendTechnology(nations: CategorizedNation[]): CategorizedNation[] {
-  return nations.filter(nation => nation.slots.sendTech > 0);
+  return nations
+    .filter(nation => nation.slots.sendTech > 0)
+    .sort((a, b) => a.slots.send_priority - b.slots.send_priority);
 }
 
 /**
  * Gets nations that should receive technology aid
  * @param nations - Array of categorized nations
- * @returns Array of nations that should get tech
+ * @returns Array of nations that should get tech, sorted by receive_priority (1 = highest priority)
  */
 export function getNationsThatShouldGetTechnology(nations: CategorizedNation[]): CategorizedNation[] {
-  return nations.filter(nation => nation.slots.getTech > 0);
+  return nations
+    .filter(nation => nation.slots.getTech > 0)
+    .sort((a, b) => a.slots.receive_priority - b.slots.receive_priority);
 }
 
 /**
  * Gets nations that should send cash aid
  * @param nations - Array of categorized nations
- * @returns Array of nations that should send cash
+ * @returns Array of nations that should send cash, sorted by send_priority (1 = highest priority)
  */
 export function getNationsThatShouldSendCash(nations: CategorizedNation[]): CategorizedNation[] {
-  return nations.filter(nation => nation.slots.sendCash > 0);
+  return nations
+    .filter(nation => nation.slots.sendCash > 0)
+    .sort((a, b) => a.slots.send_priority - b.slots.send_priority);
 }

@@ -234,7 +234,7 @@ describe('AidService', () => {
         technology: undefined,
         infrastructure: undefined,
         inWarMode: true,
-        slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
+        slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
       });
 
       expect(result[1]).toEqual({
@@ -244,7 +244,7 @@ describe('AidService', () => {
         technology: undefined,
         infrastructure: undefined,
         inWarMode: false,
-        slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4 },
+        slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
       });
 
       // Both nations should be included for UI display

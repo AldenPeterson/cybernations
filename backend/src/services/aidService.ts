@@ -125,6 +125,9 @@ export class AidService {
       expiredPairs.add(pair);
     });
 
+    // Create a set to track recommendation pairs to prevent duplicates within the same generation cycle
+    const recommendationPairs = new Set();
+
     // Count active aid offers per nation (both incoming and outgoing)
     const nationAidCounts = new Map<number, number>();
     existingOffers.forEach(offer => {
@@ -245,7 +248,20 @@ export class AidService {
     );
 
     // Priority 0: Re-establish expired offers based on slot availability
-    expiredOffers.forEach(offer => {
+    // Sort expired offers by sender and recipient priority
+    const sortedExpiredOffers = expiredOffers.sort((a, b) => {
+      const senderA = activeNations.find(n => n.id === a.declaringId);
+      const senderB = activeNations.find(n => n.id === b.declaringId);
+      const recipientA = activeNations.find(n => n.id === a.receivingId);
+      const recipientB = activeNations.find(n => n.id === b.receivingId);
+      
+      // Primary sort by sender priority, secondary by recipient priority
+      const senderPriorityDiff = (senderA?.slots.send_priority || 999) - (senderB?.slots.send_priority || 999);
+      if (senderPriorityDiff !== 0) return senderPriorityDiff;
+      return (recipientA?.slots.receive_priority || 999) - (recipientB?.slots.receive_priority || 999);
+    });
+    
+    sortedExpiredOffers.forEach(offer => {
       if (offer.declaringAllianceId === allianceId) {
         const sender = activeNations.find(n => n.id === offer.declaringId);
         const recipient = activeNations.find(n => n.id === offer.receivingId);
@@ -255,7 +271,7 @@ export class AidService {
           
           // Re-establish expired cash aid
           if (sender.slots.sendCash > 0 && recipient.slots.getCash > 0 &&
-              offer.money > 0 && !existingPairs.has(pair) && canRecommendCash(sender, recipient)) {
+              offer.money > 0 && !existingPairs.has(pair) && !recommendationPairs.has(pair) && canRecommendCash(sender, recipient)) {
             recommendations.push({
               priority: 0,
               type: 'reestablish_cash',
@@ -285,11 +301,12 @@ export class AidService {
               }
             });
             incrementCounts(sender.id, recipient.id, 'cash');
+            recommendationPairs.add(pair);
           }
           
           // Re-establish expired tech aid
           if (sender.slots.sendTech > 0 && recipient.slots.getTech > 0 &&
-              offer.technology > 0 && !existingPairs.has(pair) && canRecommendTech(sender, recipient)) {
+              offer.technology > 0 && !existingPairs.has(pair) && !recommendationPairs.has(pair) && canRecommendTech(sender, recipient)) {
             recommendations.push({
               priority: 0,
               type: 'reestablish_tech',
@@ -319,17 +336,23 @@ export class AidService {
               }
             });
             incrementCounts(sender.id, recipient.id, 'tech');
+            recommendationPairs.add(pair);
           }
         }
       }
     });
 
     // Priority 1: New cash aid recommendations (banks to farms)
-    activeNationsThatShouldSendCash.forEach(sender => {
-      nationsThatShouldGetCash.forEach(recipient => {
+    // Sort senders by send_priority (1 = highest priority)
+    const sortedCashSenders = activeNationsThatShouldSendCash.sort((a, b) => a.slots.send_priority - b.slots.send_priority);
+    // Sort recipients by receive_priority (1 = highest priority)
+    const sortedCashRecipients = nationsThatShouldGetCash.sort((a, b) => a.slots.receive_priority - b.slots.receive_priority);
+    
+    sortedCashSenders.forEach(sender => {
+      sortedCashRecipients.forEach(recipient => {
         const pair = `${Math.min(sender.id, recipient.id)}-${Math.max(sender.id, recipient.id)}`;
         
-        if (!existingPairs.has(pair) && !expiredPairs.has(pair) && canRecommendCash(sender, recipient)) {
+        if (!existingPairs.has(pair) && !expiredPairs.has(pair) && !recommendationPairs.has(pair) && canRecommendCash(sender, recipient)) {
           recommendations.push({
             priority: 1,
             type: 'new_cash',
@@ -353,16 +376,22 @@ export class AidService {
             reason: `New cash aid: ${sender.nationName} → ${recipient.nationName}`
           });
           incrementCounts(sender.id, recipient.id, 'cash');
+          recommendationPairs.add(pair);
         }
       });
     });
 
     // Priority 2: New tech aid recommendations
-    activeNationsThatShouldSendTechnology.forEach(sender => {
-      nationsThatShouldGetTechnology.forEach(recipient => {
+    // Sort senders by send_priority (1 = highest priority)
+    const sortedTechSenders = activeNationsThatShouldSendTechnology.sort((a, b) => a.slots.send_priority - b.slots.send_priority);
+    // Sort recipients by receive_priority (1 = highest priority)
+    const sortedTechRecipients = nationsThatShouldGetTechnology.sort((a, b) => a.slots.receive_priority - b.slots.receive_priority);
+    
+    sortedTechSenders.forEach(sender => {
+      sortedTechRecipients.forEach(recipient => {
         const pair = `${Math.min(sender.id, recipient.id)}-${Math.max(sender.id, recipient.id)}`;
         
-        if (!existingPairs.has(pair) && !expiredPairs.has(pair) && canRecommendTech(sender, recipient)) {
+        if (!existingPairs.has(pair) && !expiredPairs.has(pair) && !recommendationPairs.has(pair) && canRecommendTech(sender, recipient)) {
           recommendations.push({
             priority: 2,
             type: 'new_tech',
@@ -386,6 +415,7 @@ export class AidService {
             reason: `New tech aid: ${sender.nationName} → ${recipient.nationName}`
           });
           incrementCounts(sender.id, recipient.id, 'tech');
+          recommendationPairs.add(pair);
         }
       });
     });
