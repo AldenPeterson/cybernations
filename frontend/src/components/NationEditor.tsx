@@ -111,23 +111,25 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
         throw new Error(data.error || 'Failed to update nation');
       }
       
-      // Update the local state
-      setNations(prevNations => 
-        prevNations.map(nation => 
-          nation.nation_id === nationId 
-            ? { ...nation, ...updates }
-            : nation
-        )
-      );
-      
-      // Update the original nations state to reflect the saved changes
-      setOriginalNations(prevOriginal => 
-        prevOriginal.map(nation => 
-          nation.nation_id === nationId 
-            ? { ...nation, ...updates }
-            : nation
-        )
-      );
+      // Update the local state with the complete updated nation data from backend
+      if (data.nation) {
+        setNations(prevNations => 
+          prevNations.map(nation => 
+            nation.nation_id === nationId 
+              ? { ...nation, ...data.nation }
+              : nation
+          )
+        );
+        
+        // Update the original nations state to reflect the saved changes
+        setOriginalNations(prevOriginal => 
+          prevOriginal.map(nation => 
+            nation.nation_id === nationId 
+              ? { ...nation, ...data.nation }
+              : nation
+          )
+        );
+      }
       
       // Clear local changes for this nation
       setLocalChanges(prev => {

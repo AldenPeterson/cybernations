@@ -12,7 +12,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "receive_priority": 1
+        "receive_priority": 2,
+        "send_priority": 2
       },
       "current_stats": {
         "technology": "20,952.78",
@@ -32,8 +33,8 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "22,273.29",
@@ -52,8 +53,8 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "20,505.67",
@@ -69,11 +70,11 @@
       "notes": "",
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 3,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "72,603.87",
@@ -91,8 +92,8 @@
         "sendCash": 2,
         "getTech": 4,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "34,988.65",
@@ -111,8 +112,8 @@
         "sendCash": 2,
         "getTech": 4,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "32,444.19",
@@ -132,8 +133,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "7,899.25",
@@ -151,8 +152,8 @@
         "sendCash": 2,
         "getTech": 4,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "30,311.65",
@@ -172,8 +173,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "6,116.17",
@@ -191,8 +192,8 @@
         "sendCash": 0,
         "getTech": 3,
         "getCash": 0,
-        "receive_priority": 3,
-        "send_priority": 3
+        "receive_priority": 2,
+        "send_priority": 2
       },
       "current_stats": {
         "technology": "26,680.33",
@@ -211,8 +212,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 1
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "36,336.93",
@@ -232,8 +233,8 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "17,778.49",
@@ -251,8 +252,8 @@
         "sendCash": 3,
         "getTech": 3,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "46,103.00",
@@ -268,11 +269,11 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 3,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "120,087.43",
@@ -291,8 +292,8 @@
         "sendCash": 3,
         "getTech": 3,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "91,284.22",
@@ -311,8 +312,8 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "4,314.49",
@@ -332,7 +333,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "receive_priority": 1
+        "receive_priority": 2,
+        "send_priority": 2
       },
       "current_stats": {
         "technology": "22,696.90",
@@ -351,8 +353,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "326.82",
@@ -370,8 +372,8 @@
         "sendCash": 3,
         "getTech": 3,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "41,276.38",
@@ -390,8 +392,8 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "15,370.94",
@@ -411,8 +413,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "67.72",
@@ -431,8 +433,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "1.26",
@@ -451,8 +453,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "232.03",
@@ -471,8 +473,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "1,295.39",
@@ -488,10 +490,10 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 3,
-        "getTech": 2,
+        "getTech": 3,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "64,806.84",
@@ -511,8 +513,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "300.46",
@@ -530,8 +532,8 @@
         "sendCash": 1,
         "getTech": 5,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "28,289.31",
@@ -550,7 +552,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "receive_priority": 1
+        "receive_priority": 2,
+        "send_priority": 2
       },
       "current_stats": {
         "technology": "27,544.68",
@@ -569,8 +572,8 @@
         "sendCash": 3,
         "getTech": 3,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "36,966.17",
@@ -590,8 +593,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "40,191.67",
@@ -609,8 +612,8 @@
         "sendCash": 3,
         "getTech": 3,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "58,178.45",
@@ -630,8 +633,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "200.32",
@@ -650,8 +653,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "12,793.87",
@@ -669,8 +672,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "600.00",
@@ -689,8 +692,8 @@
         "sendCash": 3,
         "getTech": 3,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "56,099.07",
@@ -709,8 +712,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "100.00",
@@ -729,7 +732,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "receive_priority": 1
+        "receive_priority": 2,
+        "send_priority": 2
       },
       "current_stats": {
         "technology": "18,200.11",
@@ -749,8 +753,8 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "17,827.23",
@@ -768,8 +772,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "13,862.28",
@@ -789,8 +793,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "628.61",
@@ -808,8 +812,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 6,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "200.67",
@@ -828,8 +832,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "100.32",
@@ -848,8 +852,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "300.62",
@@ -868,8 +872,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "100.71",
@@ -888,8 +892,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "200.12",
@@ -908,8 +912,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "0.00",
@@ -928,8 +932,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "100.00",
@@ -948,8 +952,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "199.55",
@@ -968,8 +972,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "108.86",
@@ -988,8 +992,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 5,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "63.47",
@@ -1008,8 +1012,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 5,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "196.22",
