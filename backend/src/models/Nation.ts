@@ -10,6 +10,7 @@ export interface Nation {
   technology: string;
   infrastructure: string;
   nuclearWeapons: number;
+  governmentType: string;
   inWarMode: boolean;
   attackingCasualties?: number;
   defensiveCasualties?: number;
@@ -25,6 +26,8 @@ export interface CategorizedNation {
   infrastructure: string;
   strength: string;
   activity: string;
+  nuclearWeapons: number;
+  governmentType: string;
   has_dra: boolean;
   discord_handle?: string;
   slots: AidSlots;

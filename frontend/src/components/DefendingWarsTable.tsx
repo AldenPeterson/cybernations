@@ -12,6 +12,8 @@ interface War {
     strength: number;
     activity: string;
     inWarMode: boolean;
+    nuclearWeapons: number;
+    governmentType: string;
   };
   attackingNation: {
     id: number;
@@ -22,6 +24,8 @@ interface War {
     strength: number;
     activity: string;
     inWarMode: boolean;
+    nuclearWeapons: number;
+    governmentType: string;
   };
   status: string;
   date: string;
@@ -38,6 +42,8 @@ interface NationWars {
     strength: number;
     activity: string;
     inWarMode: boolean;
+    nuclearWeapons: number;
+    governmentType: string;
   };
   attackingWars: War[];
   defendingWars: War[];
@@ -128,6 +134,29 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     }
     return '#f8f9fa'; // Default light gray
   };
+
+  const getNuclearWeaponsColor = (nuclearWeapons: number): string => {
+    if (nuclearWeapons < 10) {
+      return '#ffebee'; // Light red for below 10
+    } else if (nuclearWeapons >= 10 && nuclearWeapons <= 18) {
+      return '#fffde7'; // Light yellow for 10-18
+    }
+    return '#e8f5e8'; // Light green for above 18
+  };
+
+  const getGovernmentTypeColor = (governmentType: string): string => {
+    if (governmentType.toLowerCase() === 'anarchy') {
+      return '#ffebee'; // Light red for anarchy
+    }
+    return '#f8f9fa'; // Default light gray
+  };
+
+  const shouldBeInPeaceMode = (nuclearWeapons: number, governmentType: string, attackingWars: War[], defendingWars: War[]): boolean => {
+    return (governmentType.toLowerCase() === 'anarchy'  || nuclearWeapons < 20) && 
+           (attackingWars.length === 0 && 
+           defendingWars.length === 0);
+  };
+
 
   const formatWarEndDate = (endDate: string): string => {
     // Parse the date and add one day to show the day after the war actually ends
@@ -259,9 +288,9 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       {nationWars.length > 0 ? (
         <div>
           <h2>Nation Wars</h2>
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', width: '100%' }}>
             <table style={{ 
-              width: '100%', 
+              width: '1600px',
               borderCollapse: 'collapse', 
               border: '1px solid #ddd',
               fontSize: '14px'
@@ -270,6 +299,12 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                 <tr style={{ backgroundColor: '#343a40' }}>
                   <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>
                     Nation
+                  </th>
+                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
+                    Nukes
+                  </th>
+                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
+                    Gov
                   </th>
                   <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
                     Attacking War 1
@@ -294,6 +329,9 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                   </th>
                   <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
                     Staggered
+                  </th>
+                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
+                    PM?
                   </th>
                 </tr>
               </thead>
@@ -327,6 +365,30 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                         </span>
                         <br />
                         <WarStatusBadge inWarMode={nationWar.nation.inWarMode} />
+                      </div>
+                    </td>
+                    {/* Nuclear Weapons Column */}
+                    <td style={{ 
+                      padding: '4px 6px', 
+                      border: '1px solid #ddd', 
+                      textAlign: 'center',
+                      backgroundColor: getNuclearWeaponsColor(nationWar.nation.nuclearWeapons),
+                      minWidth: '45px'
+                    }}>
+                      <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#d32f2f' }}>
+                        {nationWar.nation.nuclearWeapons}
+                      </div>
+                    </td>
+                    {/* Government Type Column */}
+                    <td style={{ 
+                      padding: '4px 6px', 
+                      border: '1px solid #ddd', 
+                      textAlign: 'center',
+                      backgroundColor: getGovernmentTypeColor(nationWar.nation.governmentType),
+                      minWidth: '60px'
+                    }}>
+                      <div style={{ fontSize: '10px', color: '#666' }}>
+                        {nationWar.nation.governmentType}
                       </div>
                     </td>
                     {/* Attacking Wars Columns */}
@@ -431,6 +493,20 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                           return <span style={{ color: '#d32f2f', fontSize: '10px', fontWeight: 'bold' }}>⚠</span>;
                         }
                       })()}
+                    </td>
+                    {/* PM Column */}
+                    <td style={{ 
+                      padding: '4px 6px', 
+                      border: '1px solid #ddd', 
+                      textAlign: 'center',
+                      backgroundColor: shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? '#ffebee' : '#ffffff',
+                      minWidth: '50px'
+                    }}>
+                      {shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? (
+                        <span style={{ color: '#d32f2f', fontSize: '10px', fontWeight: 'bold' }}>✓</span>
+                      ) : (
+                        <span style={{ color: '#999', fontSize: '10px' }}>—</span>
+                      )}
                     </td>
                   </tr>
                 ))}

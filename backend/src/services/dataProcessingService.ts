@@ -93,6 +93,7 @@ export function parseNationStats(filePath: string): Promise<Nation[]> {
           technology: row['Technology'] as string || '0',
           infrastructure: row['Infrastructure'] as string || '0',
           nuclearWeapons: parseInt(row['Nukes'] as string) || 0,
+          governmentType: row['Government Type'] as string || '',
           inWarMode: row['War Status'] ? (row['War Status'] as string).toLowerCase().includes('war') : false,
           attackingCasualties: parseInt((row['Attacking Casualties'] as string)?.replace(/,/g, '')) || 0,
           defensiveCasualties: parseInt((row['Defensive Casualties'] as string)?.replace(/,/g, '')) || 0

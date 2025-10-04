@@ -41,7 +41,9 @@ export class DefendingWarsService {
               allianceId: war.receivingAllianceId,
               strength: defendingNation?.strength || 0,
               activity: defendingNation?.activity || '',
-              inWarMode: defendingNation?.inWarMode || false
+              inWarMode: defendingNation?.inWarMode || false,
+              nuclearWeapons: defendingNation?.nuclearWeapons || 0,
+              governmentType: defendingNation?.governmentType || ''
             },
             attackingNation: {
               id: war.declaringId,
@@ -51,7 +53,9 @@ export class DefendingWarsService {
               allianceId: war.declaringAllianceId,
               strength: nation.strength,
               activity: nation.activity,
-              inWarMode: nation.inWarMode
+              inWarMode: nation.inWarMode,
+              nuclearWeapons: nation.nuclearWeapons,
+              governmentType: nation.governmentType
             },
             status: war.status,
             date: war.date,
@@ -73,7 +77,9 @@ export class DefendingWarsService {
               allianceId: war.receivingAllianceId,
               strength: nation.strength,
               activity: nation.activity,
-              inWarMode: nation.inWarMode
+              inWarMode: nation.inWarMode,
+              nuclearWeapons: nation.nuclearWeapons,
+              governmentType: nation.governmentType
             },
             attackingNation: {
               id: war.declaringId,
@@ -83,7 +89,9 @@ export class DefendingWarsService {
               allianceId: war.declaringAllianceId,
               strength: attackingNation?.strength || 0,
               activity: attackingNation?.activity || '',
-              inWarMode: attackingNation?.inWarMode || false
+              inWarMode: attackingNation?.inWarMode || false,
+              nuclearWeapons: attackingNation?.nuclearWeapons || 0,
+              governmentType: attackingNation?.governmentType || ''
             },
             status: war.status,
             date: war.date,
@@ -100,7 +108,9 @@ export class DefendingWarsService {
           allianceId: nation.allianceId,
           strength: nation.strength,
           activity: nation.activity,
-          inWarMode: nation.inWarMode
+          inWarMode: nation.inWarMode,
+          nuclearWeapons: nation.nuclearWeapons,
+          governmentType: nation.governmentType
         },
         attackingWars: attackingWars.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
         defendingWars: defendingWars.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -141,7 +151,9 @@ export class DefendingWarsService {
           allianceId: war.receivingAllianceId,
           strength: defendingNation?.strength || 0,
           activity: defendingNation?.activity || '',
-          inWarMode: defendingNation?.inWarMode || false
+          inWarMode: defendingNation?.inWarMode || false,
+          nuclearWeapons: defendingNation?.nuclearWeapons || 0,
+          governmentType: defendingNation?.governmentType || ''
         },
         attackingNation: {
           id: war.declaringId,
@@ -151,7 +163,9 @@ export class DefendingWarsService {
           allianceId: war.declaringAllianceId,
           strength: attackingNation?.strength || 0,
           activity: attackingNation?.activity || '',
-          inWarMode: attackingNation?.inWarMode || false
+          inWarMode: attackingNation?.inWarMode || false,
+          nuclearWeapons: attackingNation?.nuclearWeapons || 0,
+          governmentType: attackingNation?.governmentType || ''
         },
         status: war.status,
         date: war.date,
