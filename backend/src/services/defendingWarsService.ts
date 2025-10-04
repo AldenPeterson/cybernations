@@ -3,6 +3,7 @@ import {
 } from './dataProcessingService.js';
 import { AllianceService } from './allianceService.js';
 import { War } from '../models/index.js';
+import { calculateWarDateInfo, calculateStaggeredStatus } from '../utils/warDateUtils.js';
 
 export class DefendingWarsService {
   /**
@@ -31,6 +32,7 @@ export class DefendingWarsService {
         .filter(war => war.declaringId === nation.id)
         .map(war => {
           const defendingNation = nations.find(n => n.id === war.receivingId);
+          const warDateInfo = calculateWarDateInfo(war.endDate);
           return {
             warId: war.warId,
             defendingNation: {
@@ -59,7 +61,8 @@ export class DefendingWarsService {
             },
             status: war.status,
             date: war.date,
-            endDate: war.endDate
+            endDate: war.endDate,
+            ...warDateInfo
           };
         });
 
@@ -67,6 +70,7 @@ export class DefendingWarsService {
         .filter(war => war.receivingId === nation.id)
         .map(war => {
           const attackingNation = nations.find(n => n.id === war.declaringId);
+          const warDateInfo = calculateWarDateInfo(war.endDate);
           return {
             warId: war.warId,
             defendingNation: {
@@ -95,9 +99,13 @@ export class DefendingWarsService {
             },
             status: war.status,
             date: war.date,
-            endDate: war.endDate
+            endDate: war.endDate,
+            ...warDateInfo
           };
         });
+
+      const sortedDefendingWars = defendingWars.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const staggeredStatus = calculateStaggeredStatus(sortedDefendingWars);
 
       return {
         nation: {
@@ -113,7 +121,8 @@ export class DefendingWarsService {
           governmentType: nation.governmentType
         },
         attackingWars: attackingWars.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-        defendingWars: defendingWars.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        defendingWars: sortedDefendingWars,
+        staggeredStatus: staggeredStatus
       };
     });
 
@@ -140,6 +149,7 @@ export class DefendingWarsService {
     const warsWithNationInfo = defendingWars.map(war => {
       const defendingNation = nations.find(n => n.id === war.receivingId);
       const attackingNation = nations.find(n => n.id === war.declaringId);
+      const warDateInfo = calculateWarDateInfo(war.endDate);
       
       return {
         warId: war.warId,
@@ -169,7 +179,8 @@ export class DefendingWarsService {
         },
         status: war.status,
         date: war.date,
-        endDate: war.endDate
+        endDate: war.endDate,
+        ...warDateInfo
       };
     });
 

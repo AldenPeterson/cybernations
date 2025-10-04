@@ -13,4 +13,9 @@ export interface War {
   status: string;
   date: string;
   endDate: string;
+  // Calculated war end date fields
+  formattedEndDate?: string;
+  daysUntilExpiration?: number;
+  expirationColor?: string;
+  isExpired?: boolean;
 }

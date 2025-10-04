@@ -30,6 +30,11 @@ interface War {
   status: string;
   date: string;
   endDate: string;
+  // Calculated war end date fields from backend
+  formattedEndDate?: string;
+  daysUntilExpiration?: number;
+  expirationColor?: string;
+  isExpired?: boolean;
 }
 
 interface NationWars {
@@ -47,6 +52,10 @@ interface NationWars {
   };
   attackingWars: War[];
   defendingWars: War[];
+  staggeredStatus: {
+    status: 'staggered' | 'same-day' | 'empty';
+    color: string;
+  };
 }
 
 interface DefendingWarsStats {
@@ -225,74 +234,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   };
 
 
-  const formatWarEndDate = (endDate: string): string => {
-    // Parse the date and add one day to show the day after the war actually ends
-    const date = new Date(endDate);
-    const nextDay = new Date(date.getTime() + (24 * 60 * 60 * 1000)); // Add 24 hours
-    return nextDay.toLocaleDateString('en-US', { 
-      timeZone: 'UTC',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
-  };
 
-  const getDaysUntilExpiration = (endDate: string): number => {
-    // Parse the end date and current time, both in UTC to avoid timezone issues
-    const endDateObj = new Date(endDate);
-    const now = new Date();
-    
-    // Set both dates to start of day in UTC to compare just the date part
-    const endDateUTC = new Date(Date.UTC(endDateObj.getUTCFullYear(), endDateObj.getUTCMonth(), endDateObj.getUTCDate()));
-    const nowUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    
-    const diffTime = endDateUTC.getTime() - nowUTC.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(0, diffDays);
-  };
 
-  const getStaggeredStatus = (defendingWars: War[]): { status: 'staggered' | 'same-day' | 'empty', color: string } => {
-    if (defendingWars.length === 0) {
-      return { status: 'empty', color: '#ffffff' };
-    }
-    
-    if (defendingWars.length === 1) {
-      return { status: 'empty', color: '#ffffff' };
-    }
-    
-    // Get unique end dates (ignoring time, just the date part)
-    const endDates = defendingWars.map(war => {
-      const date = new Date(war.endDate);
-      return date.toLocaleDateString('en-US', { 
-        timeZone: 'UTC',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-    });
-    
-    const uniqueDates = new Set(endDates);
-    
-    if (uniqueDates.size > 1) {
-      return { status: 'staggered', color: '#e8f5e8' }; // Green for staggered
-    } else {
-      return { status: 'same-day', color: '#ffebee' }; // Red for same day
-    }
-  };
-
-  const getWarExpirationColor = (endDate: string): string => {
-    const daysUntilExpiration = getDaysUntilExpiration(endDate);
-    
-    if (daysUntilExpiration <= 1) {
-      return '#ffebee'; // Light red for expires tomorrow or today
-    } else if (daysUntilExpiration === 2) {
-      return '#fff3e0'; // Light orange for expires in 2 days
-    } else if (daysUntilExpiration === 3) {
-      return '#fffde7'; // Light yellow for expires in 3 days
-    } else {
-      return '#e8f5e8'; // Light green for expires in more than 3 days
-    }
-  };
 
   if (loading) {
     return <div style={{ padding: '20px', textAlign: 'center' }}>Loading defending wars...</div>;
@@ -374,7 +317,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                   <th style={headerStyles.center}>Defending War 2</th>
                   <th style={headerStyles.center}>Defending War 3</th>
                   <th style={headerStyles.center}>Staggered</th>
-                  <th style={headerStyles.center}>PM?</th>
+                  <th style={headerStyles.center}>Should PM?</th>
                 </tr>
               </thead>
               <tbody>
@@ -430,7 +373,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     {[0, 1, 2, 3].map(index => (
                       <td key={`attacking-${index}`} style={{ 
                         ...columnStyles.war,
-                        backgroundColor: nationWar.attackingWars[index] ? getWarExpirationColor(nationWar.attackingWars[index].endDate) : '#ffffff'
+                        backgroundColor: nationWar.attackingWars[index] ? (nationWar.attackingWars[index].expirationColor || '#e8f5e8') : '#ffffff'
                       }}>
                         {nationWar.attackingWars[index] ? (
                           <div style={{ fontSize: '11px' }}>
@@ -457,7 +400,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                               {nationWar.attackingWars[index].defendingNation.ruler} • {nationWar.attackingWars[index].defendingNation.alliance}
                             </div>
                             <div style={{ fontSize: '9px', color: '#666' }}>
-                              Exp: {formatWarEndDate(nationWar.attackingWars[index].endDate)}
+                              Exp: {nationWar.attackingWars[index].formattedEndDate || nationWar.attackingWars[index].endDate}
                             </div>
                           </div>
                         ) : (
@@ -469,7 +412,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     {[0, 1, 2].map(index => (
                       <td key={`defending-${index}`} style={{ 
                         ...columnStyles.war,
-                        backgroundColor: nationWar.defendingWars[index] ? getWarExpirationColor(nationWar.defendingWars[index].endDate) : '#ffffff'
+                        backgroundColor: nationWar.defendingWars[index] ? (nationWar.defendingWars[index].expirationColor || '#e8f5e8') : '#ffffff'
                       }}>
                         {nationWar.defendingWars[index] ? (
                           <div style={{ fontSize: '11px' }}>
@@ -496,7 +439,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                               {nationWar.defendingWars[index].attackingNation.ruler} • {nationWar.defendingWars[index].attackingNation.alliance}
                             </div>
                             <div style={{ fontSize: '9px', color: '#666' }}>
-                              Exp: {formatWarEndDate(nationWar.defendingWars[index].endDate)}
+                              Exp: {nationWar.defendingWars[index].formattedEndDate || nationWar.defendingWars[index].endDate}
                             </div>
                           </div>
                         ) : (
@@ -507,10 +450,10 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     {/* Staggered Column */}
                     <td style={{ 
                       ...columnStyles.staggered,
-                      backgroundColor: getStaggeredStatus(nationWar.defendingWars).color
+                      backgroundColor: nationWar.staggeredStatus.color
                     }}>
                       {(() => {
-                        const staggeredInfo = getStaggeredStatus(nationWar.defendingWars);
+                        const staggeredInfo = nationWar.staggeredStatus;
                         if (staggeredInfo.status === 'empty') {
                           return <span style={{ color: '#999', fontSize: '10px' }}>—</span>;
                         } else if (staggeredInfo.status === 'staggered') {
