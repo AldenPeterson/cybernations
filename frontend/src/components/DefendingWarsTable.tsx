@@ -74,6 +74,73 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [error, setError] = useState<string | null>(null);
   const [includePeaceMode, setIncludePeaceMode] = useState<boolean>(false);
 
+  // Column styles
+  const columnStyles = {
+    nation: {
+      padding: '2px 2px',
+      border: '1px solid #ddd',
+      backgroundColor: '#f8f9fa', // Default, will be overridden by activity color
+      minWidth: '150px',
+      maxWidth: '200px',
+      width: '150px'
+    },
+    nukes: {
+      padding: '2px 2px',
+      border: '1px solid #ddd',
+      textAlign: 'center' as const,
+      backgroundColor: '#f8f9fa', // Default, will be overridden by nuclear weapons color
+      minWidth: '5px',
+      maxWidth: '10px'
+
+    },
+    government: {
+      padding: '4px 6px',
+      border: '1px solid #ddd',
+      textAlign: 'center' as const,
+      backgroundColor: '#f8f9fa', // Default, will be overridden by government type color,
+      width: '40px'
+    },
+    war: {
+      padding: '2px 3px',
+      border: '1px solid #ddd',
+      textAlign: 'center' as const,
+      backgroundColor: '#ffffff',
+      width: '40px'
+    },
+    staggered: {
+      padding: '4px 6px',
+      border: '1px solid #ddd',
+      textAlign: 'center' as const,
+      backgroundColor: '#ffffff',
+      minWidth: '80px'
+    },
+    pm: {
+      padding: '4px 6px',
+      border: '1px solid #ddd',
+      textAlign: 'center' as const,
+      backgroundColor: '#ffffff',
+      minWidth: '50px'
+    }
+  };
+
+  // Header styles
+  const headerStyles = {
+    default: {
+      padding: '8px 6px',
+      border: '1px solid #ddd',
+      textAlign: 'left' as const,
+      color: 'white',
+      fontWeight: 'bold'
+    },
+    center: {
+      padding: '8px 6px',
+      border: '1px solid #ddd',
+      textAlign: 'center' as const,
+      color: 'white',
+      fontWeight: 'bold'
+    }
+  };
+
   useEffect(() => {
     if (allianceId) {
       fetchNationWars();
@@ -290,57 +357,31 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
           <h2>Nation Wars</h2>
           <div style={{ overflowX: 'auto', width: '100%' }}>
             <table style={{ 
-              width: '1600px',
               borderCollapse: 'collapse', 
               border: '1px solid #ddd',
               fontSize: '14px'
             }}>
               <thead>
                 <tr style={{ backgroundColor: '#343a40' }}>
-                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>
-                    Nation
-                  </th>
-                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
-                    Nukes
-                  </th>
-                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
-                    Gov
-                  </th>
-                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
-                    Attacking War 1
-                  </th>
-                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
-                    Attacking War 2
-                  </th>
-                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
-                    Attacking War 3
-                  </th>
-                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
-                    Attacking War 4
-                  </th>
-                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
-                    Defending War 1
-                  </th>
-                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
-                    Defending War 2
-                  </th>
-                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
-                    Defending War 3
-                  </th>
-                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
-                    Staggered
-                  </th>
-                  <th style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
-                    PM?
-                  </th>
+                  <th style={headerStyles.default}>Nation</th>
+                  <th style={headerStyles.center}>Nukes</th>
+                  <th style={headerStyles.center}>Gov</th>
+                  <th style={headerStyles.center}>Attacking War 1</th>
+                  <th style={headerStyles.center}>Attacking War 2</th>
+                  <th style={headerStyles.center}>Attacking War 3</th>
+                  <th style={headerStyles.center}>Attacking War 4</th>
+                  <th style={headerStyles.center}>Defending War 1</th>
+                  <th style={headerStyles.center}>Defending War 2</th>
+                  <th style={headerStyles.center}>Defending War 3</th>
+                  <th style={headerStyles.center}>Staggered</th>
+                  <th style={headerStyles.center}>PM?</th>
                 </tr>
               </thead>
               <tbody>
                 {nationWars.map((nationWar) => (
                   <tr key={nationWar.nation.id}>
                     <td style={{ 
-                      padding: '4px 6px', 
-                      border: '1px solid #ddd',
+                      ...columnStyles.nation,
                       backgroundColor: getActivityColor(nationWar.nation.activity)
                     }}>
                       <div style={{ fontSize: '12px' }}>
@@ -369,11 +410,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     </td>
                     {/* Nuclear Weapons Column */}
                     <td style={{ 
-                      padding: '4px 6px', 
-                      border: '1px solid #ddd', 
-                      textAlign: 'center',
-                      backgroundColor: getNuclearWeaponsColor(nationWar.nation.nuclearWeapons),
-                      minWidth: '45px'
+                      ...columnStyles.nukes,
+                      backgroundColor: getNuclearWeaponsColor(nationWar.nation.nuclearWeapons)
                     }}>
                       <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#d32f2f' }}>
                         {nationWar.nation.nuclearWeapons}
@@ -381,11 +419,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     </td>
                     {/* Government Type Column */}
                     <td style={{ 
-                      padding: '4px 6px', 
-                      border: '1px solid #ddd', 
-                      textAlign: 'center',
-                      backgroundColor: getGovernmentTypeColor(nationWar.nation.governmentType),
-                      minWidth: '60px'
+                      ...columnStyles.government,
+                      backgroundColor: getGovernmentTypeColor(nationWar.nation.governmentType)
                     }}>
                       <div style={{ fontSize: '10px', color: '#666' }}>
                         {nationWar.nation.governmentType}
@@ -394,11 +429,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     {/* Attacking Wars Columns */}
                     {[0, 1, 2, 3].map(index => (
                       <td key={`attacking-${index}`} style={{ 
-                        padding: '4px 6px', 
-                        border: '1px solid #ddd', 
-                        textAlign: 'center',
-                        backgroundColor: nationWar.attackingWars[index] ? getWarExpirationColor(nationWar.attackingWars[index].endDate) : '#ffffff',
-                        minWidth: '120px'
+                        ...columnStyles.war,
+                        backgroundColor: nationWar.attackingWars[index] ? getWarExpirationColor(nationWar.attackingWars[index].endDate) : '#ffffff'
                       }}>
                         {nationWar.attackingWars[index] ? (
                           <div style={{ fontSize: '11px' }}>
@@ -436,11 +468,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     {/* Defending Wars Columns */}
                     {[0, 1, 2].map(index => (
                       <td key={`defending-${index}`} style={{ 
-                        padding: '4px 6px', 
-                        border: '1px solid #ddd', 
-                        textAlign: 'center',
-                        backgroundColor: nationWar.defendingWars[index] ? getWarExpirationColor(nationWar.defendingWars[index].endDate) : '#ffffff',
-                        minWidth: '120px'
+                        ...columnStyles.war,
+                        backgroundColor: nationWar.defendingWars[index] ? getWarExpirationColor(nationWar.defendingWars[index].endDate) : '#ffffff'
                       }}>
                         {nationWar.defendingWars[index] ? (
                           <div style={{ fontSize: '11px' }}>
@@ -477,11 +506,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     ))}
                     {/* Staggered Column */}
                     <td style={{ 
-                      padding: '4px 6px', 
-                      border: '1px solid #ddd', 
-                      textAlign: 'center',
-                      backgroundColor: getStaggeredStatus(nationWar.defendingWars).color,
-                      minWidth: '80px'
+                      ...columnStyles.staggered,
+                      backgroundColor: getStaggeredStatus(nationWar.defendingWars).color
                     }}>
                       {(() => {
                         const staggeredInfo = getStaggeredStatus(nationWar.defendingWars);
@@ -496,11 +522,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     </td>
                     {/* PM Column */}
                     <td style={{ 
-                      padding: '4px 6px', 
-                      border: '1px solid #ddd', 
-                      textAlign: 'center',
-                      backgroundColor: shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? '#ffebee' : '#ffffff',
-                      minWidth: '50px'
+                      ...columnStyles.pm,
+                      backgroundColor: shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? '#ffebee' : '#ffffff'
                     }}>
                       {shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? (
                         <span style={{ color: '#d32f2f', fontSize: '10px', fontWeight: 'bold' }}>✓</span>
