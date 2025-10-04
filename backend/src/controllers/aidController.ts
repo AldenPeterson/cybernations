@@ -94,6 +94,7 @@ export class AidController {
   static async getAidRecommendations(req: Request, res: Response) {
     try {
       const allianceId = parseInt(req.params.allianceId);
+      const crossAllianceEnabled = req.query.crossAlliance === 'true';
       
       if (isNaN(allianceId)) {
         return res.status(400).json({
@@ -102,7 +103,7 @@ export class AidController {
         });
       }
 
-      const result = await AidService.getAidRecommendations(allianceId);
+      const result = await AidService.getAidRecommendations(allianceId, crossAllianceEnabled);
 
       res.json({
         success: true,

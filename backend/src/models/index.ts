@@ -3,3 +3,4 @@ export * from './Nation.js';
 export * from './AidOffer.js';
 export * from './Alliance.js';
 export * from './AidSlot.js';
+export * from './War.js';

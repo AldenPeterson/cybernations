@@ -195,7 +195,8 @@ export function parseWarStats(filePath: string): Promise<any[]> {
           receivingAlliance: decodeHtmlEntities(row['Receiving Alliance'] as string || ''),
           receivingAllianceId: parseInt(row['Receiving Alliance ID'] as string) || 0,
           status: row['War Status'] as string || '',
-          date: row['Begin Date'] as string || ''
+          date: row['Begin Date'] as string || '',
+          endDate: row['End Date'] as string || ''
         };
         wars.push(war);
       })

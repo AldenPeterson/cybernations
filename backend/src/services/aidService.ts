@@ -11,8 +11,25 @@ import {
 } from './nationCategorizationService.js';
 import { AllianceService } from './allianceService.js';
 import { AidOffer } from '../models/index.js';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 export class AidService {
+  /**
+   * Load cross-alliance aid coordination configuration
+   */
+  private static loadCrossAllianceConfig(): Record<string, string> {
+    try {
+      const configPath = join(process.cwd(), 'src', 'config', 'crossAllianceAid.json');
+      const configData = readFileSync(configPath, 'utf-8');
+      const config = JSON.parse(configData);
+      return config.cross_alliance_aid_coordination || {};
+    } catch (error) {
+      console.warn('Could not load cross-alliance aid config:', error);
+      return {};
+    }
+  }
+
   /**
    * Get aid slots for a specific alliance
    */
@@ -82,7 +99,7 @@ export class AidService {
   /**
    * Get aid recommendations for an alliance
    */
-  static async getAidRecommendations(allianceId: number) {
+  static async getAidRecommendations(allianceId: number, crossAllianceEnabled: boolean = true) {
     const { nations, aidOffers, useJsonData } = await AllianceService.getAllianceDataWithJsonPriority(allianceId);
     
     if (nations.length === 0) {
@@ -94,7 +111,32 @@ export class AidService {
 
     // If using JSON data, nations already have slots assigned
     // If using raw data, need to categorize them
-    const categorizedNations = useJsonData ? nations : categorizeNations(nations);
+    let categorizedNations = useJsonData ? nations : categorizeNations(nations);
+    
+    // Load cross-alliance configuration only if enabled
+    let crossAllianceConfig: Record<string, string> = {};
+    let receivingAllianceId: string | undefined;
+    
+    if (crossAllianceEnabled) {
+      crossAllianceConfig = this.loadCrossAllianceConfig();
+      receivingAllianceId = crossAllianceConfig[allianceId.toString()];
+      
+      // If this alliance has a linked receiving alliance, include those nations
+      if (receivingAllianceId) {
+        try {
+          const { nations: receivingNations, useJsonData: receivingUseJsonData } = 
+            await AllianceService.getAllianceDataWithJsonPriority(parseInt(receivingAllianceId));
+          
+          if (receivingNations.length > 0) {
+            const categorizedReceivingNations = receivingUseJsonData ? receivingNations : categorizeNations(receivingNations);
+            // Add receiving nations to the pool for cross-alliance coordination
+            categorizedNations = [...categorizedNations, ...categorizedReceivingNations];
+          }
+        } catch (error) {
+          console.warn(`Could not load receiving alliance ${receivingAllianceId} for cross-alliance coordination:`, error);
+        }
+      }
+    }
     
     // Don't filter out peace mode nations - only senders are restricted, not recipients
     const activeNations = categorizedNations;
@@ -232,18 +274,26 @@ export class AidService {
 
     const recommendations: any[] = [];
 
-    // Get nations by aid direction
-    const nationsThatShouldGetCash = getNationsThatShouldGetCash(activeNations);
-    const nationsThatShouldSendTechnology = getNationsThatShouldSendTechnology(activeNations);
-    const nationsThatShouldGetTechnology = getNationsThatShouldGetTechnology(activeNations);
-    const nationsThatShouldSendCash = getNationsThatShouldSendCash(activeNations);
+    // Get nations by aid direction - separate internal and cross-alliance
+    const internalNations = activeNations.filter(nation => nation.allianceId === allianceId);
+    const crossAllianceNations = crossAllianceEnabled ? activeNations.filter(nation => nation.allianceId !== allianceId) : [];
+    
+    // Internal alliance nations (priority)
+    const internalNationsThatShouldGetCash = getNationsThatShouldGetCash(internalNations);
+    const internalNationsThatShouldSendTechnology = getNationsThatShouldSendTechnology(internalNations);
+    const internalNationsThatShouldGetTechnology = getNationsThatShouldGetTechnology(internalNations);
+    const internalNationsThatShouldSendCash = getNationsThatShouldSendCash(internalNations);
+    
+    // Cross-alliance nations (secondary) - only if enabled
+    const crossAllianceNationsThatShouldGetCash = crossAllianceEnabled ? getNationsThatShouldGetCash(crossAllianceNations) : [];
+    const crossAllianceNationsThatShouldGetTechnology = crossAllianceEnabled ? getNationsThatShouldGetTechnology(crossAllianceNations) : [];
     
     // Filter out peace mode nations from sender lists only (recipients can receive in peace mode)
     // Sending nations must be in war mode, receiving nations can be in either mode
-    const activeNationsThatShouldSendCash = nationsThatShouldSendCash.filter(nation => 
+    const activeInternalNationsThatShouldSendCash = internalNationsThatShouldSendCash.filter(nation => 
       nation.inWarMode
     );
-    const activeNationsThatShouldSendTechnology = nationsThatShouldSendTechnology.filter(nation => 
+    const activeInternalNationsThatShouldSendTechnology = internalNationsThatShouldSendTechnology.filter(nation => 
       nation.inWarMode
     );
 
@@ -342,14 +392,14 @@ export class AidService {
       }
     });
 
-    // Priority 1: New cash aid recommendations (banks to farms)
+    // Priority 1: Internal cash aid recommendations (banks to farms within alliance)
     // Sort senders by send_priority (1 = highest priority)
-    const sortedCashSenders = activeNationsThatShouldSendCash.sort((a, b) => a.slots.send_priority - b.slots.send_priority);
+    const sortedInternalCashSenders = activeInternalNationsThatShouldSendCash.sort((a, b) => a.slots.send_priority - b.slots.send_priority);
     // Sort recipients by receive_priority (1 = highest priority)
-    const sortedCashRecipients = nationsThatShouldGetCash.sort((a, b) => a.slots.receive_priority - b.slots.receive_priority);
+    const sortedInternalCashRecipients = internalNationsThatShouldGetCash.sort((a, b) => a.slots.receive_priority - b.slots.receive_priority);
     
-    sortedCashSenders.forEach(sender => {
-      sortedCashRecipients.forEach(recipient => {
+    sortedInternalCashSenders.forEach(sender => {
+      sortedInternalCashRecipients.forEach(recipient => {
         const pair = `${Math.min(sender.id, recipient.id)}-${Math.max(sender.id, recipient.id)}`;
         
         if (!existingPairs.has(pair) && !expiredPairs.has(pair) && !recommendationPairs.has(pair) && canRecommendCash(sender, recipient)) {
@@ -373,7 +423,7 @@ export class AidService {
               currentAidCount: nationAidCounts.get(recipient.id) || 0,
               inWarMode: recipient.inWarMode
             },
-            reason: `New cash aid: ${sender.nationName} → ${recipient.nationName}`
+            reason: `New internal cash aid: ${sender.nationName} → ${recipient.nationName}`
           });
           incrementCounts(sender.id, recipient.id, 'cash');
           recommendationPairs.add(pair);
@@ -381,19 +431,61 @@ export class AidService {
       });
     });
 
-    // Priority 2: New tech aid recommendations
+    // Priority 2: Cross-alliance cash aid recommendations (only if internal slots are filled and cross-alliance is enabled)
+    if (crossAllianceEnabled && crossAllianceNationsThatShouldGetCash.length > 0) {
+      const sortedCrossAllianceCashRecipients = crossAllianceNationsThatShouldGetCash.sort((a, b) => a.slots.receive_priority - b.slots.receive_priority);
+      
+      sortedInternalCashSenders.forEach(sender => {
+        // Only consider cross-alliance if sender still has capacity after internal recommendations
+        const hasRemainingCapacity = hasOutgoingCashCapacity(sender.id, sender.slots);
+        if (hasRemainingCapacity) {
+          sortedCrossAllianceCashRecipients.forEach(recipient => {
+            const pair = `${Math.min(sender.id, recipient.id)}-${Math.max(sender.id, recipient.id)}`;
+            
+            if (!existingPairs.has(pair) && !expiredPairs.has(pair) && !recommendationPairs.has(pair) && canRecommendCash(sender, recipient)) {
+              recommendations.push({
+                priority: 2,
+                type: 'cross_alliance_cash',
+                sender: {
+                  id: sender.id,
+                  rulerName: sender.rulerName,
+                  nationName: sender.nationName,
+                  discord_handle: sender.discord_handle,
+                  slots: sender.slots,
+                  currentAidCount: nationAidCounts.get(sender.id) || 0,
+                  inWarMode: sender.inWarMode
+                },
+                recipient: {
+                  id: recipient.id,
+                  rulerName: recipient.rulerName,
+                  nationName: recipient.nationName,
+                  slots: recipient.slots,
+                  currentAidCount: nationAidCounts.get(recipient.id) || 0,
+                  inWarMode: recipient.inWarMode
+                },
+                reason: `Cross-alliance cash aid: ${sender.nationName} → ${recipient.nationName}`
+              });
+              incrementCounts(sender.id, recipient.id, 'cash');
+              recommendationPairs.add(pair);
+            }
+          });
+        }
+      });
+    }
+
+    // Priority 3: Internal tech aid recommendations
     // Sort senders by send_priority (1 = highest priority)
-    const sortedTechSenders = activeNationsThatShouldSendTechnology.sort((a, b) => a.slots.send_priority - b.slots.send_priority);
+    const sortedInternalTechSenders = activeInternalNationsThatShouldSendTechnology.sort((a, b) => a.slots.send_priority - b.slots.send_priority);
     // Sort recipients by receive_priority (1 = highest priority)
-    const sortedTechRecipients = nationsThatShouldGetTechnology.sort((a, b) => a.slots.receive_priority - b.slots.receive_priority);
+    const sortedInternalTechRecipients = internalNationsThatShouldGetTechnology.sort((a, b) => a.slots.receive_priority - b.slots.receive_priority);
     
-    sortedTechSenders.forEach(sender => {
-      sortedTechRecipients.forEach(recipient => {
+    sortedInternalTechSenders.forEach(sender => {
+      sortedInternalTechRecipients.forEach(recipient => {
         const pair = `${Math.min(sender.id, recipient.id)}-${Math.max(sender.id, recipient.id)}`;
         
         if (!existingPairs.has(pair) && !expiredPairs.has(pair) && !recommendationPairs.has(pair) && canRecommendTech(sender, recipient)) {
           recommendations.push({
-            priority: 2,
+            priority: 3,
             type: 'new_tech',
             sender: {
               id: sender.id,
@@ -412,13 +504,55 @@ export class AidService {
               currentAidCount: nationAidCounts.get(recipient.id) || 0,
               inWarMode: recipient.inWarMode
             },
-            reason: `New tech aid: ${sender.nationName} → ${recipient.nationName}`
+            reason: `New internal tech aid: ${sender.nationName} → ${recipient.nationName}`
           });
           incrementCounts(sender.id, recipient.id, 'tech');
           recommendationPairs.add(pair);
         }
       });
     });
+
+    // Priority 4: Cross-alliance tech aid recommendations (only if internal slots are filled and cross-alliance is enabled)
+    if (crossAllianceEnabled && crossAllianceNationsThatShouldGetTechnology.length > 0) {
+      const sortedCrossAllianceTechRecipients = crossAllianceNationsThatShouldGetTechnology.sort((a, b) => a.slots.receive_priority - b.slots.receive_priority);
+      
+      sortedInternalTechSenders.forEach(sender => {
+        // Only consider cross-alliance if sender still has capacity after internal recommendations
+        const hasRemainingCapacity = hasOutgoingTechCapacity(sender.id, sender.slots);
+        if (hasRemainingCapacity) {
+          sortedCrossAllianceTechRecipients.forEach(recipient => {
+            const pair = `${Math.min(sender.id, recipient.id)}-${Math.max(sender.id, recipient.id)}`;
+            
+            if (!existingPairs.has(pair) && !expiredPairs.has(pair) && !recommendationPairs.has(pair) && canRecommendTech(sender, recipient)) {
+              recommendations.push({
+                priority: 4,
+                type: 'cross_alliance_tech',
+                sender: {
+                  id: sender.id,
+                  rulerName: sender.rulerName,
+                  nationName: sender.nationName,
+                  discord_handle: sender.discord_handle,
+                  slots: sender.slots,
+                  currentAidCount: nationAidCounts.get(sender.id) || 0,
+                  inWarMode: sender.inWarMode
+                },
+                recipient: {
+                  id: recipient.id,
+                  rulerName: recipient.rulerName,
+                  nationName: recipient.nationName,
+                  slots: recipient.slots,
+                  currentAidCount: nationAidCounts.get(recipient.id) || 0,
+                  inWarMode: recipient.inWarMode
+                },
+                reason: `Cross-alliance tech aid: ${sender.nationName} → ${recipient.nationName}`
+              });
+              incrementCounts(sender.id, recipient.id, 'tech');
+              recommendationPairs.add(pair);
+            }
+          });
+        }
+      });
+    }
 
     // Sort recommendations by priority
     recommendations.sort((a, b) => a.priority - b.priority);
@@ -441,6 +575,16 @@ export class AidService {
                              nation.slots.sendCash + nation.slots.sendTech;
         return sum + (totalPossibleSlots - assignedSlots);
       }, 0),
+      // Internal alliance slot counts
+      internalGetCash: internalNations.reduce((sum, nation) => sum + nation.slots.getCash, 0),
+      internalGetTech: internalNations.reduce((sum, nation) => sum + nation.slots.getTech, 0),
+      internalSendCash: internalNations.reduce((sum, nation) => 
+        nation.inWarMode ? sum + nation.slots.sendCash : sum, 0),
+      internalSendTech: internalNations.reduce((sum, nation) => 
+        nation.inWarMode ? sum + nation.slots.sendTech : sum, 0),
+      // Cross-alliance slot counts (for receiving only) - only if enabled
+      crossAllianceGetCash: crossAllianceEnabled ? crossAllianceNations.reduce((sum, nation) => sum + nation.slots.getCash, 0) : 0,
+      crossAllianceGetTech: crossAllianceEnabled ? crossAllianceNations.reduce((sum, nation) => sum + nation.slots.getTech, 0) : 0,
       // Active aid offer counts by type
       activeGetCash: existingOffers.filter(offer => 
         offer.receivingAllianceId === allianceId && offer.money > 0 && offer.technology === 0

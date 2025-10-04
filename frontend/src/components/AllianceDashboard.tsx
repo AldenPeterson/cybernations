@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import NationEditor from './NationEditor';
 import SlotCountsSummary from './SlotCountsSummary';
 import WarStatusBadge from './WarStatusBadge';
+import DefendingWarsTable from './DefendingWarsTable';
 
 interface Alliance {
   id: number;
@@ -111,10 +112,11 @@ const AllianceDashboard: React.FC = () => {
   const [recommendations, setRecommendations] = useState<AidRecommendation[]>([]);
   // Nation categories removed - using slot-based statistics instead
   const [slotCounts, setSlotCounts] = useState<SlotCounts | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'recommendations' | 'nations'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'recommendations' | 'nations' | 'defending-wars'>('overview');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expirationFilter, setExpirationFilter] = useState<string[]>(['empty', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days']);
+  const [crossAllianceEnabled, setCrossAllianceEnabled] = useState<boolean>(true);
 
   useEffect(() => {
     fetchAlliances();
@@ -127,7 +129,7 @@ const AllianceDashboard: React.FC = () => {
       fetchAllianceAidStats(selectedAllianceId);
       fetchRecommendations(selectedAllianceId);
     }
-  }, [selectedAllianceId]);
+  }, [selectedAllianceId, crossAllianceEnabled]);
 
   const fetchAlliances = async () => {
     try {
@@ -204,7 +206,7 @@ const AllianceDashboard: React.FC = () => {
 
   const fetchRecommendations = async (allianceId: number) => {
     try {
-      const response = await fetch(`/api/alliances/${allianceId}/recommendations`);
+      const response = await fetch(`/api/alliances/${allianceId}/recommendations?crossAlliance=${crossAllianceEnabled}`);
       const data = await response.json();
       
       if (data.success) {
@@ -307,7 +309,10 @@ const AllianceDashboard: React.FC = () => {
             aidType = 'TECH';
           }
         }
-        discordLines.push(`send ${aidType} to ${rec.recipient.rulerName} https://www.cybernations.net/aid_form.asp?Nation_ID=${rec.recipient.id}&bynation=${rec.sender.id}`)
+        
+        // Add cross-alliance indicator
+        const crossAllianceIndicator = rec.type && rec.type.includes('cross_alliance') ? ' (Cross-Alliance)' : '';
+        discordLines.push(`send ${aidType} to ${rec.recipient.rulerName}${crossAllianceIndicator} https://www.cybernations.net/aid_form.asp?Nation_ID=${rec.recipient.id}&bynation=${rec.sender.id}`)
       });
       discordLines.push('');
     });
@@ -455,6 +460,22 @@ const AllianceDashboard: React.FC = () => {
               }}
             >
               Nation Editor
+            </button>
+            <button
+              onClick={() => setActiveTab('defending-wars')}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: activeTab === 'defending-wars' ? '#007bff' : 'transparent',
+                color: activeTab === 'defending-wars' ? 'white' : '#333',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                borderTopLeftRadius: '4px',
+                borderTopRightRadius: '4px'
+              }}
+            >
+              Defending Wars
             </button>
           </div>
         </div>
@@ -838,7 +859,13 @@ const AllianceDashboard: React.FC = () => {
           {/* Nation categories removed - showing slot counts instead */}
 
           {/* Slot Counts Summary */}
-          {slotCounts && <SlotCountsSummary slotCounts={slotCounts} />}
+          {slotCounts && (
+            <SlotCountsSummary 
+              slotCounts={slotCounts} 
+              crossAllianceEnabled={crossAllianceEnabled}
+              onCrossAllianceToggle={setCrossAllianceEnabled}
+            />
+          )}
 
           {/* Recommendations Table */}
           {recommendations.length > 0 && (
@@ -975,12 +1002,14 @@ const AllianceDashboard: React.FC = () => {
                                       fontSize: '11px', 
                                       padding: '1px 4px', 
                                       borderRadius: '2px',
-                                      backgroundColor: rec.priority === 0 ? '#ffebee' : '#e8f5e8',
-                                      color: rec.priority === 0 ? '#d32f2f' : '#2e7d32',
+                                      backgroundColor: rec.priority === 0 ? '#ffebee' : 
+                                        (rec.type && rec.type.includes('cross_alliance')) ? '#fff3e0' : '#e8f5e8',
+                                      color: rec.priority === 0 ? '#d32f2f' : 
+                                        (rec.type && rec.type.includes('cross_alliance')) ? '#f57c00' : '#2e7d32',
                                       fontWeight: 'bold',
                                       marginRight: '6px'
                                     }}>
-                                      P{rec.priority}
+                                      {rec.type && rec.type.includes('cross_alliance') ? '🌐' : `P${rec.priority}`}
                                     </span>
                                     <span style={{ fontWeight: 'bold', marginRight: '6px', fontSize: '12px' }}>
                                       {rec.type && rec.type.includes('cash') ? '💰' : '🔬'}
@@ -1035,6 +1064,11 @@ const AllianceDashboard: React.FC = () => {
       {/* Nation Editor Tab Content */}
       {activeTab === 'nations' && selectedAllianceId && (
         <NationEditor allianceId={selectedAllianceId} />
+      )}
+
+      {/* Defending Wars Tab Content */}
+      {activeTab === 'defending-wars' && selectedAllianceId && (
+        <DefendingWarsTable allianceId={selectedAllianceId} />
       )}
 
       {/* Show message when no alliance is selected */}

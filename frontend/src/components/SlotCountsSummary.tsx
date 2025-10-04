@@ -12,11 +12,20 @@ interface SlotCounts {
   activeSendCash?: number;
   activeSendTech?: number;
   totalUnassigned?: number;
+  // Cross-alliance slot counts
+  internalGetCash?: number;
+  internalGetTech?: number;
+  internalSendCash?: number;
+  internalSendTech?: number;
+  crossAllianceGetCash?: number;
+  crossAllianceGetTech?: number;
 }
 
 interface SlotCountsSummaryProps {
   slotCounts: SlotCounts;
   title?: string;
+  crossAllianceEnabled?: boolean;
+  onCrossAllianceToggle?: (enabled: boolean) => void;
 }
 
 interface SlotType {
@@ -91,13 +100,18 @@ const labelStyle: React.CSSProperties = {
 
 const SlotCountsSummary: React.FC<SlotCountsSummaryProps> = ({ 
   slotCounts, 
-  title = "Total Slot Types" 
+  title = "Total Slot Types",
+  crossAllianceEnabled = true,
+  onCrossAllianceToggle
 }) => {
   // Filter out unassigned if it's not provided or is 0
   const displaySlotTypes = slotTypes.filter(slotType => 
     slotType.key !== 'totalUnassigned' || 
     (slotCounts.totalUnassigned !== undefined && slotCounts.totalUnassigned > 0)
   );
+
+  // Check if we have cross-alliance data
+  const hasCrossAllianceData = (slotCounts.crossAllianceGetCash || 0) > 0 || (slotCounts.crossAllianceGetTech || 0) > 0;
 
   return (
     <div style={containerStyle}>
@@ -136,14 +150,28 @@ const SlotCountsSummary: React.FC<SlotCountsSummaryProps> = ({
                   return display;
                 }
                 
-                // Handle get slots with active aid info
+                // Handle get slots with active aid info and cross-alliance breakdown
                 if (slotType.key === 'totalGetCash') {
                   const active = slotCounts.activeGetCash || 0;
-                  return active > 0 ? `${total} [${active} active]` : total;
+                  const internal = slotCounts.internalGetCash || 0;
+                  const crossAlliance = slotCounts.crossAllianceGetCash || 0;
+                  let display = total.toString();
+                  if (active > 0) display += ` [${active} active]`;
+                  if (hasCrossAllianceData && internal > 0 && crossAlliance > 0) {
+                    display += ` (${internal} internal, ${crossAlliance} cross)`;
+                  }
+                  return display;
                 }
                 if (slotType.key === 'totalGetTech') {
                   const active = slotCounts.activeGetTech || 0;
-                  return active > 0 ? `${total} [${active} active]` : total;
+                  const internal = slotCounts.internalGetTech || 0;
+                  const crossAlliance = slotCounts.crossAllianceGetTech || 0;
+                  let display = total.toString();
+                  if (active > 0) display += ` [${active} active]`;
+                  if (hasCrossAllianceData && internal > 0 && crossAlliance > 0) {
+                    display += ` (${internal} internal, ${crossAlliance} cross)`;
+                  }
+                  return display;
                 }
                 
                 return total;
@@ -151,10 +179,42 @@ const SlotCountsSummary: React.FC<SlotCountsSummaryProps> = ({
             </div>
             <div style={labelStyle}>
               {slotType.label}
+              {hasCrossAllianceData && (slotType.key === 'totalGetCash' || slotType.key === 'totalGetTech') && ' 🌐'}
             </div>
           </div>
         ))}
       </div>
+      {onCrossAllianceToggle && (
+        <div style={{ 
+          marginTop: '10px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px',
+          fontSize: '12px',
+          color: '#666'
+        }}>
+          <input
+            type="checkbox"
+            id="crossAllianceToggle"
+            checked={crossAllianceEnabled}
+            onChange={(e) => onCrossAllianceToggle(e.target.checked)}
+            style={{
+              margin: 0,
+              cursor: 'pointer'
+            }}
+          />
+          <label 
+            htmlFor="crossAllianceToggle"
+            style={{
+              cursor: 'pointer',
+              fontStyle: 'italic',
+              userSelect: 'none'
+            }}
+          >
+            🌐 Cross-alliance coordination enabled
+          </label>
+        </div>
+      )}
     </div>
   );
 };

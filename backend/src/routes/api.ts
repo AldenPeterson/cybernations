@@ -3,6 +3,7 @@ import { StatsController } from '../controllers/statsController.js';
 import { AllianceController } from '../controllers/allianceController.js';
 import { aidRoutes } from './aidRoutes.js';
 import { nationEditorRoutes } from './nationEditorRoutes.js';
+import { defendingWarsRoutes } from './defendingWarsRoutes.js';
 
 export const apiRoutes = Router();
 
@@ -11,6 +12,9 @@ apiRoutes.use('/', aidRoutes);
 
 // Use nation editor routes
 apiRoutes.use('/', nationEditorRoutes);
+
+// Use defending wars routes
+apiRoutes.use('/', defendingWarsRoutes);
 
 // Stats decode endpoint - extract zip files from raw_data folder
 apiRoutes.post('/stats/decode', StatsController.decodeStats);
