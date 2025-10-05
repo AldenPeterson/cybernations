@@ -138,6 +138,20 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
           Aid
         </Link>
         <Link 
+          to={'/ns-comparisons'}
+          style={{
+            textDecoration: 'none',
+            padding: '8px 16px',
+            borderRadius: '4px',
+            backgroundColor: isActiveTab('ns-comparisons') ? '#007bff' : 'transparent',
+            color: isActiveTab('ns-comparisons') ? 'white' : '#333',
+            fontWeight: isActiveTab('ns-comparisons') ? 'bold' : 'normal',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          NS Comparisons
+        </Link>
+        <Link 
           to={getTabLink('recommendations')}
           style={{
             textDecoration: 'none',

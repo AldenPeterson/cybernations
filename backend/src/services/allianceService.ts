@@ -83,17 +83,47 @@ export class AllianceService {
    */
   static async getNationsConfig(allianceId: number) {
     const allianceData = loadAllianceById(allianceId);
-    
-    if (!allianceData) {
-      return {
-        allianceExists: false,
-        nations: []
-      };
-    }
 
     // Get raw nations data and convert to dictionary for efficient lookups
     const { nations: rawNations } = await loadDataFromFilesWithUpdate();
     const rawNationsDict = createNationsDictionary(rawNations);
+
+    // If alliance is not present in config files, build nations list from raw data
+    if (!allianceData) {
+      const defaultSlots = {
+        sendTech: 0,
+        sendCash: 0,
+        getTech: 0,
+        getCash: 0,
+        send_priority: 3,
+        receive_priority: 3
+      };
+
+      const nationsArrayFromRaw = rawNations
+        .filter(n => n.allianceId === allianceId)
+        .map(n => ({
+          nation_id: n.id,
+          ruler_name: n.rulerName,
+          nation_name: n.nationName,
+          discord_handle: '',
+          has_dra: false,
+          slots: { ...defaultSlots },
+          current_stats: {
+            technology: n.technology,
+            infrastructure: n.infrastructure,
+            strength: n.strength.toLocaleString()
+          },
+          inWarMode: n.inWarMode
+        }));
+
+      const allianceName = nationsArrayFromRaw[0]?.nation_name ? rawNations.find(n => n.allianceId === allianceId)?.alliance : undefined;
+
+      return {
+        allianceExists: true,
+        allianceName: allianceName || 'Unknown Alliance',
+        nations: nationsArrayFromRaw
+      };
+    }
 
     // Convert nations object back to array format and enrich with war mode status
     const nationsArray: any[] = [];

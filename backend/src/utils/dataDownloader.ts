@@ -109,9 +109,55 @@ function readLatestDownloadsTracker(): Record<string, { timestamp: number; origi
 }
 
 /**
- * Determine which file types are stale based on latest_downloads.json
+ * Convert a Date to our fixed Central time representation by applying a
+ * constant UTC-5 offset (matches existing logic in this file).
  */
-function getStaleFileTypesFromLatestDownloads(maxAgeMs: number): FileType[] {
+function toFixedCentral(date: Date): Date {
+  const offsetMs = 5 * 60 * 60 * 1000; // UTC-5 per existing logic
+  return new Date(date.getTime() - offsetMs);
+}
+
+/**
+ * Convert a fixed Central time Date back to UTC by reversing the offset.
+ */
+function fromFixedCentral(centralDate: Date): Date {
+  const offsetMs = 5 * 60 * 60 * 1000; // UTC-5 per existing logic
+  return new Date(centralDate.getTime() + offsetMs);
+}
+
+/**
+ * Get the most recent scheduled update time (in UTC ms) prior to now,
+ * based on a twice-daily schedule at 6:00 and 18:00 Central.
+ */
+function getLastScheduledUpdateUtcMs(now: Date): number {
+  const centralNow = toFixedCentral(now);
+  const centralYear = centralNow.getFullYear();
+  const centralMonth = centralNow.getMonth();
+  const centralDay = centralNow.getDate();
+
+  const centralHour = centralNow.getHours();
+
+  let centralScheduled = new Date(centralYear, centralMonth, centralDay, 0, 0, 0, 0);
+  if (centralHour >= 18) {
+    centralScheduled.setHours(18, 0, 0, 0);
+  } else if (centralHour >= 6) {
+    centralScheduled.setHours(6, 0, 0, 0);
+  } else {
+    // Before 6am: previous day's 6pm
+    const prevDay = new Date(centralYear, centralMonth, centralDay, 0, 0, 0, 0);
+    prevDay.setDate(prevDay.getDate() - 1);
+    prevDay.setHours(18, 0, 0, 0);
+    centralScheduled = prevDay;
+  }
+
+  return fromFixedCentral(centralScheduled).getTime();
+}
+
+/**
+ * Determine which file types are stale based on latest_downloads.json
+ * using the twice-daily schedule at 6am/6pm Central.
+ */
+function getStaleFileTypesFromLatestDownloads(): FileType[] {
   const tracker = readLatestDownloadsTracker();
   const requiredKeys: { key: string; type: FileType; csv: string }[] = [
     { key: FileType.NATION_STATS, type: FileType.NATION_STATS, csv: 'nations.csv' },
@@ -120,7 +166,8 @@ function getStaleFileTypesFromLatestDownloads(maxAgeMs: number): FileType[] {
   ];
 
   const dataPath = path.join(process.cwd(), 'src', 'data');
-  const now = Date.now();
+  const nowUtcMs = Date.now();
+  const lastScheduledUtcMs = getLastScheduledUpdateUtcMs(new Date(nowUtcMs));
 
   const stale: FileType[] = [];
 
@@ -134,7 +181,8 @@ function getStaleFileTypesFromLatestDownloads(maxAgeMs: number): FileType[] {
       continue;
     }
 
-    const isFresh = now - record.timestamp < maxAgeMs;
+    // Fresh if we have downloaded at or after the most recent scheduled time
+    const isFresh = record.timestamp >= lastScheduledUtcMs;
     if (!isFresh) {
       stale.push(item.type);
     }
@@ -183,9 +231,8 @@ async function cleanupOldFiles(fileType: FileType, extractedPath: string): Promi
  */
 async function checkForRecentFiles(): Promise<boolean> {
   try {
-    // Check recency using latest_downloads.json as source of truth
-    const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
-    const stale = getStaleFileTypesFromLatestDownloads(THREE_HOURS_MS);
+    // Check recency against 6am/6pm Central schedule using latest_downloads.json
+    const stale = getStaleFileTypesFromLatestDownloads();
     if (stale.length === 0) {
       console.log('Found recent standardized data files via latest_downloads.json');
       return true;
@@ -334,8 +381,7 @@ export async function ensureRecentFiles(): Promise<void> {
   const isProd = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
 
   // Determine staleness using latest_downloads.json
-  const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
-  const staleTypes = getStaleFileTypesFromLatestDownloads(THREE_HOURS_MS);
+  const staleTypes = getStaleFileTypesFromLatestDownloads();
 
   if (staleTypes.length === 0) {
     console.log('All standardized files are fresh according to latest_downloads.json');

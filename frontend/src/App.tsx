@@ -7,6 +7,7 @@ import RecommendationsPage from './pages/RecommendationsPage'
 import NationsPage from './pages/NationsPage'
 import DefendingWarsPage from './pages/DefendingWarsPage'
 import ShameOffersPage from './pages/ShameOffersPage'
+import NSComparisonsPage from './pages/NSComparisonsPage.tsx'
 
 function App() {
   const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(null);
@@ -54,6 +55,8 @@ function App() {
         <Route path="/defending-wars/:allianceId" element={<DefendingWarsPage />} />
         <Route path="/defending-wars" element={<Navigate to="/defending-wars" replace />} />
         
+        {/* Non-alliance-specific */}
+        <Route path="/ns-comparisons" element={<NSComparisonsPage />} />
         {/* Shame offers doesn't need alliance ID */}
         <Route path="/shame-offers" element={<ShameOffersPage />} />
         
