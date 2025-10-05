@@ -115,18 +115,19 @@ async function parseWarsFromFile(filePath: string): Promise<any[]> {
       .on('data', (row) => {
         if (row.warId && row.declaringId && row.receivingId) {
           wars.push({
-            id: parseInt(row.warId),
-            attackerNation: decodeHtmlEntities(row.declaringNation),
-            attackerNationId: parseInt(row.declaringId),
-            attackerAlliance: decodeHtmlEntities(row.declaringAlliance || ''),
-            attackerAllianceId: parseInt(row.declaringAllianceId) || 0,
-            defenderNation: decodeHtmlEntities(row.receivingNation),
-            defenderNationId: parseInt(row.receivingId),
-            defenderAlliance: decodeHtmlEntities(row.receivingAlliance || ''),
-            defenderAllianceId: parseInt(row.receivingAllianceId) || 0,
-            warType: row.reason || '',
+            warId: parseInt(row.warId),
+            declaringId: parseInt(row.declaringId),
+            declaringRuler: decodeHtmlEntities(row.declaringRuler || ''),
+            declaringNation: decodeHtmlEntities(row.declaringNation),
+            declaringAlliance: decodeHtmlEntities(row.declaringAlliance || ''),
+            declaringAllianceId: parseInt(row.declaringAllianceId) || 0,
+            receivingId: parseInt(row.receivingId),
+            receivingRuler: decodeHtmlEntities(row.receivingRuler || ''),
+            receivingNation: decodeHtmlEntities(row.receivingNation),
+            receivingAlliance: decodeHtmlEntities(row.receivingAlliance || ''),
+            receivingAllianceId: parseInt(row.receivingAllianceId) || 0,
             status: row.warStatus || '',
-            startDate: row.beginDate || '',
+            date: row.beginDate || '',
             endDate: row.endDate || ''
           });
         }
