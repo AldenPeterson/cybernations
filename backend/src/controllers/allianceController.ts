@@ -51,7 +51,7 @@ export class AllianceController {
       // In production/Vercel environments, use static configuration files
       if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
         console.log('Using static alliance configuration files in production');
-        const alliances = this.loadAlliancesFromConfig();
+        const alliances = AllianceController.loadAlliancesFromConfig();
         
         res.json({
           success: true,
