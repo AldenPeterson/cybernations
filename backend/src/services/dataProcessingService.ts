@@ -367,8 +367,11 @@ export async function loadDataFromFiles(): Promise<{ nations: Nation[]; aidOffer
         console.log(`Loading from standardized data files at: ${dataPath}`);
         
         try {
+          console.log('Parsing nations file...');
           const nations = await parseNationsFromFile(nationsFile);
+          console.log('Parsing aid offers file...');
           const aidOffers = await parseAidOffersFromFile(aidOffersFile);
+          console.log('Parsing wars file...');
           const wars = await parseWarsFromFile(warsFile);
           
           console.log(`Successfully loaded ${nations.length} nations, ${aidOffers.length} aid offers, ${wars.length} wars`);
