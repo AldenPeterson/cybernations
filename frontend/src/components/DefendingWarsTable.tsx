@@ -221,6 +221,96 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
 
   return (
     <div>
+      {/* Color Legend */}
+      <div style={{ 
+        marginBottom: '20px', 
+        padding: '15px',
+        backgroundColor: '#000000',
+        border: '1px solid #333',
+        borderRadius: '8px',
+        fontSize: '13px'
+      }}>
+        <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 'bold', color: '#ffffff' }}>
+          Color Legend
+        </h4>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+          {/* War Expiration Colors */}
+          <div>
+            <strong style={{ color: '#ffffff', fontSize: '12px' }}>War Expiration:</strong>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#ffebee', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>Expires today/tomorrow</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#fff3e0', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>Expires in 2 days</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#fffde7', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>Expires in 3 days</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#e8f5e8', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>Expires in 4+ days</span>
+            </div>
+          </div>
+
+          {/* Activity Colors */}
+          <div>
+            <strong style={{ color: '#ffffff', fontSize: '12px' }}>Activity Status:</strong>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#d4edda', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>Active last 3 days</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#fff3cd', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>Active this week</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#ffeaa7', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>Active last week</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#f8d7da', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>Inactive 3+ weeks</span>
+            </div>
+          </div>
+
+          {/* Nuclear Weapons Colors */}
+          <div>
+            <strong style={{ color: '#ffffff', fontSize: '12px' }}>Nuclear Weapons:</strong>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#ffebee', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>&lt; 10 nukes</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#fffde7', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>10-18 nukes</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#e8f5e8', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>&gt; 18 nukes</span>
+            </div>
+          </div>
+
+          {/* Other Colors */}
+          <div>
+            <strong style={{ color: '#ffffff', fontSize: '12px' }}>Other Indicators:</strong>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#ffebee', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>Anarchy government</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#e8f5e8', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>Staggered wars</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#ffebee', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>Should be in Peace Mode</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Nation Wars Table */}
       {nationWars.length > 0 ? (
