@@ -108,10 +108,10 @@ export function calculateStaggeredStatus(defendingWars: { endDate: string }[]): 
   const uniqueDates = new Set(endDates);
   
   if (uniqueDates.size > 1) {
-    return { status: 'staggered', color: '#e8f5e8' }; // Green for staggered
+    return { status: 'staggered', color: '#e8f5e8' }; // Green for staggered (multiple dates)
   } else {
-    // Only show red warning if there are exactly 3 wars expiring on the same date
-    if (defendingWars.length === 3) {
+    // Red for not staggered (2 or 3 wars on same date)
+    if (defendingWars.length >= 2 && defendingWars.length <= 3) {
       return { status: 'same-day', color: '#ffebee' }; // Red for same day
     } else {
       return { status: 'empty', color: '#ffffff' }; // White for other cases
