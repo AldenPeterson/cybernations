@@ -1,13 +1,66 @@
 import { Request, Response } from 'express';
 import { loadDataFromFilesWithUpdate, groupNationsByAlliance } from '../services/dataProcessingService.js';
 import { AllianceService } from '../services/allianceService.js';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class AllianceController {
+  /**
+   * Load alliances from static configuration files (for production environments)
+   */
+  private static loadAlliancesFromConfig(): any[] {
+    try {
+      const alliancesDir = path.join(process.cwd(), 'src', 'config', 'alliances');
+      
+      if (!fs.existsSync(alliancesDir)) {
+        console.warn('Alliances directory does not exist:', alliancesDir);
+        return [];
+      }
+      
+      const files = fs.readdirSync(alliancesDir).filter(file => file.endsWith('.json'));
+      const alliances: any[] = [];
+      
+      for (const file of files) {
+        try {
+          const filePath = path.join(alliancesDir, file);
+          const allianceData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+          
+          alliances.push({
+            id: allianceData.alliance_id,
+            name: allianceData.alliance_name,
+            nationCount: Object.keys(allianceData.nations).length
+          });
+        } catch (error) {
+          console.error(`Error loading alliance file ${file}:`, error);
+        }
+      }
+      
+      // Sort by nation count (descending - most nations first)
+      return alliances.sort((a, b) => b.nationCount - a.nationCount);
+    } catch (error) {
+      console.error('Error loading alliances from config:', error);
+      return [];
+    }
+  }
+
   /**
    * Get all alliances
    */
   static async getAlliances(req: Request, res: Response) {
     try {
+      // In production/Vercel environments, use static configuration files
+      if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+        console.log('Using static alliance configuration files in production');
+        const alliances = this.loadAlliancesFromConfig();
+        
+        res.json({
+          success: true,
+          alliances: alliances
+        });
+        return;
+      }
+
+      // In development, use the dynamic data loading
       const { nations } = await loadDataFromFilesWithUpdate();
       const alliances = groupNationsByAlliance(nations);
       
