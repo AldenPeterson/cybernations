@@ -105,7 +105,7 @@ interface SlotCounts {
 interface AllianceDashboardProps {
   selectedAllianceId: number | null;
   setSelectedAllianceId: (id: number | null) => void;
-  activeTab: 'overview' | 'recommendations' | 'nations' | 'defending-wars';
+  activeTab: 'aid' | 'recommendations' | 'nations' | 'defending-wars';
 }
 
 const AllianceDashboard: React.FC<AllianceDashboardProps> = ({ 
@@ -416,7 +416,7 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
 
 
       {/* Content based on active tab */}
-      {activeTab === 'overview' && selectedAllianceId && (
+      {activeTab === 'aid' && selectedAllianceId && (
         <>
           {/* Alliance Stats */}
           {allianceStats && allianceStats.totalNations > 0 && (

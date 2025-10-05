@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import './App.css'
 import NavigationBar from './components/NavigationBar'
-import OverviewPage from './pages/OverviewPage'
+import AidPage from './pages/AidPage'
 import RecommendationsPage from './pages/RecommendationsPage'
 import NationsPage from './pages/NationsPage'
 import DefendingWarsPage from './pages/DefendingWarsPage'
@@ -19,12 +19,12 @@ function App() {
     const allianceIdParam = pathParts[2];
     
     // Check if we're on an alliance-specific page with an alliance ID in the URL
-    if (allianceIdParam && ['overview', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
+    if (allianceIdParam && ['aid', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
       const allianceId = parseInt(allianceIdParam);
       if (!isNaN(allianceId)) {
         setSelectedAllianceId(allianceId);
       }
-    } else if (!allianceIdParam && ['overview', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
+    } else if (!allianceIdParam && ['aid', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
       // If we're on an alliance-specific page but no alliance ID in URL, clear selection
       setSelectedAllianceId(null);
     }
@@ -38,12 +38,12 @@ function App() {
       />
       
       <Routes>
-        {/* Default redirect to overview */}
-        <Route path="/" element={<Navigate to="/overview" replace />} />
+        {/* Default redirect to aid */}
+        <Route path="/" element={<Navigate to="/aid" replace />} />
         
         {/* Alliance-specific routes */}
-        <Route path="/overview/:allianceId" element={<OverviewPage />} />
-        <Route path="/overview" element={<Navigate to="/overview" replace />} />
+        <Route path="/aid/:allianceId" element={<AidPage />} />
+        <Route path="/aid" element={<Navigate to="/aid" replace />} />
         
         <Route path="/recommendations/:allianceId" element={<RecommendationsPage />} />
         <Route path="/recommendations" element={<Navigate to="/recommendations" replace />} />
@@ -58,7 +58,7 @@ function App() {
         <Route path="/shame-offers" element={<ShameOffersPage />} />
         
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/overview" replace />} />
+        <Route path="*" element={<Navigate to="/aid" replace />} />
       </Routes>
     </div>
   )

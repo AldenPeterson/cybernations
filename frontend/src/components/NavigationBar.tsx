@@ -34,7 +34,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       const pathParts = currentPath.split('/');
       const tabName = pathParts[1];
       
-      if (tabName && ['overview', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
+      if (tabName && ['aid', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
         const newPath = `/${tabName}/${selectedAllianceId}`;
         if (currentPath !== newPath) {
           navigate(newPath, { replace: true });
@@ -56,7 +56,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         const pathParts = location.pathname.split('/');
         const tabName = pathParts[1];
         const allianceIdParam = pathParts[2];
-        const isOnAllianceSpecificPage = allianceIdParam && ['overview', 'recommendations', 'nations', 'defending-wars'].includes(tabName);
+        const isOnAllianceSpecificPage = allianceIdParam && ['aid', 'recommendations', 'nations', 'defending-wars'].includes(tabName);
         
         const doombrella = data.alliances.find((alliance: any) => 
           alliance.name.toLowerCase().includes('doombrella')
@@ -82,9 +82,9 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     const pathParts = currentPath.split('/');
     const tabName = pathParts[1];
     
-    if (allianceId && tabName && ['overview', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
+    if (allianceId && tabName && ['aid', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
       navigate(`/${tabName}/${allianceId}`);
-    } else if (allianceId && tabName === 'overview') {
+    } else if (allianceId && tabName === 'aid') {
       navigate(`/${tabName}/${allianceId}`);
     }
   };
@@ -124,18 +124,18 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       {/* Left side - Navigation Links */}
       <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
         <Link 
-          to={getTabLink('overview')}
+          to={getTabLink('aid')}
           style={{
             textDecoration: 'none',
             padding: '8px 16px',
             borderRadius: '4px',
-            backgroundColor: isActiveTab('overview') ? '#007bff' : 'transparent',
-            color: isActiveTab('overview') ? 'white' : '#333',
-            fontWeight: isActiveTab('overview') ? 'bold' : 'normal',
+            backgroundColor: isActiveTab('aid') ? '#007bff' : 'transparent',
+            color: isActiveTab('aid') ? 'white' : '#333',
+            fontWeight: isActiveTab('aid') ? 'bold' : 'normal',
             transition: 'all 0.2s ease'
           }}
         >
-          Overview
+          Aid
         </Link>
         <Link 
           to={getTabLink('recommendations')}

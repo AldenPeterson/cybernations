@@ -246,7 +246,7 @@ const AidPage: React.FC = () => {
   if (!allianceId) {
     return (
       <div style={{ textAlign: 'center', padding: '40px', color: '#666', marginTop: '80px' }}>
-        Please select an alliance to view overview data.
+        Please select an alliance to view aid data.
       </div>
     );
   }
