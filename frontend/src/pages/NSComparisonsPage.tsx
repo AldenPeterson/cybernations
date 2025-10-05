@@ -295,7 +295,7 @@ const NSComparisonsPage: React.FC = () => {
 
         <div style={{ display: 'grid', gridTemplateColumns: `220px repeat(${buckets.length}, 1fr)`, gap: '10px', alignItems: 'end' }}>
           {/* Header row */}
-          <div style={{ fontWeight: 'bold', fontSize: '15px' }}>Infra Bucket</div>
+          <div style={{ fontWeight: 'bold', fontSize: '15px' }}>NS Bucket</div>
           {buckets.map(b => (
             <div key={b.label} style={{ textAlign: 'center', fontWeight: 'bold', color: '#333', fontSize: '15px' }}>{b.label}</div>
           ))}
