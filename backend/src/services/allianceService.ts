@@ -54,13 +54,16 @@ export class AllianceService {
   static async getAllianceStats(allianceId: number) {
     const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
     const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
+    const allianceNationIds = new Set(allianceNations.map(nation => nation.id));
+    
+    // Filter aid offers involving current alliance members, regardless of alliance at aid time
     const allianceAidOffers = aidOffers.filter(offer => 
-      (offer.declaringAllianceId === allianceId || offer.receivingAllianceId === allianceId) && 
+      (allianceNationIds.has(offer.declaringId) || allianceNationIds.has(offer.receivingId)) && 
       offer.status !== 'Expired'
     );
 
-    const outgoingOffers = allianceAidOffers.filter(offer => offer.declaringAllianceId === allianceId);
-    const incomingOffers = allianceAidOffers.filter(offer => offer.receivingAllianceId === allianceId);
+    const outgoingOffers = allianceAidOffers.filter(offer => allianceNationIds.has(offer.declaringId));
+    const incomingOffers = allianceAidOffers.filter(offer => allianceNationIds.has(offer.receivingId));
 
     return {
       totalNations: allianceNations.length,

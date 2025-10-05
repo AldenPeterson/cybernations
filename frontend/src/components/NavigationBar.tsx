@@ -51,11 +51,17 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       
       if (data.success) {
         setAlliances(data.alliances);
-        // Set Doombrella as default if it exists
+        // Set Doombrella as default if it exists and no alliance is already selected
+        // Only set default if we're not on an alliance-specific page (to avoid race condition with URL params)
+        const pathParts = location.pathname.split('/');
+        const tabName = pathParts[1];
+        const allianceIdParam = pathParts[2];
+        const isOnAllianceSpecificPage = allianceIdParam && ['overview', 'recommendations', 'nations', 'defending-wars'].includes(tabName);
+        
         const doombrella = data.alliances.find((alliance: any) => 
           alliance.name.toLowerCase().includes('doombrella')
         );
-        if (doombrella && !selectedAllianceId) {
+        if (doombrella && !selectedAllianceId && !isOnAllianceSpecificPage) {
           setSelectedAllianceId(doombrella.id);
         }
       } else {

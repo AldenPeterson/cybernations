@@ -19,16 +19,21 @@ export class DefendingWarsService {
       allianceNations = allianceNations.filter(nation => nation.inWarMode);
     }
     
-    // Filter active wars involving this alliance (exclude ended/expired wars)
+    // Get all active wars (exclude ended/expired wars)
     const activeWars = wars.filter(war => 
-      (war.declaringAllianceId === allianceId || war.receivingAllianceId === allianceId) &&
       war.status.toLowerCase() !== 'ended' &&
       war.status.toLowerCase() !== 'expired'
+    );
+    
+    // Find all wars involving current alliance members
+    const allianceNationIds = new Set(allianceNations.map(nation => nation.id));
+    const relevantWars = activeWars.filter(war => 
+      allianceNationIds.has(war.declaringId) || allianceNationIds.has(war.receivingId)
     );
 
     // Organize wars by nation
     const nationWars = allianceNations.map(nation => {
-      const attackingWars = activeWars
+      const attackingWars = relevantWars
         .filter(war => war.declaringId === nation.id)
         .map(war => {
           const defendingNation = nations.find(n => n.id === war.receivingId);
@@ -66,7 +71,7 @@ export class DefendingWarsService {
           };
         });
 
-      const defendingWars = activeWars
+      const defendingWars = relevantWars
         .filter(war => war.receivingId === nation.id)
         .map(war => {
           const attackingNation = nations.find(n => n.id === war.declaringId);
@@ -138,9 +143,13 @@ export class DefendingWarsService {
   static async getDefendingWars(allianceId: number) {
     const { nations, wars } = await loadDataFromFilesWithUpdate();
     
-    // Filter wars where the alliance is defending (receiving attacks)
+    // Get current alliance members
+    const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
+    const allianceNationIds = new Set(allianceNations.map(nation => nation.id));
+    
+    // Filter wars where current alliance members are defending (receiving attacks)
     const defendingWars = wars.filter(war => 
-      war.receivingAllianceId === allianceId && 
+      allianceNationIds.has(war.receivingId) && 
       war.status.toLowerCase() !== 'ended' &&
       war.status.toLowerCase() !== 'expired'
     );
@@ -196,32 +205,44 @@ export class DefendingWarsService {
   static async getDefendingWarsStats(allianceId: number) {
     const { nations, wars } = await loadDataFromFilesWithUpdate();
     
-    // Get all wars involving this alliance (both attacking and defending)
+    // Get current alliance members
+    const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
+    const allianceNationIds = new Set(allianceNations.map(nation => nation.id));
+    
+    // Get all wars involving current alliance members (both attacking and defending)
     const allianceWars = wars.filter(war => 
-      (war.declaringAllianceId === allianceId || war.receivingAllianceId === allianceId) &&
+      (allianceNationIds.has(war.declaringId) || allianceNationIds.has(war.receivingId)) &&
       war.status.toLowerCase() !== 'ended' &&
       war.status.toLowerCase() !== 'expired'
     );
 
-    const defendingWars = allianceWars.filter(war => war.receivingAllianceId === allianceId);
-    const attackingWars = allianceWars.filter(war => war.declaringAllianceId === allianceId);
+    const defendingWars = allianceWars.filter(war => allianceNationIds.has(war.receivingId));
+    const attackingWars = allianceWars.filter(war => allianceNationIds.has(war.declaringId));
 
-    // Count wars by alliance
+    // Count wars by alliance - use current alliance data for nations
     const defendingByAlliance = new Map<number, { allianceName: string; count: number }>();
     const attackingByAlliance = new Map<number, { allianceName: string; count: number }>();
 
     defendingWars.forEach(war => {
-      const allianceId = war.declaringAllianceId;
-      const allianceName = war.declaringAlliance;
-      const current = defendingByAlliance.get(allianceId) || { allianceName, count: 0 };
-      defendingByAlliance.set(allianceId, { ...current, count: current.count + 1 });
+      // Get the current alliance of the attacking nation
+      const attackingNation = nations.find(n => n.id === war.declaringId);
+      if (attackingNation) {
+        const allianceId = attackingNation.allianceId;
+        const allianceName = attackingNation.alliance;
+        const current = defendingByAlliance.get(allianceId) || { allianceName, count: 0 };
+        defendingByAlliance.set(allianceId, { ...current, count: current.count + 1 });
+      }
     });
 
     attackingWars.forEach(war => {
-      const allianceId = war.receivingAllianceId;
-      const allianceName = war.receivingAlliance;
-      const current = attackingByAlliance.get(allianceId) || { allianceName, count: 0 };
-      attackingByAlliance.set(allianceId, { ...current, count: current.count + 1 });
+      // Get the current alliance of the defending nation
+      const defendingNation = nations.find(n => n.id === war.receivingId);
+      if (defendingNation) {
+        const allianceId = defendingNation.allianceId;
+        const allianceName = defendingNation.alliance;
+        const current = attackingByAlliance.get(allianceId) || { allianceName, count: 0 };
+        attackingByAlliance.set(allianceId, { ...current, count: current.count + 1 });
+      }
     });
 
     return {

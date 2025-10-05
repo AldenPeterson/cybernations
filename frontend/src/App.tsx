@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import './App.css'
 import NavigationBar from './components/NavigationBar'
 import OverviewPage from './pages/OverviewPage'
@@ -10,6 +10,25 @@ import ShameOffersPage from './pages/ShameOffersPage'
 
 function App() {
   const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(null);
+  const location = useLocation();
+
+  // Sync selectedAllianceId with URL parameters
+  useEffect(() => {
+    const pathParts = location.pathname.split('/');
+    const tabName = pathParts[1];
+    const allianceIdParam = pathParts[2];
+    
+    // Check if we're on an alliance-specific page with an alliance ID in the URL
+    if (allianceIdParam && ['overview', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
+      const allianceId = parseInt(allianceIdParam);
+      if (!isNaN(allianceId)) {
+        setSelectedAllianceId(allianceId);
+      }
+    } else if (!allianceIdParam && ['overview', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
+      // If we're on an alliance-specific page but no alliance ID in URL, clear selection
+      setSelectedAllianceId(null);
+    }
+  }, [location.pathname]);
 
   return (
     <div style={{ fontFamily: 'Arial, sans-serif' }}>
