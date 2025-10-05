@@ -69,6 +69,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [includePeaceMode, setIncludePeaceMode] = useState<boolean>(false);
+  const [needsStagger, setNeedsStagger] = useState<boolean>(false);
 
   // Column styles
   const columnStyles = {
@@ -141,12 +142,12 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     if (allianceId) {
       fetchNationWars();
     }
-  }, [allianceId, includePeaceMode]);
+  }, [allianceId, includePeaceMode, needsStagger]);
 
   const fetchNationWars = async () => {
     try {
       setLoading(true);
-      const response = await apiCall(`${API_ENDPOINTS.nationWars(allianceId)}?includePeaceMode=${includePeaceMode}`);
+      const response = await apiCall(`${API_ENDPOINTS.nationWars(allianceId)}?includePeaceMode=${includePeaceMode}&needsStagger=${needsStagger}`);
       const data = await response.json();
       
       if (data.success) {
@@ -315,13 +316,45 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       {/* Nation Wars Table */}
       {nationWars.length > 0 ? (
         <div>
-          {/* Peace Mode Filter - positioned above table */}
+          {/* Filter Controls - positioned above table */}
           <div style={{ 
             marginBottom: '15px', 
             display: 'flex', 
             justifyContent: 'flex-end',
-            alignItems: 'center'
+            alignItems: 'center',
+            gap: '10px'
           }}>
+            <label style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              padding: '6px 10px',
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500',
+              color: '#333'
+            }}>
+              <input
+                type="checkbox"
+                checked={needsStagger}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setNeedsStagger(checked);
+                  // Auto-uncheck peacemode when needs stagger is selected
+                  if (checked) {
+                    setIncludePeaceMode(false);
+                  }
+                }}
+                style={{ 
+                  marginRight: '6px',
+                  accentColor: '#dc3545',
+                  transform: 'scale(1.1)'
+                }}
+              />
+              Needs Stagger
+            </label>
             <label style={{ 
               display: 'flex', 
               alignItems: 'center', 

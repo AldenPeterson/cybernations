@@ -9,7 +9,7 @@ export class DefendingWarsService {
   /**
    * Get wars organized by nation for a specific alliance
    */
-  static async getNationWars(allianceId: number, includePeaceMode: boolean = false) {
+  static async getNationWars(allianceId: number, includePeaceMode: boolean = false, needsStagger: boolean = false) {
     const { nations, wars } = await loadDataFromFilesWithUpdate();
     
     // Get alliance nations, optionally filtering out peace mode nations
@@ -131,10 +131,18 @@ export class DefendingWarsService {
       };
     });
 
-    // Sort nations by strength (highest first)
-    nationWars.sort((a, b) => b.nation.strength - a.nation.strength);
+    // Apply needsStagger filter if requested
+    let filteredNationWars = nationWars;
+    if (needsStagger) {
+      filteredNationWars = nationWars.filter(nationWar => 
+        nationWar.nation.inWarMode && nationWar.staggeredStatus.status !== 'staggered'
+      );
+    }
 
-    return nationWars;
+    // Sort nations by strength (highest first)
+    filteredNationWars.sort((a, b) => b.nation.strength - a.nation.strength);
+
+    return filteredNationWars;
   }
 
   /**

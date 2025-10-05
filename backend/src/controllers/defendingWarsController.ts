@@ -9,6 +9,7 @@ export class DefendingWarsController {
     try {
       const allianceId = parseInt(req.params.allianceId);
       const includePeaceMode = req.query.includePeaceMode === 'true';
+      const needsStagger = req.query.needsStagger === 'true';
       
       if (isNaN(allianceId)) {
         return res.status(400).json({
@@ -17,7 +18,7 @@ export class DefendingWarsController {
         });
       }
 
-      const nationWars = await DefendingWarsService.getNationWars(allianceId, includePeaceMode);
+      const nationWars = await DefendingWarsService.getNationWars(allianceId, includePeaceMode, needsStagger);
       
       res.json({
         success: true,
