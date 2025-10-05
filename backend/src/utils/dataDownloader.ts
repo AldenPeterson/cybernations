@@ -128,10 +128,112 @@ async function cleanupOldFiles(fileType: FileType, extractedPath: string): Promi
   }
 }
 
+/**
+ * Check if we have recent files without downloading
+ */
+async function checkForRecentFiles(): Promise<boolean> {
+  try {
+    const rawDataPath = path.join(process.cwd(), 'src', 'raw_data', 'extracted');
+    
+    if (!fs.existsSync(rawDataPath)) {
+      return false;
+    }
+    
+    const files = fs.readdirSync(rawDataPath, { withFileTypes: true });
+    const hasRecentData = files.some(file => 
+      file.isDirectory() && 
+      file.name.includes('CyberNations_SE') &&
+      fs.existsSync(path.join(rawDataPath, file.name, 'CyberNations_SE_Nation_Stats.txt'))
+    );
+    
+    return hasRecentData;
+  } catch (error) {
+    console.warn('Error checking for recent files:', error);
+    return false;
+  }
+}
+
+/**
+ * Download files with timeout protection for serverless environments
+ */
+async function downloadWithTimeout(): Promise<void> {
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Download timeout')), 25000); // 25 second timeout
+  });
+  
+  const downloadPromise = performDownload();
+  
+  await Promise.race([downloadPromise, timeoutPromise]);
+}
+
+/**
+ * Perform the actual download (extracted from the existing logic)
+ */
+async function performDownload(): Promise<void> {
+  const baseUrl = 'https://www.cybernations.net/assets/';
+  
+  // Use a more robust path resolution that works in different environments
+  let rawDataPath: string;
+  let extractedPath: string;
+  
+  try {
+    // Try to use the project root first
+    const projectRoot = process.cwd();
+    rawDataPath = path.join(projectRoot, 'src', 'raw_data');
+    extractedPath = path.join(rawDataPath, 'extracted');
+  } catch (error) {
+    console.error('Error setting up paths:', error);
+    throw error;
+  }
+  
+  // Ensure directories exist
+  if (!fs.existsSync(rawDataPath)) {
+    fs.mkdirSync(rawDataPath, { recursive: true });
+  }
+  if (!fs.existsSync(extractedPath)) {
+    fs.mkdirSync(extractedPath, { recursive: true });
+  }
+  
+  const filesToDownload = [
+    { type: FileType.NATION_STATS, url: `${baseUrl}CyberNations_SE_${FileType.NATION_STATS}_${getDownloadNumberSlug('51000')}.zip` },
+    { type: FileType.AID_STATS, url: `${baseUrl}CyberNations_SE_${FileType.AID_STATS}_${getDownloadNumberSlug('52000')}.zip` },
+    { type: FileType.WAR_STATS, url: `${baseUrl}CyberNations_SE_${FileType.WAR_STATS}_${getDownloadNumberSlug('52500')}.zip` }
+  ];
+  
+  // Download files in parallel but with individual timeouts
+  const downloadPromises = filesToDownload.map(async (file) => {
+    try {
+      const fileName = file.url.split('/').pop() || `${file.type}.zip`;
+      const zipPath = path.join(rawDataPath, fileName);
+      await downloadFile(file.url, zipPath);
+      console.log(`Successfully downloaded ${file.type}`);
+    } catch (error) {
+      console.warn(`Failed to download ${file.type}:`, error);
+      // Don't throw - allow other downloads to continue
+    }
+  });
+  
+  await Promise.allSettled(downloadPromises);
+}
+
 export async function ensureRecentFiles(): Promise<void> {
-  // Skip file operations in serverless environments like Vercel
+  // Check if we have recent files first, regardless of environment
+  const hasRecentFiles = await checkForRecentFiles();
+  
+  if (hasRecentFiles) {
+    console.log('Recent files found, skipping download');
+    return;
+  }
+  
+  // In production/serverless, try to download but with timeout protection
   if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    console.log('Skipping file operations in serverless environment');
+    console.log('Production environment detected, attempting download with timeout protection');
+    try {
+      await downloadWithTimeout();
+    } catch (error) {
+      console.warn('Download failed in production, using existing files:', error);
+      // Don't throw - allow the system to continue with existing files
+    }
     return;
   }
 
