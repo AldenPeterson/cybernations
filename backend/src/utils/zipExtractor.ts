@@ -9,6 +9,15 @@ export interface ExtractionResult {
 }
 
 export async function extractZipFile(zipPath: string, extractTo: string): Promise<ExtractionResult> {
+  // Skip file operations in serverless environments like Vercel
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    return {
+      success: false,
+      extractedFiles: [],
+      error: 'File operations not supported in serverless environment'
+    };
+  }
+
   return new Promise((resolve) => {
     const extractedFiles: string[] = [];
     
@@ -32,8 +41,17 @@ export async function extractZipFile(zipPath: string, extractTo: string): Promis
       }
 
       // Ensure extraction directory exists
-      if (!fs.existsSync(extractTo)) {
-        fs.mkdirSync(extractTo, { recursive: true });
+      try {
+        if (!fs.existsSync(extractTo)) {
+          fs.mkdirSync(extractTo, { recursive: true });
+        }
+      } catch (error) {
+        resolve({
+          success: false,
+          extractedFiles: [],
+          error: `Failed to create extraction directory: ${error instanceof Error ? error.message : 'Unknown error'}`
+        });
+        return;
       }
 
       zipfile.readEntry();
@@ -114,7 +132,25 @@ export async function extractAllZipFiles(rawDataPath: string): Promise<{
   }>;
   error?: string;
 }> {
+  // Skip file operations in serverless environments like Vercel
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    return {
+      success: false,
+      results: [],
+      error: 'File operations not supported in serverless environment'
+    };
+  }
+
   try {
+    // Ensure the raw data directory exists
+    if (!fs.existsSync(rawDataPath)) {
+      return {
+        success: false,
+        results: [],
+        error: `Raw data directory does not exist: ${rawDataPath}`
+      };
+    }
+    
     const files = fs.readdirSync(rawDataPath);
     const zipFiles = files.filter(file => file.toLowerCase().endsWith('.zip'));
     

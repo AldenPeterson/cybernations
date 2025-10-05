@@ -8,6 +8,14 @@ export class StatsController {
    */
   static async decodeStats(req: Request, res: Response) {
     try {
+      // Skip file operations in serverless environments like Vercel
+      if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+        return res.status(503).json({
+          success: false,
+          error: 'File operations not supported in serverless environment'
+        });
+      }
+
       const rawDataPath = path.join(process.cwd(), 'src', 'raw_data');
       
       console.log(`Starting zip extraction from: ${rawDataPath}`);

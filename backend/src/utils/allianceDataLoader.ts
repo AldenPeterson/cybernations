@@ -61,6 +61,12 @@ function getAlliancesDirectory(): string {
  * Load all alliance files
  */
 export function loadAllAlliances(): Map<number, AllianceData> {
+  // Skip file operations in serverless environments like Vercel
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    console.log('Skipping alliance data load in serverless environment');
+    return new Map<number, AllianceData>();
+  }
+
   const alliancesDir = getAlliancesDirectory();
   const alliances = new Map<number, AllianceData>();
   
@@ -115,10 +121,21 @@ export function loadAllianceById(allianceId: number): AllianceData | null {
  * Save alliance data to file
  */
 export function saveAllianceData(allianceData: AllianceData): boolean {
+  // Skip file operations in serverless environments like Vercel
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    console.log('Skipping alliance data save in serverless environment');
+    return false;
+  }
+
   const alliancesDir = getAlliancesDirectory();
   
-  if (!fs.existsSync(alliancesDir)) {
-    fs.mkdirSync(alliancesDir, { recursive: true });
+  try {
+    if (!fs.existsSync(alliancesDir)) {
+      fs.mkdirSync(alliancesDir, { recursive: true });
+    }
+  } catch (error) {
+    console.error('Could not create alliances directory:', error);
+    return false;
   }
   
   // Create filename

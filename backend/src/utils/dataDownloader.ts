@@ -95,6 +95,12 @@ async function extractZip(zipPath: string, extractDir: string): Promise<void> {
 
 async function cleanupOldFiles(fileType: FileType, extractedPath: string): Promise<void> {
   try {
+    // Ensure the extracted directory exists before trying to read it
+    if (!fs.existsSync(extractedPath)) {
+      console.log(`Extracted directory does not exist, skipping cleanup for ${fileType}`);
+      return;
+    }
+    
     // Find all directories for this file type
     const existingDirs = fs.readdirSync(extractedPath)
       .filter(dir => {
@@ -123,16 +129,34 @@ async function cleanupOldFiles(fileType: FileType, extractedPath: string): Promi
 }
 
 export async function ensureRecentFiles(): Promise<void> {
-  const baseUrl = 'https://www.cybernations.net/assets/';
-  const rawDataPath = path.join(process.cwd(), 'src', 'raw_data');
-  const extractedPath = path.join(rawDataPath, 'extracted');
-  
-  // Ensure directories exist
-  if (!fs.existsSync(rawDataPath)) {
-    fs.mkdirSync(rawDataPath, { recursive: true });
+  // Skip file operations in serverless environments like Vercel
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    console.log('Skipping file operations in serverless environment');
+    return;
   }
-  if (!fs.existsSync(extractedPath)) {
-    fs.mkdirSync(extractedPath, { recursive: true });
+
+  const baseUrl = 'https://www.cybernations.net/assets/';
+  
+  // Use a more robust path resolution that works in different environments
+  let rawDataPath: string;
+  let extractedPath: string;
+  
+  try {
+    // Try to use the project root first
+    const projectRoot = process.cwd();
+    rawDataPath = path.join(projectRoot, 'src', 'raw_data');
+    extractedPath = path.join(rawDataPath, 'extracted');
+    
+    // Ensure directories exist
+    if (!fs.existsSync(rawDataPath)) {
+      fs.mkdirSync(rawDataPath, { recursive: true });
+    }
+    if (!fs.existsSync(extractedPath)) {
+      fs.mkdirSync(extractedPath, { recursive: true });
+    }
+  } catch (error) {
+    console.warn('Could not create raw_data directories, skipping file operations:', error);
+    return;
   }
   
   const fileTypes: FileType[] = [FileType.NATION_STATS, FileType.AID_STATS, FileType.WAR_STATS];

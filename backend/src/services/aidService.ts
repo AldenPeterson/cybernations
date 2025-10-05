@@ -19,6 +19,12 @@ export class AidService {
    * Load cross-alliance aid coordination configuration
    */
   private static loadCrossAllianceConfig(): Record<string, string> {
+    // Skip file operations in serverless environments like Vercel
+    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+      console.log('Skipping cross-alliance config load in serverless environment');
+      return {};
+    }
+
     try {
       const configPath = join(process.cwd(), 'src', 'config', 'crossAllianceAid.json');
       const configData = readFileSync(configPath, 'utf-8');

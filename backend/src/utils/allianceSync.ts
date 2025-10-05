@@ -19,6 +19,12 @@ function getAlliancesDirectory(): string {
  * This function should be called after new data is downloaded
  */
 export async function syncAllianceFilesWithNewData(nations: Nation[]): Promise<void> {
+  // Skip file operations in serverless environments like Vercel
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    console.log('Skipping alliance file sync in serverless environment');
+    return;
+  }
+
   console.log('Starting alliance file synchronization...');
   
   const alliancesDir = getAlliancesDirectory();
@@ -196,10 +202,21 @@ async function syncAllianceData(allianceData: AllianceData, newNations: Nation[]
  * Save alliance data to file (reused from allianceDataLoader)
  */
 function saveAllianceData(allianceData: AllianceData): boolean {
+  // Skip file operations in serverless environments like Vercel
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    console.log('Skipping alliance data save in serverless environment');
+    return false;
+  }
+
   const alliancesDir = getAlliancesDirectory();
   
-  if (!fs.existsSync(alliancesDir)) {
-    fs.mkdirSync(alliancesDir, { recursive: true });
+  try {
+    if (!fs.existsSync(alliancesDir)) {
+      fs.mkdirSync(alliancesDir, { recursive: true });
+    }
+  } catch (error) {
+    console.error('Could not create alliances directory:', error);
+    return false;
   }
   
   // Create filename

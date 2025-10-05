@@ -212,10 +212,22 @@ export function parseWarStats(filePath: string): Promise<any[]> {
 }
 
 export async function loadDataFromFiles(): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {
+  // Skip file operations in serverless environments like Vercel
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    console.log('Skipping file operations in serverless environment, returning empty data');
+    return { nations: [], aidOffers: [], wars: [] };
+  }
+
   const rawDataPath = path.join(process.cwd(), 'src', 'raw_data', 'extracted');
   
   // Ensure we have recent files
   await ensureRecentFiles();
+  
+  // Ensure the extracted directory exists
+  if (!fs.existsSync(rawDataPath)) {
+    console.warn('Extracted data directory does not exist:', rawDataPath);
+    return { nations: [], aidOffers: [], wars: [] };
+  }
   
   const nations: Nation[] = [];
   const aidOffers: AidOffer[] = [];
