@@ -59,19 +59,6 @@ interface NationWars {
   };
 }
 
-interface DefendingWarsStats {
-  totalDefendingWars: number;
-  totalAttackingWars: number;
-  totalActiveWars: number;
-  defendingByAlliance: Array<{
-    allianceName: string;
-    count: number;
-  }>;
-  attackingByAlliance: Array<{
-    allianceName: string;
-    count: number;
-  }>;
-}
 
 interface DefendingWarsTableProps {
   allianceId: number;
@@ -79,7 +66,6 @@ interface DefendingWarsTableProps {
 
 const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) => {
   const [nationWars, setNationWars] = useState<NationWars[]>([]);
-  const [stats, setStats] = useState<DefendingWarsStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [includePeaceMode, setIncludePeaceMode] = useState<boolean>(false);
@@ -154,7 +140,6 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   useEffect(() => {
     if (allianceId) {
       fetchNationWars();
-      fetchDefendingWarsStats();
     }
   }, [allianceId, includePeaceMode]);
 
@@ -176,18 +161,6 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     }
   };
 
-  const fetchDefendingWarsStats = async () => {
-    try {
-      const response = await apiCall(API_ENDPOINTS.defendingWarsStats(allianceId));
-      const data = await response.json();
-      
-      if (data.success) {
-        setStats(data.stats);
-      }
-    } catch (err) {
-      console.error('Failed to fetch defending wars stats:', err);
-    }
-  };
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
@@ -248,57 +221,42 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
 
   return (
     <div>
-      {/* War Statistics */}
-      {stats && (
-        <div style={{ 
-          marginBottom: '20px', 
-          padding: '15px', 
-          backgroundColor: 'transparent', 
-          borderRadius: '8px',
-          border: '1px solid #ddd'
-        }}>
-          <h3>War Statistics</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-            <div><strong>Total Active Wars:</strong> {stats.totalActiveWars}</div>
-            <div><strong>Defending Wars:</strong> {stats.totalDefendingWars}</div>
-            <div><strong>Attacking Wars:</strong> {stats.totalAttackingWars}</div>
-          </div>
-        </div>
-      )}
-
-      {/* Peace Mode Filter */}
-      <div style={{ marginBottom: '20px' }}>
-        <label style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          padding: '8px 12px',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontSize: '14px',
-          fontWeight: '500',
-          width: 'fit-content',
-          color: '#333'
-        }}>
-          <input
-            type="checkbox"
-            checked={includePeaceMode}
-            onChange={(e) => setIncludePeaceMode(e.target.checked)}
-            style={{ 
-              marginRight: '8px',
-              accentColor: '#007bff',
-              transform: 'scale(1.2)'
-            }}
-          />
-          Include Peace Mode Nations
-        </label>
-      </div>
 
       {/* Nation Wars Table */}
       {nationWars.length > 0 ? (
         <div>
-          <h2>Nation Wars</h2>
+          {/* Peace Mode Filter - positioned above table */}
+          <div style={{ 
+            marginBottom: '15px', 
+            display: 'flex', 
+            justifyContent: 'flex-end',
+            alignItems: 'center'
+          }}>
+            <label style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              padding: '6px 10px',
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500',
+              color: '#333'
+            }}>
+              <input
+                type="checkbox"
+                checked={includePeaceMode}
+                onChange={(e) => setIncludePeaceMode(e.target.checked)}
+                style={{ 
+                  marginRight: '6px',
+                  accentColor: '#007bff',
+                  transform: 'scale(1.1)'
+                }}
+              />
+              Include Peace Mode Nations
+            </label>
+          </div>
           <div style={{ overflowX: 'auto', width: '100%' }}>
             <table style={{ 
               borderCollapse: 'collapse', 

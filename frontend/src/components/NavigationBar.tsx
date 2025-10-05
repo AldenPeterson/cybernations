@@ -171,7 +171,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             transition: 'all 0.2s ease'
           }}
         >
-          Defending Wars
+          Wars
         </Link>
         <Link 
           to={getTabLink('shame-offers')}
