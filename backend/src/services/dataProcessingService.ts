@@ -13,6 +13,136 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
+ * Parse nations from standardized CSV file
+ */
+async function parseNationsFromFile(filePath: string): Promise<Nation[]> {
+  return new Promise((resolve, reject) => {
+    const nations: Nation[] = [];
+    
+    createReadStream(filePath)
+      .pipe(csv({
+        separator: '|',
+        headers: ['id', 'rulerName', 'nationName', 'alliance', 'allianceId', 'allianceDate', 'allianceStatus', 'governmentType', 'religion', 'team', 'created', 'technology', 'infrastructure', 'baseLand', 'warStatus', 'resource1', 'resource2', 'votes', 'strength', 'defcon', 'baseSoldiers', 'tanks', 'cruise', 'nukes', 'activity', 'connectedResource1', 'connectedResource2', 'connectedResource3', 'connectedResource4', 'connectedResource5', 'connectedResource6', 'connectedResource7', 'connectedResource8', 'connectedResource9', 'connectedResource10', 'attackingCasualties', 'defensiveCasualties']
+      }))
+      .on('data', (row) => {
+        if (row.id && row.rulerName) {
+          nations.push({
+            id: parseInt(row.id),
+            rulerName: decodeHtmlEntities(row.rulerName),
+            nationName: decodeHtmlEntities(row.nationName),
+            alliance: decodeHtmlEntities(row.alliance || ''),
+            allianceId: parseInt(row.allianceId) || 0,
+            team: row.team || '',
+            strength: parseFloat(row.strength?.replace(/,/g, '') || '0'),
+            activity: row.activity || '',
+            technology: row.technology || '0',
+            infrastructure: row.infrastructure || '0',
+            nuclearWeapons: parseInt(row.nukes) || 0,
+            governmentType: row.governmentType || '',
+            inWarMode: row.warStatus === 'War Mode'
+          });
+        }
+      })
+      .on('end', () => {
+        console.log(`Parsed ${nations.length} nations from standardized file`);
+        resolve(nations);
+      })
+      .on('error', (error) => {
+        console.error('Error parsing nations from standardized file:', error);
+        reject(error);
+      });
+  });
+}
+
+/**
+ * Parse aid offers from standardized CSV file
+ */
+async function parseAidOffersFromFile(filePath: string): Promise<AidOffer[]> {
+  return new Promise((resolve, reject) => {
+    const aidOffers: AidOffer[] = [];
+    
+    createReadStream(filePath)
+      .pipe(csv({
+        separator: '|',
+        headers: ['declaringId', 'declaringRuler', 'declaringNation', 'declaringAlliance', 'declaringAllianceId', 'declaringTeam', 'receivingId', 'receivingRuler', 'receivingNation', 'receivingAlliance', 'receivingAllianceId', 'receivingTeam', 'status', 'money', 'technology', 'soldiers', 'date', 'reason', 'aidId']
+      }))
+      .on('data', (row) => {
+        if (row.aidId && row.declaringId && row.receivingId) {
+          aidOffers.push({
+            aidId: parseInt(row.aidId),
+            declaringId: parseInt(row.declaringId),
+            declaringRuler: decodeHtmlEntities(row.declaringRuler || ''),
+            declaringNation: decodeHtmlEntities(row.declaringNation),
+            declaringAlliance: decodeHtmlEntities(row.declaringAlliance || ''),
+            declaringAllianceId: parseInt(row.declaringAllianceId) || 0,
+            receivingId: parseInt(row.receivingId),
+            receivingRuler: decodeHtmlEntities(row.receivingRuler || ''),
+            receivingNation: decodeHtmlEntities(row.receivingNation),
+            receivingAlliance: decodeHtmlEntities(row.receivingAlliance || ''),
+            receivingAllianceId: parseInt(row.receivingAllianceId) || 0,
+            status: row.status || '',
+            money: parseFloat(row.money?.replace(/,/g, '') || '0'),
+            technology: parseFloat(row.technology?.replace(/,/g, '') || '0'),
+            soldiers: parseInt(row.soldiers) || 0,
+            date: row.date || '',
+            reason: row.reason || ''
+          });
+        }
+      })
+      .on('end', () => {
+        console.log(`Parsed ${aidOffers.length} aid offers from standardized file`);
+        resolve(aidOffers);
+      })
+      .on('error', (error) => {
+        console.error('Error parsing aid offers from standardized file:', error);
+        reject(error);
+      });
+  });
+}
+
+/**
+ * Parse wars from standardized CSV file
+ */
+async function parseWarsFromFile(filePath: string): Promise<any[]> {
+  return new Promise((resolve, reject) => {
+    const wars: any[] = [];
+    
+    createReadStream(filePath)
+      .pipe(csv({
+        separator: '|',
+        headers: ['declaringId', 'declaringRuler', 'declaringNation', 'declaringAlliance', 'declaringAllianceId', 'declaringTeam', 'receivingId', 'receivingRuler', 'receivingNation', 'receivingAlliance', 'receivingAllianceId', 'receivingTeam', 'warStatus', 'beginDate', 'endDate', 'reason', 'warId', 'destruction', 'attackPercent', 'defendPercent']
+      }))
+      .on('data', (row) => {
+        if (row.warId && row.declaringId && row.receivingId) {
+          wars.push({
+            id: parseInt(row.warId),
+            attackerNation: decodeHtmlEntities(row.declaringNation),
+            attackerNationId: parseInt(row.declaringId),
+            attackerAlliance: decodeHtmlEntities(row.declaringAlliance || ''),
+            attackerAllianceId: parseInt(row.declaringAllianceId) || 0,
+            defenderNation: decodeHtmlEntities(row.receivingNation),
+            defenderNationId: parseInt(row.receivingId),
+            defenderAlliance: decodeHtmlEntities(row.receivingAlliance || ''),
+            defenderAllianceId: parseInt(row.receivingAllianceId) || 0,
+            warType: row.reason || '',
+            status: row.warStatus || '',
+            startDate: row.beginDate || '',
+            endDate: row.endDate || ''
+          });
+        }
+      })
+      .on('end', () => {
+        console.log(`Parsed ${wars.length} wars from standardized file`);
+        resolve(wars);
+      })
+      .on('error', (error) => {
+        console.error('Error parsing wars from standardized file:', error);
+        reject(error);
+      });
+  });
+}
+
+/**
  * Decodes HTML entities in a string
  * @param str - String that may contain HTML entities
  * @returns Decoded string
@@ -216,6 +346,26 @@ export function parseWarStats(filePath: string): Promise<any[]> {
 }
 
 export async function loadDataFromFiles(): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {
+  // Try to load from new standardized data files first
+  const standardizedDataPath = path.join(process.cwd(), 'src', 'data');
+  
+  if (fs.existsSync(standardizedDataPath)) {
+    const nationsFile = path.join(standardizedDataPath, 'nations.csv');
+    const aidOffersFile = path.join(standardizedDataPath, 'aid_offers.csv');
+    const warsFile = path.join(standardizedDataPath, 'wars.csv');
+    
+    if (fs.existsSync(nationsFile) && fs.existsSync(aidOffersFile) && fs.existsSync(warsFile)) {
+      console.log('Loading from standardized data files');
+      
+      const nations = await parseNationsFromFile(nationsFile);
+      const aidOffers = await parseAidOffersFromFile(aidOffersFile);
+      const wars = await parseWarsFromFile(warsFile);
+      
+      return { nations, aidOffers, wars };
+    }
+  }
+  
+  // Fallback to old system
   let rawDataPath = '';
   
   // In production, try to load from available files without downloading

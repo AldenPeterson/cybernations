@@ -1,0 +1,17 @@
+{
+  "NATION_STATS": {
+    "timestamp": 1759629717608,
+    "originalFile": "CyberNations_SE_Nation_Stats_10022025510002.zip",
+    "downloadTime": "2025-10-05T02:01:57.608Z"
+  },
+  "AID_STATS": {
+    "timestamp": 1759629717611,
+    "originalFile": "CyberNations_SE_Aid_Stats_10022025520002.zip",
+    "downloadTime": "2025-10-05T02:01:57.611Z"
+  },
+  "WAR_STATS": {
+    "timestamp": 1759629717611,
+    "originalFile": "CyberNations_SE_War_Stats_10022025525002.zip",
+    "downloadTime": "2025-10-05T02:01:57.611Z"
+  }
+}

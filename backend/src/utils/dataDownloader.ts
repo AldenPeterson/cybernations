@@ -133,6 +133,22 @@ async function cleanupOldFiles(fileType: FileType, extractedPath: string): Promi
  */
 async function checkForRecentFiles(): Promise<boolean> {
   try {
+    // Check for new standardized data files first
+    const dataPath = path.join(process.cwd(), 'src', 'data');
+    
+    if (fs.existsSync(dataPath)) {
+      const requiredFiles = ['nations.csv', 'aid_offers.csv', 'wars.csv'];
+      const hasAllFiles = requiredFiles.every(file => 
+        fs.existsSync(path.join(dataPath, file))
+      );
+      
+      if (hasAllFiles) {
+        console.log('Found standardized data files');
+        return true;
+      }
+    }
+    
+    // Fallback: check for old extracted files
     const rawDataPath = path.join(process.cwd(), 'src', 'raw_data', 'extracted');
     
     if (!fs.existsSync(rawDataPath)) {
@@ -167,53 +183,118 @@ async function downloadWithTimeout(): Promise<void> {
 }
 
 /**
- * Perform the actual download (extracted from the existing logic)
+ * Perform the actual download with standardized file naming
  */
 async function performDownload(): Promise<void> {
   const baseUrl = 'https://www.cybernations.net/assets/';
   
-  // Use a more robust path resolution that works in different environments
-  let rawDataPath: string;
-  let extractedPath: string;
+  // Use standardized paths for bundled data
+  let dataPath: string;
   
   try {
-    // Try to use the project root first
     const projectRoot = process.cwd();
-    rawDataPath = path.join(projectRoot, 'src', 'raw_data');
-    extractedPath = path.join(rawDataPath, 'extracted');
+    dataPath = path.join(projectRoot, 'src', 'data');
   } catch (error) {
     console.error('Error setting up paths:', error);
     throw error;
   }
   
-  // Ensure directories exist
-  if (!fs.existsSync(rawDataPath)) {
-    fs.mkdirSync(rawDataPath, { recursive: true });
-  }
-  if (!fs.existsSync(extractedPath)) {
-    fs.mkdirSync(extractedPath, { recursive: true });
+  // Ensure data directory exists
+  if (!fs.existsSync(dataPath)) {
+    fs.mkdirSync(dataPath, { recursive: true });
   }
   
   const filesToDownload = [
-    { type: FileType.NATION_STATS, url: `${baseUrl}CyberNations_SE_${FileType.NATION_STATS}_${getDownloadNumberSlug('51000')}.zip` },
-    { type: FileType.AID_STATS, url: `${baseUrl}CyberNations_SE_${FileType.AID_STATS}_${getDownloadNumberSlug('52000')}.zip` },
-    { type: FileType.WAR_STATS, url: `${baseUrl}CyberNations_SE_${FileType.WAR_STATS}_${getDownloadNumberSlug('52500')}.zip` }
+    { 
+      type: FileType.NATION_STATS, 
+      url: `${baseUrl}CyberNations_SE_${FileType.NATION_STATS}_${getDownloadNumberSlug('51000')}.zip`,
+      outputFile: 'nations.csv'
+    },
+    { 
+      type: FileType.AID_STATS, 
+      url: `${baseUrl}CyberNations_SE_${FileType.AID_STATS}_${getDownloadNumberSlug('52000')}.zip`,
+      outputFile: 'aid_offers.csv'
+    },
+    { 
+      type: FileType.WAR_STATS, 
+      url: `${baseUrl}CyberNations_SE_${FileType.WAR_STATS}_${getDownloadNumberSlug('52500')}.zip`,
+      outputFile: 'wars.csv'
+    }
   ];
   
-  // Download files in parallel but with individual timeouts
+  const latestDownloads: { [key: string]: { timestamp: number; originalFile: string; downloadTime: string } } = {};
+  
+  // Download and process files
   const downloadPromises = filesToDownload.map(async (file) => {
     try {
-      const fileName = file.url.split('/').pop() || `${file.type}.zip`;
-      const zipPath = path.join(rawDataPath, fileName);
-      await downloadFile(file.url, zipPath);
-      console.log(`Successfully downloaded ${file.type}`);
+      const tempZipPath = path.join(dataPath, `temp_${file.type}.zip`);
+      const outputPath = path.join(dataPath, file.outputFile);
+      
+      // Download the zip file
+      await downloadFile(file.url, tempZipPath);
+      console.log(`Downloaded ${file.type}`);
+      
+      // Extract the CSV content to standardized filename
+      await extractCsvToStandardFile(tempZipPath, outputPath, file.type);
+      console.log(`Extracted ${file.type} to ${file.outputFile}`);
+      
+      // Track this download
+      latestDownloads[file.type] = {
+        timestamp: Date.now(),
+        originalFile: file.url.split('/').pop() || '',
+        downloadTime: new Date().toISOString()
+      };
+      
+      // Clean up temp zip file
+      if (fs.existsSync(tempZipPath)) {
+        fs.unlinkSync(tempZipPath);
+      }
+      
     } catch (error) {
-      console.warn(`Failed to download ${file.type}:`, error);
-      // Don't throw - allow other downloads to continue
+      console.warn(`Failed to download/process ${file.type}:`, error);
     }
   });
   
   await Promise.allSettled(downloadPromises);
+  
+  // Write the latest downloads tracker
+  const trackerPath = path.join(dataPath, 'latest_downloads.json');
+  fs.writeFileSync(trackerPath, JSON.stringify(latestDownloads, null, 2));
+  console.log('Updated latest downloads tracker');
+}
+
+/**
+ * Extract CSV content from zip file to standardized filename
+ */
+async function extractCsvToStandardFile(zipPath: string, outputPath: string, fileType: FileType): Promise<void> {
+  const tempExtractDir = path.join(path.dirname(zipPath), 'temp_extract');
+  
+  try {
+    // Extract zip to temp directory
+    await extractZipFile(zipPath, tempExtractDir);
+    
+    // Find the extracted CSV file
+    const extractedFiles = fs.readdirSync(tempExtractDir, { recursive: true }) as string[];
+    const csvFile = extractedFiles.find((file: string) => 
+      file.endsWith('.txt') && file.includes('CyberNations_SE')
+    );
+    
+    if (!csvFile) {
+      throw new Error(`No CSV file found in ${fileType} zip`);
+    }
+    
+    const sourcePath = path.join(tempExtractDir, csvFile);
+    const csvContent = fs.readFileSync(sourcePath, 'utf8');
+    
+    // Write to standardized output file
+    fs.writeFileSync(outputPath, csvContent);
+    
+  } finally {
+    // Clean up temp extraction directory
+    if (fs.existsSync(tempExtractDir)) {
+      fs.rmSync(tempExtractDir, { recursive: true, force: true });
+    }
+  }
 }
 
 export async function ensureRecentFiles(): Promise<void> {
