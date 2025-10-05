@@ -8,7 +8,7 @@ export const aidRoutes = Router();
 aidRoutes.get('/alliances/:allianceId/aid-slots', validateAllianceId, AidController.getAidSlots);
 
 // Get alliance aid statistics
-aidRoutes.get('/alliances/:allianceId/alliance-aid-stats', validateAllianceId, AidController.getAllianceAidStats);
+aidRoutes.get('/alliances/:allianceId/aid-stats', validateAllianceId, AidController.getAllianceAidStats);
 
 // Get aid recommendations for an alliance
 aidRoutes.get('/alliances/:allianceId/recommendations', validateAllianceId, AidController.getAidRecommendations);
