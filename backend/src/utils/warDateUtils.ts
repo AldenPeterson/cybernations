@@ -24,9 +24,16 @@ export function formatWarEndDate(endDate: string): string {
   // Parse the date and add one calendar day to show the day after the war actually ends
   // All dates in the data are Central Time
   const date = new Date(endDate);
-  const centralNextDay = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
-  return centralNextDay.toLocaleDateString('en-US', { 
-    timeZone: 'America/Chicago',
+  
+  // Get the Central Time date components
+  const centralYear = date.toLocaleDateString('en-US', { timeZone: 'America/Chicago', year: 'numeric' });
+  const centralMonth = date.toLocaleDateString('en-US', { timeZone: 'America/Chicago', month: 'numeric' });
+  const centralDay = date.toLocaleDateString('en-US', { timeZone: 'America/Chicago', day: 'numeric' });
+  
+  // Create a date object for the Central Time date and add one day
+  const centralDate = new Date(parseInt(centralYear), parseInt(centralMonth) - 1, parseInt(centralDay) + 1);
+  
+  return centralDate.toLocaleDateString('en-US', { 
     year: 'numeric',
     month: '2-digit',
     day: '2-digit'
@@ -39,15 +46,25 @@ export function formatWarEndDate(endDate: string): string {
  * @returns Number of days until expiration (0 or positive)
  */
 export function getDaysUntilExpiration(endDate: string): number {
-  // Parse the end date and current time, both in Central Time
+  // Parse the end date and current time
   const endDateObj = new Date(endDate);
   const now = new Date();
   
-  // Set both dates to start of day in Central Time to compare just the date part
-  const endDateCentral = new Date(endDateObj.getFullYear(), endDateObj.getMonth(), endDateObj.getDate());
-  const nowCentral = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // Get Central Time date components for the war end date
+  const endYear = parseInt(endDateObj.toLocaleDateString('en-US', { timeZone: 'America/Chicago', year: 'numeric' }));
+  const endMonth = parseInt(endDateObj.toLocaleDateString('en-US', { timeZone: 'America/Chicago', month: 'numeric' }));
+  const endDay = parseInt(endDateObj.toLocaleDateString('en-US', { timeZone: 'America/Chicago', day: 'numeric' }));
   
-  const diffTime = endDateCentral.getTime() - nowCentral.getTime();
+  // Get Central Time date components for current time
+  const nowYear = parseInt(now.toLocaleDateString('en-US', { timeZone: 'America/Chicago', year: 'numeric' }));
+  const nowMonth = parseInt(now.toLocaleDateString('en-US', { timeZone: 'America/Chicago', month: 'numeric' }));
+  const nowDay = parseInt(now.toLocaleDateString('en-US', { timeZone: 'America/Chicago', day: 'numeric' }));
+  
+  // Create date objects for comparison (expiration date is day after war ends)
+  const expirationDate = new Date(endYear, endMonth - 1, endDay + 1);
+  const currentDate = new Date(nowYear, nowMonth - 1, nowDay);
+  
+  const diffTime = expirationDate.getTime() - currentDate.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   return Math.max(0, diffDays);
 }
