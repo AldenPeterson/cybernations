@@ -346,24 +346,42 @@ export function parseWarStats(filePath: string): Promise<any[]> {
 }
 
 export async function loadDataFromFiles(): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {
-  // Try to load from new standardized data files first
+  // Always try standardized data files first, especially in production
   const standardizedDataPath = path.join(process.cwd(), 'src', 'data');
   
-  if (fs.existsSync(standardizedDataPath)) {
-    const nationsFile = path.join(standardizedDataPath, 'nations.csv');
-    const aidOffersFile = path.join(standardizedDataPath, 'aid_offers.csv');
-    const warsFile = path.join(standardizedDataPath, 'wars.csv');
-    
-    if (fs.existsSync(nationsFile) && fs.existsSync(aidOffersFile) && fs.existsSync(warsFile)) {
-      console.log('Loading from standardized data files');
+  // Try multiple possible paths for standardized files in different environments
+  const possibleStandardizedPaths = [
+    path.join(process.cwd(), 'src', 'data'),
+    path.join(__dirname, '..', 'data'),
+    path.join(process.cwd(), 'dist', 'src', 'data'),
+    path.join(__dirname, '..', '..', 'data')
+  ];
+  
+  for (const dataPath of possibleStandardizedPaths) {
+    if (fs.existsSync(dataPath)) {
+      const nationsFile = path.join(dataPath, 'nations.csv');
+      const aidOffersFile = path.join(dataPath, 'aid_offers.csv');
+      const warsFile = path.join(dataPath, 'wars.csv');
       
-      const nations = await parseNationsFromFile(nationsFile);
-      const aidOffers = await parseAidOffersFromFile(aidOffersFile);
-      const wars = await parseWarsFromFile(warsFile);
-      
-      return { nations, aidOffers, wars };
+      if (fs.existsSync(nationsFile) && fs.existsSync(aidOffersFile) && fs.existsSync(warsFile)) {
+        console.log(`Loading from standardized data files at: ${dataPath}`);
+        
+        try {
+          const nations = await parseNationsFromFile(nationsFile);
+          const aidOffers = await parseAidOffersFromFile(aidOffersFile);
+          const wars = await parseWarsFromFile(warsFile);
+          
+          console.log(`Successfully loaded ${nations.length} nations, ${aidOffers.length} aid offers, ${wars.length} wars`);
+          return { nations, aidOffers, wars };
+        } catch (error) {
+          console.warn(`Error loading standardized files from ${dataPath}:`, error);
+          // Continue to try other paths
+        }
+      }
     }
   }
+  
+  console.warn('Standardized data files not found in any expected location');
   
   // Fallback to old system
   let rawDataPath = '';

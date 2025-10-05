@@ -68,8 +68,12 @@ export class AllianceController {
    */
   static async getAlliances(req: Request, res: Response) {
     try {
+      console.log('Starting alliance data loading...');
+      
       // Always try to use the dynamic data loading first
       const { nations } = await loadDataFromFilesWithUpdate();
+      
+      console.log(`Loaded ${nations.length} nations from data files`);
       
       if (nations.length > 0) {
         // We have nation data, group by alliance
@@ -94,6 +98,9 @@ export class AllianceController {
       // If no nations data available, try loading from config files as fallback
       console.log('No nations data available, trying config files as fallback');
       const alliances = AllianceController.loadAlliancesFromConfig();
+      
+      // Log what we found for debugging
+      console.log(`Fallback loaded ${alliances.length} alliances from config files`);
       
       res.json({
         success: true,
