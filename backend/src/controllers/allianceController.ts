@@ -10,12 +10,28 @@ export class AllianceController {
    */
   private static loadAlliancesFromConfig(): any[] {
     try {
-      const alliancesDir = path.join(process.cwd(), 'src', 'config', 'alliances');
+      // Try different possible paths for the alliances directory
+      const possiblePaths = [
+        path.join(process.cwd(), 'src', 'config', 'alliances'),
+        path.join(__dirname, '..', 'config', 'alliances'),
+        path.join(process.cwd(), 'dist', 'src', 'config', 'alliances'),
+        path.join(__dirname, '..', '..', 'config', 'alliances')
+      ];
       
-      if (!fs.existsSync(alliancesDir)) {
-        console.warn('Alliances directory does not exist:', alliancesDir);
+      let alliancesDir = '';
+      for (const possiblePath of possiblePaths) {
+        if (fs.existsSync(possiblePath)) {
+          alliancesDir = possiblePath;
+          break;
+        }
+      }
+      
+      if (!alliancesDir) {
+        console.warn('Alliances directory not found in any expected location:', possiblePaths);
         return [];
       }
+      
+      console.log('Using alliances directory:', alliancesDir);
       
       const files = fs.readdirSync(alliancesDir).filter(file => file.endsWith('.json'));
       const alliances: any[] = [];
@@ -48,34 +64,36 @@ export class AllianceController {
    */
   static async getAlliances(req: Request, res: Response) {
     try {
-      // In production/Vercel environments, use static configuration files
-      if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-        console.log('Using static alliance configuration files in production');
-        const alliances = AllianceController.loadAlliancesFromConfig();
+      // Always try to use the dynamic data loading first
+      const { nations } = await loadDataFromFilesWithUpdate();
+      
+      if (nations.length > 0) {
+        // We have nation data, group by alliance
+        const alliances = groupNationsByAlliance(nations);
+        
+        // Filter out alliances with no name and sort by nation count (descending - most nations first)
+        const filteredAndSortedAlliances = alliances
+          .filter(alliance => alliance.name && alliance.name.trim() !== '')
+          .sort((a, b) => b.nations.length - a.nations.length);
         
         res.json({
           success: true,
-          alliances: alliances
+          alliances: filteredAndSortedAlliances.map(alliance => ({
+            id: alliance.id,
+            name: alliance.name,
+            nationCount: alliance.nations.length
+          }))
         });
         return;
       }
-
-      // In development, use the dynamic data loading
-      const { nations } = await loadDataFromFilesWithUpdate();
-      const alliances = groupNationsByAlliance(nations);
       
-      // Filter out alliances with no name and sort by nation count (descending - most nations first)
-      const filteredAndSortedAlliances = alliances
-        .filter(alliance => alliance.name && alliance.name.trim() !== '')
-        .sort((a, b) => b.nations.length - a.nations.length);
+      // If no nations data available, try loading from config files as fallback
+      console.log('No nations data available, trying config files as fallback');
+      const alliances = AllianceController.loadAlliancesFromConfig();
       
       res.json({
         success: true,
-        alliances: filteredAndSortedAlliances.map(alliance => ({
-          id: alliance.id,
-          name: alliance.name,
-          nationCount: alliance.nations.length
-        }))
+        alliances: alliances
       });
     } catch (error) {
       console.error('Error fetching alliances:', error);
