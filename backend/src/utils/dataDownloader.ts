@@ -93,6 +93,56 @@ async function extractZip(zipPath: string, extractDir: string): Promise<void> {
   console.log(`Extracted ${result.extractedFiles.length} files from ZIP`);
 }
 
+/**
+ * Read the latest downloads tracker if present
+ */
+function readLatestDownloadsTracker(): Record<string, { timestamp: number; originalFile: string; downloadTime: string }> | null {
+  try {
+    const dataPath = path.join(process.cwd(), 'src', 'data');
+    const trackerPath = path.join(dataPath, 'latest_downloads.json');
+    if (!fs.existsSync(trackerPath)) return null;
+    const raw = fs.readFileSync(trackerPath, 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Determine which file types are stale based on latest_downloads.json
+ */
+function getStaleFileTypesFromLatestDownloads(maxAgeMs: number): FileType[] {
+  const tracker = readLatestDownloadsTracker();
+  const requiredKeys: { key: string; type: FileType; csv: string }[] = [
+    { key: FileType.NATION_STATS, type: FileType.NATION_STATS, csv: 'nations.csv' },
+    { key: FileType.AID_STATS, type: FileType.AID_STATS, csv: 'aid_offers.csv' },
+    { key: FileType.WAR_STATS, type: FileType.WAR_STATS, csv: 'wars.csv' }
+  ];
+
+  const dataPath = path.join(process.cwd(), 'src', 'data');
+  const now = Date.now();
+
+  const stale: FileType[] = [];
+
+  for (const item of requiredKeys) {
+    const csvPath = path.join(dataPath, item.csv);
+    const hasCsv = fs.existsSync(csvPath);
+    const record = tracker ? tracker[item.key] : undefined;
+
+    if (!record || !hasCsv) {
+      stale.push(item.type);
+      continue;
+    }
+
+    const isFresh = now - record.timestamp < maxAgeMs;
+    if (!isFresh) {
+      stale.push(item.type);
+    }
+  }
+
+  return stale;
+}
+
 async function cleanupOldFiles(fileType: FileType, extractedPath: string): Promise<void> {
   try {
     // Ensure the extracted directory exists before trying to read it
@@ -133,19 +183,12 @@ async function cleanupOldFiles(fileType: FileType, extractedPath: string): Promi
  */
 async function checkForRecentFiles(): Promise<boolean> {
   try {
-    // Check for new standardized data files first
-    const dataPath = path.join(process.cwd(), 'src', 'data');
-    
-    if (fs.existsSync(dataPath)) {
-      const requiredFiles = ['nations.csv', 'aid_offers.csv', 'wars.csv'];
-      const hasAllFiles = requiredFiles.every(file => 
-        fs.existsSync(path.join(dataPath, file))
-      );
-      
-      if (hasAllFiles) {
-        console.log('Found standardized data files');
-        return true;
-      }
+    // Check recency using latest_downloads.json as source of truth
+    const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+    const stale = getStaleFileTypesFromLatestDownloads(THREE_HOURS_MS);
+    if (stale.length === 0) {
+      console.log('Found recent standardized data files via latest_downloads.json');
+      return true;
     }
     
     // Fallback: check for old extracted files
@@ -205,24 +248,14 @@ async function performDownload(): Promise<void> {
   }
   
   const filesToDownload = [
-    { 
-      type: FileType.NATION_STATS, 
-      url: `${baseUrl}CyberNations_SE_${FileType.NATION_STATS}_${getDownloadNumberSlug('51000')}.zip`,
-      outputFile: 'nations.csv'
-    },
-    { 
-      type: FileType.AID_STATS, 
-      url: `${baseUrl}CyberNations_SE_${FileType.AID_STATS}_${getDownloadNumberSlug('52000')}.zip`,
-      outputFile: 'aid_offers.csv'
-    },
-    { 
-      type: FileType.WAR_STATS, 
-      url: `${baseUrl}CyberNations_SE_${FileType.WAR_STATS}_${getDownloadNumberSlug('52500')}.zip`,
-      outputFile: 'wars.csv'
-    }
+    { type: FileType.NATION_STATS, url: `${baseUrl}${getFileInfo(FileType.NATION_STATS).name}`, outputFile: 'nations.csv' },
+    { type: FileType.AID_STATS, url: `${baseUrl}${getFileInfo(FileType.AID_STATS).name}`, outputFile: 'aid_offers.csv' },
+    { type: FileType.WAR_STATS, url: `${baseUrl}${getFileInfo(FileType.WAR_STATS).name}`, outputFile: 'wars.csv' }
   ];
   
-  const latestDownloads: { [key: string]: { timestamp: number; originalFile: string; downloadTime: string } } = {};
+  // Merge with existing tracker to preserve fresh entries
+  const existingTracker = readLatestDownloadsTracker() || {};
+  const latestDownloads: { [key: string]: { timestamp: number; originalFile: string; downloadTime: string } } = { ...existingTracker };
   
   // Download and process files
   const downloadPromises = filesToDownload.map(async (file) => {
@@ -298,107 +331,101 @@ async function extractCsvToStandardFile(zipPath: string, outputPath: string, fil
 }
 
 export async function ensureRecentFiles(): Promise<void> {
-  // Check if we have recent files first, regardless of environment
-  const hasRecentFiles = await checkForRecentFiles();
-  
-  if (hasRecentFiles) {
-    console.log('Recent files found, skipping download');
+  const isProd = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
+
+  // Determine staleness using latest_downloads.json
+  const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+  const staleTypes = getStaleFileTypesFromLatestDownloads(THREE_HOURS_MS);
+
+  if (staleTypes.length === 0) {
+    console.log('All standardized files are fresh according to latest_downloads.json');
     return;
   }
-  
-  // In production/serverless, try to download but with timeout protection
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    console.log('Production environment detected, attempting download with timeout protection');
+
+  if (isProd) {
+    console.log('Production environment detected, attempting download with timeout protection for stale files:', staleTypes.join(', '));
     try {
+      // Fallback to full download in prod for simplicity/timeouts
       await downloadWithTimeout();
     } catch (error) {
       console.warn('Download failed in production, using existing files:', error);
-      // Don't throw - allow the system to continue with existing files
+      return;
     }
-    return;
+  } else {
+    try {
+      console.log('Development environment detected, downloading stale standardized files:', staleTypes.join(', '));
+      await performSelectiveDownload(staleTypes);
+    } catch (error) {
+      console.warn('Selective standardized download failed in development:', error);
+    }
   }
 
-  const baseUrl = 'https://www.cybernations.net/assets/';
-  
-  // Use a more robust path resolution that works in different environments
-  let rawDataPath: string;
-  let extractedPath: string;
-  
+  // After refreshing standardized files, sync alliance files using the new data
   try {
-    // Try to use the project root first
-    const projectRoot = process.cwd();
-    rawDataPath = path.join(projectRoot, 'src', 'raw_data');
-    extractedPath = path.join(rawDataPath, 'extracted');
-    
-    // Ensure directories exist
-    if (!fs.existsSync(rawDataPath)) {
-      fs.mkdirSync(rawDataPath, { recursive: true });
-    }
-    if (!fs.existsSync(extractedPath)) {
-      fs.mkdirSync(extractedPath, { recursive: true });
+    console.log('Syncing alliance files with refreshed data...');
+    const { loadDataFromFiles } = await import('../services/dataProcessingService.js');
+    const { nations } = await loadDataFromFiles();
+    if (nations.length > 0) {
+      await syncAllianceFilesWithNewData(nations);
+    } else {
+      console.log('No nation data found after download, skipping alliance sync');
     }
   } catch (error) {
-    console.warn('Could not create raw_data directories, skipping file operations:', error);
-    return;
+    console.error('Error syncing alliance files after download:', error);
   }
-  
-  const fileTypes: FileType[] = [FileType.NATION_STATS, FileType.AID_STATS, FileType.WAR_STATS];
-  let anyFilesUpdated = false;
-  
-  for (const fileType of fileTypes) {
-    try {
-      const fileInfo = getFileInfo(fileType);
-      const zipPath = path.join(rawDataPath, fileInfo.name);
-      const extractDir = path.join(extractedPath, fileInfo.name.replace('.zip', ''));
-      const txtFile = path.join(extractDir, `CyberNations_SE_${fileType}.txt`);
-      
-      console.log(`Checking ${txtFile} file...`);
+}
 
-      // Check if we already have the most recent file
-      if (fs.existsSync(txtFile)) {
-        console.log(`${fileType} file is up to date`);
-        continue;
-      }
-      
-      // Clean up old files for this file type before downloading new ones
-      await cleanupOldFiles(fileType, extractedPath);
-      
-      console.log(`Downloading ${fileType}...`);
-      const url = `${baseUrl}${fileInfo.name}`;
-      await downloadFile(url, zipPath);
-      
-      console.log(`Extracting ${fileType}...`);
-      if (!fs.existsSync(extractDir)) {
-        fs.mkdirSync(extractDir, { recursive: true });
-      }
-      await extractZip(zipPath, extractDir);
-      
-      // Clean up zip file
-      fs.unlinkSync(zipPath);
-      
-      console.log(`${fileType} updated successfully`);
-      anyFilesUpdated = true;
-    } catch (error) {
-      console.error(`Error updating ${fileType} :`, error);
-      // Continue with other files even if one fails
-    }
+/**
+ * Download only the specified file types and update the tracker
+ */
+async function performSelectiveDownload(staleTypes: FileType[]): Promise<void> {
+  const baseUrl = 'https://www.cybernations.net/assets/';
+
+  // Setup data path
+  let dataPath: string;
+  try {
+    const projectRoot = process.cwd();
+    dataPath = path.join(projectRoot, 'src', 'data');
+  } catch (error) {
+    console.error('Error setting up paths:', error);
+    throw error;
   }
-  
-  // If any files were updated, sync alliance files
-  if (anyFilesUpdated) {
+
+  if (!fs.existsSync(dataPath)) {
+    fs.mkdirSync(dataPath, { recursive: true });
+  }
+
+  const mapping: Record<FileType, { outputFile: string }> = {
+    [FileType.NATION_STATS]: { outputFile: 'nations.csv' },
+    [FileType.AID_STATS]: { outputFile: 'aid_offers.csv' },
+    [FileType.WAR_STATS]: { outputFile: 'wars.csv' }
+  };
+
+  const existingTracker = readLatestDownloadsTracker() || {};
+  const latestDownloads: { [key: string]: { timestamp: number; originalFile: string; downloadTime: string } } = { ...existingTracker };
+
+  for (const type of staleTypes) {
+    const fileInfo = getFileInfo(type);
+    const url = `${baseUrl}${fileInfo.name}`;
+    const tempZipPath = path.join(dataPath, `temp_${type}.zip`);
+    const outputPath = path.join(dataPath, mapping[type].outputFile);
+
     try {
-      console.log('Files were updated, syncing alliance files...');
-      // Import and call the data parser to get the new nation data
-      const { loadDataFromFiles } = await import('../services/dataProcessingService.js');
-      const { nations } = await loadDataFromFiles();
-      
-      if (nations.length > 0) {
-        await syncAllianceFilesWithNewData(nations);
-      } else {
-        console.log('No nation data found, skipping alliance sync');
+      await downloadFile(url, tempZipPath);
+      await extractCsvToStandardFile(tempZipPath, outputPath, type);
+      latestDownloads[type] = {
+        timestamp: Date.now(),
+        originalFile: fileInfo.name,
+        downloadTime: new Date().toISOString()
+      };
+    } finally {
+      if (fs.existsSync(tempZipPath)) {
+        fs.unlinkSync(tempZipPath);
       }
-    } catch (error) {
-      console.error('Error syncing alliance files:', error);
     }
   }
+
+  const trackerPath = path.join(dataPath, 'latest_downloads.json');
+  fs.writeFileSync(trackerPath, JSON.stringify(latestDownloads, null, 2));
+  console.log('Updated latest downloads tracker (selective)');
 }

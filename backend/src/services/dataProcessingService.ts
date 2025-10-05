@@ -347,6 +347,13 @@ export function parseWarStats(filePath: string): Promise<any[]> {
 }
 
 export async function loadDataFromFiles(): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {
+  // Ensure we have recent files before attempting to read standardized CSVs
+  try {
+    await ensureRecentFiles();
+  } catch (e) {
+    console.warn('ensureRecentFiles failed, proceeding with available files:', e);
+  }
+
   // Always try standardized data files first, especially in production
   const standardizedDataPath = path.join(process.cwd(), 'src', 'data');
   
