@@ -1,6 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
 
+// Shared labels and colors for coalitions
+const BLUE_LABEL = 'Blue';
+const RED_LABEL = 'Red';
+const BLUE_COLOR = '#0d6efd';
+const RED_COLOR = '#dc3545';
+
 interface Alliance {
   id: number;
   name: string;
@@ -13,6 +19,7 @@ interface NationConfig {
   nation_name: string;
   current_stats?: {
     strength?: string; // backend uses string numbers with commas
+    technology?: string;
   };
 }
 
@@ -69,34 +76,34 @@ function formatTechBucketLabel(lower: number, upper: number): string {
 
 const NSComparisonsPage: React.FC = () => {
   const [alliances, setAlliances] = useState<Alliance[]>([]);
-  const [selectedAlliances, setSelectedAlliances] = useState<{ [key in GroupKey]: number | null }>({ A: null, B: null });
+  const [selectedAlliances, setSelectedAlliances] = useState<{ [key in GroupKey]: number[] }>({ A: [], B: [] });
   const [nationsByAlliance, setNationsByAlliance] = useState<Record<number, NationConfig[]>>({});
-  const [loading, setLoading] = useState(false);
+  // Loading removed (not used in UI)
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadAlliances = async () => {
       try {
-        setLoading(true);
         const res = await apiCall(API_ENDPOINTS.alliances);
         const data = await res.json();
         if (data.success) {
-          setAlliances(data.alliances);
+          const filtered = (data.alliances as Alliance[])
+            .filter(a => a.name && a.name.trim() !== '' && a.nationCount >= 10)
+            .sort((a, b) => b.nationCount - a.nationCount);
+          setAlliances(filtered);
         } else {
           setError(data.error || 'Failed to load alliances');
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load alliances');
-      } finally {
-        setLoading(false);
       }
     };
     loadAlliances();
   }, []);
 
   useEffect(() => {
-    const idsToFetch = [selectedAlliances.A, selectedAlliances.B]
-      .filter((id): id is number => !!id && !(id in nationsByAlliance));
+    const allIds = [...selectedAlliances.A, ...selectedAlliances.B];
+    const idsToFetch = allIds.filter((id) => !(id in nationsByAlliance));
     if (idsToFetch.length === 0) return;
 
     const fetchNations = async (id: number) => {
@@ -120,20 +127,22 @@ const NSComparisonsPage: React.FC = () => {
   }, []);
 
   const counts = useMemo(() => {
-    const getCountsForAlliance = (allianceId: number | null) => {
-      const arr = allianceId ? nationsByAlliance[allianceId] || [] : [];
+    const sumCountsForAlliances = (ids: number[]) => {
       const result = new Array(buckets.length).fill(0) as number[];
-      for (const nation of arr) {
-        const ns = parseStrength(nation.current_stats?.strength);
-        if (ns == null) continue;
-        const idx = buckets.findIndex(b => ns >= b.lower && ns < b.upper);
-        if (idx >= 0) result[idx] += 1;
-      }
+      ids.forEach((id) => {
+        const arr = nationsByAlliance[id] || [];
+        for (const nation of arr) {
+          const ns = parseStrength(nation.current_stats?.strength);
+          if (ns == null) continue;
+          const idx = buckets.findIndex(b => ns >= b.lower && ns < b.upper);
+          if (idx >= 0) result[idx] += 1;
+        }
+      });
       return result;
     };
     return {
-      A: getCountsForAlliance(selectedAlliances.A),
-      B: getCountsForAlliance(selectedAlliances.B)
+      A: sumCountsForAlliances(selectedAlliances.A),
+      B: sumCountsForAlliances(selectedAlliances.B)
     };
   }, [buckets, nationsByAlliance, selectedAlliances]);
 
@@ -158,20 +167,22 @@ const NSComparisonsPage: React.FC = () => {
   }
 
   const countsTech = useMemo(() => {
-    const getCountsForAlliance = (allianceId: number | null) => {
-      const arr = allianceId ? nationsByAlliance[allianceId] || [] : [];
+    const sumCountsForAlliances = (ids: number[]) => {
       const result = new Array(techBuckets.length).fill(0) as number[];
-      for (const nation of arr) {
-        const tech = parseTech(nation.current_stats?.technology);
-        if (tech == null) continue;
-        const idx = techBuckets.findIndex(b => tech >= b.lower && tech < b.upper);
-        if (idx >= 0) result[idx] += 1;
-      }
+      ids.forEach((id) => {
+        const arr = nationsByAlliance[id] || [];
+        for (const nation of arr) {
+          const tech = parseTech(nation.current_stats?.technology);
+          if (tech == null) continue;
+          const idx = techBuckets.findIndex(b => tech >= b.lower && tech < b.upper);
+          if (idx >= 0) result[idx] += 1;
+        }
+      });
       return result;
     };
     return {
-      A: getCountsForAlliance(selectedAlliances.A),
-      B: getCountsForAlliance(selectedAlliances.B)
+      A: sumCountsForAlliances(selectedAlliances.A),
+      B: sumCountsForAlliances(selectedAlliances.B)
     };
   }, [techBuckets, nationsByAlliance, selectedAlliances]);
 
@@ -183,62 +194,89 @@ const NSComparisonsPage: React.FC = () => {
 
   // Scatterplot: Tech (X) vs Strength (Y)
   const scatterData = useMemo(() => {
-    const getPoints = (allianceId: number | null) => {
-      const arr = allianceId ? nationsByAlliance[allianceId] || [] : [];
-      return arr
-        .map(n => ({
-          x: parseFloat((n.current_stats?.technology || '0').replace(/,/g, '')),
-          y: parseFloat((n.current_stats?.strength || '0').replace(/,/g, ''))
-        }))
-        .filter(p => !isNaN(p.x) && !isNaN(p.y));
+    const getPointsForAlliances = (ids: number[]) => {
+      const points: { x: number; y: number }[] = [];
+      ids.forEach((id) => {
+        const arr = nationsByAlliance[id] || [];
+        arr.forEach(n => {
+          // Switched axes: X = Strength, Y = Technology
+          const x = parseFloat((n.current_stats?.strength || '0').replace(/,/g, ''));
+          const y = parseFloat((n.current_stats?.technology || '0').replace(/,/g, ''));
+          if (!isNaN(x) && !isNaN(y)) points.push({ x, y });
+        });
+      });
+      return points;
     };
-    const A = getPoints(selectedAlliances.A);
-    const B = getPoints(selectedAlliances.B);
+    const A = getPointsForAlliances(selectedAlliances.A);
+    const B = getPointsForAlliances(selectedAlliances.B);
     const xMax = Math.max(1, ...A.map(p => p.x), ...B.map(p => p.x));
     const yMax = Math.max(1, ...A.map(p => p.y), ...B.map(p => p.y));
     return { A, B, xMax, yMax };
   }, [nationsByAlliance, selectedAlliances]);
 
-  const handleSelect = (group: GroupKey, value: string) => {
-    const id = value ? parseInt(value, 10) : null;
-    setSelectedAlliances(prev => ({ ...prev, [group]: id }));
-  };
+  // No single-select handlers; coalition selection is managed via table checkboxes
 
   return (
-    <div style={{ marginTop: '80px', padding: '20px' }}>
-      <h2>NS Comparisons</h2>
-      <p style={{ color: '#666' }}>Compare nation strength distributions between two alliances.</p>
-
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', alignItems: 'center' }}>
-        <div>
-          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px', color: '#333' }}>Group A</label>
-          <select
-            value={selectedAlliances.A || ''}
-            onChange={(e) => handleSelect('A', e.target.value)}
-            style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', minWidth: '280px' }}
-            disabled={loading}
-          >
-            <option value="">Choose an alliance...</option>
-            {alliances.map(a => (
-              <option key={a.id} value={a.id}>{a.name} ({a.nationCount} nations)</option>
-            ))}
-          </select>
+    <div style={{ marginTop: '80px', padding: '24px', fontSize: '16px', color: '#222' }}>
+      {/* Coalition selector table */}
+      <div style={{ backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
+        <h3 style={{ marginTop: 0, color: '#111', fontSize: '18px' }}>Coalitions</h3>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', lineHeight: 1.2 }}>
+            <thead>
+              <tr style={{ background: '#f6f7f9', color: '#111' }}>
+                <th style={{ textAlign: 'left', padding: '6px 10px', borderBottom: '1px solid #ddd', fontWeight: 600 }}>Alliance</th>
+                <th style={{ textAlign: 'center', padding: '6px 10px', borderBottom: '1px solid #ddd', color: BLUE_COLOR, fontWeight: 600 }}>{BLUE_LABEL}</th>
+                <th style={{ textAlign: 'center', padding: '6px 10px', borderBottom: '1px solid #ddd', color: RED_COLOR, fontWeight: 600 }}>{RED_LABEL}</th>
+                <th style={{ textAlign: 'right', padding: '6px 10px', borderBottom: '1px solid #ddd', fontWeight: 600 }}>Nations</th>
+              </tr>
+            </thead>
+            <tbody>
+              {alliances.map((a, idx) => {
+                const inA = selectedAlliances.A.includes(a.id); // Blue
+                const inB = selectedAlliances.B.includes(a.id); // Red
+                return (
+                  <tr key={a.id} style={{ background: idx % 2 === 0 ? '#fff' : '#fafbfc' }}>
+                    <td style={{ padding: '6px 10px', borderBottom: '1px solid #eee', verticalAlign: 'middle' }}>{a.name}</td>
+                    <td style={{ padding: '6px 10px', borderBottom: '1px solid #eee', textAlign: 'center', verticalAlign: 'middle' }}>
+                      <input
+                        type="checkbox"
+                        checked={inA}
+                        style={{ transform: 'scale(0.9)', margin: 0 }}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setSelectedAlliances(prev => ({
+                            A: checked ? [...prev.A.filter(id => id !== a.id), a.id] : prev.A.filter(id => id !== a.id),
+                            B: prev.B.filter(id => id !== a.id) // ensure exclusive membership
+                          }));
+                        }}
+                      />
+                    </td>
+                    <td style={{ padding: '6px 10px', borderBottom: '1px solid #eee', textAlign: 'center', verticalAlign: 'middle' }}>
+                      <input
+                        type="checkbox"
+                        checked={inB}
+                        style={{ transform: 'scale(0.9)', margin: 0 }}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setSelectedAlliances(prev => ({
+                            A: prev.A.filter(id => id !== a.id), // ensure exclusive membership
+                            B: checked ? [...prev.B.filter(id => id !== a.id), a.id] : prev.B.filter(id => id !== a.id)
+                          }));
+                        }}
+                      />
+                    </td>
+                    <td style={{ padding: '6px 10px', borderBottom: '1px solid #eee', textAlign: 'right', color: '#444', fontVariantNumeric: 'tabular-nums', verticalAlign: 'middle' }}>{a.nationCount}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-        <div>
-          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '6px', color: '#333' }}>Group B</label>
-          <select
-            value={selectedAlliances.B || ''}
-            onChange={(e) => handleSelect('B', e.target.value)}
-            style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', minWidth: '280px' }}
-            disabled={loading}
-          >
-            <option value="">Choose an alliance...</option>
-            {alliances.map(a => (
-              <option key={a.id} value={a.id}>{a.name} ({a.nationCount} nations)</option>
-            ))}
-          </select>
+        {error && <div style={{ color: '#dc3545', marginTop: '8px' }}>{error}</div>}
+        <div style={{ marginTop: '8px', color: '#666', fontSize: '13px' }}>
+          Showing alliances with at least 10 nations.
         </div>
-        {error && <span style={{ color: '#dc3545' }}>{error}</span>}
       </div>
 
       {/* NS Histogram */}
@@ -246,24 +284,24 @@ const NSComparisonsPage: React.FC = () => {
         {/* Legend */}
         <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: '#0d6efd', borderRadius: '3px' }} />
-            <span style={{ color: '#333' }}>Group A</span>
+            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: BLUE_COLOR, borderRadius: '3px' }} />
+            <span style={{ color: '#333' }}>{BLUE_LABEL}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: '#dc3545', borderRadius: '3px' }} />
-            <span style={{ color: '#333' }}>Group B</span>
+            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: RED_COLOR, borderRadius: '3px' }} />
+            <span style={{ color: '#333' }}>{RED_LABEL}</span>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: `200px repeat(${buckets.length}, 1fr)`, gap: '8px', alignItems: 'end' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `220px repeat(${buckets.length}, 1fr)`, gap: '10px', alignItems: 'end' }}>
           {/* Header row */}
-          <div style={{ fontWeight: 'bold' }}>Bucket</div>
+          <div style={{ fontWeight: 'bold', fontSize: '15px' }}>Infra Bucket</div>
           {buckets.map(b => (
-            <div key={b.label} style={{ textAlign: 'center', fontWeight: 'bold', color: '#333' }}>{b.label}</div>
+            <div key={b.label} style={{ textAlign: 'center', fontWeight: 'bold', color: '#333', fontSize: '15px' }}>{b.label}</div>
           ))}
 
           {/* Bars row - side-by-side within each bucket */}
-          <div style={{ fontWeight: 'bold', color: '#333' }}>Counts</div>
+          <div style={{ fontWeight: 'bold', color: '#333', fontSize: '15px' }}>Counts (Blue vs Red)</div>
           {buckets.map((_, i) => {
             const a = counts.A[i] || 0;
             const b = counts.B[i] || 0;
@@ -275,28 +313,28 @@ const NSComparisonsPage: React.FC = () => {
                   <div style={{
                     height: `${aHeight}px`,
                     width: '100%',
-                    backgroundColor: '#0d6efd',
+                    backgroundColor: BLUE_COLOR,
                     borderRadius: '4px'
                   }} />
-                  <div style={{ fontSize: '12px', color: '#333', marginTop: '6px' }}>{a}</div>
+                  <div style={{ fontSize: '13px', color: '#222', marginTop: '6px' }}>{a}</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '40%' }}>
                   <div style={{
                     height: `${bHeight}px`,
                     width: '100%',
-                    backgroundColor: '#dc3545',
+                    backgroundColor: RED_COLOR,
                     borderRadius: '4px'
                   }} />
-                  <div style={{ fontSize: '12px', color: '#333', marginTop: '6px' }}>{b}</div>
+                  <div style={{ fontSize: '13px', color: '#222', marginTop: '6px' }}>{b}</div>
                 </div>
               </div>
             );
           })}
 
           {/* Totals row */}
-          <div style={{ fontWeight: 'bold', color: '#333' }}>Totals</div>
+          <div style={{ fontWeight: 'bold', color: '#333', fontSize: '15px' }}>Totals</div>
           {buckets.map((_, i) => (
-            <div key={`T-${i}`} style={{ textAlign: 'center', color: '#333', fontWeight: 600 }}>
+            <div key={`T-${i}`} style={{ textAlign: 'center', color: '#222', fontWeight: 600, fontSize: '15px' }}>
               {counts.A[i] + counts.B[i]}
             </div>
           ))}
@@ -308,24 +346,24 @@ const NSComparisonsPage: React.FC = () => {
         {/* Legend */}
         <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: '#0d6efd', borderRadius: '3px' }} />
-            <span style={{ color: '#333' }}>Group A</span>
+            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: BLUE_COLOR, borderRadius: '3px' }} />
+            <span style={{ color: '#333' }}>{BLUE_LABEL}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: '#dc3545', borderRadius: '3px' }} />
-            <span style={{ color: '#333' }}>Group B</span>
+            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: RED_COLOR, borderRadius: '3px' }} />
+            <span style={{ color: '#333' }}>{RED_LABEL}</span>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: `200px repeat(${techBuckets.length}, 1fr)`, gap: '8px', alignItems: 'end' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `220px repeat(${techBuckets.length}, 1fr)`, gap: '10px', alignItems: 'end' }}>
           {/* Header row */}
-          <div style={{ fontWeight: 'bold' }}>Tech Bucket</div>
+          <div style={{ fontWeight: 'bold', fontSize: '15px' }}>Tech Bucket</div>
           {techBuckets.map(b => (
-            <div key={b.label} style={{ textAlign: 'center', fontWeight: 'bold', color: '#333' }}>{b.label}</div>
+            <div key={b.label} style={{ textAlign: 'center', fontWeight: 'bold', color: '#333', fontSize: '15px' }}>{b.label}</div>
           ))}
 
           {/* Bars row - side-by-side within each bucket */}
-          <div style={{ fontWeight: 'bold', color: '#333' }}>Counts</div>
+          <div style={{ fontWeight: 'bold', color: '#333', fontSize: '15px' }}>Counts (Blue vs Red)</div>
           {techBuckets.map((_, i) => {
             const a = countsTech.A[i] || 0;
             const b = countsTech.B[i] || 0;
@@ -337,28 +375,28 @@ const NSComparisonsPage: React.FC = () => {
                   <div style={{
                     height: `${aHeight}px`,
                     width: '100%',
-                    backgroundColor: '#0d6efd',
+                    backgroundColor: BLUE_COLOR,
                     borderRadius: '4px'
                   }} />
-                  <div style={{ fontSize: '12px', color: '#333', marginTop: '6px' }}>{a}</div>
+                  <div style={{ fontSize: '13px', color: '#222', marginTop: '6px' }}>{a}</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '40%' }}>
                   <div style={{
                     height: `${bHeight}px`,
                     width: '100%',
-                    backgroundColor: '#dc3545',
+                    backgroundColor: RED_COLOR,
                     borderRadius: '4px'
                   }} />
-                  <div style={{ fontSize: '12px', color: '#333', marginTop: '6px' }}>{b}</div>
+                  <div style={{ fontSize: '13px', color: '#222', marginTop: '6px' }}>{b}</div>
                 </div>
               </div>
             );
           })}
 
           {/* Totals row */}
-          <div style={{ fontWeight: 'bold', color: '#333' }}>Totals</div>
+          <div style={{ fontWeight: 'bold', color: '#333', fontSize: '15px' }}>Totals</div>
           {techBuckets.map((_, i) => (
-            <div key={`TT-${i}`} style={{ textAlign: 'center', color: '#333', fontWeight: 600 }}>
+            <div key={`TT-${i}`} style={{ textAlign: 'center', color: '#222', fontWeight: 600, fontSize: '15px' }}>
               {countsTech.A[i] + countsTech.B[i]}
             </div>
           ))}
@@ -367,15 +405,15 @@ const NSComparisonsPage: React.FC = () => {
 
       {/* Scatterplot: Tech (X) vs Strength (Y) */}
       <div style={{ backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '8px', padding: '16px', marginTop: '24px' }}>
-        <h3 style={{ marginTop: 0, color: '#333' }}>Tech vs Nation Strength</h3>
+        <h3 style={{ marginTop: 0, color: '#333' }}>Nation Strength vs Technology</h3>
         <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: '#0d6efd', borderRadius: '3px' }} />
-            <span style={{ color: '#333' }}>Group A</span>
+            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: BLUE_COLOR, borderRadius: '3px' }} />
+            <span style={{ color: '#333' }}>{BLUE_LABEL}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: '#dc3545', borderRadius: '3px' }} />
-            <span style={{ color: '#333' }}>Group B</span>
+            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: RED_COLOR, borderRadius: '3px' }} />
+            <span style={{ color: '#333' }}>{RED_LABEL}</span>
           </div>
         </div>
 
@@ -417,18 +455,18 @@ const NSComparisonsPage: React.FC = () => {
                   </g>
                 ))}
 
-                {/* Points - Group A */}
+                {/* Points - Blue */}
                 {scatterData.A.map((p, idx) => (
-                  <circle key={`A-${idx}`} cx={xScale(p.x)} cy={yScale(p.y)} r={r} fill="#0d6efd" fillOpacity={0.7} />
+                  <circle key={`A-${idx}`} cx={xScale(p.x)} cy={yScale(p.y)} r={r} fill={BLUE_COLOR} fillOpacity={0.7} />
                 ))}
-                {/* Points - Group B */}
+                {/* Points - Red */}
                 {scatterData.B.map((p, idx) => (
-                  <circle key={`B-${idx}`} cx={xScale(p.x)} cy={yScale(p.y)} r={r} fill="#dc3545" fillOpacity={0.7} />
+                  <circle key={`B-${idx}`} cx={xScale(p.x)} cy={yScale(p.y)} r={r} fill={RED_COLOR} fillOpacity={0.7} />
                 ))}
 
                 {/* Axis labels */}
-                <text x={plotW / 2} y={plotH + 36} textAnchor="middle" fontSize={13} fill="#333">Technology</text>
-                <text transform={`translate(${-40}, ${plotH / 2}) rotate(-90)`} textAnchor="middle" fontSize={13} fill="#333">Nation Strength</text>
+                <text x={plotW / 2} y={plotH + 36} textAnchor="middle" fontSize={13} fill="#333">Nation Strength</text>
+                <text transform={`translate(${-40}, ${plotH / 2}) rotate(-90)`} textAnchor="middle" fontSize={13} fill="#333">Technology</text>
               </g>
             </svg>
           );

@@ -76,12 +76,18 @@ export class AllianceController {
       console.log(`Loaded ${nations.length} nations from data files`);
       
       if (nations.length > 0) {
+        // Filter out nations lacking alliance info
+        const nationsWithAlliance = nations.filter(n => 
+          !!n.alliance && n.alliance.trim() !== '' && !!n.allianceId && n.allianceId > 0
+        );
+        
         // We have nation data, group by alliance
-        const alliances = groupNationsByAlliance(nations);
+        const alliances = groupNationsByAlliance(nationsWithAlliance);
         
         // Filter out alliances with no name and sort by nation count (descending - most nations first)
         const filteredAndSortedAlliances = alliances
           .filter(alliance => alliance.name && alliance.name.trim() !== '')
+          .filter(alliance => alliance.nations.length >= 10)
           .sort((a, b) => b.nations.length - a.nations.length);
         
         res.json({

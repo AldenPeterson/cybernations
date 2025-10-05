@@ -100,7 +100,7 @@ export class AllianceService {
       };
 
       const nationsArrayFromRaw = rawNations
-        .filter(n => n.allianceId === allianceId)
+        .filter(n => n.allianceId === allianceId && n.alliance && n.alliance.trim() !== '')
         .map(n => ({
           nation_id: n.id,
           ruler_name: n.rulerName,
