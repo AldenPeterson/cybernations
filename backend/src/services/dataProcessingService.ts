@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import csv from 'csv-parser';
 import { createReadStream } from 'fs';
 import { ensureRecentFiles } from '../utils/dataDownloader.js';
@@ -7,6 +8,9 @@ import { Nation } from '../models/Nation.js';
 import { AidOffer } from '../models/AidOffer.js';
 import { Alliance } from '../models/Alliance.js';
 import { AidSlot, NationAidSlots } from '../models/AidSlot.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Decodes HTML entities in a string
