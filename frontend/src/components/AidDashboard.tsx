@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiCall, API_ENDPOINTS } from '../utils/api';
 
 interface SmallAidOffer {
   aidId: number;
@@ -35,7 +36,7 @@ const AidDashboard: React.FC = () => {
   const fetchGlobalSmallAidOffers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/small-aid-offers');
+      const response = await apiCall(API_ENDPOINTS.smallAidOffers);
       const data = await response.json();
       
       if (data.success) {

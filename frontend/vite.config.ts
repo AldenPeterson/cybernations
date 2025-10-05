@@ -17,5 +17,9 @@ export default defineConfig({
         secure: false,
       }
     }
+  },
+  define: {
+    // Make environment variables available to the client
+    __API_BASE_URL__: JSON.stringify(process.env.VITE_API_BASE_URL || '')
   }
 })

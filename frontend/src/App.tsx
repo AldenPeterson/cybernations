@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import AidDashboard from './components/AidDashboard'
 import AllianceDashboard from './components/AllianceDashboard'
+import { apiCall, API_ENDPOINTS } from './utils/api'
 
 function App() {
   const [loading, setLoading] = useState(false);
@@ -9,7 +10,7 @@ function App() {
 
   const checkHealth = async () => {
     try {
-      const response = await fetch('/health');
+      const response = await apiCall(API_ENDPOINTS.health);
       const data = await response.json();
       alert(`Backend Status: ${data.status}`);
     } catch (err) {
@@ -20,11 +21,8 @@ function App() {
   const decodeStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/stats/decode', {
+      const response = await apiCall(API_ENDPOINTS.statsDecode, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
       
       const data = await response.json();

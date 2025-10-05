@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import WarStatusBadge from './WarStatusBadge';
+import { apiCall, API_ENDPOINTS } from '../utils/api';
 
 interface War {
   warId: number;
@@ -160,7 +161,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const fetchNationWars = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/alliances/${allianceId}/nation-wars?includePeaceMode=${includePeaceMode}`);
+      const response = await apiCall(`${API_ENDPOINTS.nationWars(allianceId)}?includePeaceMode=${includePeaceMode}`);
       const data = await response.json();
       
       if (data.success) {
@@ -177,7 +178,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
 
   const fetchDefendingWarsStats = async () => {
     try {
-      const response = await fetch(`/api/alliances/${allianceId}/defending-wars-stats`);
+      const response = await apiCall(API_ENDPOINTS.defendingWarsStats(allianceId));
       const data = await response.json();
       
       if (data.success) {

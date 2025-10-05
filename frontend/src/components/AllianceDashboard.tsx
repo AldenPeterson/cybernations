@@ -3,6 +3,7 @@ import NationEditor from './NationEditor';
 import SlotCountsSummary from './SlotCountsSummary';
 import WarStatusBadge from './WarStatusBadge';
 import DefendingWarsTable from './DefendingWarsTable';
+import { apiCall, API_ENDPOINTS } from '../utils/api';
 
 interface Alliance {
   id: number;
@@ -134,7 +135,7 @@ const AllianceDashboard: React.FC = () => {
   const fetchAlliances = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/alliances');
+      const response = await apiCall(API_ENDPOINTS.alliances);
       const data = await response.json();
       
       if (data.success) {
@@ -159,7 +160,7 @@ const AllianceDashboard: React.FC = () => {
   const fetchAidSlots = async (allianceId: number) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/alliances/${allianceId}/aid-slots`);
+      const response = await apiCall(API_ENDPOINTS.allianceAidSlots(allianceId));
       const data = await response.json();
       
       if (data.success) {
@@ -176,7 +177,7 @@ const AllianceDashboard: React.FC = () => {
 
   const fetchAllianceStats = async (allianceId: number) => {
     try {
-      const response = await fetch(`/api/alliances/${allianceId}/stats`);
+      const response = await apiCall(API_ENDPOINTS.allianceStats(allianceId));
       const data = await response.json();
       
       if (data.success) {
@@ -189,7 +190,7 @@ const AllianceDashboard: React.FC = () => {
 
   const fetchAllianceAidStats = async (allianceId: number) => {
     try {
-      const response = await fetch(`/api/alliances/${allianceId}/alliance-aid-stats`);
+      const response = await apiCall(API_ENDPOINTS.allianceAidStats(allianceId));
       const data = await response.json();
       
       if (data.success) {
@@ -206,7 +207,7 @@ const AllianceDashboard: React.FC = () => {
 
   const fetchRecommendations = async (allianceId: number) => {
     try {
-      const response = await fetch(`/api/alliances/${allianceId}/recommendations?crossAlliance=${crossAllianceEnabled}`);
+      const response = await apiCall(`${API_ENDPOINTS.allianceRecommendations(allianceId)}?crossAlliance=${crossAllianceEnabled}`);
       const data = await response.json();
       
       if (data.success) {

@@ -8,6 +8,7 @@ import {
   type SortingState,
   type ColumnFiltersState,
 } from '@tanstack/react-table';
+import { apiCall, API_ENDPOINTS } from '../utils/api';
 import { createNationTableColumns } from './NationTableColumns';
 import { type NationConfig } from '../types/nation';
 import { tableStyles, tableCSS, combineStyles, getTextAlignment, getHeaderContentAlignment } from '../styles/tableStyles';
@@ -149,7 +150,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
 
   const fetchAidSlots = async () => {
     try {
-      const response = await fetch(`/api/alliances/${allianceId}/aid-slots`);
+      const response = await apiCall(API_ENDPOINTS.allianceAidSlots(allianceId));
       const data = await response.json();
       
       if (data.success) {
@@ -167,7 +168,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       setLoading(true);
       setError('');
       
-      const response = await fetch(`http://localhost:3001/api/alliances/${allianceId}/nations-config`);
+      const response = await apiCall(API_ENDPOINTS.nationsConfig(allianceId));
       const data = await response.json();
       
       if (!data.success) {
@@ -199,11 +200,8 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       console.log('Updates being sent:', updates);
       console.log('Slots being sent:', updates.slots);
       console.log('========================');
-      const response = await fetch(`http://localhost:3001/api/alliances/${allianceId}/nations/${nationId}`, {
+      const response = await apiCall(API_ENDPOINTS.updateNationSlots(allianceId, nationId), {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(updates),
       });
       
