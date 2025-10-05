@@ -35,7 +35,7 @@ export const API_ENDPOINTS = {
   allianceRecommendations: (id: number) => `/api/alliances/${id}/recommendations`,
   nationsConfig: (id: number) => `/api/alliances/${id}/nations-config`,
   aidSlots: (id: number) => `/api/alliances/${id}/aid-slots`,
-  updateNationSlots: (allianceId: number, nationId: number) => `/api/alliances/${allianceId}/nations/${nationId}/slots`,
+  updateNationSlots: (allianceId: number, nationId: number) => `/api/alliances/${allianceId}/nations/${nationId}`,
   nationWars: (id: number) => `/api/alliances/${id}/nation-wars`,
   defendingWarsStats: (id: number) => `/api/alliances/${id}/defending-wars-stats`,
   smallAidOffers: '/api/small-aid-offers',

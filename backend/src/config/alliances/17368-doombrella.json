@@ -828,10 +828,10 @@
       "discord_handle": "sammy8874",
       "has_dra": true,
       "slots": {
-        "sendTech": 6,
+        "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
+        "getCash": 6,
         "send_priority": 2,
         "receive_priority": 2
       },

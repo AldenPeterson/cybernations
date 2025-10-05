@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import NationEditor from './NationEditor';
 import SlotCountsSummary from './SlotCountsSummary';
 import WarStatusBadge from './WarStatusBadge';
-import DefendingWarsTable from './DefendingWarsTable';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
 
 interface Alliance {
@@ -104,16 +102,24 @@ interface SlotCounts {
   activeSendTech?: number;
 }
 
-const AllianceDashboard: React.FC = () => {
+interface AllianceDashboardProps {
+  selectedAllianceId: number | null;
+  setSelectedAllianceId: (id: number | null) => void;
+  activeTab: 'overview' | 'recommendations' | 'nations' | 'defending-wars';
+}
+
+const AllianceDashboard: React.FC<AllianceDashboardProps> = ({ 
+  selectedAllianceId, 
+  setSelectedAllianceId, 
+  activeTab 
+}) => {
   const [alliances, setAlliances] = useState<Alliance[]>([]);
-  const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(null);
   const [aidSlots, setAidSlots] = useState<NationAidSlots[]>([]);
   const [allianceStats, setAllianceStats] = useState<AllianceStats | null>(null);
   const [allianceAidStats, setAllianceAidStats] = useState<AllianceAidStats[]>([]);
   const [recommendations, setRecommendations] = useState<AidRecommendation[]>([]);
   // Nation categories removed - using slot-based statistics instead
   const [slotCounts, setSlotCounts] = useState<SlotCounts | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'recommendations' | 'nations' | 'defending-wars'>('overview');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expirationFilter, setExpirationFilter] = useState<string[]>(['empty', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days']);
@@ -381,8 +387,6 @@ const AllianceDashboard: React.FC = () => {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>Alliance Dashboard</h1>
-      
       {/* Alliance Selector */}
       <div style={{ marginBottom: '20px' }}>
         <label htmlFor="alliance-select" style={{ marginRight: '10px', fontWeight: 'bold' }}>
@@ -410,79 +414,8 @@ const AllianceDashboard: React.FC = () => {
         </select>
       </div>
 
-      {/* Tab Navigation */}
-      {selectedAllianceId && (
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', borderBottom: '1px solid #ddd' }}>
-            <button
-              onClick={() => setActiveTab('overview')}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: activeTab === 'overview' ? '#007bff' : 'transparent',
-                color: activeTab === 'overview' ? 'white' : '#333',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                borderTopLeftRadius: '4px',
-                borderTopRightRadius: '4px'
-              }}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('recommendations')}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: activeTab === 'recommendations' ? '#007bff' : 'transparent',
-                color: activeTab === 'recommendations' ? 'white' : '#333',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                borderTopLeftRadius: '4px',
-                borderTopRightRadius: '4px'
-              }}
-            >
-              Aid Recommendations
-            </button>
-            <button
-              onClick={() => setActiveTab('nations')}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: activeTab === 'nations' ? '#007bff' : 'transparent',
-                color: activeTab === 'nations' ? 'white' : '#333',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                borderTopLeftRadius: '4px',
-                borderTopRightRadius: '4px'
-              }}
-            >
-              Nation Editor
-            </button>
-            <button
-              onClick={() => setActiveTab('defending-wars')}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: activeTab === 'defending-wars' ? '#007bff' : 'transparent',
-                color: activeTab === 'defending-wars' ? 'white' : '#333',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                borderTopLeftRadius: '4px',
-                borderTopRightRadius: '4px'
-              }}
-            >
-              Defending Wars
-            </button>
-          </div>
-        </div>
-      )}
 
-      {/* Overview Tab Content */}
+      {/* Content based on active tab */}
       {activeTab === 'overview' && selectedAllianceId && (
         <>
           {/* Alliance Stats */}
@@ -1062,15 +995,6 @@ const AllianceDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Nation Editor Tab Content */}
-      {activeTab === 'nations' && selectedAllianceId && (
-        <NationEditor allianceId={selectedAllianceId} />
-      )}
-
-      {/* Defending Wars Tab Content */}
-      {activeTab === 'defending-wars' && selectedAllianceId && (
-        <DefendingWarsTable allianceId={selectedAllianceId} />
-      )}
 
       {/* Show message when no alliance is selected */}
       {!selectedAllianceId && (
