@@ -150,7 +150,7 @@ async function syncAllianceData(allianceData: AllianceData, newNations: Nation[]
     console.log(`  Removed ${removedNations.length} nations: ${removedNations.join(', ')}`);
   }
   
-  // 3. Update existing nations with new data
+  // 3. Update existing nations with new data (preserve existing custom fields)
   const updatedNations: string[] = [];
   for (const newNation of newNations) {
     const nationId = newNation.id;
@@ -159,18 +159,19 @@ async function syncAllianceData(allianceData: AllianceData, newNations: Nation[]
     if (existingNation) {
       let hasChanges = false;
       
-      // Update ruler_name and nation_name
+      // Only update ruler_name if it has changed
       if (existingNation.ruler_name !== newNation.rulerName) {
         existingNation.ruler_name = newNation.rulerName;
         hasChanges = true;
       }
       
+      // Only update nation_name if it has changed
       if (existingNation.nation_name !== newNation.nationName) {
         existingNation.nation_name = newNation.nationName;
         hasChanges = true;
       }
       
-      // Update current_stats
+      // Only update current_stats if they have changed
       const newStats = {
         technology: newNation.technology,
         infrastructure: newNation.infrastructure,
@@ -184,6 +185,9 @@ async function syncAllianceData(allianceData: AllianceData, newNations: Nation[]
         existingNation.current_stats = newStats;
         hasChanges = true;
       }
+      
+      // Preserve existing custom fields (discord_handle, has_dra, notes, slots)
+      // These are not updated from the raw data and should remain as configured
       
       if (hasChanges) {
         updatedNations.push(newNation.nationName);

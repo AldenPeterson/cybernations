@@ -26,15 +26,15 @@
       "ruler_name": "Commissar Sendoa",
       "nation_name": "Cataduanes",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
-        "receive_priority": 1,
-        "send_priority": 2
+        "getCash": 0,
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "126.13",
@@ -751,7 +751,7 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
+        "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -926,15 +926,15 @@
       "ruler_name": "Pelzig",
       "nation_name": "Salusa Secundus",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
-        "receive_priority": 1,
-        "send_priority": 2
+        "getCash": 0,
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "357.06",
@@ -951,7 +951,7 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
+        "getCash": 0,
         "send_priority": 2,
         "receive_priority": 1
       },
@@ -1006,7 +1006,7 @@
       "ruler_name": "draggie",
       "nation_name": "Aporia",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -1166,15 +1166,15 @@
       "ruler_name": "Ascended Dio",
       "nation_name": "The Nootropics",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
-        "receive_priority": 1,
-        "send_priority": 2
+        "getCash": 0,
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "375.42",
@@ -1231,7 +1231,7 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
+        "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -1246,15 +1246,15 @@
       "ruler_name": "The1nonlykk",
       "nation_name": "Biourja",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
-        "receive_priority": 1,
-        "send_priority": 2
+        "getCash": 0,
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "75.68",
@@ -1291,7 +1291,7 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
+        "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -1471,7 +1471,7 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
+        "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -1552,9 +1552,9 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
-        "receive_priority": 1,
-        "send_priority": 2
+        "getCash": 0,
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "110.44",
@@ -1586,15 +1586,15 @@
       "ruler_name": "ONXwat",
       "nation_name": "Vanier",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
-        "receive_priority": 1,
-        "send_priority": 2
+        "getCash": 0,
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "100.00",
@@ -1611,7 +1611,7 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
+        "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -1631,7 +1631,7 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
+        "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -1646,13 +1646,13 @@
       "ruler_name": "LiFeng",
       "nation_name": "Qwertyiop",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
+        "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -1666,13 +1666,13 @@
       "ruler_name": "DoctorDlicious",
       "nation_name": "Lat Flan",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
+        "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -1692,7 +1692,7 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
+        "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -1712,9 +1712,9 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
-        "receive_priority": 1,
-        "send_priority": 2
+        "getCash": 0,
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "3.66",
@@ -1726,13 +1726,13 @@
       "ruler_name": "InsiderThreat",
       "nation_name": "The Silent Proxy",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
+        "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
