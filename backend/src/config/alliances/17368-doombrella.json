@@ -529,8 +529,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 1,
-        "getTech": 5,
+        "sendCash": 4,
+        "getTech": 2,
         "getCash": 0,
         "send_priority": 1,
         "receive_priority": 2
@@ -669,8 +669,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 3,
-        "getTech": 3,
+        "sendCash": 6,
+        "getTech": 0,
         "getCash": 0,
         "send_priority": 1,
         "receive_priority": 2
@@ -713,7 +713,7 @@
         "getTech": 4,
         "getCash": 0,
         "send_priority": 2,
-        "receive_priority": 2
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "18,300.11",
@@ -948,10 +948,10 @@
       "discord_handle": "imthomass",
       "has_dra": true,
       "slots": {
-        "sendTech": 2,
+        "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 4,
+        "getCash": 6,
         "send_priority": 2,
         "receive_priority": 2
       },
