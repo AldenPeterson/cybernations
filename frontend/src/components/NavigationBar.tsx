@@ -34,7 +34,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       const pathParts = currentPath.split('/');
       const tabName = pathParts[1];
       
-      if (tabName && ['aid', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
+      if (tabName && ['aid', 'recommendations', 'nations', 'defending-wars', 'staggers'].includes(tabName)) {
         const newPath = `/${tabName}/${selectedAllianceId}`;
         if (currentPath !== newPath) {
           navigate(newPath, { replace: true });
@@ -56,7 +56,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         const pathParts = location.pathname.split('/');
         const tabName = pathParts[1];
         const allianceIdParam = pathParts[2];
-        const isOnAllianceSpecificPage = allianceIdParam && ['aid', 'recommendations', 'nations', 'defending-wars'].includes(tabName);
+        const isOnAllianceSpecificPage = allianceIdParam && ['aid', 'recommendations', 'nations', 'defending-wars', 'staggers'].includes(tabName);
         
         const doombrella = data.alliances.find((alliance: any) => 
           alliance.name.toLowerCase().includes('doombrella')
@@ -82,7 +82,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     const pathParts = currentPath.split('/');
     const tabName = pathParts[1];
     
-    if (allianceId && tabName && ['aid', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
+    if (allianceId && tabName && ['aid', 'recommendations', 'nations', 'defending-wars', 'staggers'].includes(tabName)) {
       navigate(`/${tabName}/${allianceId}`);
     } else if (allianceId && tabName === 'aid') {
       navigate(`/${tabName}/${allianceId}`);
@@ -192,6 +192,20 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
           }}
         >
           Wars
+        </Link>
+        <Link 
+          to={getTabLink('staggers')}
+          style={{
+            textDecoration: 'none',
+            padding: '8px 16px',
+            borderRadius: '4px',
+            backgroundColor: isActiveTab('staggers') ? '#007bff' : 'transparent',
+            color: isActiveTab('staggers') ? 'white' : '#333',
+            fontWeight: isActiveTab('staggers') ? 'bold' : 'normal',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          Staggers
         </Link>
         <Link 
           to={getTabLink('shame-offers')}

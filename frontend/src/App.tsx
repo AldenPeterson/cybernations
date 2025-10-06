@@ -8,6 +8,7 @@ import NationsPage from './pages/NationsPage'
 import DefendingWarsPage from './pages/DefendingWarsPage'
 import ShameOffersPage from './pages/ShameOffersPage'
 import NSComparisonsPage from './pages/NSComparisonsPage.tsx'
+import StaggersPage from './pages/StaggersPage'
 
 function App() {
   const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(null);
@@ -20,12 +21,12 @@ function App() {
     const allianceIdParam = pathParts[2];
     
     // Check if we're on an alliance-specific page with an alliance ID in the URL
-    if (allianceIdParam && ['aid', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
+    if (allianceIdParam && ['aid', 'recommendations', 'nations', 'defending-wars', 'staggers'].includes(tabName)) {
       const allianceId = parseInt(allianceIdParam);
       if (!isNaN(allianceId)) {
         setSelectedAllianceId(allianceId);
       }
-    } else if (!allianceIdParam && ['aid', 'recommendations', 'nations', 'defending-wars'].includes(tabName)) {
+    } else if (!allianceIdParam && ['aid', 'recommendations', 'nations', 'defending-wars', 'staggers'].includes(tabName)) {
       // If we're on an alliance-specific page but no alliance ID in URL, clear selection
       setSelectedAllianceId(null);
     }
@@ -54,6 +55,9 @@ function App() {
         
         <Route path="/defending-wars/:allianceId" element={<DefendingWarsPage />} />
         <Route path="/defending-wars" element={<Navigate to="/defending-wars" replace />} />
+        
+        <Route path="/staggers/:allianceId" element={<StaggersPage />} />
+        <Route path="/staggers" element={<Navigate to="/staggers" replace />} />
         
         {/* Non-alliance-specific */}
         <Route path="/ns-comparisons" element={<NSComparisonsPage />} />

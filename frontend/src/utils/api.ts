@@ -38,6 +38,7 @@ export const API_ENDPOINTS = {
   updateNationSlots: (allianceId: number, nationId: number) => `/api/alliances/${allianceId}/nations/${nationId}`,
   nationWars: (id: number) => `/api/alliances/${id}/nation-wars`,
   defendingWarsStats: (id: number) => `/api/alliances/${id}/defending-wars-stats`,
+  staggerEligibility: '/api/stagger-eligibility',
   smallAidOffers: '/api/small-aid-offers',
   statsDecode: '/api/stats/decode',
 } as const;
