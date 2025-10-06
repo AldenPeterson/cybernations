@@ -18,18 +18,16 @@ interface FileInfo {
 
 function getDownloadNumberSlug(file_flag: string): string {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1; // No padding
-  const day = String(now.getDate());
-  
-  // Convert to Central Time (UTC-6 or UTC-5 depending on DST)
-  // For simplicity, we'll use a fixed offset of UTC-6 (CST)
-  // In production, you'd want to use a proper timezone library like date-fns-tz
-  const utcHour = now.getUTCHours();
-  const centralHour = (utcHour - 5 + 24) % 24; // Convert UTC to CST (UTC-6)
+  const centralNow = now.toLocaleString('en-US', { timeZone: 'America/Chicago' });
+  const centralDate = new Date(centralNow);
+  const year = centralDate.getFullYear();
+  const month = centralDate.getMonth() + 1;
+  const day = centralDate.getDate();
+  const hours = centralDate.getHours();
+ 
   
   // Determine if it's between 6am and 6pm Central Time
-  const isDaytime = centralHour >= 6 && centralHour < 18;
+  const isDaytime = hours >= 6 && hours < 18;
   const timeSuffix = isDaytime ? '1' : '2';
   
   // Format: MMDDYYYYXXXX where XXXX is 4-digit file identifier + toggle
@@ -182,8 +180,13 @@ function getStaleFileTypesFromLatestDownloads(): FileType[] {
     }
 
     // Fresh if we have downloaded at or after the most recent scheduled time
-    const isFresh = record.timestamp >= lastScheduledUtcMs;
-    if (!isFresh) {
+    const isFreshByTime = record.timestamp >= lastScheduledUtcMs;
+    
+    // Also check if the filename matches what we expect for the current time
+    const expectedFileInfo = getFileInfo(item.type);
+    const isFreshByFilename = record.originalFile === expectedFileInfo.name;
+    
+    if (!isFreshByTime || !isFreshByFilename) {
       stale.push(item.type);
     }
   }
