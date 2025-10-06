@@ -148,13 +148,6 @@ const StaggersTable: React.FC<StaggersTableProps> = ({ selectedAllianceId }) => 
     return '#f8f9fa';
   };
 
-  const getGovernmentTypeColor = (governmentType: string): string => {
-    if (governmentType.toLowerCase() === 'anarchy') {
-      return '#ffebee';
-    }
-    return '#f8f9fa';
-  };
-
   // Keep the data structured by defending nation for stagger planning
   const tableData = staggerData;
 
@@ -219,7 +212,7 @@ const StaggersTable: React.FC<StaggersTableProps> = ({ selectedAllianceId }) => 
               No eligible attackers found
             </div>
           ) : (
-            row.eligibleAttackers.map((attacker, index) => (
+            row.eligibleAttackers.map((attacker) => (
               <div key={attacker.id} style={{ 
                 display: 'flex',
                 alignItems: 'center',
