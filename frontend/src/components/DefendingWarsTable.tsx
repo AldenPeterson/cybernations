@@ -2,6 +2,132 @@ import React, { useState, useEffect } from 'react';
 import WarStatusBadge from './WarStatusBadge';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
 
+interface StaggerRecommendationsCellProps {
+  defendingNation: {
+    id: number;
+    name: string;
+    ruler: string;
+    alliance: string;
+    allianceId: number;
+    strength: number;
+    activity: string;
+    inWarMode: boolean;
+    nuclearWeapons: number;
+    governmentType: string;
+  };
+  staggeringAllianceId: number;
+}
+
+const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({ 
+  defendingNation, 
+  staggeringAllianceId 
+}) => {
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (staggeringAllianceId && defendingNation.id) {
+      // Add a small delay to prevent too many simultaneous requests
+      const timeoutId = setTimeout(() => {
+        fetchStaggerRecommendations();
+      }, 100);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        setRecommendations([]);
+        setLoading(false);
+      };
+    }
+    
+    return () => {
+      setRecommendations([]);
+      setLoading(false);
+    };
+  }, [staggeringAllianceId, defendingNation.id]);
+
+  const fetchStaggerRecommendations = async () => {
+    try {
+      setLoading(true);
+      const url = `${API_ENDPOINTS.staggerEligibility}/${staggeringAllianceId}/${defendingNation.allianceId}?hideAnarchy=true&hidePeaceMode=true&hideNonPriority=false`;
+      const response = await apiCall(url);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Find recommendations for this specific defending nation
+        const nationRecommendations = data.staggerData.find(
+          (item: any) => item.defendingNation.id === defendingNation.id
+        );
+        setRecommendations(nationRecommendations?.eligibleAttackers || []);
+      } else {
+        setRecommendations([]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch stagger recommendations:', err);
+      setRecommendations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  };
+
+  const formatTechnology = (techStr: string): string => {
+    const tech = parseFloat(techStr.replace(/,/g, '')) || 0;
+    if (tech >= 1000000) {
+      return (tech / 1000000).toFixed(1) + 'M';
+    } else if (tech >= 1000) {
+      return (tech / 1000).toFixed(1) + 'K';
+    }
+    return tech.toString();
+  };
+
+  if (loading) {
+    return <span style={{ color: '#666', fontSize: '9px' }}>Loading...</span>;
+  }
+
+  if (recommendations.length === 0) {
+    return <span style={{ color: '#999', fontSize: '9px' }}>None</span>;
+  }
+
+  return (
+    <div style={{ fontSize: '9px', textAlign: 'left' }}>
+      {recommendations.slice(0, 3).map((attacker) => (
+        <div key={attacker.id} style={{ marginBottom: '3px', lineHeight: '1.2', fontFamily: 'monospace' }}>
+          <a 
+            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attacker.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ 
+              color: '#1976d2', 
+              textDecoration: 'none',
+              fontWeight: 'bold'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+          >
+            {attacker.name} / {attacker.ruler}
+          </a>
+          <span style={{ color: '#666', marginLeft: '8px' }}>
+            | {formatNumber(attacker.strength).padStart(8)} NS | {formatTechnology(attacker.technology).padStart(8)} Tech | {attacker.nuclearWeapons.toString().padStart(2)} nukes
+          </span>
+        </div>
+      ))}
+      {recommendations.length > 3 && (
+        <div style={{ color: '#666', fontSize: '8px', fontStyle: 'italic' }}>
+          +{recommendations.length - 3} more
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface War {
   warId: number;
   defendingNation: {
@@ -60,6 +186,12 @@ interface NationWars {
 }
 
 
+interface Alliance {
+  id: number;
+  name: string;
+  nationCount: number;
+}
+
 interface DefendingWarsTableProps {
   allianceId: number;
 }
@@ -70,6 +202,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [error, setError] = useState<string | null>(null);
   const [includePeaceMode, setIncludePeaceMode] = useState<boolean>(false);
   const [needsStagger, setNeedsStagger] = useState<boolean>(false);
+  const [alliances, setAlliances] = useState<Alliance[]>([]);
+  const [staggeringAllianceId, setStaggeringAllianceId] = useState<number | null>(null);
 
   // Column styles
   const columnStyles = {
@@ -89,13 +223,6 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       minWidth: '5px',
       maxWidth: '10px'
 
-    },
-    government: {
-      padding: '4px 6px',
-      border: '1px solid #ddd',
-      textAlign: 'center' as const,
-      backgroundColor: '#f8f9fa', // Default, will be overridden by government type color,
-      width: '40px'
     },
     war: {
       padding: '2px 3px',
@@ -143,6 +270,23 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       fetchNationWars();
     }
   }, [allianceId, includePeaceMode, needsStagger]);
+
+  useEffect(() => {
+    fetchAlliances();
+  }, []);
+
+  const fetchAlliances = async () => {
+    try {
+      const response = await apiCall(API_ENDPOINTS.alliances);
+      const data = await response.json();
+      
+      if (data.success) {
+        setAlliances(data.alliances);
+      }
+    } catch (err) {
+      console.error('Failed to fetch alliances:', err);
+    }
+  };
 
   const fetchNationWars = async () => {
     try {
@@ -195,13 +339,6 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     return '#e8f5e8'; // Light green for above 18
   };
 
-  const getGovernmentTypeColor = (governmentType: string): string => {
-    if (governmentType.toLowerCase() === 'anarchy') {
-      return '#ffebee'; // Light red for anarchy
-    }
-    return '#f8f9fa'; // Default light gray
-  };
-
   const shouldBeInPeaceMode = (nuclearWeapons: number, governmentType: string, attackingWars: War[], defendingWars: War[]): boolean => {
     return (governmentType.toLowerCase() === 'anarchy'  || nuclearWeapons < 20) && 
            (attackingWars.length === 0 && 
@@ -221,7 +358,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   }
 
   return (
-    <div>
+    <div style={{ width: '100%', maxWidth: 'none' }}>
       {/* Color Legend */}
       <div style={{ 
         marginBottom: '20px', 
@@ -298,8 +435,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
           <div>
             <strong style={{ color: '#ffffff', fontSize: '12px' }}>Other Indicators:</strong>
             <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#ffebee', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>Anarchy government</span>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#d32f2f', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>Nation in anarchy (red text)</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
               <div style={{ width: '18px', height: '18px', backgroundColor: '#e8f5e8', border: '1px solid #666', marginRight: '8px' }}></div>
@@ -320,10 +457,42 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
           <div style={{ 
             marginBottom: '15px', 
             display: 'flex', 
-            justifyContent: 'flex-end',
+            justifyContent: 'space-between',
             alignItems: 'center',
             gap: '10px'
           }}>
+            {/* Staggering Alliance Dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ 
+                fontSize: '13px',
+                fontWeight: '500',
+                color: '#333'
+              }}>
+                Staggering Alliance:
+              </label>
+              <select
+                value={staggeringAllianceId || ''}
+                onChange={(e) => setStaggeringAllianceId(e.target.value ? parseInt(e.target.value) : null)}
+                style={{
+                  padding: '6px 10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  backgroundColor: '#fff',
+                  fontSize: '13px',
+                  minWidth: '200px'
+                }}
+              >
+                <option value="">Select alliance...</option>
+                {alliances.filter(alliance => alliance.id !== allianceId).map(alliance => (
+                  <option key={alliance.id} value={alliance.id}>
+                    {alliance.name} ({alliance.nationCount} nations)
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Right side checkboxes */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <label style={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -379,18 +548,20 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
               />
               Include Peace Mode Nations
             </label>
+            </div>
           </div>
-          <div style={{ overflowX: 'auto', width: '100%' }}>
+          <div style={{ overflowX: 'auto', width: '100%', maxWidth: 'none' }}>
             <table style={{ 
               borderCollapse: 'collapse', 
               border: '1px solid #ddd',
-              fontSize: '14px'
+              fontSize: '14px',
+              minWidth: '1000px',
+              width: '100%'
             }}>
               <thead>
                 <tr style={{ backgroundColor: '#343a40' }}>
                   <th style={headerStyles.default}>Nation</th>
                   <th style={headerStyles.center}>Nukes</th>
-                  <th style={headerStyles.center}>Gov</th>
                   <th style={headerStyles.center}>Attacking War 1</th>
                   <th style={headerStyles.center}>Attacking War 2</th>
                   <th style={headerStyles.center}>Attacking War 3</th>
@@ -400,6 +571,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                   <th style={headerStyles.center}>Defending War 3</th>
                   <th style={headerStyles.center}>Staggered</th>
                   <th style={headerStyles.center}>Should PM?</th>
+                  <th style={headerStyles.center}>Stagger Recs</th>
                 </tr>
               </thead>
               <tbody>
@@ -416,7 +588,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{ 
-                              color: '#007bff', 
+                              color: nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? '#d32f2f' : '#007bff', 
                               textDecoration: 'none'
                             }}
                             onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
@@ -426,7 +598,11 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                           </a>
                         </strong>
                         <br />
-                        <span style={{ color: '#666', fontSize: '10px' }}>
+                        <span style={{ 
+                          color: nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? '#d32f2f' : '#666', 
+                          fontSize: '10px',
+                          fontWeight: nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? 'bold' : 'normal'
+                        }}>
                           {nationWar.nation.ruler} • {formatNumber(nationWar.nation.strength)} NS
                         </span>
                         <br />
@@ -440,15 +616,6 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     }}>
                       <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#d32f2f' }}>
                         {nationWar.nation.nuclearWeapons}
-                      </div>
-                    </td>
-                    {/* Government Type Column */}
-                    <td style={{ 
-                      ...columnStyles.government,
-                      backgroundColor: getGovernmentTypeColor(nationWar.nation.governmentType)
-                    }}>
-                      <div style={{ fontSize: '10px', color: '#666' }}>
-                        {nationWar.nation.governmentType}
                       </div>
                     </td>
                     {/* Attacking Wars Columns */}
@@ -554,6 +721,22 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                         <span style={{ color: '#d32f2f', fontSize: '10px', fontWeight: 'bold' }}>✓</span>
                       ) : (
                         <span style={{ color: '#999', fontSize: '10px' }}>—</span>
+                      )}
+                    </td>
+                    {/* Stagger Recommendations Column */}
+                    <td style={{ 
+                      ...columnStyles.staggered,
+                      backgroundColor: '#ffffff',
+                      minWidth: '80px',
+                      textAlign: 'left'
+                    }}>
+                      {staggeringAllianceId ? (
+                        <StaggerRecommendationsCell 
+                          defendingNation={nationWar.nation}
+                          staggeringAllianceId={staggeringAllianceId}
+                        />
+                      ) : (
+                        <span style={{ color: '#999', fontSize: '10px' }}>Select alliance</span>
                       )}
                     </td>
                   </tr>

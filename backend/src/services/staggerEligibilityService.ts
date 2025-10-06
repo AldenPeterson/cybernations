@@ -26,6 +26,7 @@ export interface StaggerEligibilityData {
     allianceId: number;
     strength: number;
     technology: string;
+    nuclearWeapons: number;
     activity: string;
     inWarMode: boolean;
     governmentType: string;
@@ -45,6 +46,7 @@ export class StaggerEligibilityService {
     hidePeaceMode: boolean = false,
     hideNonPriority: boolean = false
   ): Promise<StaggerEligibilityData[]> {
+    console.log(`StaggerEligibilityService called with hideAnarchy=${hideAnarchy}, hidePeaceMode=${hidePeaceMode}, hideNonPriority=${hideNonPriority}`);
     const { nations, wars } = await loadDataFromFilesWithUpdate();
     
     // Get nations from both alliances
@@ -94,6 +96,7 @@ export class StaggerEligibilityService {
             allianceId: attacker.allianceId,
             strength: attacker.strength,
             technology: attacker.technology,
+            nuclearWeapons: attacker.nuclearWeapons,
             activity: attacker.activity,
             inWarMode: attacker.inWarMode,
             governmentType: attacker.governmentType,
@@ -109,6 +112,7 @@ export class StaggerEligibilityService {
           
           // Apply additional filters
           if (hideAnarchy && attacker.governmentType.toLowerCase() === 'anarchy') {
+            console.log(`Filtering out anarchy attacker: ${attacker.name} (${attacker.governmentType})`);
             return false;
           }
           if (hidePeaceMode && !attacker.inWarMode) {
