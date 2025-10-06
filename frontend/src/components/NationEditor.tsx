@@ -33,6 +33,10 @@ interface AidOffer {
   soldiers: number;
   date: string;
   reason: string;
+  // Calculated fields from backend
+  expirationDate?: string;
+  daysUntilExpiration?: number;
+  isExpired?: boolean;
 }
 
 interface AidSlot {

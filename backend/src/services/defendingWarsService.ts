@@ -3,7 +3,7 @@ import {
 } from './dataProcessingService.js';
 import { AllianceService } from './allianceService.js';
 import { War } from '../models/index.js';
-import { calculateWarDateInfo, calculateStaggeredStatus } from '../utils/warDateUtils.js';
+import { calculateWarDateInfo, calculateStaggeredStatus } from '../utils/dateUtils.js';
 
 export class DefendingWarsService {
   /**

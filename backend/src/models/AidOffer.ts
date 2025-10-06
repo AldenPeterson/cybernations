@@ -16,4 +16,8 @@ export interface AidOffer {
   soldiers: number;
   date: string;
   reason: string;
+  // Calculated date fields (added by backend)
+  expirationDate?: string;
+  daysUntilExpiration?: number;
+  isExpired?: boolean;
 }

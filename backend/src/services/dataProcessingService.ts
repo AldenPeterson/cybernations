@@ -68,7 +68,7 @@ async function parseAidOffersFromFile(filePath: string): Promise<AidOffer[]> {
       }))
       .on('data', (row) => {
         if (row.aidId && row.declaringId && row.receivingId) {
-          aidOffers.push({
+          const baseOffer = {
             aidId: parseInt(row.aidId),
             declaringId: parseInt(row.declaringId),
             declaringRuler: decodeHtmlEntities(row.declaringRuler || ''),
@@ -86,7 +86,10 @@ async function parseAidOffersFromFile(filePath: string): Promise<AidOffer[]> {
             soldiers: parseInt(row.soldiers) || 0,
             date: row.date || '',
             reason: row.reason || ''
-          });
+          };
+
+          // Don't calculate date fields here - do it on-demand to avoid performance issues
+          aidOffers.push(baseOffer);
         }
       })
       .on('end', () => {
@@ -266,7 +269,7 @@ export function parseAidStats(filePath: string): Promise<AidOffer[]> {
         }
 
         // Use row object directly with column names as keys
-        const aidOffer: AidOffer = {
+        const baseOffer: AidOffer = {
           aidId: parseInt(row['Aid ID'] as string) || 0,
           declaringId: parseInt(row['Declaring ID'] as string) || 0,
           declaringRuler: decodeHtmlEntities(row['Declaring Ruler'] as string || ''),
@@ -285,7 +288,9 @@ export function parseAidStats(filePath: string): Promise<AidOffer[]> {
           date: row['Date'] as string || '',
           reason: row['Reason'] as string || ''
         };
-        aidOffers.push(aidOffer);
+
+        // Don't calculate date fields here - do it on-demand to avoid performance issues
+        aidOffers.push(baseOffer);
       })
       .on('end', () => {
         resolve(aidOffers);

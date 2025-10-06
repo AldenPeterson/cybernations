@@ -20,6 +20,10 @@ interface AidOffer {
   soldiers: number;
   reason: string;
   date: string;
+  // Calculated fields from backend
+  expirationDate?: string;
+  daysUntilExpiration?: number;
+  isExpired?: boolean;
 }
 
 interface AidSlot {
@@ -153,26 +157,6 @@ const AidPage: React.FC = () => {
     return parts.join(' / ') || 'Empty';
   };
 
-  const calculateExpirationDate = (offerDate: string): string => {
-    const offerDateObj = new Date(offerDate);
-    const expirationDate = new Date(offerDateObj.getTime() + (10 * 24 * 60 * 60 * 1000)); // Add 10 days
-    const daysUntilExpiration = getDaysUntilExpiration(offerDate);
-    return `${expirationDate.toLocaleDateString()} (${daysUntilExpiration} days)`;
-  };
-
-  const isOfferExpired = (offerDate: string): boolean => {
-    const offerDateObj = new Date(offerDate);
-    const expirationDate = new Date(offerDateObj.getTime() + (10 * 24 * 60 * 60 * 1000));
-    return new Date() > expirationDate;
-  };
-
-  const getDaysUntilExpiration = (offerDate: string): number => {
-    const offerDateObj = new Date(offerDate);
-    const now = new Date();
-    const daysSinceOffer = Math.floor((now.getTime() - offerDateObj.getTime()) / (1000 * 60 * 60 * 24));
-    return Math.max(0, 10 - daysSinceOffer);
-  };
-
   const getExpirationCategory = (days: number): string => {
     if (days < 0) return 'expired';
     if (days === 0) return 'today';
@@ -198,7 +182,7 @@ const AidPage: React.FC = () => {
           return expirationFilter.includes('empty');
         }
         
-        const days = getDaysUntilExpiration(slot.aidOffer.date);
+        const days = slot.aidOffer.daysUntilExpiration || 0;
         const category = getExpirationCategory(days);
         return expirationFilter.includes(category);
       });
@@ -544,7 +528,7 @@ const AidPage: React.FC = () => {
                       </div>
                     </td>
                     {nationAidSlots.aidSlots.map((slot) => {
-                      const isExpired = slot.aidOffer ? isOfferExpired(slot.aidOffer.date) : false;
+                      const isExpired = slot.aidOffer ? slot.aidOffer.isExpired : false;
                       const hasDRA = nationAidSlots.aidSlots.length === 6;
                       const isBlackCell = !hasDRA && slot.slotNumber > 5;
                       
@@ -600,7 +584,7 @@ const AidPage: React.FC = () => {
                               color: isExpired ? '#d32f2f' : '#666',
                               fontWeight: isExpired ? 'bold' : 'normal'
                             }}>
-                              Expires: {calculateExpirationDate(slot.aidOffer.date)}
+                              Expires: {slot.aidOffer.expirationDate} ({slot.aidOffer.daysUntilExpiration} days)
                             </div>
                           </div>
                         ) : (

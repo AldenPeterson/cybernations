@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AidService } from '../services/aidService.js';
+import { calculateAidDateInfo } from '../utils/dateUtils.js';
 
 export class AidController {
   /**
@@ -33,19 +34,32 @@ export class AidController {
           aidSlots: nationAidSlots.aidSlots.map(slot => ({
             slotNumber: slot.slotNumber,
             isOutgoing: slot.isOutgoing,
-            aidOffer: slot.aidOffer ? {
-              aidId: slot.aidOffer.aidId,
-              targetNation: slot.isOutgoing ? slot.aidOffer.receivingNation : slot.aidOffer.declaringNation,
-              targetRuler: slot.isOutgoing ? slot.aidOffer.receivingRuler : slot.aidOffer.declaringRuler,
-              targetId: slot.isOutgoing ? slot.aidOffer.receivingId : slot.aidOffer.declaringId,
-              declaringId: slot.aidOffer.declaringId,
-              receivingId: slot.aidOffer.receivingId,
-              money: slot.aidOffer.money,
-              technology: slot.aidOffer.technology,
-              soldiers: slot.aidOffer.soldiers,
-              reason: slot.aidOffer.reason,
-              date: slot.aidOffer.date
-            } : null
+            aidOffer: slot.aidOffer ? (() => {
+              // Calculate date fields only for aid offers that are actually being returned
+              const dateInfo = slot.aidOffer.date ? (() => {
+                try {
+                  return calculateAidDateInfo(slot.aidOffer.date);
+                } catch (error) {
+                  console.warn(`Failed to parse date "${slot.aidOffer.date}" for aid offer ${slot.aidOffer.aidId}:`, error);
+                  return {};
+                }
+              })() : {};
+
+              return {
+                aidId: slot.aidOffer.aidId,
+                targetNation: slot.isOutgoing ? slot.aidOffer.receivingNation : slot.aidOffer.declaringNation,
+                targetRuler: slot.isOutgoing ? slot.aidOffer.receivingRuler : slot.aidOffer.declaringRuler,
+                targetId: slot.isOutgoing ? slot.aidOffer.receivingId : slot.aidOffer.declaringId,
+                declaringId: slot.aidOffer.declaringId,
+                receivingId: slot.aidOffer.receivingId,
+                money: slot.aidOffer.money,
+                technology: slot.aidOffer.technology,
+                soldiers: slot.aidOffer.soldiers,
+                reason: slot.aidOffer.reason,
+                date: slot.aidOffer.date,
+                ...dateInfo
+              };
+            })() : null
           }))
         }))
       });
