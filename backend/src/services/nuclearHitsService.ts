@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { parseCentralTimeDate } from '../utils/dateUtils.js';
+import { fileURLToPath } from 'url';
 
 export interface NuclearReportInput {
   AttackingNation: string | number;
@@ -19,7 +20,26 @@ export interface NuclearHitRecord {
 type NuclearHitStore = Record<string, NuclearHitRecord>;
 
 function getDataFilePath(): string {
-  return path.join(process.cwd(), 'src', 'data', 'nuclear_hits.json');
+  const candidates: string[] = [];
+  // 1) dist relative (when running compiled code)
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    candidates.push(path.join(__dirname, '..', 'data', 'nuclear_hits.json')); // dist/services -> dist/data
+    candidates.push(path.join(__dirname, '..', '..', 'src', 'data', 'nuclear_hits.json')); // fallback to src from dist
+  } catch {}
+  // 2) process cwd variants
+  candidates.push(path.join(process.cwd(), 'dist', 'data', 'nuclear_hits.json'));
+  candidates.push(path.join(process.cwd(), 'src', 'data', 'nuclear_hits.json'));
+  candidates.push(path.join(process.cwd(), 'data', 'nuclear_hits.json'));
+
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) return p;
+    } catch {}
+  }
+  // Default to src path; writes are skipped in prod anyway
+  return candidates[candidates.length - 1];
 }
 
 export function readNuclearHits(): NuclearHitStore {
