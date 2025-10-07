@@ -48,3 +48,4 @@ const StrengthRatioBadge: React.FC<StrengthRatioBadgeProps> = ({
 };
 
 export default StrengthRatioBadge;
+

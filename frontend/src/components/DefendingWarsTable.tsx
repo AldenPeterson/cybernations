@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import WarStatusBadge from './WarStatusBadge';
 import FilterCheckbox from './FilterCheckbox';
 import NSPercentageBadge from './NSPercentageBadge';
+import AllianceMultiSelect from './AllianceMultiSelect';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
 
 interface StaggerRecommendationsCellProps {
@@ -222,6 +224,7 @@ interface DefendingWarsTableProps {
 }
 
 const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [allNationWars, setAllNationWars] = useState<NationWars[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -230,6 +233,71 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [hideNonPriority, setHideNonPriority] = useState<boolean>(false);
   const [alliances, setAlliances] = useState<Alliance[]>([]);
   const [staggeringAllianceIds, setStaggeringAllianceIds] = useState<number[]>([]);
+
+  // Helper function to parse boolean from URL parameter
+  const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
+    if (value === null) return defaultValue;
+    return value.toLowerCase() === 'true';
+  };
+
+  // Helper function to parse array of numbers from URL parameter
+  const parseNumberArrayParam = (value: string | null): number[] => {
+    if (!value) return [];
+    return value.split(',')
+      .map(id => parseInt(id.trim()))
+      .filter(id => !isNaN(id));
+  };
+
+  // Helper function to update URL parameters
+  const updateUrlParams = useCallback((updates: Record<string, string | null>) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === '') {
+        newSearchParams.delete(key);
+      } else {
+        newSearchParams.set(key, value);
+      }
+    });
+    
+    setSearchParams(newSearchParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  // Handler for staggering alliance selection changes (with URL update)
+  const handleStaggeringAllianceChange = useCallback((selectedIds: number[]) => {
+    setStaggeringAllianceIds(selectedIds);
+    updateUrlParams({ 
+      staggeringAlliances: selectedIds.length > 0 ? selectedIds.join(',') : null 
+    });
+  }, [updateUrlParams]);
+
+  // Handler for setting staggering alliances without URL update (for initialization)
+  const setStaggeringAllianceIdsOnly = useCallback((selectedIds: number[]) => {
+    setStaggeringAllianceIds(selectedIds);
+  }, []);
+
+
+  // Initialize boolean parameters from URL (only once on mount)
+  useEffect(() => {
+    setIncludePeaceMode(parseBooleanParam(searchParams.get('includePeaceMode')));
+    setNeedsStagger(parseBooleanParam(searchParams.get('needsStagger')));
+    setHideNonPriority(parseBooleanParam(searchParams.get('hideNonPriority')));
+  }, []); // Empty dependency array - only run on mount
+
+  // Initialize staggering alliances from URL (when alliances load or allianceId changes)
+  useEffect(() => {
+    const staggeringAllianceIdsParam = parseNumberArrayParam(searchParams.get('staggeringAlliances'));
+    
+    // Only filter alliances if we have alliances loaded, otherwise keep the URL params as-is
+    // This prevents clearing selections during the initial load when alliances array is empty
+    const validAllianceIds = alliances.length > 0 
+      ? staggeringAllianceIdsParam.filter(id => 
+          alliances.some(alliance => alliance.id === id && alliance.id !== allianceId)
+        )
+      : staggeringAllianceIdsParam; // Keep URL params during initial load
+    
+    setStaggeringAllianceIdsOnly(validAllianceIds);
+  }, [alliances, allianceId, setStaggeringAllianceIdsOnly]); // Remove searchParams from dependencies
 
   // Column styles
   const columnStyles = {
@@ -295,11 +363,12 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     if (allianceId) {
       fetchNationWars();
     }
-  }, [allianceId, includePeaceMode, needsStagger]);
+  }, [allianceId]);
 
   useEffect(() => {
     fetchAlliances();
   }, []);
+
 
   const fetchAlliances = async () => {
     try {
@@ -317,7 +386,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const fetchNationWars = async () => {
     try {
       setLoading(true);
-      const response = await apiCall(`${API_ENDPOINTS.nationWars(allianceId)}?includePeaceMode=${includePeaceMode}&needsStagger=${needsStagger}`);
+      const response = await apiCall(`${API_ENDPOINTS.nationWars(allianceId)}`);
       const data = await response.json();
       
       if (data.success) {
@@ -393,15 +462,31 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   };
 
   // Apply client-side filtering
-  const filteredNationWars = hideNonPriority 
-    ? allNationWars.filter(isPriorityNation)
-    : allNationWars;
+  let filteredNationWars = allNationWars;
+
+  // Filter out peace mode nations if includePeaceMode is false
+  if (!includePeaceMode) {
+    filteredNationWars = filteredNationWars.filter(nationWar => nationWar.nation.inWarMode);
+  }
+
+  // Filter to only show nations that need stagger if needsStagger is true
+  if (needsStagger) {
+    filteredNationWars = filteredNationWars.filter(nationWar => 
+      nationWar.nation.inWarMode && nationWar.staggeredStatus.status !== 'staggered'
+    );
+  }
+
+  // Filter to hide non-priority nations if hideNonPriority is true
+  if (hideNonPriority) {
+    filteredNationWars = filteredNationWars.filter(isPriorityNation);
+  }
 
 
 
 
 
-  if (loading) {
+  // Show loading indicator without hiding the entire interface
+  if (loading && allNationWars.length === 0) {
     return <div style={{ padding: '20px', textAlign: 'center' }}>Loading defending wars...</div>;
   }
 
@@ -509,132 +594,61 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
           <div style={{ 
             marginBottom: '15px', 
             display: 'flex', 
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            flexDirection: 'column',
             gap: '10px'
           }}>
-            {/* Staggering Alliance Multi-Select */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <label style={{ 
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#2c3e50',
-                whiteSpace: 'nowrap'
-              }}>
-                Staggering Alliances:
-              </label>
-              <select
-                multiple
-                value={staggeringAllianceIds.map(id => id.toString())}
-                onChange={(e) => {
-                  const selectedValues = Array.from(e.target.selectedOptions, option => parseInt(option.value));
-                  setStaggeringAllianceIds(selectedValues);
+            {/* First row: Staggering Alliance Multi-Select and Defending Nation Filters */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              {/* Staggering Alliance Multi-Select */}
+              <AllianceMultiSelect
+                label="Staggering Alliances"
+                alliances={alliances}
+                selectedAllianceIds={staggeringAllianceIds}
+                excludedAllianceId={allianceId}
+                onChange={handleStaggeringAllianceChange}
+              />
+              
+              {/* Defending nation checkboxes */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <FilterCheckbox
+                label="Needs Stagger"
+                checked={needsStagger}
+                onChange={(checked) => {
+                  setNeedsStagger(checked);
+                  updateUrlParams({ needsStagger: checked.toString() });
                 }}
-                style={{
-                  padding: '10px 14px',
-                  border: '2px solid #3498db',
-                  borderRadius: '6px',
-                  backgroundColor: '#fff',
-                  fontSize: '15px',
-                  fontWeight: '500',
-                  color: '#2c3e50',
-                  minWidth: '280px',
-                  minHeight: '100px',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-                  fontFamily: 'Arial, sans-serif',
-                  lineHeight: '1.4'
+              />
+              <FilterCheckbox
+                label="Hide non-priority defending nations"
+                checked={hideNonPriority}
+                onChange={(checked) => {
+                  setHideNonPriority(checked);
+                  updateUrlParams({ hideNonPriority: checked.toString() });
                 }}
-              >
-                {alliances.filter(alliance => alliance.id !== allianceId).map(alliance => (
-                  <option 
-                    key={alliance.id} 
-                    value={alliance.id}
-                    style={{
-                      padding: '6px 10px',
-                      fontSize: '15px',
-                      fontWeight: '500',
-                      color: '#2c3e50',
-                      backgroundColor: '#fff',
-                      lineHeight: '1.4'
-                    }}
-                  >
-                    {alliance.name} ({alliance.nationCount} nations)
-                  </option>
-                ))}
-              </select>
-              <div style={{ 
-                fontSize: '12px', 
-                color: '#5a6c7d',
-                fontWeight: '500',
-                maxWidth: '140px',
-                lineHeight: '1.3'
-              }}>
-                Hold Ctrl/Cmd to select multiple alliances
+              />
               </div>
             </div>
             
-            {/* Right side checkboxes */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <label style={{ 
+            {/* Second row: Attacking nation filters */}
+            <div style={{ 
               display: 'flex', 
-              alignItems: 'center', 
-              padding: '6px 10px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: '500',
-              color: '#333'
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: '10px'
             }}>
-              <input
-                type="checkbox"
-                checked={needsStagger}
-                onChange={(e) => {
-                  const checked = e.target.checked;
-                  setNeedsStagger(checked);
-                  // Auto-uncheck peacemode when needs stagger is selected
-                  if (checked) {
-                    setIncludePeaceMode(false);
-                  }
-                }}
-                style={{ 
-                  marginRight: '6px',
-                  accentColor: '#dc3545',
-                  transform: 'scale(1.1)'
-                }}
-              />
-              Needs Stagger
-            </label>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              padding: '6px 10px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: '500',
-              color: '#333'
-            }}>
-              <input
-                type="checkbox"
+              <FilterCheckbox
+                label="Assign PM nations"
                 checked={includePeaceMode}
-                onChange={(e) => setIncludePeaceMode(e.target.checked)}
-                style={{ 
-                  marginRight: '6px',
-                  accentColor: '#007bff',
-                  transform: 'scale(1.1)'
+                onChange={(checked) => {
+                  setIncludePeaceMode(checked);
+                  updateUrlParams({ includePeaceMode: checked.toString() });
                 }}
               />
-              Include Peace Mode Nations
-            </label>
-            <FilterCheckbox
-              label="Hide non-priority defending nations"
-              checked={hideNonPriority}
-              onChange={setHideNonPriority}
-            />
             </div>
           </div>
           <div style={{ overflowX: 'auto', width: '100%', maxWidth: 'none' }}>

@@ -112,7 +112,6 @@ export class StaggerEligibilityService {
           
           // Apply additional filters
           if (hideAnarchy && attacker.governmentType.toLowerCase() === 'anarchy') {
-            console.log(`Filtering out anarchy attacker: ${attacker.name} (${attacker.governmentType})`);
             return false;
           }
           if (hidePeaceMode && !attacker.inWarMode) {

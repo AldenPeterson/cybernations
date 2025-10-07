@@ -52,3 +52,4 @@ const ColorLegend: React.FC<ColorLegendProps> = ({ sections, className = '' }) =
 };
 
 export default ColorLegend;
+

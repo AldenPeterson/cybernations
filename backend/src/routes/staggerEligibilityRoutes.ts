@@ -9,3 +9,4 @@ router.get('/:attackingAllianceId/:defendingAllianceId',
 );
 
 export default router;
+

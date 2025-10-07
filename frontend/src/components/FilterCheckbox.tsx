@@ -6,6 +6,7 @@ export interface FilterCheckboxProps {
   onChange: (checked: boolean) => void;
   disabled?: boolean;
   className?: string;
+  accentColor?: string;
 }
 
 const FilterCheckbox: React.FC<FilterCheckboxProps> = ({ 
@@ -13,7 +14,8 @@ const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
   checked, 
   onChange, 
   disabled = false,
-  className = ''
+  className = '',
+  accentColor = '#007bff'
 }) => {
   return (
     <label style={{ 
@@ -36,7 +38,7 @@ const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
         disabled={disabled}
         style={{ 
           marginRight: '6px',
-          accentColor: '#007bff',
+          accentColor: accentColor,
           transform: 'scale(1.1)',
           cursor: disabled ? 'not-allowed' : 'pointer'
         }}
@@ -47,3 +49,4 @@ const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
 };
 
 export default FilterCheckbox;
+
