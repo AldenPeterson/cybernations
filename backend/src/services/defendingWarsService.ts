@@ -17,7 +17,9 @@ export class DefendingWarsService {
     const nuclearStore = readNuclearHits();
     const latestNukedDateByNationId = new Map<number, string>(); // formatted date MM/DD/YYYY (Central)
     for (const record of Object.values(nuclearStore)) {
-      const defendingId = parseInt(record.defendingNation);
+      // Only count successful nuclear hits
+      if ((record.result || '').toLowerCase() !== 'direct hit') continue;
+      const defendingId = parseInt(String(record.defendingNation).trim(), 10);
       if (!defendingId) continue;
       try {
         const sentDate = parseCentralTimeDate(record.sentAt);
