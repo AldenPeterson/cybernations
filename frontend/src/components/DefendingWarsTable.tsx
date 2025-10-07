@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import WarStatusBadge from './WarStatusBadge';
+import FilterCheckbox from './FilterCheckbox';
+import NSPercentageBadge from './NSPercentageBadge';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
 
 interface StaggerRecommendationsCellProps {
@@ -15,18 +17,20 @@ interface StaggerRecommendationsCellProps {
     nuclearWeapons: number;
     governmentType: string;
   };
-  staggeringAllianceId: number;
+  staggeringAllianceIds: number[];
+  hideNonPriority: boolean;
 }
 
 const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({ 
   defendingNation, 
-  staggeringAllianceId 
+  staggeringAllianceIds,
+  hideNonPriority 
 }) => {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (staggeringAllianceId && defendingNation.id) {
+    if (staggeringAllianceIds.length > 0 && defendingNation.id) {
       // Add a small delay to prevent too many simultaneous requests
       const timeoutId = setTimeout(() => {
         fetchStaggerRecommendations();
@@ -43,24 +47,42 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
       setRecommendations([]);
       setLoading(false);
     };
-  }, [staggeringAllianceId, defendingNation.id]);
+  }, [staggeringAllianceIds, defendingNation.id, hideNonPriority]);
 
   const fetchStaggerRecommendations = async () => {
     try {
       setLoading(true);
-      const url = `${API_ENDPOINTS.staggerEligibility}/${staggeringAllianceId}/${defendingNation.allianceId}?hideAnarchy=true&hidePeaceMode=true&hideNonPriority=false`;
-      const response = await apiCall(url);
-      const data = await response.json();
+      const allRecommendations: any[] = [];
       
-      if (data.success) {
-        // Find recommendations for this specific defending nation
-        const nationRecommendations = data.staggerData.find(
-          (item: any) => item.defendingNation.id === defendingNation.id
-        );
-        setRecommendations(nationRecommendations?.eligibleAttackers || []);
-      } else {
-        setRecommendations([]);
+      // Fetch recommendations for each selected staggering alliance
+      for (const staggeringAllianceId of staggeringAllianceIds) {
+        try {
+          const url = `${API_ENDPOINTS.staggerEligibility}/${staggeringAllianceId}/${defendingNation.allianceId}?hideAnarchy=true&hidePeaceMode=true&hideNonPriority=${hideNonPriority}`;
+          const response = await apiCall(url);
+          const data = await response.json();
+          
+          if (data.success) {
+            // Find recommendations for this specific defending nation
+            const nationRecommendations = data.staggerData.find(
+              (item: any) => item.defendingNation.id === defendingNation.id
+            );
+            if (nationRecommendations?.eligibleAttackers) {
+              allRecommendations.push(...nationRecommendations.eligibleAttackers);
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to fetch stagger recommendations for alliance ${staggeringAllianceId}:`, err);
+        }
       }
+      
+      // Remove duplicates based on attacker ID and sort by strength
+      const uniqueRecommendations = allRecommendations
+        .filter((rec, index, self) => 
+          index === self.findIndex(r => r.id === rec.id)
+        )
+        .sort((a, b) => b.strength - a.strength);
+      
+      setRecommendations(uniqueRecommendations);
     } catch (err) {
       console.error('Failed to fetch stagger recommendations:', err);
       setRecommendations([]);
@@ -114,6 +136,9 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
           >
             {attacker.name} / {attacker.ruler}
           </a>
+          {attacker.strengthRatio && (
+            <NSPercentageBadge strengthRatio={attacker.strengthRatio} />
+          )}
           <span style={{ color: '#666', marginLeft: '8px' }}>
             | {formatNumber(attacker.strength).padStart(8)} NS | {formatTechnology(attacker.technology).padStart(8)} Tech | {attacker.nuclearWeapons.toString().padStart(2)} nukes
           </span>
@@ -197,13 +222,14 @@ interface DefendingWarsTableProps {
 }
 
 const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) => {
-  const [nationWars, setNationWars] = useState<NationWars[]>([]);
+  const [allNationWars, setAllNationWars] = useState<NationWars[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [includePeaceMode, setIncludePeaceMode] = useState<boolean>(false);
   const [needsStagger, setNeedsStagger] = useState<boolean>(false);
+  const [hideNonPriority, setHideNonPriority] = useState<boolean>(false);
   const [alliances, setAlliances] = useState<Alliance[]>([]);
-  const [staggeringAllianceId, setStaggeringAllianceId] = useState<number | null>(null);
+  const [staggeringAllianceIds, setStaggeringAllianceIds] = useState<number[]>([]);
 
   // Column styles
   const columnStyles = {
@@ -295,7 +321,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       const data = await response.json();
       
       if (data.success) {
-        setNationWars(data.nationWars);
+        setAllNationWars(data.nationWars);
       } else {
         setError(data.error);
       }
@@ -344,6 +370,32 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
            (attackingWars.length === 0 && 
            defendingWars.length === 0);
   };
+
+  const isPriorityNation = (nationWar: NationWars): boolean => {
+    const defendingNation = nationWar.nation;
+    const defendingWars = nationWar.defendingWars;
+    
+    // Priority if in anarchy
+    if (defendingNation.governmentType.toLowerCase() === 'anarchy') {
+      return true;
+    }
+    
+    // Priority if not staggered but has defending wars
+    // "Not staggered" means they have open war slots (less than 3 defensive wars)
+    const currentDefendingWars = defendingWars.length;
+    const openWarSlots = Math.max(0, 3 - currentDefendingWars);
+    
+    if (openWarSlots > 0 && currentDefendingWars > 0) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Apply client-side filtering
+  const filteredNationWars = hideNonPriority 
+    ? allNationWars.filter(isPriorityNation)
+    : allNationWars;
 
 
 
@@ -451,7 +503,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       </div>
 
       {/* Nation Wars Table */}
-      {nationWars.length > 0 ? (
+      {filteredNationWars.length > 0 ? (
         <div>
           {/* Filter Controls - positioned above table */}
           <div style={{ 
@@ -461,34 +513,64 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
             alignItems: 'center',
             gap: '10px'
           }}>
-            {/* Staggering Alliance Dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Staggering Alliance Multi-Select */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <label style={{ 
-                fontSize: '13px',
-                fontWeight: '500',
-                color: '#333'
+                fontSize: '14px',
+                fontWeight: '600',
+                color: '#2c3e50',
+                whiteSpace: 'nowrap'
               }}>
-                Staggering Alliance:
+                Staggering Alliances:
               </label>
               <select
-                value={staggeringAllianceId || ''}
-                onChange={(e) => setStaggeringAllianceId(e.target.value ? parseInt(e.target.value) : null)}
+                multiple
+                value={staggeringAllianceIds.map(id => id.toString())}
+                onChange={(e) => {
+                  const selectedValues = Array.from(e.target.selectedOptions, option => parseInt(option.value));
+                  setStaggeringAllianceIds(selectedValues);
+                }}
                 style={{
-                  padding: '6px 10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
+                  padding: '10px 14px',
+                  border: '2px solid #3498db',
+                  borderRadius: '6px',
                   backgroundColor: '#fff',
-                  fontSize: '13px',
-                  minWidth: '200px'
+                  fontSize: '15px',
+                  fontWeight: '500',
+                  color: '#2c3e50',
+                  minWidth: '280px',
+                  minHeight: '100px',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                  fontFamily: 'Arial, sans-serif',
+                  lineHeight: '1.4'
                 }}
               >
-                <option value="">Select alliance...</option>
                 {alliances.filter(alliance => alliance.id !== allianceId).map(alliance => (
-                  <option key={alliance.id} value={alliance.id}>
+                  <option 
+                    key={alliance.id} 
+                    value={alliance.id}
+                    style={{
+                      padding: '6px 10px',
+                      fontSize: '15px',
+                      fontWeight: '500',
+                      color: '#2c3e50',
+                      backgroundColor: '#fff',
+                      lineHeight: '1.4'
+                    }}
+                  >
                     {alliance.name} ({alliance.nationCount} nations)
                   </option>
                 ))}
               </select>
+              <div style={{ 
+                fontSize: '12px', 
+                color: '#5a6c7d',
+                fontWeight: '500',
+                maxWidth: '140px',
+                lineHeight: '1.3'
+              }}>
+                Hold Ctrl/Cmd to select multiple alliances
+              </div>
             </div>
             
             {/* Right side checkboxes */}
@@ -548,6 +630,11 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
               />
               Include Peace Mode Nations
             </label>
+            <FilterCheckbox
+              label="Hide non-priority defending nations"
+              checked={hideNonPriority}
+              onChange={setHideNonPriority}
+            />
             </div>
           </div>
           <div style={{ overflowX: 'auto', width: '100%', maxWidth: 'none' }}>
@@ -575,7 +662,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                 </tr>
               </thead>
               <tbody>
-                {nationWars.map((nationWar) => (
+                {filteredNationWars.map((nationWar) => (
                   <tr key={nationWar.nation.id}>
                     <td style={{ 
                       ...columnStyles.nation,
@@ -730,13 +817,14 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       minWidth: '80px',
                       textAlign: 'left'
                     }}>
-                      {staggeringAllianceId ? (
+                      {staggeringAllianceIds.length > 0 ? (
                         <StaggerRecommendationsCell 
                           defendingNation={nationWar.nation}
-                          staggeringAllianceId={staggeringAllianceId}
+                          staggeringAllianceIds={staggeringAllianceIds}
+                          hideNonPriority={hideNonPriority}
                         />
                       ) : (
-                        <span style={{ color: '#999', fontSize: '10px' }}>Select alliance</span>
+                        <span style={{ color: '#999', fontSize: '10px' }}>Select alliances</span>
                       )}
                     </td>
                   </tr>

@@ -139,6 +139,7 @@ export class DefendingWarsService {
       );
     }
 
+
     // Sort nations by strength (highest first)
     filteredNationWars.sort((a, b) => b.nation.strength - a.nation.strength);
 
