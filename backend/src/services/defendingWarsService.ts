@@ -3,7 +3,8 @@ import {
 } from './dataProcessingService.js';
 import { AllianceService } from './allianceService.js';
 import { War } from '../models/index.js';
-import { calculateWarDateInfo, calculateStaggeredStatus } from '../utils/dateUtils.js';
+import { calculateWarDateInfo, calculateStaggeredStatus, parseCentralTimeDate, formatCentralTimeDate } from '../utils/dateUtils.js';
+import { readNuclearHits } from './nuclearHitsService.js';
 
 export class DefendingWarsService {
   /**
@@ -11,6 +12,31 @@ export class DefendingWarsService {
    */
   static async getNationWars(allianceId: number, includePeaceMode: boolean = false, needsStagger: boolean = false) {
     const { nations, wars } = await loadDataFromFilesWithUpdate();
+
+    // Build latest nuked date map for defending nations from nuclear hits
+    const nuclearStore = readNuclearHits();
+    const latestNukedDateByNationId = new Map<number, string>(); // formatted date MM/DD/YYYY (Central)
+    for (const record of Object.values(nuclearStore)) {
+      const defendingId = parseInt(record.defendingNation);
+      if (!defendingId) continue;
+      try {
+        const sentDate = parseCentralTimeDate(record.sentAt);
+        const formatted = formatCentralTimeDate(sentDate);
+        const existing = latestNukedDateByNationId.get(defendingId);
+        if (!existing) {
+          latestNukedDateByNationId.set(defendingId, formatted);
+        } else {
+          // Keep the most recent by comparing actual times
+          const existingMs = parseCentralTimeDate(existing + ' 00:00:00').getTime();
+          const currentMs = sentDate.getTime();
+          if (currentMs > existingMs) {
+            latestNukedDateByNationId.set(defendingId, formatted);
+          }
+        }
+      } catch {
+        // ignore malformed dates
+      }
+    }
     
     // Get alliance nations, optionally filtering out peace mode nations
     let allianceNations = nations.filter(nation => nation.allianceId === allianceId);
@@ -123,7 +149,8 @@ export class DefendingWarsService {
           activity: nation.activity,
           inWarMode: nation.inWarMode,
           nuclearWeapons: nation.nuclearWeapons,
-          governmentType: nation.governmentType
+          governmentType: nation.governmentType,
+          lastNukedDate: latestNukedDateByNationId.get(nation.id)
         },
         attackingWars: attackingWars.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
         defendingWars: sortedDefendingWars,

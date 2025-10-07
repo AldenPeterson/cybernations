@@ -203,6 +203,7 @@ interface NationWars {
     inWarMode: boolean;
     nuclearWeapons: number;
     governmentType: string;
+    lastNukedDate?: string;
   };
   attackingWars: War[];
   defendingWars: War[];
@@ -318,6 +319,13 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       maxWidth: '10px'
 
     },
+    lastNuked: {
+      padding: '2px 3px',
+      border: '1px solid #ddd',
+      textAlign: 'center' as const,
+      backgroundColor: '#ffffff',
+      minWidth: '90px'
+    },
     war: {
       padding: '2px 3px',
       border: '1px solid #ddd',
@@ -432,6 +440,48 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       return '#fffde7'; // Light yellow for 10-18
     }
     return '#e8f5e8'; // Light green for above 18
+  };
+
+  const getCentralTodayYMD = (): { y: number; m: number; d: number } => {
+    const centralNowStr = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
+    const centralNow = new Date(centralNowStr);
+    return {
+      y: centralNow.getFullYear(),
+      m: centralNow.getMonth() + 1,
+      d: centralNow.getDate()
+    };
+  };
+
+  const parseMmDdYyyy = (dateStr: string): { y: number; m: number; d: number } | null => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return null;
+    const m = parseInt(parts[0], 10);
+    const d = parseInt(parts[1], 10);
+    const y = parseInt(parts[2], 10);
+    if (!m || !d || !y) return null;
+    return { y, m, d };
+  };
+
+  const getLastNukedCellColor = (lastNukedDate?: string): string => {
+    if (!lastNukedDate) return '#ffffff';
+    const parsed = parseMmDdYyyy(lastNukedDate);
+    if (!parsed) return '#ffffff';
+    const today = getCentralTodayYMD();
+    const todayUtc = Date.UTC(today.y, today.m - 1, today.d);
+    const lastUtc = Date.UTC(parsed.y, parsed.m - 1, parsed.d);
+    const diffDays = Math.floor((todayUtc - lastUtc) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 1) return '#e8f5e8'; // green: today or yesterday
+    if (diffDays === 2) return '#fffde7'; // yellow: 2 days ago
+    return '#ffebee'; // red: 3+ days
+  };
+
+  const formatLastNukedDisplay = (lastNukedDate?: string): string => {
+    const parsed = lastNukedDate ? parseMmDdYyyy(lastNukedDate) : null;
+    if (!parsed) return '—';
+    const mm = String(parsed.m).padStart(2, '0');
+    const dd = String(parsed.d).padStart(2, '0');
+    return `${mm}/${dd}`;
   };
 
   const shouldBeInPeaceMode = (nuclearWeapons: number, governmentType: string, attackingWars: War[], defendingWars: War[]): boolean => {
@@ -663,6 +713,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                 <tr style={{ backgroundColor: '#343a40' }}>
                   <th style={headerStyles.default}>Nation</th>
                   <th style={headerStyles.center}>Nukes</th>
+                  <th style={headerStyles.center}>Last Nuked</th>
                   <th style={headerStyles.center}>Attacking War 1</th>
                   <th style={headerStyles.center}>Attacking War 2</th>
                   <th style={headerStyles.center}>Attacking War 3</th>
@@ -717,6 +768,12 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     }}>
                       <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#d32f2f' }}>
                         {nationWar.nation.nuclearWeapons}
+                      </div>
+                    </td>
+                    {/* Last Nuked Column */}
+                    <td style={{ ...columnStyles.lastNuked, backgroundColor: getLastNukedCellColor(nationWar.nation.lastNukedDate) }}>
+                      <div style={{ fontSize: '11px', color: '#333' }}>
+                        {formatLastNukedDisplay(nationWar.nation.lastNukedDate)}
                       </div>
                     </td>
                     {/* Attacking Wars Columns */}
