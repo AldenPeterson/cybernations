@@ -232,6 +232,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [includePeaceMode, setIncludePeaceMode] = useState<boolean>(false);
   const [needsStagger, setNeedsStagger] = useState<boolean>(false);
   const [hideNonPriority, setHideNonPriority] = useState<boolean>(false);
+  const [needsNuke, setNeedsNuke] = useState<boolean>(false);
   const [alliances, setAlliances] = useState<Alliance[]>([]);
   const [staggeringAllianceIds, setStaggeringAllianceIds] = useState<number[]>([]);
 
@@ -283,6 +284,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     setIncludePeaceMode(parseBooleanParam(searchParams.get('includePeaceMode')));
     setNeedsStagger(parseBooleanParam(searchParams.get('needsStagger')));
     setHideNonPriority(parseBooleanParam(searchParams.get('hideNonPriority')));
+    setNeedsNuke(parseBooleanParam(searchParams.get('needsNuke')));
   }, []); // Empty dependency array - only run on mount
 
   // Initialize staggering alliances from URL (when alliances load or allianceId changes)
@@ -531,6 +533,21 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     filteredNationWars = filteredNationWars.filter(isPriorityNation);
   }
 
+  // Filter to show only nations that need a nuke (no nuke today or yesterday)
+  if (needsNuke) {
+    filteredNationWars = filteredNationWars.filter(nationWar => {
+      const last = nationWar.nation.lastNukedDate;
+      if (!last) return true;
+      const parsed = parseMmDdYyyy(last);
+      if (!parsed) return true;
+      const today = getCentralTodayYMD();
+      const todayUtc = Date.UTC(today.y, today.m - 1, today.d);
+      const lastUtc = Date.UTC(parsed.y, parsed.m - 1, parsed.d);
+      const diffDays = Math.floor((todayUtc - lastUtc) / (1000 * 60 * 60 * 24));
+      return diffDays >= 2; // keep if 2+ days ago
+    });
+  }
+
 
 
 
@@ -697,6 +714,14 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                 onChange={(checked) => {
                   setIncludePeaceMode(checked);
                   updateUrlParams({ includePeaceMode: checked.toString() });
+                }}
+              />
+              <FilterCheckbox
+                label="Needs nuke?"
+                checked={needsNuke}
+                onChange={(checked) => {
+                  setNeedsNuke(checked);
+                  updateUrlParams({ needsNuke: checked.toString() });
                 }}
               />
             </div>
