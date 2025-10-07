@@ -25,6 +25,33 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}): Prom
   });
 };
 
+// Helper function to safely parse JSON from response
+export const safeJsonParse = async (response: Response): Promise<any> => {
+  const text = await response.text();
+  
+  if (!text.trim()) {
+    throw new Error('Empty response from server');
+  }
+  
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    console.error('Failed to parse JSON response:', text);
+    throw new Error(`Invalid JSON response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+// Helper function to make API calls with better error handling
+export const apiCallWithErrorHandling = async (endpoint: string, options: RequestInit = {}): Promise<any> => {
+  const response = await apiCall(endpoint, options);
+  
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  
+  return await safeJsonParse(response);
+};
+
 // API endpoints
 export const API_ENDPOINTS = {
   health: '/health',

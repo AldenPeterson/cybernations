@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { apiCall, API_ENDPOINTS } from '../utils/api';
+import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 
 interface Alliance {
   id: number;
@@ -91,8 +91,7 @@ const AidPage: React.FC = () => {
       setError(null);
 
       // Fetch alliance info
-      const allianceResponse = await apiCall(API_ENDPOINTS.alliances);
-      const allianceData = await allianceResponse.json();
+      const allianceData = await apiCallWithErrorHandling(API_ENDPOINTS.alliances);
       
       if (allianceData.success) {
         const foundAlliance = allianceData.alliances.find((a: Alliance) => a.id === id);
@@ -100,8 +99,7 @@ const AidPage: React.FC = () => {
       }
 
       // Fetch aid slots
-      const aidSlotsResponse = await apiCall(API_ENDPOINTS.allianceAidSlots(id));
-      const aidSlotsData = await aidSlotsResponse.json();
+      const aidSlotsData = await apiCallWithErrorHandling(API_ENDPOINTS.allianceAidSlots(id));
       
       if (aidSlotsData.success) {
         setAidSlots(aidSlotsData.aidSlots);
@@ -111,8 +109,7 @@ const AidPage: React.FC = () => {
 
       // Fetch alliance stats
       try {
-        const statsResponse = await apiCall(API_ENDPOINTS.allianceStats(id));
-        const statsData = await statsResponse.json();
+        const statsData = await apiCallWithErrorHandling(API_ENDPOINTS.allianceStats(id));
         
         if (statsData.success) {
           setAllianceStats(statsData.stats);
@@ -123,8 +120,7 @@ const AidPage: React.FC = () => {
 
       // Fetch alliance aid stats
       try {
-        const aidStatsResponse = await apiCall(API_ENDPOINTS.allianceAidStats(id));
-        const aidStatsData = await aidStatsResponse.json();
+        const aidStatsData = await apiCallWithErrorHandling(API_ENDPOINTS.allianceAidStats(id));
         
         if (aidStatsData.success) {
           setAllianceAidStats(aidStatsData.allianceAidStats || []);
@@ -134,6 +130,7 @@ const AidPage: React.FC = () => {
       }
 
     } catch (err) {
+      console.error('Error in fetchAllianceData:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch alliance data');
     } finally {
       setLoading(false);
