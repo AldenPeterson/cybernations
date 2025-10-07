@@ -5,6 +5,7 @@ import { aidRoutes } from './aidRoutes.js';
 import { nationEditorRoutes } from './nationEditorRoutes.js';
 import { defendingWarsRoutes } from './defendingWarsRoutes.js';
 import staggerEligibilityRoutes from './staggerEligibilityRoutes.js';
+import { nuclearHitsRoutes } from './nuclearHitsRoutes.js';
 
 export const apiRoutes = Router();
 
@@ -19,6 +20,9 @@ apiRoutes.use('/', defendingWarsRoutes);
 
 // Use stagger eligibility routes
 apiRoutes.use('/stagger-eligibility', staggerEligibilityRoutes);
+
+// Nuclear hits routes
+apiRoutes.use('/', nuclearHitsRoutes);
 
 // Stats decode endpoint - extract zip files from raw_data folder
 apiRoutes.post('/stats/decode', StatsController.decodeStats);
