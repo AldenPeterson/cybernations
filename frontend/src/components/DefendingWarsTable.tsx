@@ -38,6 +38,12 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
 }) => {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Reset expanded state when recommendations change
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [recommendations.length, maxRecommendations]);
 
   useEffect(() => {
     const fetchStaggerRecommendations = async () => {
@@ -133,7 +139,7 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
   }
 
   const totalRecommendations = recommendations.length;
-  const displayedRecommendations = recommendations.slice(0, maxRecommendations);
+  const displayedRecommendations = isExpanded ? recommendations : recommendations.slice(0, maxRecommendations);
   const hasMore = totalRecommendations > maxRecommendations;
 
   return (
@@ -163,17 +169,27 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
         </div>
       ))}
       {hasMore && (
-        <div style={{ 
-          marginTop: '8px', 
-          padding: '4px 8px', 
-          backgroundColor: '#fff3cd', 
-          border: '1px solid #ffc107',
-          borderRadius: '4px',
-          color: '#856404',
-          fontWeight: 'bold',
-          fontSize: '9px'
-        }}>
-          +{totalRecommendations - maxRecommendations} more available
+        <div 
+          onClick={() => setIsExpanded(!isExpanded)}
+          style={{ 
+            marginTop: '8px', 
+            padding: '4px 8px', 
+            backgroundColor: '#fff3cd', 
+            border: '1px solid #ffc107',
+            borderRadius: '4px',
+            color: '#856404',
+            fontWeight: 'bold',
+            fontSize: '9px',
+            cursor: 'pointer',
+            userSelect: 'none'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#ffe69c'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff3cd'}
+        >
+          {isExpanded 
+            ? `▲ Show less (${totalRecommendations} total)` 
+            : `▼ +${totalRecommendations - maxRecommendations} more available`
+          }
         </div>
       )}
     </div>
