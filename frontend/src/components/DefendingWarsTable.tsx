@@ -832,7 +832,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                               {nationWar.attackingWars[index].defendingNation.ruler} • {nationWar.attackingWars[index].defendingNation.alliance}
                             </div>
                             <div style={{ fontSize: '9px', color: '#666' }}>
-                              Exp: {nationWar.attackingWars[index].formattedEndDate || nationWar.attackingWars[index].endDate}
+                              {nationWar.attackingWars[index].formattedEndDate || nationWar.attackingWars[index].endDate}
                             </div>
                           </div>
                         ) : (
@@ -871,7 +871,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                               {nationWar.defendingWars[index].attackingNation.ruler} • {nationWar.defendingWars[index].attackingNation.alliance}
                             </div>
                             <div style={{ fontSize: '9px', color: '#666' }}>
-                              Exp: {nationWar.defendingWars[index].formattedEndDate || nationWar.defendingWars[index].endDate}
+                              {nationWar.defendingWars[index].formattedEndDate || nationWar.defendingWars[index].endDate}
                             </div>
                           </div>
                         ) : (
