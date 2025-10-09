@@ -19,20 +19,77 @@ interface StaggerRecommendationsCellProps {
     nuclearWeapons: number;
     governmentType: string;
   };
-  staggeringAllianceIds: number[];
+  assignAllianceIds: number[];
   hideNonPriority: boolean;
+  includePeaceMode: boolean;
+  assignOnlyPositive: boolean;
+  staggerOnly: boolean;
+  maxRecommendations: number;
 }
 
 const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({ 
   defendingNation, 
-  staggeringAllianceIds,
-  hideNonPriority 
+  assignAllianceIds,
+  hideNonPriority,
+  includePeaceMode,
+  assignOnlyPositive,
+  staggerOnly,
+  maxRecommendations
 }) => {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (staggeringAllianceIds.length > 0 && defendingNation.id) {
+    const fetchStaggerRecommendations = async () => {
+      try {
+        setLoading(true);
+        const allRecommendations: any[] = [];
+        
+        // Fetch recommendations for each selected assign alliance
+        for (const assignAllianceId of assignAllianceIds) {
+          try {
+            const url = `${API_ENDPOINTS.staggerEligibility}/${assignAllianceId}/${defendingNation.allianceId}?hideAnarchy=true&hidePeaceMode=${!includePeaceMode}&hideNonPriority=${hideNonPriority}`;
+            const response = await apiCall(url);
+            const data = await response.json();
+            
+            if (data.success) {
+              // Find recommendations for this specific defending nation
+              const nationRecommendations = data.staggerData.find(
+                (item: any) => item.defendingNation.id === defendingNation.id
+              );
+              if (nationRecommendations?.eligibleAttackers) {
+                allRecommendations.push(...nationRecommendations.eligibleAttackers);
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to fetch stagger recommendations for alliance ${assignAllianceId}:`, err);
+          }
+        }
+        
+        // Remove duplicates based on attacker ID and apply filters
+        let uniqueRecommendations = allRecommendations
+          .filter((rec, index, self) => 
+            index === self.findIndex(r => r.id === rec.id)
+          );
+        
+        // Apply "Assign only positive" filter - only show attackers with >= 100% NS
+        if (assignOnlyPositive) {
+          uniqueRecommendations = uniqueRecommendations.filter(rec => rec.strengthRatio >= 1.0);
+        }
+        
+        // Sort by strength (highest first)
+        uniqueRecommendations.sort((a, b) => b.strength - a.strength);
+        
+        setRecommendations(uniqueRecommendations);
+      } catch (err) {
+        console.error('Failed to fetch stagger recommendations:', err);
+        setRecommendations([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (assignAllianceIds.length > 0 && defendingNation.id) {
       // Add a small delay to prevent too many simultaneous requests
       const timeoutId = setTimeout(() => {
         fetchStaggerRecommendations();
@@ -40,58 +97,13 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
       
       return () => {
         clearTimeout(timeoutId);
-        setRecommendations([]);
-        setLoading(false);
       };
-    }
-    
-    return () => {
+    } else {
+      // Only clear recommendations if there are no alliances selected
       setRecommendations([]);
       setLoading(false);
-    };
-  }, [staggeringAllianceIds, defendingNation.id, hideNonPriority]);
-
-  const fetchStaggerRecommendations = async () => {
-    try {
-      setLoading(true);
-      const allRecommendations: any[] = [];
-      
-      // Fetch recommendations for each selected staggering alliance
-      for (const staggeringAllianceId of staggeringAllianceIds) {
-        try {
-          const url = `${API_ENDPOINTS.staggerEligibility}/${staggeringAllianceId}/${defendingNation.allianceId}?hideAnarchy=true&hidePeaceMode=true&hideNonPriority=${hideNonPriority}`;
-          const response = await apiCall(url);
-          const data = await response.json();
-          
-          if (data.success) {
-            // Find recommendations for this specific defending nation
-            const nationRecommendations = data.staggerData.find(
-              (item: any) => item.defendingNation.id === defendingNation.id
-            );
-            if (nationRecommendations?.eligibleAttackers) {
-              allRecommendations.push(...nationRecommendations.eligibleAttackers);
-            }
-          }
-        } catch (err) {
-          console.error(`Failed to fetch stagger recommendations for alliance ${staggeringAllianceId}:`, err);
-        }
-      }
-      
-      // Remove duplicates based on attacker ID and sort by strength
-      const uniqueRecommendations = allRecommendations
-        .filter((rec, index, self) => 
-          index === self.findIndex(r => r.id === rec.id)
-        )
-        .sort((a, b) => b.strength - a.strength);
-      
-      setRecommendations(uniqueRecommendations);
-    } catch (err) {
-      console.error('Failed to fetch stagger recommendations:', err);
-      setRecommendations([]);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [assignAllianceIds, defendingNation.id, defendingNation.allianceId, hideNonPriority, includePeaceMode, assignOnlyPositive, staggerOnly]);
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
@@ -112,18 +124,22 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
     return tech.toString();
   };
 
-  if (loading) {
+  if (loading && recommendations.length === 0) {
     return <span style={{ color: '#666', fontSize: '9px' }}>Loading...</span>;
   }
 
-  if (recommendations.length === 0) {
+  if (!loading && recommendations.length === 0) {
     return <span style={{ color: '#999', fontSize: '9px' }}>None</span>;
   }
 
+  const totalRecommendations = recommendations.length;
+  const displayedRecommendations = recommendations.slice(0, maxRecommendations);
+  const hasMore = totalRecommendations > maxRecommendations;
+
   return (
     <div style={{ fontSize: '9px', textAlign: 'left' }}>
-      {recommendations.slice(0, 3).map((attacker) => (
-        <div key={attacker.id} style={{ marginBottom: '3px', lineHeight: '1.2', fontFamily: 'monospace' }}>
+      {displayedRecommendations.map((attacker) => (
+        <div key={attacker.id} style={{ marginBottom: '4px', lineHeight: '1.2', fontFamily: 'monospace' }}>
           <a 
             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attacker.id}`}
             target="_blank"
@@ -142,13 +158,22 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
             <NSPercentageBadge strengthRatio={attacker.strengthRatio} />
           )}
           <span style={{ color: '#666', marginLeft: '8px' }}>
-            | {formatNumber(attacker.strength).padStart(8)} NS | {formatTechnology(attacker.technology).padStart(8)} Tech | {attacker.nuclearWeapons.toString().padStart(2)} nukes
+            | {attacker.alliance || 'None'} | {formatNumber(attacker.strength).padStart(8)} NS | {formatTechnology(attacker.technology).padStart(8)} Tech | {attacker.nuclearWeapons.toString().padStart(2)} nukes
           </span>
         </div>
       ))}
-      {recommendations.length > 3 && (
-        <div style={{ color: '#666', fontSize: '8px', fontStyle: 'italic' }}>
-          +{recommendations.length - 3} more
+      {hasMore && (
+        <div style={{ 
+          marginTop: '8px', 
+          padding: '4px 8px', 
+          backgroundColor: '#fff3cd', 
+          border: '1px solid #ffc107',
+          borderRadius: '4px',
+          color: '#856404',
+          fontWeight: 'bold',
+          fontSize: '9px'
+        }}>
+          +{totalRecommendations - maxRecommendations} more available
         </div>
       )}
     </div>
@@ -233,8 +258,13 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [needsStagger, setNeedsStagger] = useState<boolean>(false);
   const [hideNonPriority, setHideNonPriority] = useState<boolean>(false);
   const [needsNuke, setNeedsNuke] = useState<boolean>(false);
+  const [assignOnlyPositive, setAssignOnlyPositive] = useState<boolean>(false);
+  const [staggerOnly, setStaggerOnly] = useState<boolean>(true);
+  const [maxRecommendations, setMaxRecommendations] = useState<number>(7);
+  const [urgentTargets, setUrgentTargets] = useState<boolean>(false);
+  const [blownStaggers, setBlownStaggers] = useState<boolean>(false);
   const [alliances, setAlliances] = useState<Alliance[]>([]);
-  const [staggeringAllianceIds, setStaggeringAllianceIds] = useState<number[]>([]);
+  const [assignAllianceIds, setAssignAllianceIds] = useState<number[]>([]);
 
   // Helper function to parse boolean from URL parameter
   const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
@@ -265,17 +295,17 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     setSearchParams(newSearchParams, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  // Handler for staggering alliance selection changes (with URL update)
-  const handleStaggeringAllianceChange = useCallback((selectedIds: number[]) => {
-    setStaggeringAllianceIds(selectedIds);
+  // Handler for assign alliance selection changes (with URL update)
+  const handleAssignAllianceChange = useCallback((selectedIds: number[]) => {
+    setAssignAllianceIds(selectedIds);
     updateUrlParams({ 
-      staggeringAlliances: selectedIds.length > 0 ? selectedIds.join(',') : null 
+      assignAlliances: selectedIds.length > 0 ? selectedIds.join(',') : null 
     });
   }, [updateUrlParams]);
 
-  // Handler for setting staggering alliances without URL update (for initialization)
-  const setStaggeringAllianceIdsOnly = useCallback((selectedIds: number[]) => {
-    setStaggeringAllianceIds(selectedIds);
+  // Handler for setting assign alliances without URL update (for initialization)
+  const setAssignAllianceIdsOnly = useCallback((selectedIds: number[]) => {
+    setAssignAllianceIds(selectedIds);
   }, []);
 
 
@@ -285,22 +315,33 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     setNeedsStagger(parseBooleanParam(searchParams.get('needsStagger')));
     setHideNonPriority(parseBooleanParam(searchParams.get('hideNonPriority')));
     setNeedsNuke(parseBooleanParam(searchParams.get('needsNuke')));
+    setAssignOnlyPositive(parseBooleanParam(searchParams.get('assignOnlyPositive')));
+    setStaggerOnly(parseBooleanParam(searchParams.get('staggerOnly'), true)); // default true
+    setUrgentTargets(parseBooleanParam(searchParams.get('urgentTargets')));
+    setBlownStaggers(parseBooleanParam(searchParams.get('blownStaggers')));
+    const maxRecsParam = searchParams.get('maxRecommendations');
+    if (maxRecsParam) {
+      const parsed = parseInt(maxRecsParam);
+      if (!isNaN(parsed) && parsed > 0) {
+        setMaxRecommendations(parsed);
+      }
+    }
   }, []); // Empty dependency array - only run on mount
 
-  // Initialize staggering alliances from URL (when alliances load or allianceId changes)
+  // Initialize assign alliances from URL (when alliances load or allianceId changes)
   useEffect(() => {
-    const staggeringAllianceIdsParam = parseNumberArrayParam(searchParams.get('staggeringAlliances'));
+    const assignAllianceIdsParam = parseNumberArrayParam(searchParams.get('assignAlliances'));
     
     // Only filter alliances if we have alliances loaded, otherwise keep the URL params as-is
     // This prevents clearing selections during the initial load when alliances array is empty
     const validAllianceIds = alliances.length > 0 
-      ? staggeringAllianceIdsParam.filter(id => 
+      ? assignAllianceIdsParam.filter(id => 
           alliances.some(alliance => alliance.id === id && alliance.id !== allianceId)
         )
-      : staggeringAllianceIdsParam; // Keep URL params during initial load
+      : assignAllianceIdsParam; // Keep URL params during initial load
     
-    setStaggeringAllianceIdsOnly(validAllianceIds);
-  }, [alliances, allianceId, setStaggeringAllianceIdsOnly]); // Remove searchParams from dependencies
+    setAssignAllianceIdsOnly(validAllianceIds);
+  }, [alliances, allianceId, setAssignAllianceIdsOnly]); // Remove searchParams from dependencies
 
   // Column styles
   const columnStyles = {
@@ -326,7 +367,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       border: '1px solid #ddd',
       textAlign: 'center' as const,
       backgroundColor: '#ffffff',
-      minWidth: '90px'
+      minWidth: '50px',
+      maxWidth: '60px'
     },
     war: {
       padding: '2px 3px',
@@ -516,13 +558,15 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   // Apply client-side filtering
   let filteredNationWars = allNationWars;
 
-  // Filter out peace mode nations if includePeaceMode is false
-  if (!includePeaceMode) {
-    filteredNationWars = filteredNationWars.filter(nationWar => nationWar.nation.inWarMode);
-  }
-
   // Filter to only show nations that need stagger if needsStagger is true
   if (needsStagger) {
+    filteredNationWars = filteredNationWars.filter(nationWar => 
+      nationWar.nation.inWarMode && nationWar.staggeredStatus.status !== 'staggered'
+    );
+  }
+
+  // Filter to only show nations that need staggers if staggerOnly is true (for target assignment)
+  if (staggerOnly && assignAllianceIds.length > 0) {
     filteredNationWars = filteredNationWars.filter(nationWar => 
       nationWar.nation.inWarMode && nationWar.staggeredStatus.status !== 'staggered'
     );
@@ -545,6 +589,60 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       const lastUtc = Date.UTC(parsed.y, parsed.m - 1, parsed.d);
       const diffDays = Math.floor((todayUtc - lastUtc) / (1000 * 60 * 60 * 24));
       return diffDays >= 2; // keep if 2+ days ago
+    });
+  }
+
+  // Filter to show only urgent targets (newest war expires in 0 or 1 days)
+  if (urgentTargets) {
+    filteredNationWars = filteredNationWars.filter(nationWar => {
+      if (nationWar.defendingWars.length === 0) return false;
+      
+      // Find the newest war (most recently started) by finding the one with most days until expiration
+      const newestWar = nationWar.defendingWars.reduce((newest, current) => {
+        const newestDays = newest.daysUntilExpiration ?? 0;
+        const currentDays = current.daysUntilExpiration ?? 0;
+        return currentDays > newestDays ? current : newest;
+      });
+      
+      // Check if newest war expires in 0 or 1 days (today or tomorrow)
+      const daysUntilExpiration = newestWar.daysUntilExpiration;
+      return daysUntilExpiration === 0 || daysUntilExpiration === 1;
+    });
+  }
+
+  // Filter to show only blown staggers (3 defending wars ending on same date, no attacking wars after)
+  if (blownStaggers) {
+    filteredNationWars = filteredNationWars.filter(nationWar => {
+      try {
+        // Must have exactly 3 defending wars
+        if (nationWar.defendingWars.length !== 3) return false;
+        
+        // Check if all 3 defending wars have the same end date (compare the formatted date string or raw date)
+        const firstEndDate = nationWar.defendingWars[0].formattedEndDate || nationWar.defendingWars[0].endDate;
+        const allSameDate = nationWar.defendingWars.every(war => {
+          const warDate = war.formattedEndDate || war.endDate;
+          return warDate === firstEndDate;
+        });
+        
+        if (!allSameDate) return false;
+        
+        // Check if there are any attacking wars ending after this date
+        if (nationWar.attackingWars.length === 0) return true; // No attacking wars, so blown stagger
+        
+        // Get the daysUntilExpiration for the defending wars (all should be the same)
+        const defendingDaysUntilExpiration = nationWar.defendingWars[0].daysUntilExpiration ?? 0;
+        
+        // Check if any attacking war expires later than the defending wars
+        const hasAttackingWarsAfter = nationWar.attackingWars.some(war => {
+          const attackingDaysUntilExpiration = war.daysUntilExpiration ?? 0;
+          return attackingDaysUntilExpiration > defendingDaysUntilExpiration;
+        });
+        
+        return !hasAttackingWarsAfter; // Show if no attacking wars end after defending wars
+      } catch (err) {
+        console.error('Error in blown staggers filter:', err);
+        return false;
+      }
     });
   }
 
@@ -654,60 +752,45 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
         </div>
       </div>
 
-      {/* Nation Wars Table */}
-      {filteredNationWars.length > 0 ? (
-        <div>
-          {/* Filter Controls - positioned above table */}
+      {/* Filter Controls - positioned above table */}
+      <div style={{ 
+        marginBottom: '15px', 
+        display: 'flex', 
+        flexDirection: 'column',
+        gap: '15px'
+      }}>
+        {/* Target Assignment Controls Section */}
+        <div style={{ 
+          padding: '15px',
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #ddd',
+          borderRadius: '8px'
+        }}>
+          <h4 style={{ 
+            margin: '0 0 12px 0', 
+            fontSize: '14px', 
+            fontWeight: 'bold', 
+            color: '#333' 
+          }}>
+            Target Assignment Configuration
+          </h4>
           <div style={{ 
-            marginBottom: '15px', 
             display: 'flex', 
-            flexDirection: 'column',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             gap: '10px'
           }}>
-            {/* First row: Staggering Alliance Multi-Select and Defending Nation Filters */}
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              {/* Staggering Alliance Multi-Select */}
-              <AllianceMultiSelect
-                label="Staggering Alliances"
-                alliances={alliances}
-                selectedAllianceIds={staggeringAllianceIds}
-                excludedAllianceId={allianceId}
-                onChange={handleStaggeringAllianceChange}
-              />
-              
-              {/* Defending nation checkboxes */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <FilterCheckbox
-                label="Needs Stagger"
-                checked={needsStagger}
-                onChange={(checked) => {
-                  setNeedsStagger(checked);
-                  updateUrlParams({ needsStagger: checked.toString() });
-                }}
-              />
-              <FilterCheckbox
-                label="Hide non-priority defending nations"
-                checked={hideNonPriority}
-                onChange={(checked) => {
-                  setHideNonPriority(checked);
-                  updateUrlParams({ hideNonPriority: checked.toString() });
-                }}
-              />
-              </div>
-            </div>
+            {/* Assign Alliances Multi-Select */}
+            <AllianceMultiSelect
+              label="Assign Alliances"
+              alliances={alliances}
+              selectedAllianceIds={assignAllianceIds}
+              excludedAllianceId={allianceId}
+              onChange={handleAssignAllianceChange}
+            />
             
-            {/* Second row: Attacking nation filters */}
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
+            {/* Assignment configuration checkboxes */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <FilterCheckbox
                 label="Assign PM nations"
                 checked={includePeaceMode}
@@ -717,17 +800,105 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                 }}
               />
               <FilterCheckbox
-                label="Needs nuke?"
-                checked={needsNuke}
+                label="Assign only stronger"
+                checked={assignOnlyPositive}
                 onChange={(checked) => {
-                  setNeedsNuke(checked);
-                  updateUrlParams({ needsNuke: checked.toString() });
+                  setAssignOnlyPositive(checked);
+                  updateUrlParams({ assignOnlyPositive: checked.toString() });
                 }}
               />
+              <FilterCheckbox
+                label="Stagger only"
+                checked={staggerOnly}
+                onChange={(checked) => {
+                  setStaggerOnly(checked);
+                  updateUrlParams({ staggerOnly: checked.toString() });
+                }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <label style={{ fontSize: '14px', color: '#333', fontWeight: '500' }}>
+                  Max recommendations:
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={maxRecommendations}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value) && value > 0) {
+                      setMaxRecommendations(value);
+                      updateUrlParams({ maxRecommendations: value.toString() });
+                    }
+                  }}
+                  style={{
+                    width: '60px',
+                    padding: '4px 8px',
+                    fontSize: '14px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    textAlign: 'center'
+                  }}
+                />
+              </div>
             </div>
           </div>
-          <div style={{ overflowX: 'auto', width: '100%', maxWidth: 'none' }}>
-            <table style={{ 
+        </div>
+        
+        {/* Defending Nations Filter Section */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <FilterCheckbox
+            label="Needs Stagger?"
+            checked={needsStagger}
+            onChange={(checked) => {
+              setNeedsStagger(checked);
+              updateUrlParams({ needsStagger: checked.toString() });
+            }}
+          />
+          <FilterCheckbox
+            label="Hide non-priority defending nations"
+            checked={hideNonPriority}
+            onChange={(checked) => {
+              setHideNonPriority(checked);
+              updateUrlParams({ hideNonPriority: checked.toString() });
+            }}
+          />
+          <FilterCheckbox
+            label="Needs nuke?"
+            checked={needsNuke}
+            onChange={(checked) => {
+              setNeedsNuke(checked);
+              updateUrlParams({ needsNuke: checked.toString() });
+            }}
+          />
+          <FilterCheckbox
+            label="Urgent Targets"
+            checked={urgentTargets}
+            onChange={(checked) => {
+              setUrgentTargets(checked);
+              updateUrlParams({ urgentTargets: checked.toString() });
+            }}
+          />
+          <FilterCheckbox
+            label="Blown Staggers"
+            checked={blownStaggers}
+            onChange={(checked) => {
+              setBlownStaggers(checked);
+              updateUrlParams({ blownStaggers: checked.toString() });
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Nation Wars Table */}
+      {filteredNationWars.length > 0 ? (
+        <div style={{ overflowX: 'auto', width: '100%', maxWidth: 'none' }}>
+          <table style={{ 
               borderCollapse: 'collapse', 
               border: '1px solid #ddd',
               fontSize: '14px',
@@ -910,14 +1081,19 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     <td style={{ 
                       ...columnStyles.staggered,
                       backgroundColor: '#ffffff',
-                      minWidth: '80px',
+                      minWidth: '400px',
+                      maxWidth: '500px',
                       textAlign: 'left'
                     }}>
-                      {staggeringAllianceIds.length > 0 ? (
+                      {assignAllianceIds.length > 0 ? (
                         <StaggerRecommendationsCell 
                           defendingNation={nationWar.nation}
-                          staggeringAllianceIds={staggeringAllianceIds}
+                          assignAllianceIds={assignAllianceIds}
                           hideNonPriority={hideNonPriority}
+                          includePeaceMode={includePeaceMode}
+                          assignOnlyPositive={assignOnlyPositive}
+                          staggerOnly={staggerOnly}
+                          maxRecommendations={maxRecommendations}
                         />
                       ) : (
                         <span style={{ color: '#999', fontSize: '10px' }}>Select alliances</span>
@@ -928,10 +1104,9 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
               </tbody>
             </table>
           </div>
-        </div>
       ) : (
         <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-          No active wars found for this alliance.
+          No results found with current filters.
         </div>
       )}
     </div>
