@@ -14,6 +14,7 @@ interface StaggerRecommendationsCellProps {
     alliance: string;
     allianceId: number;
     strength: number;
+    technology: string;
     activity: string;
     inWarMode: boolean;
     nuclearWeapons: number;
@@ -145,27 +146,41 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
   return (
     <div style={{ fontSize: '9px', textAlign: 'left' }}>
       {displayedRecommendations.map((attacker) => (
-        <div key={attacker.id} style={{ marginBottom: '4px', lineHeight: '1.2', fontFamily: 'monospace' }}>
-          <a 
-            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attacker.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ 
-              color: '#1976d2', 
-              textDecoration: 'none',
-              fontWeight: 'bold'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-          >
-            {attacker.name} / {attacker.ruler}
-          </a>
-          {attacker.strengthRatio && (
-            <NSPercentageBadge strengthRatio={attacker.strengthRatio} />
-          )}
-          <span style={{ color: '#666', marginLeft: '8px' }}>
-            | {attacker.alliance || 'None'} | {formatNumber(attacker.strength).padStart(8)} NS | {formatTechnology(attacker.technology).padStart(8)} Tech | {attacker.nuclearWeapons.toString().padStart(2)} nukes
-          </span>
+        <div key={attacker.id} style={{ marginBottom: '4px', lineHeight: '1.2', fontFamily: 'monospace', display: 'flex', alignItems: 'center' }}>
+          <div style={{ minWidth: '180px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <a 
+              href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attacker.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ 
+                color: '#1976d2', 
+                textDecoration: 'none',
+                fontWeight: 'bold'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+              onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+              title={`${attacker.name} / ${attacker.ruler}`}
+            >
+              {attacker.name} / {attacker.ruler}
+            </a>
+          </div>
+          <div style={{ minWidth: '50px' }}>
+            {attacker.strengthRatio && (
+              <NSPercentageBadge strengthRatio={attacker.strengthRatio} />
+            )}
+          </div>
+          <div style={{ minWidth: '120px', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={attacker.alliance || 'None'}>
+            {attacker.alliance || 'None'}
+          </div>
+          <div style={{ minWidth: '75px', color: '#666', textAlign: 'right' }}>
+            {formatNumber(attacker.strength)} NS
+          </div>
+          <div style={{ minWidth: '75px', color: '#666', textAlign: 'right' }}>
+            {formatTechnology(attacker.technology)} Tech
+          </div>
+          <div style={{ minWidth: '60px', color: '#666', textAlign: 'right' }}>
+            {attacker.nuclearWeapons} nukes
+          </div>
         </div>
       ))}
       {hasMore && (
@@ -205,6 +220,7 @@ interface War {
     alliance: string;
     allianceId: number;
     strength: number;
+    technology: string;
     activity: string;
     inWarMode: boolean;
     nuclearWeapons: number;
@@ -217,6 +233,7 @@ interface War {
     alliance: string;
     allianceId: number;
     strength: number;
+    technology: string;
     activity: string;
     inWarMode: boolean;
     nuclearWeapons: number;
@@ -240,6 +257,7 @@ interface NationWars {
     alliance: string;
     allianceId: number;
     strength: number;
+    technology: string;
     activity: string;
     inWarMode: boolean;
     nuclearWeapons: number;
@@ -488,6 +506,16 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       return (num / 1000).toFixed(1) + 'K';
     }
     return num.toString();
+  };
+
+  const formatTechnology = (techStr: string): string => {
+    const tech = parseFloat(techStr.replace(/,/g, '')) || 0;
+    if (tech >= 1000000) {
+      return (tech / 1000000).toFixed(1) + 'M';
+    } else if (tech >= 1000) {
+      return (tech / 1000).toFixed(1) + 'K';
+    }
+    return tech.toFixed(0);
   };
 
   const getActivityColor = (activity: string): string => {
@@ -929,7 +957,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
               borderCollapse: 'collapse', 
               border: '1px solid #ddd',
               fontSize: '14px',
-              minWidth: '1400px',
+              minWidth: '1600px',
               width: '100%'
             }}>
               <thead>
@@ -976,7 +1004,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                             onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
                             onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
                           >
-                            {nationWar.nation.name}
+                            {nationWar.nation.ruler} / {nationWar.nation.name}
                           </a>
                         </strong>
                         <br />
@@ -985,7 +1013,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                           fontSize: '10px',
                           fontWeight: nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? 'bold' : 'normal'
                         }}>
-                          {nationWar.nation.ruler} • {formatNumber(nationWar.nation.strength)} NS
+                          {formatNumber(nationWar.nation.strength)} NS / {formatTechnology(nationWar.nation.technology)} Tech
                         </span>
                         <br />
                         <WarStatusBadge inWarMode={nationWar.nation.inWarMode} />
@@ -1115,8 +1143,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     <td style={{ 
                       ...columnStyles.staggered,
                       backgroundColor: '#ffffff',
-                      minWidth: '400px',
-                      maxWidth: '500px',
+                      minWidth: '600px',
+                      maxWidth: '700px',
                       textAlign: 'left'
                     }}>
                       {assignAllianceIds.length > 0 ? (

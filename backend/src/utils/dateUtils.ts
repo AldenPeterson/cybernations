@@ -100,6 +100,31 @@ export function getCurrentCentralTime(): Date {
 }
 
 /**
+ * Check if current time is in the blackout window (11:45 PM - 12:15 AM Central)
+ * when CyberNations files are not available for download
+ * @returns True if in blackout window, false otherwise
+ */
+export function isInBlackoutWindow(): boolean {
+  const now = new Date();
+  const centralNow = now.toLocaleString('en-US', { timeZone: 'America/Chicago' });
+  const centralDate = new Date(centralNow);
+  const hours = centralDate.getHours();
+  const minutes = centralDate.getMinutes();
+  
+  // 11:45 PM - 11:59 PM (23:45 - 23:59)
+  if (hours === 23 && minutes >= 45) {
+    return true;
+  }
+  
+  // 12:00 AM - 12:15 AM (0:00 - 0:15)
+  if (hours === 0 && minutes <= 15) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Format a date as Central Time string
  * @param date - Date object to format
  * @returns Formatted date string in MM/DD/YYYY format

@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as https from 'https';
 import { extractZipFile } from './zipExtractor.js';
 import { syncAllianceFilesWithNewData } from './allianceSync.js';
+import { isInBlackoutWindow } from './dateUtils.js';
 
 export enum FileType {
   NATION_STATS = 'Nation_Stats',
@@ -16,9 +17,10 @@ interface FileInfo {
   isRecent: boolean;
 }
 
-function getDownloadNumberSlug(file_flag: string): string {
+function getDownloadNumberSlug(file_flag: string, hoursOffset: number = 0): string {
   const now = new Date();
-  const centralNow = now.toLocaleString('en-US', { timeZone: 'America/Chicago' });
+  const offsetDate = new Date(now.getTime() - (hoursOffset * 60 * 60 * 1000));
+  const centralNow = offsetDate.toLocaleString('en-US', { timeZone: 'America/Chicago' });
   const centralDate = new Date(centralNow);
   const year = centralDate.getFullYear();
   const month = centralDate.getMonth() + 1;
@@ -298,9 +300,9 @@ async function performDownload(): Promise<void> {
   }
   
   const filesToDownload = [
-    { type: FileType.NATION_STATS, url: `${baseUrl}${getFileInfo(FileType.NATION_STATS).name}`, outputFile: 'nations.csv' },
-    { type: FileType.AID_STATS, url: `${baseUrl}${getFileInfo(FileType.AID_STATS).name}`, outputFile: 'aid_offers.csv' },
-    { type: FileType.WAR_STATS, url: `${baseUrl}${getFileInfo(FileType.WAR_STATS).name}`, outputFile: 'wars.csv' }
+    { type: FileType.NATION_STATS, outputFile: 'nations.csv' },
+    { type: FileType.AID_STATS, outputFile: 'aid_offers.csv' },
+    { type: FileType.WAR_STATS, outputFile: 'wars.csv' }
   ];
   
   // Merge with existing tracker to preserve fresh entries
@@ -313,8 +315,8 @@ async function performDownload(): Promise<void> {
       const tempZipPath = path.join(dataPath, `temp_${file.type}.zip`);
       const outputPath = path.join(dataPath, file.outputFile);
       
-      // Download the zip file
-      await downloadFile(file.url, tempZipPath);
+      // Download the zip file with fallback
+      const result = await downloadFileWithFallback(baseUrl, file.type, tempZipPath);
       console.log(`Downloaded ${file.type}`);
       
       // Extract the CSV content to standardized filename
@@ -324,7 +326,7 @@ async function performDownload(): Promise<void> {
       // Track this download
       latestDownloads[file.type] = {
         timestamp: Date.now(),
-        originalFile: file.url.split('/').pop() || '',
+        originalFile: result.filename,
         downloadTime: new Date().toISOString()
       };
       
@@ -381,6 +383,12 @@ async function extractCsvToStandardFile(zipPath: string, outputPath: string, fil
 }
 
 export async function ensureRecentFiles(): Promise<void> {
+  // Check if we're in the blackout window before doing anything
+  if (isInBlackoutWindow()) {
+    // Don't spam logs - only check staleness if we would actually try to download
+    return;
+  }
+
   const isProd = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
 
   // Determine staleness using latest_downloads.json
@@ -425,6 +433,48 @@ export async function ensureRecentFiles(): Promise<void> {
 }
 
 /**
+ * Try to download a file with fallback to previous time periods
+ */
+async function downloadFileWithFallback(
+  baseUrl: string,
+  fileType: FileType,
+  tempZipPath: string
+): Promise<{ success: boolean; filename: string }> {
+  const flag_map = {
+    [FileType.NATION_STATS]: '51000',
+    [FileType.AID_STATS]: '52000',
+    [FileType.WAR_STATS]: '52500'
+  };
+
+  // Try current time, then fallback to 12 hours ago, then 24 hours ago, then 36 hours ago
+  const hoursOffsets = [0, 12, 24, 36];
+  
+  for (const hoursOffset of hoursOffsets) {
+    const flag = flag_map[fileType];
+    const timestamp = getDownloadNumberSlug(flag, hoursOffset);
+    const filename = `CyberNations_SE_${fileType}_${timestamp}.zip`;
+    const url = `${baseUrl}${filename}`;
+    
+    try {
+      console.log(`Trying to download ${filename}${hoursOffset > 0 ? ` (${hoursOffset}h ago)` : ''}...`);
+      await downloadFile(url, tempZipPath);
+      console.log(`✓ Successfully downloaded ${filename}`);
+      return { success: true, filename };
+    } catch (error: any) {
+      if (error.message && error.message.includes('404')) {
+        console.log(`✗ File not available: ${filename}`);
+        // Continue to next fallback
+        continue;
+      }
+      // For other errors, throw immediately
+      throw error;
+    }
+  }
+  
+  throw new Error(`Failed to download ${fileType} after trying ${hoursOffsets.length} time periods`);
+}
+
+/**
  * Download only the specified file types and update the tracker
  */
 async function performSelectiveDownload(staleTypes: FileType[]): Promise<void> {
@@ -454,17 +504,15 @@ async function performSelectiveDownload(staleTypes: FileType[]): Promise<void> {
   const latestDownloads: { [key: string]: { timestamp: number; originalFile: string; downloadTime: string } } = { ...existingTracker };
 
   for (const type of staleTypes) {
-    const fileInfo = getFileInfo(type);
-    const url = `${baseUrl}${fileInfo.name}`;
     const tempZipPath = path.join(dataPath, `temp_${type}.zip`);
     const outputPath = path.join(dataPath, mapping[type].outputFile);
 
     try {
-      await downloadFile(url, tempZipPath);
+      const result = await downloadFileWithFallback(baseUrl, type, tempZipPath);
       await extractCsvToStandardFile(tempZipPath, outputPath, type);
       latestDownloads[type] = {
         timestamp: Date.now(),
-        originalFile: fileInfo.name,
+        originalFile: result.filename,
         downloadTime: new Date().toISOString()
       };
     } finally {
