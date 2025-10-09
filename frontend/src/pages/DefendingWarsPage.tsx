@@ -14,7 +14,7 @@ const DefendingWarsPage: React.FC = () => {
   }
 
   return (
-    <div style={{ marginTop: '80px' }}>
+    <div style={{ marginTop: '80px', padding: '0 20px', maxWidth: 'none', width: '100%' }}>
       <DefendingWarsTable allianceId={parseInt(allianceId)} />
     </div>
   );

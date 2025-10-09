@@ -367,16 +367,20 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       backgroundColor: '#f8f9fa', // Default, will be overridden by activity color
       minWidth: '150px',
       maxWidth: '200px',
-      width: '150px'
+      width: '150px',
+      position: 'sticky' as const,
+      left: 0,
+      zIndex: 100,
+      boxShadow: '2px 0 8px -2px rgba(0,0,0,0.3), 1px 0 0 0 #999'
     },
     nukes: {
       padding: '2px 2px',
       border: '1px solid #ddd',
       textAlign: 'center' as const,
       backgroundColor: '#f8f9fa', // Default, will be overridden by nuclear weapons color
-      minWidth: '5px',
-      maxWidth: '10px'
-
+      minWidth: '40px',
+      maxWidth: '50px',
+      width: '45px'
     },
     lastNuked: {
       padding: '2px 3px',
@@ -384,28 +388,35 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       textAlign: 'center' as const,
       backgroundColor: '#ffffff',
       minWidth: '50px',
-      maxWidth: '60px'
+      maxWidth: '60px',
+      width: '55px'
     },
     war: {
       padding: '2px 3px',
       border: '1px solid #ddd',
       textAlign: 'center' as const,
       backgroundColor: '#ffffff',
-      width: '40px'
+      minWidth: '120px',
+      maxWidth: '150px',
+      width: '135px'
     },
     staggered: {
       padding: '4px 6px',
       border: '1px solid #ddd',
       textAlign: 'center' as const,
       backgroundColor: '#ffffff',
-      minWidth: '80px'
+      minWidth: '60px',
+      maxWidth: '80px',
+      width: '70px'
     },
     pm: {
       padding: '4px 6px',
       border: '1px solid #ddd',
       textAlign: 'center' as const,
       backgroundColor: '#ffffff',
-      minWidth: '50px'
+      minWidth: '50px',
+      maxWidth: '70px',
+      width: '60px'
     }
   };
 
@@ -918,12 +929,19 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
               borderCollapse: 'collapse', 
               border: '1px solid #ddd',
               fontSize: '14px',
-              minWidth: '1000px',
+              minWidth: '1400px',
               width: '100%'
             }}>
               <thead>
                 <tr style={{ backgroundColor: '#343a40' }}>
-                  <th style={headerStyles.default}>Nation</th>
+                  <th style={{
+                    ...headerStyles.default,
+                    position: 'sticky',
+                    left: 0,
+                    zIndex: 200,
+                    backgroundColor: '#343a40',
+                    boxShadow: '2px 0 8px -2px rgba(0,0,0,0.3), 1px 0 0 0 #999'
+                  }}>Nation</th>
                   <th style={headerStyles.center}>Nukes</th>
                   <th style={headerStyles.center}>Last Nuked</th>
                   <th style={headerStyles.center}>Attacking War 1</th>
@@ -935,7 +953,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                   <th style={headerStyles.center}>Defending War 3</th>
                   <th style={headerStyles.center}>Staggered</th>
                   <th style={headerStyles.center}>Should PM?</th>
-                  <th style={headerStyles.center}>Stagger Recs</th>
+                  <th style={headerStyles.center}>Assignments</th>
                 </tr>
               </thead>
               <tbody>
