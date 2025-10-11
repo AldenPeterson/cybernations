@@ -1,5 +1,6 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync, existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 export interface SpyglassData {
   nationName: string;
@@ -11,11 +12,49 @@ export interface SpyglassData {
 }
 
 /**
+ * Get the path to the spyglass data file, trying multiple locations
+ */
+function getSpyglassFilePath(): string {
+  const candidates: string[] = [];
+  
+  // 1) dist relative (when running compiled code)
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    candidates.push(join(__dirname, '..', 'data', 'spyglass.txt')); // dist/services -> dist/data
+    candidates.push(join(__dirname, '..', '..', 'src', 'data', 'spyglass.txt')); // fallback to src from dist
+  } catch {}
+  
+  // 2) process cwd variants
+  candidates.push(join(process.cwd(), 'dist', 'data', 'spyglass.txt'));
+  candidates.push(join(process.cwd(), 'src', 'data', 'spyglass.txt'));
+  candidates.push(join(process.cwd(), 'data', 'spyglass.txt'));
+
+  for (const p of candidates) {
+    try {
+      if (existsSync(p)) return p;
+    } catch {}
+  }
+  
+  // Default to src path as fallback
+  return join(process.cwd(), 'src', 'data', 'spyglass.txt');
+}
+
+/**
  * Parse the spyglass.txt file to extract warchest information
  */
-export function parseSpyglassData(filePath: string): Map<string, SpyglassData> {
+export function parseSpyglassData(filePath?: string): Map<string, SpyglassData> {
+  // Use provided path or auto-detect
+  const resolvedPath = filePath || getSpyglassFilePath();
+  
   try {
-    const content = readFileSync(filePath, 'utf-8');
+    // Check if file exists before trying to read
+    if (!existsSync(resolvedPath)) {
+      console.log(`Spyglass file not found at ${resolvedPath}, returning empty data`);
+      return new Map();
+    }
+    
+    const content = readFileSync(resolvedPath, 'utf-8');
     const lines = content.split('\n');
     const spyglassMap = new Map<string, SpyglassData>();
     
@@ -79,8 +118,8 @@ export function parseSpyglassData(filePath: string): Map<string, SpyglassData> {
  * Load spyglass data from the standard location
  */
 export function loadSpyglassData(): Map<string, SpyglassData> {
-  const filePath = join(process.cwd(), 'src', 'data', 'spyglass.txt');
-  return parseSpyglassData(filePath);
+  // Auto-detect the correct path
+  return parseSpyglassData();
 }
 
 /**
