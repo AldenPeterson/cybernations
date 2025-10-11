@@ -305,6 +305,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [maxRecommendations, setMaxRecommendations] = useState<number>(7);
   const [urgentTargets, setUrgentTargets] = useState<boolean>(false);
   const [blownStaggers, setBlownStaggers] = useState<boolean>(false);
+  const [showPMNations, setShowPMNations] = useState<boolean>(false);
   const [alliances, setAlliances] = useState<Alliance[]>([]);
   const [assignAllianceIds, setAssignAllianceIds] = useState<number[]>([]);
 
@@ -361,6 +362,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     setStaggerOnly(parseBooleanParam(searchParams.get('staggerOnly'), true)); // default true
     setUrgentTargets(parseBooleanParam(searchParams.get('urgentTargets')));
     setBlownStaggers(parseBooleanParam(searchParams.get('blownStaggers')));
+    setShowPMNations(parseBooleanParam(searchParams.get('showPMNations')));
     const maxRecsParam = searchParams.get('maxRecommendations');
     if (maxRecsParam) {
       const parsed = parseInt(maxRecsParam);
@@ -500,7 +502,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const fetchNationWars = async () => {
     try {
       setLoading(true);
-      const response = await apiCall(`${API_ENDPOINTS.nationWars(allianceId)}`);
+      const response = await apiCall(`${API_ENDPOINTS.nationWars(allianceId)}?includePeaceMode=true`);
       const data = await response.json();
       
       if (data.success) {
@@ -735,6 +737,13 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
         console.error('Error in blown staggers filter:', err);
         return false;
       }
+    });
+  }
+
+  // Filter to hide nations in peace mode if showPMNations is false
+  if (!showPMNations) {
+    filteredNationWars = filteredNationWars.filter(nationWar => {
+      return nationWar.nation.inWarMode;
     });
   }
 
@@ -999,6 +1008,14 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
             onChange={(checked) => {
               setBlownStaggers(checked);
               updateUrlParams({ blownStaggers: checked.toString() });
+            }}
+          />
+          <FilterCheckbox
+            label="Show PM nations?"
+            checked={showPMNations}
+            onChange={(checked) => {
+              setShowPMNations(checked);
+              updateUrlParams({ showPMNations: checked.toString() });
             }}
           />
         </div>
