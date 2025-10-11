@@ -14,6 +14,8 @@ export interface Nation {
   inWarMode: boolean;
   attackingCasualties?: number;
   defensiveCasualties?: number;
+  warchest?: number;
+  spyglassLastUpdated?: number; // days old
 }
 
 export interface CategorizedNation {

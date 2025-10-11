@@ -19,6 +19,8 @@ interface StaggerRecommendationsCellProps {
     inWarMode: boolean;
     nuclearWeapons: number;
     governmentType: string;
+    warchest?: number;
+    spyglassLastUpdated?: number;
   };
   assignAllianceIds: number[];
   hideNonPriority: boolean;
@@ -225,6 +227,8 @@ interface War {
     inWarMode: boolean;
     nuclearWeapons: number;
     governmentType: string;
+    warchest?: number;
+    spyglassLastUpdated?: number;
   };
   attackingNation: {
     id: number;
@@ -238,6 +242,8 @@ interface War {
     inWarMode: boolean;
     nuclearWeapons: number;
     governmentType: string;
+    warchest?: number;
+    spyglassLastUpdated?: number;
   };
   status: string;
   date: string;
@@ -263,6 +269,8 @@ interface NationWars {
     nuclearWeapons: number;
     governmentType: string;
     lastNukedDate?: string;
+    warchest?: number;
+    spyglassLastUpdated?: number;
   };
   attackingWars: War[];
   defendingWars: War[];
@@ -391,6 +399,15 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       zIndex: 100,
       boxShadow: '2px 0 8px -2px rgba(0,0,0,0.3), 1px 0 0 0 #999'
     },
+    warchest: {
+      padding: '2px 3px',
+      border: '1px solid #ddd',
+      textAlign: 'center' as const,
+      backgroundColor: '#f8f9fa',
+      minWidth: '80px',
+      maxWidth: '100px',
+      width: '90px'
+    },
     nukes: {
       padding: '2px 2px',
       border: '1px solid #ddd',
@@ -518,6 +535,17 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     return tech.toFixed(0);
   };
 
+  const formatWarchest = (warchest: number): string => {
+    if (warchest >= 1000000000) {
+      return '$' + (warchest / 1000000000).toFixed(1) + 'B';
+    } else if (warchest >= 1000000) {
+      return '$' + (warchest / 1000000).toFixed(1) + 'M';
+    } else if (warchest >= 1000) {
+      return '$' + (warchest / 1000).toFixed(1) + 'K';
+    }
+    return '$' + warchest.toFixed(0);
+  };
+
   const getActivityColor = (activity: string): string => {
     const activityLower = activity.toLowerCase();
     if (activityLower.includes('active in the last 3 days')) {
@@ -539,6 +567,15 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       return '#fffde7'; // Light yellow for 10-18
     }
     return '#e8f5e8'; // Light green for above 18
+  };
+
+  const getWarchestColor = (warchest: number): string => {
+    if (warchest < 100000000) { // Less than $100M
+      return '#ffebee'; // Light red
+    } else if (warchest >= 100000000 && warchest < 1000000000) { // $100M - $1B
+      return '#fffde7'; // Light yellow
+    }
+    return '#e8f5e8'; // Light green for $1B+
   };
 
   const getCentralTodayYMD = (): { y: number; m: number; d: number } => {
@@ -788,6 +825,23 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
             </div>
           </div>
 
+          {/* Warchest Colors */}
+          <div>
+            <strong style={{ color: '#ffffff', fontSize: '12px' }}>Warchest:</strong>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#ffebee', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>&lt; $100M</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#fffde7', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>$100M - $1B</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
+              <div style={{ width: '18px', height: '18px', backgroundColor: '#e8f5e8', border: '1px solid #666', marginRight: '8px' }}></div>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>&gt; $1B</span>
+            </div>
+          </div>
+
           {/* Other Colors */}
           <div>
             <strong style={{ color: '#ffffff', fontSize: '12px' }}>Other Indicators:</strong>
@@ -970,6 +1024,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     backgroundColor: '#343a40',
                     boxShadow: '2px 0 8px -2px rgba(0,0,0,0.3), 1px 0 0 0 #999'
                   }}>Nation</th>
+                  <th style={headerStyles.center}>Warchest</th>
                   <th style={headerStyles.center}>Nukes</th>
                   <th style={headerStyles.center}>Last Nuked</th>
                   <th style={headerStyles.center}>Attacking War 1</th>
@@ -1019,6 +1074,33 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                         <WarStatusBadge inWarMode={nationWar.nation.inWarMode} />
                       </div>
                     </td>
+                    {/* Warchest Column */}
+                    <td style={{
+                      ...columnStyles.warchest,
+                      backgroundColor: nationWar.nation.warchest !== undefined ? getWarchestColor(nationWar.nation.warchest) : '#ffffff'
+                    }}>
+                      {nationWar.nation.warchest !== undefined ? (
+                        <div style={{ fontSize: '11px' }}>
+                          <div style={{ 
+                            color: '#2e7d32', 
+                            fontWeight: 'bold'
+                          }}>
+                            {formatWarchest(nationWar.nation.warchest)}
+                          </div>
+                          {nationWar.nation.spyglassLastUpdated !== undefined && (
+                            <div style={{ 
+                              color: '#666', 
+                              fontSize: '9px',
+                              marginTop: '2px'
+                            }}>
+                              ({nationWar.nation.spyglassLastUpdated}d)
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span style={{ color: '#999', fontSize: '10px' }}>—</span>
+                      )}
+                    </td>
                     {/* Nuclear Weapons Column */}
                     <td style={{ 
                       ...columnStyles.nukes,
@@ -1064,6 +1146,18 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                             <div style={{ fontSize: '9px', color: '#666', marginBottom: '2px' }}>
                               {nationWar.attackingWars[index].defendingNation.ruler} • {nationWar.attackingWars[index].defendingNation.alliance}
                             </div>
+                            {nationWar.attackingWars[index].defendingNation.warchest !== undefined && (
+                              <div style={{ fontSize: '9px', marginBottom: '2px' }}>
+                                <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                                  {formatWarchest(nationWar.attackingWars[index].defendingNation.warchest!)}
+                                </span>
+                                {nationWar.attackingWars[index].defendingNation.spyglassLastUpdated !== undefined && (
+                                  <span style={{ color: '#666', marginLeft: '3px' }}>
+                                    ({nationWar.attackingWars[index].defendingNation.spyglassLastUpdated}d)
+                                  </span>
+                                )}
+                              </div>
+                            )}
                             <div style={{ fontSize: '9px', color: '#666' }}>
                               {nationWar.attackingWars[index].formattedEndDate || nationWar.attackingWars[index].endDate}
                             </div>
@@ -1103,6 +1197,18 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                             <div style={{ fontSize: '9px', color: '#666', marginBottom: '2px' }}>
                               {nationWar.defendingWars[index].attackingNation.ruler} • {nationWar.defendingWars[index].attackingNation.alliance}
                             </div>
+                            {nationWar.defendingWars[index].attackingNation.warchest !== undefined && (
+                              <div style={{ fontSize: '9px', marginBottom: '2px' }}>
+                                <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                                  {formatWarchest(nationWar.defendingWars[index].attackingNation.warchest!)}
+                                </span>
+                                {nationWar.defendingWars[index].attackingNation.spyglassLastUpdated !== undefined && (
+                                  <span style={{ color: '#666', marginLeft: '3px' }}>
+                                    ({nationWar.defendingWars[index].attackingNation.spyglassLastUpdated}d)
+                                  </span>
+                                )}
+                              </div>
+                            )}
                             <div style={{ fontSize: '9px', color: '#666' }}>
                               {nationWar.defendingWars[index].formattedEndDate || nationWar.defendingWars[index].endDate}
                             </div>
