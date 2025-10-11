@@ -502,7 +502,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const fetchNationWars = async () => {
     try {
       setLoading(true);
-      const response = await apiCall(`${API_ENDPOINTS.nationWars(allianceId)}?includePeaceMode=true`);
+      // Fetch all data without any filtering - we'll filter client-side
+      const response = await apiCall(`${API_ENDPOINTS.nationWars(allianceId)}?includePeaceMode=true&needsStagger=false`);
       const data = await response.json();
       
       if (data.success) {
