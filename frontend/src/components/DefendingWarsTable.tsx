@@ -80,20 +80,22 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
       {displayedRecommendations.map((attacker) => (
         <div key={attacker.id} className={tableClasses.assignmentCell.row}>
           <div className={tableClasses.assignmentCell.nationName}>
-            <a 
-              href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attacker.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-700 no-underline font-bold hover:underline"
-              title={`${attacker.name} / ${attacker.ruler}`}
-            >
-              {attacker.name} / {attacker.ruler}
-            </a>
-            {!attacker.inWarMode && (
-              <span className="ml-1">
-                <WarStatusBadge inWarMode={false} variant="inline" />
-              </span>
-            )}
+            <div className="flex items-center min-w-0">
+              <a 
+                href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attacker.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-700 no-underline font-bold hover:underline overflow-hidden overflow-ellipsis whitespace-nowrap flex-1 min-w-0"
+                title={`${attacker.name} / ${attacker.ruler}`}
+              >
+                {attacker.name} / {attacker.ruler}
+              </a>
+              {!attacker.inWarMode && (
+                <span className="ml-1 flex-shrink-0">
+                  <WarStatusBadge inWarMode={false} variant="inline" />
+                </span>
+              )}
+            </div>
           </div>
           <div className={tableClasses.assignmentCell.strengthBadge}>
             {attacker.strengthRatio && (

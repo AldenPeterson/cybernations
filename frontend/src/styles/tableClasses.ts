@@ -96,7 +96,7 @@ export const tableClasses = {
   assignmentCell: {
     container: 'text-[7px] md:text-[9px] text-left',
     row: 'mb-1 leading-tight font-mono flex items-center',
-    nationName: 'w-[120px] md:w-[180px] overflow-hidden overflow-ellipsis whitespace-nowrap flex-shrink-0',
+    nationName: 'w-[120px] md:w-[180px] flex-shrink-0 flex items-center',
     strengthBadge: 'w-[35px] md:w-[50px] flex-shrink-0',
     alliance: 'w-[100px] md:w-[130px] text-gray-600 whitespace-nowrap overflow-hidden overflow-ellipsis flex-shrink-0',
     strength: 'w-[50px] md:w-[75px] text-gray-600 text-right flex-shrink-0',
