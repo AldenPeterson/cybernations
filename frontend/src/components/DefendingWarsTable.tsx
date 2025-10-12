@@ -674,7 +674,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   return (
     <div className="w-full max-w-none">
       {/* Color Legend */}
-      <div className="mb-5 p-4 bg-black border border-gray-700 rounded-lg text-xs">
+      <div className="mb-5 mx-5 p-4 bg-black border border-gray-700 rounded-lg text-xs">
         <h4 className="m-0 mb-3 text-sm font-bold text-white">
           Color Legend
         </h4>
@@ -775,7 +775,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       </div>
 
       {/* Filter Controls - positioned above table */}
-      <div className="mb-4 flex flex-col gap-4">
+      <div className="mb-4 mx-5 flex flex-col gap-4">
         {/* Target Assignment Controls Section */}
         <div className="p-4 bg-slate-50 border border-slate-300 rounded-lg">
           <h4 className="m-0 mb-3 text-sm font-bold text-gray-800">

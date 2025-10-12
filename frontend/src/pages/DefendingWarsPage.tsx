@@ -14,7 +14,7 @@ const DefendingWarsPage: React.FC = () => {
   }
 
   return (
-    <div className="mt-20 px-5 max-w-none w-full">
+    <div className="mt-20 max-w-none w-full">
       <DefendingWarsTable allianceId={parseInt(allianceId)} />
     </div>
   );
