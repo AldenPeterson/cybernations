@@ -384,9 +384,9 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
                         header.column.getCanSort() && 'sortable-header'
                       )}
                       style={{
-                        fontSize: header.id.includes('send') || header.id.includes('get') ? '12px' : '14px',
+                        fontSize: header.id.includes('send') || header.id.includes('get') ? '14px' : '16px',
                         width: `${header.getSize()}px`,
-                        padding: header.getSize() < 40 ? '16px 4px' : '16px 12px'
+                        padding: header.getSize() < 70 ? '12px 8px' : '12px 12px'
                       }}
                       onClick={header.column.getToggleSortingHandler()}
                     >

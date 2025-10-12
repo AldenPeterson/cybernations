@@ -8,22 +8,7 @@ import { apiCall, API_ENDPOINTS } from '../utils/api';
 import { tableClasses } from '../styles/tableClasses';
 
 interface StaggerRecommendationsCellProps {
-  defendingNation: {
-    id: number;
-    name: string;
-    ruler: string;
-    alliance: string;
-    allianceId: number;
-    strength: number;
-    technology: string;
-    activity: string;
-    inWarMode: boolean;
-    nuclearWeapons: number;
-    governmentType: string;
-    warchest?: number;
-    spyglassLastUpdated?: number;
-  };
-  assignAllianceIds: number[];
+  rawRecommendations: any[]; // Pre-fetched recommendations passed from parent
   includePeaceMode: boolean;
   assignOnlyPositive: boolean;
   maxRecommendations: number;
@@ -32,80 +17,14 @@ interface StaggerRecommendationsCellProps {
 }
 
 const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({ 
-  defendingNation, 
-  assignAllianceIds,
+  rawRecommendations,
   includePeaceMode,
   assignOnlyPositive,
   maxRecommendations,
   showForFullTargets,
   defendingWarsCount
 }) => {
-  const [rawRecommendations, setRawRecommendations] = useState<any[]>([]); // Store unfiltered API data
-  const [loading, setLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-
-  // Fetch data only when alliance selection changes
-  useEffect(() => {
-    const fetchStaggerRecommendations = async () => {
-      try {
-        setLoading(true);
-        const allRecommendations: any[] = [];
-        
-        // Fetch recommendations for each selected assign alliance
-        // Get ALL data without any filters - we'll filter client-side
-        for (const assignAllianceId of assignAllianceIds) {
-          try {
-            const url = `${API_ENDPOINTS.staggerEligibility}/${assignAllianceId}/${defendingNation.allianceId}?hideAnarchy=true&hidePeaceMode=false&hideNonPriority=false&includeFullTargets=true`;
-            const response = await apiCall(url);
-            const data = await response.json();
-            
-            if (data.success) {
-              // Find recommendations for this specific defending nation
-              const nationRecommendations = data.staggerData.find(
-                (item: any) => item.defendingNation.id === defendingNation.id
-              );
-              if (nationRecommendations?.eligibleAttackers) {
-                allRecommendations.push(...nationRecommendations.eligibleAttackers);
-              }
-            }
-          } catch (err) {
-            console.error(`Failed to fetch stagger recommendations for alliance ${assignAllianceId}:`, err);
-          }
-        }
-        
-        // Remove duplicates based on attacker ID
-        const uniqueRecommendations = allRecommendations
-          .filter((rec, index, self) => 
-            index === self.findIndex(r => r.id === rec.id)
-          );
-        
-        // Sort by strength (highest first)
-        uniqueRecommendations.sort((a, b) => b.strength - a.strength);
-        
-        setRawRecommendations(uniqueRecommendations);
-      } catch (err) {
-        console.error('Failed to fetch stagger recommendations:', err);
-        setRawRecommendations([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (assignAllianceIds.length > 0 && defendingNation.id) {
-      // Add a small delay to prevent too many simultaneous requests
-      const timeoutId = setTimeout(() => {
-        fetchStaggerRecommendations();
-      }, 100);
-      
-      return () => {
-        clearTimeout(timeoutId);
-      };
-    } else {
-      // Only clear recommendations if there are no alliances selected
-      setRawRecommendations([]);
-      setLoading(false);
-    }
-  }, [assignAllianceIds, defendingNation.id, defendingNation.allianceId]);
 
   // Apply filters client-side whenever filter settings change
   const filteredRecommendations = React.useMemo(() => {
@@ -123,11 +42,6 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
     
     return filtered;
   }, [rawRecommendations, includePeaceMode, assignOnlyPositive]);
-
-  // Reset expanded state when recommendations change
-  useEffect(() => {
-    setIsExpanded(false);
-  }, [filteredRecommendations.length, maxRecommendations]);
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
@@ -153,11 +67,7 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
     return <span className="text-gray-400 text-[9px]">Full</span>;
   }
 
-  if (loading && filteredRecommendations.length === 0) {
-    return <span className="text-gray-600 text-[9px]">Loading...</span>;
-  }
-
-  if (!loading && filteredRecommendations.length === 0) {
+  if (filteredRecommendations.length === 0) {
     return <span className="text-gray-400 text-[9px]">None</span>;
   }
 
@@ -310,6 +220,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [showForFullTargets, setShowForFullTargets] = useState<boolean>(true);
   const [alliances, setAlliances] = useState<Alliance[]>([]);
   const [assignAllianceIds, setAssignAllianceIds] = useState<number[]>([]);
+  const [staggerRecommendationsMap, setStaggerRecommendationsMap] = useState<Map<number, any[]>>(new Map());
 
   // Helper function to parse boolean from URL parameter
   const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
@@ -403,6 +314,64 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   useEffect(() => {
     fetchAlliances();
   }, []);
+
+  // Fetch all stagger recommendations once when assign alliances change
+  useEffect(() => {
+    const fetchAllStaggerRecommendations = async () => {
+      if (assignAllianceIds.length === 0) {
+        setStaggerRecommendationsMap(new Map());
+        return;
+      }
+
+      try {
+        const newMap = new Map<number, any[]>();
+
+        // Fetch stagger eligibility data for each assign alliance
+        for (const assignAllianceId of assignAllianceIds) {
+          try {
+            const url = `${API_ENDPOINTS.staggerEligibility}/${assignAllianceId}/${allianceId}?hideAnarchy=true&hidePeaceMode=false&hideNonPriority=false&includeFullTargets=true`;
+            const response = await apiCall(url);
+            const data = await response.json();
+
+            if (data.success && data.staggerData) {
+              // Store recommendations for each defending nation
+              data.staggerData.forEach((item: any) => {
+                const defendingNationId = item.defendingNation.id;
+                const existingRecs = newMap.get(defendingNationId) || [];
+                
+                // Add eligible attackers for this nation
+                if (item.eligibleAttackers) {
+                  existingRecs.push(...item.eligibleAttackers);
+                }
+                
+                newMap.set(defendingNationId, existingRecs);
+              });
+            }
+          } catch (err) {
+            console.error(`Failed to fetch stagger recommendations for alliance ${assignAllianceId}:`, err);
+          }
+        }
+
+        // Remove duplicates and sort for each nation
+        newMap.forEach((recommendations, nationId) => {
+          const uniqueRecs = recommendations
+            .filter((rec, index, self) => 
+              index === self.findIndex(r => r.id === rec.id)
+            )
+            .sort((a, b) => b.strength - a.strength);
+          
+          newMap.set(nationId, uniqueRecs);
+        });
+
+        setStaggerRecommendationsMap(newMap);
+      } catch (err) {
+        console.error('Failed to fetch stagger recommendations:', err);
+        setStaggerRecommendationsMap(new Map());
+      }
+    };
+
+    fetchAllStaggerRecommendations();
+  }, [assignAllianceIds, allianceId]);
 
 
   const fetchAlliances = async () => {
@@ -1115,8 +1084,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     >
                       {assignAllianceIds.length > 0 ? (
                         <StaggerRecommendationsCell 
-                          defendingNation={nationWar.nation}
-                          assignAllianceIds={assignAllianceIds}
+                          rawRecommendations={staggerRecommendationsMap.get(nationWar.nation.id) || []}
                           includePeaceMode={includePeaceMode}
                           assignOnlyPositive={assignOnlyPositive}
                           maxRecommendations={maxRecommendations}

@@ -28,7 +28,7 @@ export const tableClasses = {
   headerRow: 'bg-gradient-to-br from-slate-50 to-slate-200 border-b-2 border-slate-300',
 
   // Header cell styles
-  headerCell: 'px-3 py-4 text-gray-700 font-bold text-sm tracking-wide border-b-2 border-slate-300 cursor-pointer select-none transition-all duration-200 bg-slate-50',
+  headerCell: 'px-3 py-4 text-slate-900 font-bold text-base tracking-wide border-b-2 border-slate-300 cursor-pointer select-none transition-all duration-200 bg-slate-50',
   headerCellSmall: 'text-xs',
   headerCellContent: 'flex items-center gap-1',
 
@@ -44,14 +44,14 @@ export const tableClasses = {
 
   // Data cell styles
   dataCell: 'px-3 py-2 text-slate-800 border-b border-slate-100 align-middle',
-  dataCellCompact: 'px-1 py-0.5 text-slate-800 border-b border-slate-100 align-middle',
+  dataCellCompact: 'px-2 py-2 text-slate-800 border-b border-slate-100 align-middle',
 
   // Input field styles
   inputField: 'border-2 border-slate-200 rounded-lg px-3 py-2 text-sm transition-all duration-200 bg-white text-slate-800 break-words box-border leading-snug',
   inputFieldFocus: 'outline-none border-secondary ring-2 ring-secondary/20',
   inputFieldHover: 'border-slate-300',
-  numberInput: 'text-center font-semibold w-[50px]',
-  checkboxInput: 'w-[18px] h-[18px] cursor-pointer',
+  numberInput: 'text-center font-semibold w-[60px]',
+  checkboxInput: 'w-[20px] h-[20px] cursor-pointer',
 
   // Button styles
   saveButton: 'bg-gradient-to-br from-success to-success-dark text-white border-none rounded-lg px-5 py-2.5 text-sm font-semibold cursor-pointer transition-all shadow-md shadow-success/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-success/30 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none',
