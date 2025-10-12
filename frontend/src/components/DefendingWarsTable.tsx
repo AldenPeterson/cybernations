@@ -115,7 +115,7 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
             {attacker.nuclearWeapons} nukes
           </div>
           <div className={`${tableClasses.assignmentCell.wars} ${attacker.currentWars > 0 ? 'text-red-600 font-bold' : ''}`}>
-            {attacker.currentWars !== undefined ? `${attacker.currentWars} war${attacker.currentWars !== 1 ? 's' : ''}` : '—'}
+            {attacker.currentWars !== undefined && attacker.currentWars > 0 ? `${attacker.currentWars} war${attacker.currentWars !== 1 ? 's' : ''}` : '—'}
           </div>
         </div>
       ))}
