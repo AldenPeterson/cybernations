@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 
 export interface ColorLegendItem {
   color: string;
@@ -17,31 +18,21 @@ export interface ColorLegendProps {
 
 const ColorLegend: React.FC<ColorLegendProps> = ({ sections, className = '' }) => {
   return (
-    <div style={{ 
-      marginBottom: '20px', 
-      padding: '15px',
-      backgroundColor: '#000000',
-      border: '1px solid #333',
-      borderRadius: '8px',
-      fontSize: '13px'
-    }} className={className}>
-      <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 'bold', color: '#ffffff' }}>
+    <div className={clsx('mb-5 p-4 bg-black border border-gray-700 rounded-lg text-xs', className)}>
+      <h4 className="m-0 mb-3 text-sm font-bold text-white">
         Color Legend
       </h4>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
         {sections.map((section, sectionIndex) => (
           <div key={sectionIndex}>
-            <strong style={{ color: '#ffffff', fontSize: '12px' }}>{section.title}:</strong>
+            <strong className="text-white text-xs">{section.title}:</strong>
             {section.items.map((item, itemIndex) => (
-              <div key={itemIndex} style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-                <div style={{ 
-                  width: '18px', 
-                  height: '18px', 
-                  backgroundColor: item.color, 
-                  border: '1px solid #666', 
-                  marginRight: '8px' 
-                }}></div>
-                <span style={{ fontSize: '11px', color: '#ffffff' }}>{item.label}</span>
+              <div key={itemIndex} className="flex items-center my-0.5">
+                <div 
+                  className="w-[18px] h-[18px] border border-gray-600 mr-2"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="text-[11px] text-white">{item.label}</span>
               </div>
             ))}
           </div>

@@ -1,5 +1,6 @@
 import React from 'react';
-import { tableStyles } from '../styles/tableStyles';
+import { tableClasses } from '../styles/tableClasses';
+import clsx from 'clsx';
 
 export interface FilterOption {
   label: string;
@@ -16,7 +17,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
   className = '' 
 }) => {
   return (
-    <div style={tableStyles.filterContainer} className={className}>
+    <div className={clsx(tableClasses.filterContainer, className)}>
       {children}
     </div>
   );

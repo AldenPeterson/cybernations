@@ -1,5 +1,6 @@
 import React from 'react';
-import { tableStyles } from '../styles/tableStyles';
+import { tableClasses } from '../styles/tableClasses';
+import clsx from 'clsx';
 
 export interface TableColumn<T> {
   key: keyof T | string;
@@ -42,9 +43,9 @@ function ReusableTable<T>({
 
   if (loading) {
     return (
-      <div style={tableStyles.loadingContainer}>
-        <div style={tableStyles.loadingCard}>
-          <div style={tableStyles.loadingText}>Loading...</div>
+      <div className={tableClasses.loadingContainer}>
+        <div className={tableClasses.loadingCard}>
+          <div className={tableClasses.loadingText}>Loading...</div>
         </div>
       </div>
     );
@@ -52,10 +53,10 @@ function ReusableTable<T>({
 
   if (error) {
     return (
-      <div style={tableStyles.errorContainer}>
-        <div style={tableStyles.errorCard}>
-          <h3 style={tableStyles.errorTitle}>Error</h3>
-          <p style={tableStyles.errorText}>{error}</p>
+      <div className={tableClasses.errorContainer}>
+        <div className={tableClasses.errorCard}>
+          <h3 className={tableClasses.errorTitle}>Error</h3>
+          <p className={tableClasses.errorText}>{error}</p>
         </div>
       </div>
     );
@@ -63,25 +64,27 @@ function ReusableTable<T>({
 
   if (data.length === 0) {
     return (
-      <div style={tableStyles.emptyState}>
-        <p style={tableStyles.emptyStateText}>{emptyMessage}</p>
+      <div className={tableClasses.emptyState}>
+        <p className={tableClasses.emptyStateText}>{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div style={tableStyles.tableWrapper} className={className}>
-      <table style={tableStyles.table}>
+    <div className={clsx(tableClasses.tableWrapper, className)}>
+      <table className={tableClasses.table}>
         <thead>
-          <tr style={tableStyles.headerRow}>
+          <tr className={tableClasses.headerRow}>
             {columns.map((column) => (
               <th
                 key={String(column.key)}
+                className={clsx(
+                  tableClasses.headerCell,
+                  column.sortable && 'cursor-pointer'
+                )}
                 style={{
-                  ...tableStyles.headerCell,
                   textAlign: column.align || 'left',
-                  width: column.width,
-                  cursor: column.sortable ? 'pointer' : 'default'
+                  width: column.width
                 }}
               >
                 {column.header}
@@ -93,17 +96,13 @@ function ReusableTable<T>({
           {data.map((row, rowIndex) => (
             <tr 
               key={getRowKey(row, rowIndex)}
-              style={{
-                ...tableStyles.dataRow,
-                ...(rowIndex % 2 === 0 ? tableStyles.dataRowEven : {})
-              }}
-              className="nation-table-row"
+              className={clsx(tableClasses.dataRow, 'nation-table-row')}
             >
               {columns.map((column) => (
                 <td
                   key={`${String(column.key)}-${rowIndex}`}
+                  className={tableClasses.dataCell}
                   style={{
-                    ...tableStyles.dataCell,
                     textAlign: column.align || 'left'
                   }}
                 >

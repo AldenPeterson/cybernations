@@ -1,5 +1,6 @@
 import React from 'react';
-import { tableStyles } from '../styles/tableStyles';
+import { tableClasses } from '../styles/tableClasses';
+import clsx from 'clsx';
 
 export interface TableContainerProps {
   children: React.ReactNode;
@@ -11,8 +12,8 @@ const TableContainer: React.FC<TableContainerProps> = ({
   className = '' 
 }) => {
   return (
-    <div style={tableStyles.container} className={className}>
-      <div style={tableStyles.card}>
+    <div className={clsx(tableClasses.container, className)}>
+      <div className={tableClasses.card}>
         {children}
       </div>
     </div>

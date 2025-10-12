@@ -210,7 +210,7 @@ const AidPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', marginTop: '80px' }}>
+      <div className="p-5 text-center mt-20">
         Loading alliance data...
       </div>
     );
@@ -218,7 +218,7 @@ const AidPage: React.FC = () => {
 
   if (error) {
     return (
-      <div style={{ padding: '20px', color: 'red', marginTop: '80px' }}>
+      <div className="p-5 text-error mt-20">
         Error: {error}
       </div>
     );
@@ -226,7 +226,7 @@ const AidPage: React.FC = () => {
 
   if (!allianceId) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: '#666', marginTop: '80px' }}>
+      <div className="text-center p-10 text-gray-600 mt-20">
         Please select an alliance to view aid data.
       </div>
     );
@@ -234,25 +234,19 @@ const AidPage: React.FC = () => {
 
   if (!alliance) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: '#666', marginTop: '80px' }}>
+      <div className="text-center p-10 text-gray-600 mt-20">
         Alliance not found.
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', marginTop: '80px' }}>
+    <div className="p-5 font-sans mt-20">
       {/* Alliance Stats */}
       {allianceStats && allianceStats.totalNations > 0 && (
-        <div style={{ 
-          marginBottom: '20px', 
-          padding: '15px', 
-          backgroundColor: 'transparent', 
-          borderRadius: '8px',
-          border: '1px solid #ddd'
-        }}>
+        <div className="mb-5 p-4 bg-transparent rounded-lg border border-slate-300">
           <h3>Alliance Statistics</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
             <div><strong>Total Nations:</strong> {allianceStats.totalNations}</div>
             <div><strong>Sent Aid:</strong> {allianceStats.totalOutgoingAid}</div>
             <div><strong>Received Aid:</strong> {allianceStats.totalIncomingAid}</div>
@@ -268,106 +262,39 @@ const AidPage: React.FC = () => {
 
       {/* Alliance-to-Alliance Aid Statistics */}
       {allianceAidStats && allianceAidStats.length > 0 && (
-        <div style={{ 
-          marginBottom: '20px', 
-          padding: '15px', 
-          backgroundColor: 'transparent', 
-          borderRadius: '8px',
-          border: '1px solid #ddd'
-        }}>
+        <div className="mb-5 p-4 bg-transparent rounded-lg border border-slate-300">
           <h3>{alliance.name} Aid Offers, by receiving/sending alliance</h3>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ 
-              width: '100%', 
-              borderCollapse: 'collapse', 
-              border: '1px solid #ddd',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-slate-300 text-sm bg-white">
               <thead>
-                <tr style={{ backgroundColor: '#343a40' }}>
-                  <th style={{ 
-                    padding: '12px', 
-                    border: '1px solid #ddd', 
-                    textAlign: 'left',
-                    backgroundColor: '#343a40',
-                    color: 'white',
-                    fontWeight: 'bold'
-                  }}>
+                <tr className="bg-gray-800">
+                  <th className="p-3 border border-slate-300 text-left bg-gray-800 text-white font-bold">
                     Alliance
                   </th>
-                  <th style={{ 
-                    padding: '12px', 
-                    border: '1px solid #ddd', 
-                    textAlign: 'center',
-                    backgroundColor: '#343a40',
-                    color: 'white',
-                    fontWeight: 'bold'
-                  }}>
+                  <th className="p-3 border border-slate-300 text-center bg-gray-800 text-white font-bold">
                     Received
                   </th>
-                  <th style={{ 
-                    padding: '12px', 
-                    border: '1px solid #ddd', 
-                    textAlign: 'center',
-                    backgroundColor: '#343a40',
-                    color: 'white',
-                    fontWeight: 'bold'
-                  }}>
+                  <th className="p-3 border border-slate-300 text-center bg-gray-800 text-white font-bold">
                     Sent
                   </th>
-                  <th style={{ 
-                    padding: '12px', 
-                    border: '1px solid #ddd', 
-                    textAlign: 'center',
-                    backgroundColor: '#343a40',
-                    color: 'white',
-                    fontWeight: 'bold'
-                  }}>
+                  <th className="p-3 border border-slate-300 text-center bg-gray-800 text-white font-bold">
                     Total
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {allianceAidStats?.map((stats) => (
-                  <tr key={stats.allianceId} style={{ backgroundColor: 'white' }}>
-                    <td style={{ 
-                      padding: '8px', 
-                      border: '1px solid #ddd',
-                      fontWeight: 'bold',
-                      color: 'black',
-                      backgroundColor: 'white'
-                    }}>
+                  <tr key={stats.allianceId} className="bg-white hover:bg-slate-50">
+                    <td className="p-2 border border-slate-300 font-bold text-black bg-white">
                       {stats.allianceName}
                     </td>
-                    <td style={{ 
-                      padding: '8px', 
-                      border: '1px solid #ddd', 
-                      textAlign: 'center',
-                      color: 'black',
-                      backgroundColor: 'white',
-                      fontWeight: stats.incomingAid > 0 ? 'bold' : 'normal'
-                    }}>
+                    <td className={`p-2 border border-slate-300 text-center text-black bg-white ${stats.incomingAid > 0 ? 'font-bold' : 'font-normal'}`}>
                       {stats.incomingAid}
                     </td>
-                    <td style={{ 
-                      padding: '8px', 
-                      border: '1px solid #ddd', 
-                      textAlign: 'center',
-                      color: 'black',
-                      backgroundColor: 'white',
-                      fontWeight: stats.outgoingAid > 0 ? 'bold' : 'normal'
-                    }}>
+                    <td className={`p-2 border border-slate-300 text-center text-black bg-white ${stats.outgoingAid > 0 ? 'font-bold' : 'font-normal'}`}>
                       {stats.outgoingAid}
                     </td>
-                    <td style={{ 
-                      padding: '8px', 
-                      border: '1px solid #ddd', 
-                      textAlign: 'center',
-                      color: 'black',
-                      backgroundColor: 'white',
-                      fontWeight: 'bold'
-                    }}>
+                    <td className="p-2 border border-slate-300 text-center text-black bg-white font-bold">
                       {stats.incomingAid + stats.outgoingAid}
                     </td>
                   </tr>
@@ -379,44 +306,25 @@ const AidPage: React.FC = () => {
       )}
 
       {/* Expiration Filter */}
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-          <label style={{ marginRight: '10px', fontWeight: 'bold' }}>
+      <div className="mb-5">
+        <div className="flex items-center mb-2">
+          <label className="mr-2.5 font-bold">
             Filter by Aid Expiration:
           </label>
           <button
             onClick={() => setExpirationFilter(['empty', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days'])}
-            style={{
-              padding: '4px 8px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              color: '#333',
-              fontWeight: '500',
-              marginRight: '8px'
-            }}
+            className="px-2 py-1 bg-slate-50 border border-slate-300 rounded cursor-pointer text-xs text-gray-800 font-medium mr-2 hover:bg-slate-100"
           >
             Check All
           </button>
           <button
             onClick={() => setExpirationFilter([])}
-            style={{
-              padding: '4px 8px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              color: '#333',
-              fontWeight: '500'
-            }}
+            className="px-2 py-1 bg-slate-50 border border-slate-300 rounded cursor-pointer text-xs text-gray-800 font-medium hover:bg-slate-100"
           >
             Uncheck All
           </button>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div className="flex flex-wrap gap-2">
           {[
             { value: 'empty', label: 'Empty', color: '#f8f9fa', textColor: '#333' },
             { value: '1 day', label: '1 Day', color: '#ffeaa7', textColor: '#333' },
@@ -430,18 +338,14 @@ const AidPage: React.FC = () => {
             { value: '9 days', label: '9 Days', color: '#d4edda', textColor: '#333' },
             { value: '10 days', label: '10 Days', color: '#d4edda', textColor: '#333' }
           ].map(option => (
-            <label key={option.value} style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              padding: '4px 8px',
-              backgroundColor: expirationFilter.includes(option.value) ? option.color : '#f8f9fa',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              color: option.textColor,
-              fontWeight: '500'
-            }}>
+            <label 
+              key={option.value}
+              className="flex items-center px-2 py-1 border border-slate-300 rounded cursor-pointer text-sm font-medium"
+              style={{ 
+                backgroundColor: expirationFilter.includes(option.value) ? option.color : '#f8f9fa',
+                color: option.textColor
+              }}
+            >
               <input
                 type="checkbox"
                 checked={expirationFilter.includes(option.value)}
@@ -452,7 +356,7 @@ const AidPage: React.FC = () => {
                     setExpirationFilter(expirationFilter.filter(f => f !== option.value));
                   }
                 }}
-                style={{ marginRight: '6px' }}
+                className="mr-1.5"
               />
               {option.label}
             </label>
@@ -464,23 +368,18 @@ const AidPage: React.FC = () => {
       {getFilteredAidSlots().length > 0 && (
         <div>
           <h2>Aid Slots by Nation</h2>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ 
-              width: '100%', 
-              borderCollapse: 'collapse', 
-              border: '1px solid #ddd',
-              fontSize: '14px'
-            }}>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-slate-300 text-sm">
               <thead>
-                <tr style={{ backgroundColor: '#343a40' }}>
-                  <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>
+                <tr className="bg-gray-800">
+                  <th className="p-3 border border-slate-300 text-left text-white font-bold">
                     Nation
                   </th>
                   {[1, 2, 3, 4, 5, 6].map(slotNum => (
-                    <th key={slotNum} style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>
+                    <th key={slotNum} className="p-3 border border-slate-300 text-center text-white font-bold">
                       Slot {slotNum}
                       <br />
-                      <small style={{ color: '#e0e0e0' }}>
+                      <small className="text-gray-300">
                         Aid Offer
                       </small>
                     </th>
@@ -490,36 +389,30 @@ const AidPage: React.FC = () => {
               <tbody>
                 {getFilteredAidSlots().map((nationAidSlots) => (
                   <tr key={nationAidSlots.nation.id}>
-                    <td style={{ 
-                      padding: '8px', 
-                      border: '1px solid #ddd',
-                      backgroundColor: getActivityColor(nationAidSlots.nation.activity)
-                    }}>
+                    <td 
+                      className="p-2 border border-slate-300"
+                      style={{ backgroundColor: getActivityColor(nationAidSlots.nation.activity) }}
+                    >
                       <div>
                         <strong>
                           <a 
                             href={`https://www.cybernations.net/search_aid.asp?search=${nationAidSlots.nation.id}&Extended=1`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{ 
-                              color: '#007bff', 
-                              textDecoration: 'none'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                            className="text-primary no-underline hover:underline"
                           >
                             {nationAidSlots.nation.nationName}
                           </a>
                         </strong>
                         <br />
-                        <small style={{ color: '#666' }}>
+                        <small className="text-gray-600">
                           {nationAidSlots.nation.rulerName}
                         </small>
                         <br />
-                        <small style={{ 
-                          color: getWarStatusColor(nationAidSlots.nation.inWarMode),
-                          fontWeight: 'bold'
-                        }}>
+                        <small 
+                          className="font-bold"
+                          style={{ color: getWarStatusColor(nationAidSlots.nation.inWarMode) }}
+                        >
                           {getWarStatusIcon(nationAidSlots.nation.inWarMode)} {nationAidSlots.nation.inWarMode ? 'War Mode' : 'Peace Mode'}
                         </small>
                       </div>
@@ -530,62 +423,48 @@ const AidPage: React.FC = () => {
                       const isBlackCell = !hasDRA && slot.slotNumber > 5;
                       
                       return (
-                      <td key={slot.slotNumber} style={{ 
-                        padding: '8px', 
-                        border: '1px solid #ddd', 
-                        textAlign: 'center',
-                        backgroundColor: isBlackCell ? '#000000' : (slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff')
-                      }}>
+                      <td 
+                        key={slot.slotNumber}
+                        className="p-2 border border-slate-300 text-center"
+                        style={{ backgroundColor: isBlackCell ? '#000000' : (slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff') }}
+                      >
                         {isBlackCell ? (
-                          <span style={{ color: '#ffffff' }}>N/A</span>
+                          <span className="text-white">N/A</span>
                         ) : slot.aidOffer ? (
-                          <div style={{ fontSize: '12px' }}>
-                            <div style={{ 
-                              fontWeight: 'bold', 
-                              marginBottom: '4px',
-                              color: isExpired ? '#d32f2f' : (slot.isOutgoing ? '#1976d2' : '#7b1fa2')
-                            }}>
+                          <div className="text-xs">
+                            <div 
+                              className="font-bold mb-1"
+                              style={{ color: isExpired ? '#d32f2f' : (slot.isOutgoing ? '#1976d2' : '#7b1fa2') }}
+                            >
                               {slot.isOutgoing ? '→ ' : '← '}
                               <a 
                                 href={`https://www.cybernations.net/search_aid.asp?search=${slot.aidOffer.targetId || 'undefined'}&Extended=1`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                style={{ 
-                                  color: 'inherit', 
-                                  textDecoration: 'none' 
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                                className="no-underline hover:underline"
+                                style={{ color: 'inherit' }}
                               >
                                 {slot.aidOffer.targetNation}
                               </a>
-                              <span style={{ color: '#666', fontWeight: 'normal' }}> / {slot.aidOffer.targetRuler}</span>
-                              {isExpired && <span style={{ color: '#d32f2f', fontSize: '10px' }}> (EXPIRED)</span>}
+                              <span className="text-gray-600 font-normal"> / {slot.aidOffer.targetRuler}</span>
+                              {isExpired && <span className="text-red-600 text-[10px]"> (EXPIRED)</span>}
                             </div>
-                            <div style={{ marginBottom: '4px', fontSize: '11px' }}>
-                              <span style={{ 
-                                color: '#2c5530', 
-                                fontWeight: 'bold',
-                                backgroundColor: '#e8f5e8',
-                                padding: '2px 4px',
-                                borderRadius: '3px'
-                              }}>
+                            <div className="mb-1 text-[11px]">
+                              <span className="text-green-900 font-bold bg-green-50 px-1 py-0.5 rounded-sm">
                                 {formatAidValue(slot.aidOffer.money, slot.aidOffer.technology, slot.aidOffer.soldiers)}
                               </span>
                               {slot.aidOffer.reason && (
-                                <span style={{ color: '#666', marginLeft: '4px' }}> - {slot.aidOffer.reason}</span>
+                                <span className="text-gray-600 ml-1"> - {slot.aidOffer.reason}</span>
                               )}
                             </div>
-                            <div style={{ 
-                              fontSize: '10px', 
-                              color: isExpired ? '#d32f2f' : '#666',
-                              fontWeight: isExpired ? 'bold' : 'normal'
-                            }}>
+                            <div 
+                              className={`text-[10px] ${isExpired ? 'text-red-600 font-bold' : 'text-gray-600 font-normal'}`}
+                            >
                               Expires: {slot.aidOffer.expirationDate} ({slot.aidOffer.daysUntilExpiration} days)
                             </div>
                           </div>
                         ) : (
-                          <span style={{ color: '#999' }}>Empty</span>
+                          <span className="text-gray-400">Empty</span>
                         )}
                       </td>
                       );
@@ -599,7 +478,7 @@ const AidPage: React.FC = () => {
       )}
 
       {getFilteredAidSlots().length === 0 && !loading && (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+        <div className="text-center p-10 text-gray-600">
           {expirationFilter.length > 0 
             ? 'No nations match the selected expiration filter.' 
             : 'No aid slot data found for this alliance.'

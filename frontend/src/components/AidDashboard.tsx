@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
+import { tableClasses } from '../styles/tableClasses';
 
 interface SmallAidOffer {
   aidId: number;
@@ -70,110 +71,88 @@ const AidDashboard: React.FC = () => {
   };
 
   if (loading) {
-    return <div style={{ padding: '20px', textAlign: 'center' }}>Loading small aid offers...</div>;
+    return <div className={tableClasses.loadingContainer}><div className={tableClasses.loadingText}>Loading small aid offers...</div></div>;
   }
 
   if (error) {
-    return <div style={{ padding: '20px', color: 'red' }}>Error: {error}</div>;
+    return <div className="p-5 text-error">Error: {error}</div>;
   }
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>Shame Offers (&lt; 6M &amp; &lt; 100 Tech)</h1>
-      <p style={{ marginBottom: '20px', color: '#666' }}>
+    <div className="p-5 font-sans">
+      <h1 className="text-3xl font-bold mb-2 text-gray-200">Shame Offers (&lt; 6M &amp; &lt; 100 Tech)</h1>
+      <p className="mb-5 text-gray-400">
         Showing all small aid offers across all alliances ({globalSmallAidOffers.length} total)
       </p>
       
       {globalSmallAidOffers.length > 0 ? (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ 
-              width: '100%', 
-              borderCollapse: 'collapse', 
-              border: '1px solid #ddd',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-600 text-sm bg-gray-800">
               <thead>
-                <tr style={{ backgroundColor: '#343a40' }}>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>Sender</th>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>Sender Alliance</th>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>Recipient</th>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>Recipient Alliance</th>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>Aid Value</th>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'left', color: 'white', fontWeight: 'bold' }}>Reason</th>
-                <th style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center', color: 'white', fontWeight: 'bold' }}>Date</th>
+                <tr className="bg-gray-700">
+                <th className="p-3 border border-gray-600 text-left text-white font-bold">Sender</th>
+                <th className="p-3 border border-gray-600 text-left text-white font-bold">Sender Alliance</th>
+                <th className="p-3 border border-gray-600 text-left text-white font-bold">Recipient</th>
+                <th className="p-3 border border-gray-600 text-left text-white font-bold">Recipient Alliance</th>
+                <th className="p-3 border border-gray-600 text-center text-white font-bold">Aid Value</th>
+                <th className="p-3 border border-gray-600 text-left text-white font-bold">Reason</th>
+                <th className="p-3 border border-gray-600 text-center text-white font-bold">Date</th>
                 </tr>
               </thead>
               <tbody>
               {globalSmallAidOffers?.map((offer) => (
-                <tr key={offer.aidId} style={{ backgroundColor: 'white' }}>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                <tr key={offer.aidId} className="bg-gray-800 hover:bg-gray-700">
+                  <td className="p-2.5 border border-gray-600">
                     <a 
                       href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.declaringNation?.id || ''}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ 
-                              color: '#007bff', 
-                        textDecoration: 'none',
-                        fontWeight: 'bold'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-                          >
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary no-underline font-bold hover:underline"
+                    >
                       {offer.declaringNation?.name || 'Unknown'}
-                          </a>
-                        <br />
-                    <small style={{ color: '#666' }}>{offer.declaringNation?.ruler || 'Unknown'}</small>
+                    </a>
+                    <br />
+                    <small className="text-gray-400">{offer.declaringNation?.ruler || 'Unknown'}</small>
                   </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd', fontWeight: 'bold', color: '#1976d2' }}>
+                  <td className="p-2.5 border border-gray-600 font-bold text-blue-400">
                     {offer.declaringNation?.alliance || 'Unknown'}
-                    </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                  </td>
+                  <td className="p-2.5 border border-gray-600">
                     <a 
                       href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.receivingNation?.id || ''}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ 
-                        color: '#007bff', 
-                        textDecoration: 'none',
-                        fontWeight: 'bold'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-                              >
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary no-underline font-bold hover:underline"
+                    >
                       {offer.receivingNation?.name || 'Unknown'}
                     </a>
                     <br />
-                    <small style={{ color: '#666' }}>{offer.receivingNation?.ruler || 'Unknown'}</small>
+                    <small className="text-gray-400">{offer.receivingNation?.ruler || 'Unknown'}</small>
                   </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd', fontWeight: 'bold', color: '#7b1fa2' }}>
+                  <td className="p-2.5 border border-gray-600 font-bold text-purple-400">
                     {offer.receivingNation?.alliance || 'Unknown'}
                   </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>
-                              <span style={{ 
-                                color: '#2c5530', 
-                                fontWeight: 'bold',
-                                backgroundColor: '#e8f5e8',
-                      padding: '4px 8px',
-                      borderRadius: '4px'
-                              }}>
+                  <td className="p-2.5 border border-gray-600 text-center">
+                    <span className="text-green-300 font-bold bg-green-900/30 px-2 py-1 rounded">
                       {formatAidValue(offer.money, offer.technology, offer.soldiers)}
-                              </span>
+                    </span>
                   </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd', fontSize: '13px' }}>
+                  <td className="p-2.5 border border-gray-600 text-xs text-gray-200">
                     {offer.reason || 'No reason provided'}
                   </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center', fontSize: '13px' }}>
+                  <td className="p-2.5 border border-gray-600 text-center text-xs text-gray-200">
                     {new Date(offer.date).toLocaleDateString()}
-                      </td>
-                  </tr>
-                ))}
+                  </td>
+                </tr>
+              ))}
               </tbody>
             </table>
           </div>
       ) : (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-          {loading ? 'Loading small aid offers...' : 'No small aid offers found.'}
+        <div className={tableClasses.emptyState}>
+          <p className={tableClasses.emptyStateText}>
+            {loading ? 'Loading small aid offers...' : 'No small aid offers found.'}
+          </p>
         </div>
       )}
     </div>

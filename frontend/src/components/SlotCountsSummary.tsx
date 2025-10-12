@@ -68,35 +68,11 @@ const slotTypes: SlotType[] = [
   }
 ];
 
-const containerStyle: React.CSSProperties = {
-  marginBottom: '20px',
-  padding: '15px',
-  backgroundColor: 'transparent',
-  borderRadius: '8px',
-  border: '1px solid #ddd'
-};
-
-const gridStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-  gap: '10px'
-};
-
-const cardStyle: React.CSSProperties = {
-  textAlign: 'center',
-  padding: '10px',
-  borderRadius: '4px'
-};
-
-const valueStyle: React.CSSProperties = {
-  fontSize: '20px',
-  fontWeight: 'bold'
-};
-
-const labelStyle: React.CSSProperties = {
-  color: '#666',
-  fontSize: '14px'
-};
+const containerClass = 'mb-5 p-4 bg-transparent rounded-lg border border-slate-300';
+const gridClass = 'grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2.5';
+const cardClass = 'text-center p-2.5 rounded';
+const valueClass = 'text-xl font-bold';
+const labelClass = 'text-gray-600 text-sm';
 
 const SlotCountsSummary: React.FC<SlotCountsSummaryProps> = ({ 
   slotCounts, 
@@ -114,21 +90,19 @@ const SlotCountsSummary: React.FC<SlotCountsSummaryProps> = ({
   const hasCrossAllianceData = (slotCounts.crossAllianceGetCash || 0) > 0 || (slotCounts.crossAllianceGetTech || 0) > 0;
 
   return (
-    <div style={containerStyle}>
+    <div className={containerClass}>
       <h3>{title}</h3>
-      <div style={gridStyle}>
+      <div className={gridClass}>
         {displaySlotTypes.map((slotType) => (
           <div 
             key={slotType.key}
-            style={{
-              ...cardStyle,
-              backgroundColor: slotType.backgroundColor
-            }}
+            className={cardClass}
+            style={{ backgroundColor: slotType.backgroundColor }}
           >
-            <div style={{
-              ...valueStyle,
-              color: slotType.textColor
-            }}>
+            <div 
+              className={valueClass}
+              style={{ color: slotType.textColor }}
+            >
               {(() => {
                 const total = slotCounts[slotType.key] || 0;
                 
@@ -177,7 +151,7 @@ const SlotCountsSummary: React.FC<SlotCountsSummaryProps> = ({
                 return total;
               })()}
             </div>
-            <div style={labelStyle}>
+            <div className={labelClass}>
               {slotType.label}
               {hasCrossAllianceData && (slotType.key === 'totalGetCash' || slotType.key === 'totalGetTech') && ' 🌐'}
             </div>
@@ -185,31 +159,17 @@ const SlotCountsSummary: React.FC<SlotCountsSummaryProps> = ({
         ))}
       </div>
       {onCrossAllianceToggle && (
-        <div style={{ 
-          marginTop: '10px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '8px',
-          fontSize: '12px',
-          color: '#666'
-        }}>
+        <div className="mt-2.5 flex items-center gap-2 text-xs text-gray-600">
           <input
             type="checkbox"
             id="crossAllianceToggle"
             checked={crossAllianceEnabled}
             onChange={(e) => onCrossAllianceToggle(e.target.checked)}
-            style={{
-              margin: 0,
-              cursor: 'pointer'
-            }}
+            className="m-0 cursor-pointer"
           />
           <label 
             htmlFor="crossAllianceToggle"
-            style={{
-              cursor: 'pointer',
-              fontStyle: 'italic',
-              userSelect: 'none'
-            }}
+            className="cursor-pointer italic select-none"
           >
             🌐 Cross-alliance coordination enabled
           </label>

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import './App.css'
 import NavigationBar from './components/NavigationBar'
 import AidPage from './pages/AidPage'
 import RecommendationsPage from './pages/RecommendationsPage'
@@ -32,7 +31,7 @@ function App() {
   }, [location.pathname]);
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+    <div className="font-sans max-w-full overflow-x-hidden">
       <NavigationBar 
         selectedAllianceId={selectedAllianceId}
         setSelectedAllianceId={setSelectedAllianceId}

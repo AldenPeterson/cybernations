@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 
 interface NSPercentageBadgeProps {
   strengthRatio: number;
@@ -7,34 +8,23 @@ interface NSPercentageBadgeProps {
 const NSPercentageBadge: React.FC<NSPercentageBadgeProps> = ({ strengthRatio }) => {
   const percentage = Math.round(strengthRatio * 100);
   
-  // Determine color based on percentage
-  const getBadgeColor = (percentage: number): string => {
+  // Determine color classes based on percentage
+  const getBadgeClasses = (percentage: number): string => {
     if (percentage < 95) {
-      return '#dc3545'; // Red - below 95%
+      return 'bg-red-600'; // Red - below 95%
     } else if (percentage >= 95 && percentage <= 105) {
-      return '#ffc107'; // Yellow - between 95% and 105%
+      return 'bg-yellow-500'; // Yellow - between 95% and 105%
     } else {
-      return '#28a745'; // Green - above 105%
+      return 'bg-green-600'; // Green - above 105%
     }
   };
 
-  const badgeColor = getBadgeColor(percentage);
-
   return (
     <span
-      style={{
-        display: 'inline-block',
-        padding: '1px 4px',
-        borderRadius: '3px',
-        backgroundColor: badgeColor,
-        color: 'white',
-        fontSize: '8px',
-        fontWeight: 'bold',
-        fontFamily: 'monospace',
-        marginLeft: '4px',
-        minWidth: '24px',
-        textAlign: 'center'
-      }}
+      className={clsx(
+        'inline-block px-1 py-px rounded-sm text-white text-[8px] font-bold font-mono ml-1 min-w-[24px] text-center',
+        getBadgeClasses(percentage)
+      )}
     >
       {percentage}%
     </span>

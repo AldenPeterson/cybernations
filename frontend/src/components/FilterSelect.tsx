@@ -1,5 +1,6 @@
 import React from 'react';
-import { tableStyles } from '../styles/tableStyles';
+import { tableClasses } from '../styles/tableClasses';
+import clsx from 'clsx';
 
 export interface FilterOption {
   label: string;
@@ -28,8 +29,8 @@ const FilterSelect: React.FC<FilterSelectProps> = ({
   minWidth = '300px'
 }) => {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }} className={className}>
-      <label style={{ fontWeight: '600', fontSize: '15px', color: '#333' }}>
+    <div className={clsx('flex items-center gap-2.5', className)}>
+      <label className="font-semibold text-[15px] text-gray-800">
         {label}:
       </label>
       <select
@@ -45,18 +46,16 @@ const FilterSelect: React.FC<FilterSelectProps> = ({
           }
         }}
         disabled={disabled}
-        style={{
-          ...tableStyles.filterSelect,
-          minWidth,
-          opacity: disabled ? 0.6 : 1,
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          color: '#1e293b',
-          fontFamily: 'inherit'
-        }}
+        className={clsx(
+          tableClasses.filterSelect,
+          'text-slate-800 font-inherit',
+          disabled && 'opacity-60 cursor-not-allowed'
+        )}
+        style={{ minWidth }}
       >
-        <option value="" style={{ color: '#1e293b' }}>{placeholder}</option>
+        <option value="" className="text-slate-800">{placeholder}</option>
         {options.map(option => (
-          <option key={option.value} value={option.value} style={{ color: '#1e293b' }}>
+          <option key={option.value} value={option.value} className="text-slate-800">
             {option.label}
           </option>
         ))}

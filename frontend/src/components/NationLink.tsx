@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 
 export interface NationLinkProps {
   nationId: number;
@@ -20,18 +21,11 @@ const NationLink: React.FC<NationLinkProps> = ({
       href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nationId}`}
       target="_blank"
       rel="noopener noreferrer"
-      className={className}
-      style={{ 
-        color: '#007bff', 
-        textDecoration: 'none',
-        fontWeight: '600',
-        ...style
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-      onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+      className={clsx('text-primary no-underline font-semibold hover:underline', className)}
+      style={style}
     >
       {nationName}
-      {showId && <span style={{ color: '#666', fontWeight: 'normal', marginLeft: '4px' }}>({nationId})</span>}
+      {showId && <span className="text-gray-600 font-normal ml-1">({nationId})</span>}
     </a>
   );
 };

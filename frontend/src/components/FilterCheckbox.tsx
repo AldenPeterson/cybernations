@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 
 export interface FilterCheckboxProps {
   label: string;
@@ -18,30 +19,23 @@ const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
   accentColor = '#007bff'
 }) => {
   return (
-    <label style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      padding: '6px 10px',
-      backgroundColor: '#f8f9fa',
-      border: '1px solid #ddd',
-      borderRadius: '4px',
-      cursor: disabled ? 'not-allowed' : 'pointer',
-      fontSize: '13px',
-      fontWeight: '500',
-      color: disabled ? '#999' : '#333',
-      opacity: disabled ? 0.6 : 1
-    }} className={className}>
+    <label 
+      className={clsx(
+        'flex items-center px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded text-xs font-medium',
+        disabled ? 'cursor-not-allowed text-gray-400 opacity-60' : 'cursor-pointer text-gray-800',
+        className
+      )}
+    >
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         disabled={disabled}
-        style={{ 
-          marginRight: '6px',
-          accentColor: accentColor,
-          transform: 'scale(1.1)',
-          cursor: disabled ? 'not-allowed' : 'pointer'
-        }}
+        className={clsx(
+          'mr-1.5 scale-110',
+          disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+        )}
+        style={{ accentColor }}
       />
       {label}
     </label>

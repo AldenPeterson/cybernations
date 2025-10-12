@@ -11,9 +11,10 @@ import {
 import { apiCall, API_ENDPOINTS } from '../utils/api';
 import { createNationTableColumns } from './NationTableColumns';
 import { type NationConfig } from '../types/nation';
-import { tableStyles, tableCSS, combineStyles, getTextAlignment, getHeaderContentAlignment } from '../styles/tableStyles';
+import { tableClasses, getTextAlignment, getHeaderContentAlignment } from '../styles/tableClasses';
 import SlotCountsSummary from './SlotCountsSummary';
 import { useNationForm } from '../hooks/useNationForm';
+import clsx from 'clsx';
 
 interface AidOffer {
   aidId: number;
@@ -323,9 +324,9 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
 
   if (loading) {
     return (
-      <div style={tableStyles.loadingContainer}>
-        <div style={tableStyles.loadingCard}>
-          <div style={tableStyles.loadingText}>Loading nations configuration...</div>
+      <div className={tableClasses.loadingContainer}>
+        <div className={tableClasses.loadingCard}>
+          <div className={tableClasses.loadingText}>Loading nations configuration...</div>
         </div>
       </div>
     );
@@ -333,13 +334,13 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
 
   if (error) {
     return (
-      <div style={tableStyles.errorContainer}>
-        <div style={tableStyles.errorCard}>
-          <h3 style={tableStyles.errorTitle}>Error</h3>
-          <p style={tableStyles.errorText}>{error}</p>
+      <div className={tableClasses.errorContainer}>
+        <div className={tableClasses.errorCard}>
+          <h3 className={tableClasses.errorTitle}>Error</h3>
+          <p className={tableClasses.errorText}>{error}</p>
           <button 
             onClick={fetchNationsConfig}
-            style={tableStyles.retryButton}
+            className={tableClasses.retryButton}
           >
             Retry
           </button>
@@ -350,13 +351,13 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
 
   if (!allianceExists) {
     return (
-      <div style={tableStyles.loadingContainer}>
-        <div style={tableStyles.loadingCard}>
-          <h3 style={{ color: '#1e293b', margin: '0 0 16px 0' }}>Alliance Not Configured</h3>
-          <p style={{ color: '#64748b', margin: '0' }}>
+      <div className={tableClasses.loadingContainer}>
+        <div className={tableClasses.loadingCard}>
+          <h3 className="text-slate-800 m-0 mb-4">Alliance Not Configured</h3>
+          <p className="text-slate-500 m-0">
             This alliance is not present in the configuration file.
           </p>
-          <p style={{ color: '#64748b', margin: '8px 0 0 0' }}>
+          <p className="text-slate-500 mt-2 mb-0">
             Add nations to the configuration file to enable editing.
           </p>
         </div>
@@ -365,40 +366,38 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
   }
 
   return (
-    <div style={{ ...tableStyles.container, backgroundColor: '#000000' }}>
+    <div className={clsx(tableClasses.container, 'bg-black')}>
       <SlotCountsSummary slotCounts={slotCounts} />
 
-      <div style={tableStyles.tableWrapper}>
-        <style>{tableCSS}</style>
-        <table style={tableStyles.table}>
+      <div className={tableClasses.tableWrapper}>
+        <table className={tableClasses.table}>
             <thead>
               {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id} style={tableStyles.headerRow} className="sticky-header">
+                <tr key={headerGroup.id} className={clsx(tableClasses.headerRow, 'sticky-header')}>
                   {headerGroup.headers.map(header => (
                     <th 
-                      key={header.id} 
-                      style={combineStyles(
-                        tableStyles.headerCell,
-                        {
-                          textAlign: getTextAlignment(header.id),
-                          fontSize: header.id.includes('send') || header.id.includes('get') ? '12px' : '14px',
-                          width: `${header.getSize()}px`,
-                          cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                          padding: header.getSize() < 40 ? '16px 4px' : '16px 12px'
-                        }
+                      key={header.id}
+                      className={clsx(
+                        tableClasses.headerCell,
+                        getTextAlignment(header.id),
+                        'sticky-header',
+                        header.column.getCanSort() && 'sortable-header'
                       )}
-                      className={`sticky-header ${header.column.getCanSort() ? 'sortable-header' : ''}`}
+                      style={{
+                        fontSize: header.id.includes('send') || header.id.includes('get') ? '12px' : '14px',
+                        width: `${header.getSize()}px`,
+                        padding: header.getSize() < 40 ? '16px 4px' : '16px 12px'
+                      }}
                       onClick={header.column.getToggleSortingHandler()}
                     >
-                      <div style={combineStyles(
-                        tableStyles.headerCellContent,
-                        { justifyContent: getHeaderContentAlignment(header.id) }
-                      )}>
+                      <div 
+                        className={clsx(tableClasses.headerCellContent, getHeaderContentAlignment(header.id))}
+                      >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getCanSort() && (
-                          <span style={combineStyles(
-                            tableStyles.sortIndicator,
-                            header.column.getIsSorted() ? tableStyles.sortIndicatorActive : tableStyles.sortIndicatorInactive
+                          <span className={clsx(
+                            tableClasses.sortIndicator,
+                            header.column.getIsSorted() ? tableClasses.sortIndicatorActive : tableClasses.sortIndicatorInactive
                           )}>
                             {{
                               asc: '↑',
@@ -421,24 +420,28 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
                 return (
                   <tr 
                     key={row.id} 
-                    className="nation-table-row"
+                    className={clsx(
+                      tableClasses.dataRow,
+                      'nation-table-row'
+                    )}
                     style={{
-                      ...tableStyles.dataRow,
                       backgroundColor: hasErrors ? '#fef2f2' : hasWarnings ? '#fffbeb' : undefined,
                       borderLeft: hasErrors ? '4px solid #ef4444' : hasWarnings ? '4px solid #f59e0b' : undefined,
-                    }}>
+                    }}
+                  >
                     {row.getVisibleCells().map(cell => (
                       <td 
                         key={cell.id}
-                        style={combineStyles(
-                          tableStyles.dataCell,
-                          { 
-                            textAlign: getTextAlignment(cell.column.id),
-                            verticalAlign: 'middle',
-                            width: `${cell.column.getSize()}px`,
-                            backgroundColor: hasErrors ? '#fef2f2' : hasWarnings ? '#fffbeb' : undefined,
-                          }
-                        )}>
+                        className={clsx(
+                          tableClasses.dataCellCompact,
+                          getTextAlignment(cell.column.id)
+                        )}
+                        style={{ 
+                          verticalAlign: 'middle',
+                          width: `${cell.column.getSize()}px`,
+                          backgroundColor: hasErrors ? '#fef2f2' : hasWarnings ? '#fffbeb' : undefined,
+                        }}
+                      >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -450,8 +453,8 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       </div>
 
       {nations.length === 0 && (
-        <div style={tableStyles.emptyState}>
-          <p style={tableStyles.emptyStateText}>
+        <div className={tableClasses.emptyState}>
+          <p className={tableClasses.emptyStateText}>
             No nations found in the configuration for this alliance.
           </p>
         </div>

@@ -217,18 +217,18 @@ const NSComparisonsPage: React.FC = () => {
   // No single-select handlers; coalition selection is managed via table checkboxes
 
   return (
-    <div style={{ marginTop: '80px', padding: '24px', fontSize: '16px', color: '#222' }}>
+    <div className="mt-20 p-6 text-base text-gray-900">
       {/* Coalition selector table */}
-      <div style={{ backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
-        <h3 style={{ marginTop: 0, color: '#111', fontSize: '18px' }}>Coalitions</h3>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', lineHeight: 1.2 }}>
+      <div className="bg-white border border-slate-300 rounded-xl p-3.5 mb-4">
+        <h3 className="mt-0 text-gray-900 text-lg">Coalitions</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm leading-tight">
             <thead>
-              <tr style={{ background: '#f6f7f9', color: '#111' }}>
-                <th style={{ textAlign: 'left', padding: '6px 10px', borderBottom: '1px solid #ddd', fontWeight: 600 }}>Alliance</th>
-                <th style={{ textAlign: 'center', padding: '6px 10px', borderBottom: '1px solid #ddd', color: BLUE_COLOR, fontWeight: 600 }}>{BLUE_LABEL}</th>
-                <th style={{ textAlign: 'center', padding: '6px 10px', borderBottom: '1px solid #ddd', color: RED_COLOR, fontWeight: 600 }}>{RED_LABEL}</th>
-                <th style={{ textAlign: 'right', padding: '6px 10px', borderBottom: '1px solid #ddd', fontWeight: 600 }}>Nations</th>
+              <tr className="bg-slate-100 text-gray-900">
+                <th className="text-left px-2.5 py-1.5 border-b border-slate-300 font-semibold">Alliance</th>
+                <th className="text-center px-2.5 py-1.5 border-b border-slate-300 font-semibold" style={{ color: BLUE_COLOR }}>{BLUE_LABEL}</th>
+                <th className="text-center px-2.5 py-1.5 border-b border-slate-300 font-semibold" style={{ color: RED_COLOR }}>{RED_LABEL}</th>
+                <th className="text-right px-2.5 py-1.5 border-b border-slate-300 font-semibold">Nations</th>
               </tr>
             </thead>
             <tbody>
@@ -236,13 +236,13 @@ const NSComparisonsPage: React.FC = () => {
                 const inA = selectedAlliances.A.includes(a.id); // Blue
                 const inB = selectedAlliances.B.includes(a.id); // Red
                 return (
-                  <tr key={a.id} style={{ background: idx % 2 === 0 ? '#fff' : '#fafbfc' }}>
-                    <td style={{ padding: '6px 10px', borderBottom: '1px solid #eee', verticalAlign: 'middle' }}>{a.name}</td>
-                    <td style={{ padding: '6px 10px', borderBottom: '1px solid #eee', textAlign: 'center', verticalAlign: 'middle' }}>
+                  <tr key={a.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                    <td className="px-2.5 py-1.5 border-b border-slate-200 align-middle">{a.name}</td>
+                    <td className="px-2.5 py-1.5 border-b border-slate-200 text-center align-middle">
                       <input
                         type="checkbox"
                         checked={inA}
-                        style={{ transform: 'scale(0.9)', margin: 0 }}
+                        className="scale-90 m-0"
                         onChange={(e) => {
                           const checked = e.target.checked;
                           setSelectedAlliances(prev => ({
@@ -252,11 +252,11 @@ const NSComparisonsPage: React.FC = () => {
                         }}
                       />
                     </td>
-                    <td style={{ padding: '6px 10px', borderBottom: '1px solid #eee', textAlign: 'center', verticalAlign: 'middle' }}>
+                    <td className="px-2.5 py-1.5 border-b border-slate-200 text-center align-middle">
                       <input
                         type="checkbox"
                         checked={inB}
-                        style={{ transform: 'scale(0.9)', margin: 0 }}
+                        className="scale-90 m-0"
                         onChange={(e) => {
                           const checked = e.target.checked;
                           setSelectedAlliances(prev => ({
@@ -266,30 +266,30 @@ const NSComparisonsPage: React.FC = () => {
                         }}
                       />
                     </td>
-                    <td style={{ padding: '6px 10px', borderBottom: '1px solid #eee', textAlign: 'right', color: '#444', fontVariantNumeric: 'tabular-nums', verticalAlign: 'middle' }}>{a.nationCount}</td>
+                    <td className="px-2.5 py-1.5 border-b border-slate-200 text-right text-gray-700 tabular-nums align-middle">{a.nationCount}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
-        {error && <div style={{ color: '#dc3545', marginTop: '8px' }}>{error}</div>}
-        <div style={{ marginTop: '8px', color: '#666', fontSize: '13px' }}>
+        {error && <div className="text-error mt-2">{error}</div>}
+        <div className="mt-2 text-gray-600 text-xs">
           Showing alliances with at least 10 nations.
         </div>
       </div>
 
       {/* NS Histogram */}
-      <div style={{ overflowX: 'auto', backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '8px', padding: '16px' }}>
+      <div className="overflow-x-auto bg-white border border-slate-300 rounded-lg p-4">
         {/* Legend */}
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: BLUE_COLOR, borderRadius: '3px' }} />
-            <span style={{ color: '#333' }}>{BLUE_LABEL}</span>
+        <div className="flex gap-4 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: BLUE_COLOR }} />
+            <span className="text-gray-800">{BLUE_LABEL}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: RED_COLOR, borderRadius: '3px' }} />
-            <span style={{ color: '#333' }}>{RED_LABEL}</span>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: RED_COLOR }} />
+            <span className="text-gray-800">{RED_LABEL}</span>
           </div>
         </div>
 
@@ -342,16 +342,16 @@ const NSComparisonsPage: React.FC = () => {
       </div>
 
       {/* Tech Histogram */}
-      <div style={{ overflowX: 'auto', backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '8px', padding: '16px', marginTop: '24px' }}>
+      <div className="overflow-x-auto bg-white border border-slate-300 rounded-lg p-4 mt-6">
         {/* Legend */}
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: BLUE_COLOR, borderRadius: '3px' }} />
-            <span style={{ color: '#333' }}>{BLUE_LABEL}</span>
+        <div className="flex gap-4 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: BLUE_COLOR }} />
+            <span className="text-gray-800">{BLUE_LABEL}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: RED_COLOR, borderRadius: '3px' }} />
-            <span style={{ color: '#333' }}>{RED_LABEL}</span>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: RED_COLOR }} />
+            <span className="text-gray-800">{RED_LABEL}</span>
           </div>
         </div>
 
@@ -404,16 +404,16 @@ const NSComparisonsPage: React.FC = () => {
       </div>
 
       {/* Scatterplot: Tech (X) vs Strength (Y) */}
-      <div style={{ backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '8px', padding: '16px', marginTop: '24px' }}>
-        <h3 style={{ marginTop: 0, color: '#333' }}>Nation Strength vs Technology</h3>
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: BLUE_COLOR, borderRadius: '3px' }} />
-            <span style={{ color: '#333' }}>{BLUE_LABEL}</span>
+      <div className="bg-white border border-slate-300 rounded-lg p-4 mt-6">
+        <h3 className="mt-0 text-gray-800">Nation Strength vs Technology</h3>
+        <div className="flex gap-4 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: BLUE_COLOR }} />
+            <span className="text-gray-800">{BLUE_LABEL}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ display: 'inline-block', width: '14px', height: '14px', backgroundColor: RED_COLOR, borderRadius: '3px' }} />
-            <span style={{ color: '#333' }}>{RED_LABEL}</span>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: RED_COLOR }} />
+            <span className="text-gray-800">{RED_LABEL}</span>
           </div>
         </div>
 

@@ -1,7 +1,8 @@
 import type React from 'react';
 import { useState, useEffect } from 'react';
-import { tableStyles } from '../styles/tableStyles';
+import { tableClasses } from '../styles/tableClasses';
 import WarStatusBadge from './WarStatusBadge';
+import clsx from 'clsx';
 
 // Custom hook for debouncing values
 function useDebounce<T>(value: T, delay: number): T {
@@ -53,13 +54,8 @@ export const EditableTextInput: React.FC<EditableTextInputProps> = ({
       type="text"
       value={localValue}
       onChange={(e) => setLocalValue(e.target.value)}
-      className={className}
+      className={clsx(tableClasses.inputField, 'w-full h-10', className)}
       placeholder={placeholder}
-      style={{ 
-        ...tableStyles.inputField, 
-        width: '100%',
-        height: '40px'
-      }}
     />
   );
 };
@@ -96,17 +92,8 @@ export const EditableTextarea: React.FC<EditableTextareaProps> = ({
     <textarea
       value={localValue}
       onChange={(e) => setLocalValue(e.target.value)}
-      className={className}
+      className={clsx(tableClasses.inputField, 'w-full h-10 resize-none font-inherit py-2', className)}
       placeholder={placeholder}
-      style={{ 
-        ...tableStyles.inputField,
-        width: '100%',
-        height: '40px',
-        resize: 'none',
-        fontFamily: 'inherit',
-        paddingTop: '8px',
-        paddingBottom: '8px'
-      }}
     />
   );
 };
@@ -130,14 +117,9 @@ export const EditableNumberInput: React.FC<EditableNumberInputProps> = ({
     type="number"
     value={value}
     onChange={(e) => onChange(parseInt(e.target.value) || 0)}
-    className={className}
+    className={clsx(tableClasses.inputField, tableClasses.numberInput, 'h-10', className)}
     min={min}
     max={max}
-    style={{ 
-      ...tableStyles.inputField, 
-      ...tableStyles.numberInput,
-      height: '40px'
-    }}
   />
 );
 
@@ -156,8 +138,7 @@ export const EditableCheckbox: React.FC<EditableCheckboxProps> = ({
     type="checkbox"
     checked={checked}
     onChange={(e) => onChange(e.target.checked)}
-    className={className}
-    style={tableStyles.checkboxInput}
+    className={clsx(tableClasses.checkboxInput, className)}
   />
 );
 
@@ -176,24 +157,11 @@ export const NationCell: React.FC<NationCellProps> = ({ nation }) => (
       href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nation.nation_id}`}
       target="_blank" 
       rel="noopener noreferrer"
-      style={{
-        color: '#3b82f6',
-        textDecoration: 'none',
-        fontWeight: '600',
-        fontSize: '15px',
-        transition: 'color 0.2s ease'
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.color = '#1d4ed8'}
-      onMouseLeave={(e) => e.currentTarget.style.color = '#3b82f6'}
+      className="text-secondary no-underline font-semibold text-[15px] transition-colors hover:text-blue-700"
     >
       {nation.nation_name}
     </a>
-    <div style={{ 
-      fontSize: '13px', 
-      color: '#64748b',
-      marginTop: '4px',
-      fontWeight: '500'
-    }}>
+    <div className="text-xs text-slate-500 mt-1 font-medium">
       {nation.ruler_name}
     </div>
     <WarStatusBadge inWarMode={nation.inWarMode} variant="inline" />
@@ -226,11 +194,7 @@ const formatStrength = (strength: string): string => {
 };
 
 export const StrengthCell: React.FC<StrengthCellProps> = ({ strength }) => (
-  <div style={{
-    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
-    fontWeight: '600',
-    fontSize: '14px'
-  }}>
+  <div className="font-mono font-semibold text-sm">
     {strength ? formatStrength(strength) : '0'}
   </div>
 );
@@ -247,28 +211,27 @@ export const SaveButton: React.FC<SaveButtonProps> = ({ nationId, isSaving, hasC
   const isDisabled = isSaving || !hasChanges || hasValidationErrors;
   
   let buttonText = 'Save';
-  let backgroundColor = '#3b82f6';
+  let bgColorClass = 'bg-secondary';
   
   if (isSaving) {
     buttonText = 'Saving...';
   } else if (hasValidationErrors) {
     buttonText = 'Fix Errors';
-    backgroundColor = '#ef4444';
+    bgColorClass = 'bg-red-500';
   } else if (!hasChanges) {
     buttonText = 'No Changes';
-    backgroundColor = '#94a3b8';
+    bgColorClass = 'bg-slate-400';
   }
   
   return (
     <button
       onClick={() => onSave(nationId)}
       disabled={isDisabled}
-      className="save-button"
-      style={{
-        ...tableStyles.saveButton,
-        opacity: isDisabled ? 0.5 : 1,
-        backgroundColor: backgroundColor,
-      }}
+      className={clsx(
+        tableClasses.saveButton,
+        bgColorClass,
+        isDisabled && 'opacity-50'
+      )}
     >
       {buttonText}
     </button>

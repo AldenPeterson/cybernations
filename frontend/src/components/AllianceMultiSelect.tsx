@@ -50,51 +50,6 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
 
   const selectValue = selectedAllianceIds.map(id => id.toString());
 
-  const styles = {
-    container: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px'
-    },
-    label: {
-      fontSize: '14px',
-      fontWeight: '600',
-      color: '#2c3e50',
-      whiteSpace: 'nowrap' as const
-    },
-    select: {
-      padding: '10px 14px',
-      border: '2px solid #3498db',
-      borderRadius: '6px',
-      backgroundColor: disabled ? '#f8f9fa' : '#fff',
-      fontSize: '15px',
-      fontWeight: '500',
-      color: disabled ? '#6c757d' : '#2c3e50',
-      minWidth: '280px',
-      minHeight: '100px',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-      fontFamily: 'Arial, sans-serif',
-      lineHeight: '1.4',
-      cursor: disabled ? 'not-allowed' : 'pointer',
-      opacity: disabled ? 0.6 : 1
-    },
-    option: {
-      padding: '6px 10px',
-      fontSize: '15px',
-      fontWeight: '500',
-      color: '#2c3e50',
-      backgroundColor: '#fff',
-      lineHeight: '1.4'
-    },
-    placeholder: {
-      fontSize: '12px',
-      color: '#5a6c7d',
-      fontWeight: '500',
-      maxWidth: '140px',
-      lineHeight: '1.3'
-    }
-  };
-
   // Add CSS to ensure selected options are always visible
   const cssStyle = `
     .alliance-multiselect option:checked {
@@ -108,31 +63,30 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
   `;
 
   return (
-    <div style={styles.container}>
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
       <style>{cssStyle}</style>
-      <label style={styles.label}>
+      <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
         {label}:
       </label>
       <select
-        className="alliance-multiselect"
+        className="alliance-multiselect px-3.5 py-2.5 border-2 border-blue-500 rounded-md font-sans text-sm sm:text-[15px] font-medium w-full sm:min-w-[280px] min-h-[100px] shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:bg-slate-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:opacity-60"
         multiple
         value={selectValue}
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
-        style={styles.select}
       >
         {availableAlliances.map(alliance => (
           <option 
             key={alliance.id} 
             value={alliance.id.toString()}
-            style={styles.option}
+            className="p-1.5 text-sm sm:text-[15px] font-medium text-gray-700 bg-white leading-snug"
           >
             {alliance.name} ({alliance.nationCount} nations)
           </option>
         ))}
       </select>
-      <div style={styles.placeholder}>
+      <div className="text-xs text-gray-600 font-medium max-w-full sm:max-w-[140px] leading-tight">
         {placeholder}
       </div>
     </div>

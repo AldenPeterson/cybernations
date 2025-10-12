@@ -9,7 +9,6 @@ import {
   StrengthCell,
   SaveButton,
 } from './EditableCells';
-import { tableStyles } from '../styles/tableStyles';
 import { type NationConfig, type NationSlots } from '../types/nation';
 
 // Re-export types for backward compatibility
@@ -43,13 +42,7 @@ export const createNationTableColumns = ({
     id: 'index',
     header: '#',
     cell: ({ getValue }) => (
-      <div style={{
-        ...tableStyles.dataCell,
-        color: '#64748b',
-        textAlign: 'center',
-        fontWeight: '600',
-        fontSize: '14px'
-      }}>
+      <div className="text-slate-500 text-center font-semibold text-sm">
         {getValue() + 1}
       </div>
     ),
@@ -72,7 +65,7 @@ export const createNationTableColumns = ({
     id: 'strength',
     header: 'NS',
     cell: ({ getValue }) => (
-      <div style={{ ...tableStyles.dataCell, textAlign: 'right' }}>
+      <div className="text-right">
         <StrengthCell strength={getValue()} />
       </div>
     ),
@@ -90,7 +83,7 @@ export const createNationTableColumns = ({
     id: 'infrastructure',
     header: 'Infra',
     cell: ({ getValue }) => (
-      <div style={{ ...tableStyles.dataCell, textAlign: 'right' }}>
+      <div className="text-right">
         <StrengthCell strength={getValue()} />
       </div>
     ),
@@ -108,7 +101,7 @@ export const createNationTableColumns = ({
     id: 'technology',
     header: 'Tech',
     cell: ({ getValue }) => (
-      <div style={{ ...tableStyles.dataCell, textAlign: 'right' }}>
+      <div className="text-right">
         <StrengthCell strength={getValue()} />
       </div>
     ),
@@ -153,7 +146,7 @@ export const createNationTableColumns = ({
   columnHelper.accessor('has_dra', {
     header: 'Has DRA',
     cell: ({ getValue, row }) => (
-      <div style={{ textAlign: 'center' }}>
+      <div className="text-center">
         <EditableCheckbox
           checked={getValue()}
           onChange={(checked) => handleFieldChange(row.original.nation_id, 'has_dra', checked)}
@@ -167,13 +160,13 @@ export const createNationTableColumns = ({
   // Send Priority column (editable)
   columnHelper.accessor('slots.send_priority', {
     header: () => (
-      <div style={{ lineHeight: '1.2', textAlign: 'center' }}>
+      <div className="leading-tight text-center">
         <div>Send</div>
         <div>Priority</div>
       </div>
     ),
     cell: ({ getValue, row }) => (
-      <div style={{ textAlign: 'center' }}>
+      <div className="text-center">
         <EditableNumberInput
           value={getValue()}
           onChange={(value) => handleSlotChange(row.original.nation_id, 'send_priority', value)}
@@ -189,13 +182,13 @@ export const createNationTableColumns = ({
   // Receive Priority column (editable)
   columnHelper.accessor('slots.receive_priority', {
     header: () => (
-      <div style={{ lineHeight: '1.2', textAlign: 'center' }}>
+      <div className="leading-tight text-center">
         <div>Receive</div>
         <div>Priority</div>
       </div>
     ),
     cell: ({ getValue, row }) => (
-      <div style={{ textAlign: 'center' }}>
+      <div className="text-center">
         <EditableNumberInput
           value={getValue()}
           onChange={(value) => handleSlotChange(row.original.nation_id, 'receive_priority', value)}
@@ -211,7 +204,7 @@ export const createNationTableColumns = ({
   // Send Tech column (editable)
   columnHelper.accessor('slots.sendTech', {
     header: () => (
-      <div style={{ lineHeight: '1.2', textAlign: 'center' }}>
+      <div className="leading-tight text-center">
         <div>Send</div>
         <div>Tech</div>
       </div>
@@ -227,7 +220,7 @@ export const createNationTableColumns = ({
       const hasWarnings = totalSlots < expectedTotal; // Under-assignment shows warning
       
       return (
-        <div style={{ textAlign: 'center' }}>
+        <div className="text-center">
           <EditableNumberInput
             value={getValue()}
             onChange={(value) => handleSlotChange(row.original.nation_id, 'sendTech', value)}
@@ -235,12 +228,7 @@ export const createNationTableColumns = ({
             max={6}
           />
           {(hasErrors || hasWarnings) && (
-            <div style={{ 
-              fontSize: '10px', 
-              color: hasErrors ? '#ef4444' : '#f59e0b', 
-              marginTop: '2px',
-              fontWeight: '600'
-            }}>
+            <div className={`text-[10px] mt-0.5 font-semibold ${hasErrors ? 'text-red-500' : 'text-amber-500'}`}>
               {totalSlots}/{expectedTotal}
             </div>
           )}
@@ -255,7 +243,7 @@ export const createNationTableColumns = ({
   // Send Cash column (editable)
   columnHelper.accessor('slots.sendCash', {
     header: () => (
-      <div style={{ lineHeight: '1.2', textAlign: 'center' }}>
+      <div className="leading-tight text-center">
         <div>Send</div>
         <div>Cash</div>
       </div>
@@ -271,7 +259,7 @@ export const createNationTableColumns = ({
       const hasWarnings = totalSlots < expectedTotal; // Under-assignment shows warning
       
       return (
-        <div style={{ textAlign: 'center' }}>
+        <div className="text-center">
           <EditableNumberInput
             value={getValue()}
             onChange={(value) => handleSlotChange(row.original.nation_id, 'sendCash', value)}
@@ -279,12 +267,7 @@ export const createNationTableColumns = ({
             max={6}
           />
           {(hasErrors || hasWarnings) && (
-            <div style={{ 
-              fontSize: '10px', 
-              color: hasErrors ? '#ef4444' : '#f59e0b', 
-              marginTop: '2px',
-              fontWeight: '600'
-            }}>
+            <div className={`text-[10px] mt-0.5 font-semibold ${hasErrors ? 'text-red-500' : 'text-amber-500'}`}>
               {totalSlots}/{expectedTotal}
             </div>
           )}
@@ -298,7 +281,7 @@ export const createNationTableColumns = ({
   // Get Tech column (editable)
   columnHelper.accessor('slots.getTech', {
     header: () => (
-      <div style={{ lineHeight: '1.2', textAlign: 'center' }}>
+      <div className="leading-tight text-center">
         <div>Get</div>
         <div>Tech</div>
       </div>
@@ -314,7 +297,7 @@ export const createNationTableColumns = ({
       const hasWarnings = totalSlots < expectedTotal; // Under-assignment shows warning
       
       return (
-        <div style={{ textAlign: 'center' }}>
+        <div className="text-center">
           <EditableNumberInput
             value={getValue()}
             onChange={(value) => handleSlotChange(row.original.nation_id, 'getTech', value)}
@@ -322,12 +305,7 @@ export const createNationTableColumns = ({
             max={6}
           />
           {(hasErrors || hasWarnings) && (
-            <div style={{ 
-              fontSize: '10px', 
-              color: hasErrors ? '#ef4444' : '#f59e0b', 
-              marginTop: '2px',
-              fontWeight: '600'
-            }}>
+            <div className={`text-[10px] mt-0.5 font-semibold ${hasErrors ? 'text-red-500' : 'text-amber-500'}`}>
               {totalSlots}/{expectedTotal}
             </div>
           )}
@@ -341,7 +319,7 @@ export const createNationTableColumns = ({
   // Get Cash column (editable)
   columnHelper.accessor('slots.getCash', {
     header: () => (
-      <div style={{ lineHeight: '1.2', textAlign: 'center' }}>
+      <div className="leading-tight text-center">
         <div>Get</div>
         <div>Cash</div>
       </div>
@@ -357,7 +335,7 @@ export const createNationTableColumns = ({
       const hasWarnings = totalSlots < expectedTotal; // Under-assignment shows warning
       
       return (
-        <div style={{ textAlign: 'center' }}>
+        <div className="text-center">
           <EditableNumberInput
             value={getValue()}
             onChange={(value) => handleSlotChange(row.original.nation_id, 'getCash', value)}
@@ -365,12 +343,7 @@ export const createNationTableColumns = ({
             max={6}
           />
           {(hasErrors || hasWarnings) && (
-            <div style={{ 
-              fontSize: '10px', 
-              color: hasErrors ? '#ef4444' : '#f59e0b', 
-              marginTop: '2px',
-              fontWeight: '600'
-            }}>
+            <div className={`text-[10px] mt-0.5 font-semibold ${hasErrors ? 'text-red-500' : 'text-amber-500'}`}>
               {totalSlots}/{expectedTotal}
             </div>
           )}
@@ -386,7 +359,7 @@ export const createNationTableColumns = ({
     id: 'actions',
     header: 'Actions',
     cell: ({ row }) => (
-      <div style={{ textAlign: 'center' }}>
+      <div className="text-center">
         <SaveButton
           nationId={row.original.nation_id}
           isSaving={saving === row.original.nation_id}

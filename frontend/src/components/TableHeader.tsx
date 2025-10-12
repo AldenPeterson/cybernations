@@ -1,5 +1,6 @@
 import React from 'react';
-import { tableStyles } from '../styles/tableStyles';
+import { tableClasses } from '../styles/tableClasses';
+import clsx from 'clsx';
 
 export interface TableHeaderProps {
   title: string;
@@ -15,9 +16,9 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   className = '' 
 }) => {
   return (
-    <div style={tableStyles.header} className={className}>
-      <h1 style={tableStyles.title}>{title}</h1>
-      {subtitle && <p style={tableStyles.subtitle}>{subtitle}</p>}
+    <div className={clsx(tableClasses.header, className)}>
+      <h1 className={tableClasses.title}>{title}</h1>
+      {subtitle && <p className={tableClasses.subtitle}>{subtitle}</p>}
       {children}
     </div>
   );

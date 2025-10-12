@@ -7,14 +7,14 @@ const DefendingWarsPage: React.FC = () => {
 
   if (!allianceId) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: '#666', marginTop: '80px' }}>
+      <div className="text-center p-10 text-gray-600 mt-20">
         Please select an alliance to view defending wars.
       </div>
     );
   }
 
   return (
-    <div style={{ marginTop: '80px', padding: '0 20px', maxWidth: 'none', width: '100%' }}>
+    <div className="mt-20 px-5 max-w-none w-full">
       <DefendingWarsTable allianceId={parseInt(allianceId)} />
     </div>
   );

@@ -134,11 +134,11 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
   };
 
   if (loading && recommendations.length === 0) {
-    return <span style={{ color: '#666', fontSize: '9px' }}>Loading...</span>;
+    return <span className="text-gray-600 text-[9px]">Loading...</span>;
   }
 
   if (!loading && recommendations.length === 0) {
-    return <span style={{ color: '#999', fontSize: '9px' }}>None</span>;
+    return <span className="text-gray-400 text-[9px]">None</span>;
   }
 
   const totalRecommendations = recommendations.length;
@@ -146,41 +146,35 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
   const hasMore = totalRecommendations > maxRecommendations;
 
   return (
-    <div style={{ fontSize: '9px', textAlign: 'left' }}>
+    <div className="text-[9px] text-left">
       {displayedRecommendations.map((attacker) => (
-        <div key={attacker.id} style={{ marginBottom: '4px', lineHeight: '1.2', fontFamily: 'monospace', display: 'flex', alignItems: 'center' }}>
-          <div style={{ minWidth: '180px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div key={attacker.id} className="mb-1 leading-tight font-mono flex items-center">
+          <div className="min-w-[180px] max-w-[180px] overflow-hidden overflow-ellipsis whitespace-nowrap">
             <a 
               href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attacker.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ 
-                color: '#1976d2', 
-                textDecoration: 'none',
-                fontWeight: 'bold'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-              onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+              className="text-blue-700 no-underline font-bold hover:underline"
               title={`${attacker.name} / ${attacker.ruler}`}
             >
               {attacker.name} / {attacker.ruler}
             </a>
           </div>
-          <div style={{ minWidth: '50px' }}>
+          <div className="min-w-[50px]">
             {attacker.strengthRatio && (
               <NSPercentageBadge strengthRatio={attacker.strengthRatio} />
             )}
           </div>
-          <div style={{ minWidth: '120px', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={attacker.alliance || 'None'}>
+          <div className="min-w-[120px] text-gray-600 overflow-hidden overflow-ellipsis whitespace-nowrap" title={attacker.alliance || 'None'}>
             {attacker.alliance || 'None'}
           </div>
-          <div style={{ minWidth: '75px', color: '#666', textAlign: 'right' }}>
+          <div className="min-w-[75px] text-gray-600 text-right">
             {formatNumber(attacker.strength)} NS
           </div>
-          <div style={{ minWidth: '75px', color: '#666', textAlign: 'right' }}>
+          <div className="min-w-[75px] text-gray-600 text-right">
             {formatTechnology(attacker.technology)} Tech
           </div>
-          <div style={{ minWidth: '60px', color: '#666', textAlign: 'right' }}>
+          <div className="min-w-[60px] text-gray-600 text-right">
             {attacker.nuclearWeapons} nukes
           </div>
         </div>
@@ -188,20 +182,7 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
       {hasMore && (
         <div 
           onClick={() => setIsExpanded(!isExpanded)}
-          style={{ 
-            marginTop: '8px', 
-            padding: '4px 8px', 
-            backgroundColor: '#fff3cd', 
-            border: '1px solid #ffc107',
-            borderRadius: '4px',
-            color: '#856404',
-            fontWeight: 'bold',
-            fontSize: '9px',
-            cursor: 'pointer',
-            userSelect: 'none'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#ffe69c'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff3cd'}
+          className="mt-2 px-2 py-1 bg-yellow-100 border border-yellow-400 rounded text-yellow-800 font-bold text-[9px] cursor-pointer select-none hover:bg-yellow-200"
         >
           {isExpanded 
             ? `▲ Show less (${totalRecommendations} total)` 
@@ -387,92 +368,21 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     setAssignAllianceIdsOnly(validAllianceIds);
   }, [alliances, allianceId, setAssignAllianceIdsOnly]); // Remove searchParams from dependencies
 
-  // Column styles
-  const columnStyles = {
-    nation: {
-      padding: '2px 2px',
-      border: '1px solid #ddd',
-      backgroundColor: '#f8f9fa', // Default, will be overridden by activity color
-      minWidth: '150px',
-      maxWidth: '200px',
-      width: '150px',
-      position: 'sticky' as const,
-      left: 0,
-      zIndex: 100,
-      boxShadow: '2px 0 8px -2px rgba(0,0,0,0.3), 1px 0 0 0 #999'
-    },
-    warchest: {
-      padding: '2px 3px',
-      border: '1px solid #ddd',
-      textAlign: 'center' as const,
-      backgroundColor: '#f8f9fa',
-      minWidth: '80px',
-      maxWidth: '100px',
-      width: '90px'
-    },
-    nukes: {
-      padding: '2px 2px',
-      border: '1px solid #ddd',
-      textAlign: 'center' as const,
-      backgroundColor: '#f8f9fa', // Default, will be overridden by nuclear weapons color
-      minWidth: '40px',
-      maxWidth: '50px',
-      width: '45px'
-    },
-    lastNuked: {
-      padding: '2px 3px',
-      border: '1px solid #ddd',
-      textAlign: 'center' as const,
-      backgroundColor: '#ffffff',
-      minWidth: '50px',
-      maxWidth: '60px',
-      width: '55px'
-    },
-    war: {
-      padding: '2px 3px',
-      border: '1px solid #ddd',
-      textAlign: 'center' as const,
-      backgroundColor: '#ffffff',
-      minWidth: '120px',
-      maxWidth: '150px',
-      width: '135px'
-    },
-    staggered: {
-      padding: '4px 6px',
-      border: '1px solid #ddd',
-      textAlign: 'center' as const,
-      backgroundColor: '#ffffff',
-      minWidth: '60px',
-      maxWidth: '80px',
-      width: '70px'
-    },
-    pm: {
-      padding: '4px 6px',
-      border: '1px solid #ddd',
-      textAlign: 'center' as const,
-      backgroundColor: '#ffffff',
-      minWidth: '50px',
-      maxWidth: '70px',
-      width: '60px'
-    }
+  // Column styles (Tailwind version)
+  const columnClasses = {
+    nation: 'p-0.5 border border-slate-300 bg-slate-50 min-w-[150px] max-w-[200px] w-[150px] sticky left-0 z-[100] shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]',
+    warchest: 'p-0.5 px-1 border border-slate-300 text-center bg-slate-50 min-w-[80px] max-w-[100px] w-[90px]',
+    nukes: 'p-0.5 border border-slate-300 text-center bg-slate-50 min-w-[40px] max-w-[50px] w-[45px]',
+    lastNuked: 'p-0.5 px-1 border border-slate-300 text-center bg-white min-w-[50px] max-w-[60px] w-[55px]',
+    war: 'p-0.5 px-1 border border-slate-300 text-center bg-white min-w-[120px] max-w-[150px] w-[135px]',
+    staggered: 'px-1.5 py-1 border border-slate-300 text-center bg-white min-w-[60px] max-w-[80px] w-[70px]',
+    pm: 'px-1.5 py-1 border border-slate-300 text-center bg-white min-w-[50px] max-w-[70px] w-[60px]'
   };
 
-  // Header styles
-  const headerStyles = {
-    default: {
-      padding: '8px 6px',
-      border: '1px solid #ddd',
-      textAlign: 'left' as const,
-      color: 'white',
-      fontWeight: 'bold'
-    },
-    center: {
-      padding: '8px 6px',
-      border: '1px solid #ddd',
-      textAlign: 'center' as const,
-      color: 'white',
-      fontWeight: 'bold'
-    }
+  // Header classes (Tailwind version)
+  const headerClasses = {
+    default: 'px-1.5 py-2 border border-slate-300 text-left text-white font-bold',
+    center: 'px-1.5 py-2 border border-slate-300 text-center text-white font-bold'
   };
 
   useEffect(() => {
@@ -754,151 +664,124 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
 
   // Show loading indicator without hiding the entire interface
   if (loading && allNationWars.length === 0) {
-    return <div style={{ padding: '20px', textAlign: 'center' }}>Loading defending wars...</div>;
+    return <div className="p-5 text-center">Loading defending wars...</div>;
   }
 
   if (error) {
-    return <div style={{ padding: '20px', color: 'red' }}>Error: {error}</div>;
+    return <div className="p-5 text-error">Error: {error}</div>;
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: 'none' }}>
+    <div className="w-full max-w-none">
       {/* Color Legend */}
-      <div style={{ 
-        marginBottom: '20px', 
-        padding: '15px',
-        backgroundColor: '#000000',
-        border: '1px solid #333',
-        borderRadius: '8px',
-        fontSize: '13px'
-      }}>
-        <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 'bold', color: '#ffffff' }}>
+      <div className="mb-5 p-4 bg-black border border-gray-700 rounded-lg text-xs">
+        <h4 className="m-0 mb-3 text-sm font-bold text-white">
           Color Legend
         </h4>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
           {/* War Expiration Colors */}
           <div>
-            <strong style={{ color: '#ffffff', fontSize: '12px' }}>War Expiration:</strong>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#ffebee', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>Expires today/tomorrow</span>
+            <strong className="text-white text-xs">War Expiration:</strong>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffebee' }}></div>
+              <span className="text-[11px] text-white">Expires today/tomorrow</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#fff3e0', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>Expires in 2 days</span>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fff3e0' }}></div>
+              <span className="text-[11px] text-white">Expires in 2 days</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#fffde7', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>Expires in 3 days</span>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fffde7' }}></div>
+              <span className="text-[11px] text-white">Expires in 3 days</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#e8f5e8', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>Expires in 4+ days</span>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
+              <span className="text-[11px] text-white">Expires in 4+ days</span>
             </div>
           </div>
 
           {/* Activity Colors */}
           <div>
-            <strong style={{ color: '#ffffff', fontSize: '12px' }}>Activity Status:</strong>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#d4edda', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>Active last 3 days</span>
+            <strong className="text-white text-xs">Activity Status:</strong>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#d4edda' }}></div>
+              <span className="text-[11px] text-white">Active last 3 days</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#fff3cd', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>Active this week</span>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fff3cd' }}></div>
+              <span className="text-[11px] text-white">Active this week</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#ffeaa7', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>Active last week</span>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffeaa7' }}></div>
+              <span className="text-[11px] text-white">Active last week</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#f8d7da', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>Inactive 3+ weeks</span>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#f8d7da' }}></div>
+              <span className="text-[11px] text-white">Inactive 3+ weeks</span>
             </div>
           </div>
 
           {/* Nuclear Weapons Colors */}
           <div>
-            <strong style={{ color: '#ffffff', fontSize: '12px' }}>Nuclear Weapons:</strong>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#ffebee', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>&lt; 10 nukes</span>
+            <strong className="text-white text-xs">Nuclear Weapons:</strong>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffebee' }}></div>
+              <span className="text-[11px] text-white">&lt; 10 nukes</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#fffde7', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>10-18 nukes</span>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fffde7' }}></div>
+              <span className="text-[11px] text-white">10-18 nukes</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#e8f5e8', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>&gt; 18 nukes</span>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
+              <span className="text-[11px] text-white">&gt; 18 nukes</span>
             </div>
           </div>
 
           {/* Warchest Colors */}
           <div>
-            <strong style={{ color: '#ffffff', fontSize: '12px' }}>Warchest:</strong>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#ffebee', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>&lt; $100M</span>
+            <strong className="text-white text-xs">Warchest:</strong>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffebee' }}></div>
+              <span className="text-[11px] text-white">&lt; $100M</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#fffde7', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>$100M - $1B</span>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fffde7' }}></div>
+              <span className="text-[11px] text-white">$100M - $1B</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#e8f5e8', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>&gt; $1B</span>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
+              <span className="text-[11px] text-white">&gt; $1B</span>
             </div>
           </div>
 
           {/* Other Colors */}
           <div>
-            <strong style={{ color: '#ffffff', fontSize: '12px' }}>Other Indicators:</strong>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#d32f2f', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>Nation in anarchy (red text)</span>
+            <strong className="text-white text-xs">Other Indicators:</strong>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#d32f2f' }}></div>
+              <span className="text-[11px] text-white">Nation in anarchy (red text)</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#e8f5e8', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>Staggered wars</span>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
+              <span className="text-[11px] text-white">Staggered wars</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', margin: '3px 0' }}>
-              <div style={{ width: '18px', height: '18px', backgroundColor: '#ffebee', border: '1px solid #666', marginRight: '8px' }}></div>
-              <span style={{ fontSize: '11px', color: '#ffffff' }}>Should be in Peace Mode</span>
+            <div className="flex items-center my-0.5">
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffebee' }}></div>
+              <span className="text-[11px] text-white">Should be in Peace Mode</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filter Controls - positioned above table */}
-      <div style={{ 
-        marginBottom: '15px', 
-        display: 'flex', 
-        flexDirection: 'column',
-        gap: '15px'
-      }}>
+      <div className="mb-4 flex flex-col gap-4">
         {/* Target Assignment Controls Section */}
-        <div style={{ 
-          padding: '15px',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #ddd',
-          borderRadius: '8px'
-        }}>
-          <h4 style={{ 
-            margin: '0 0 12px 0', 
-            fontSize: '14px', 
-            fontWeight: 'bold', 
-            color: '#333' 
-          }}>
+        <div className="p-4 bg-slate-50 border border-slate-300 rounded-lg">
+          <h4 className="m-0 mb-3 text-sm font-bold text-gray-800">
             Target Assignment Configuration
           </h4>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '10px'
-          }}>
+          <div className="flex flex-col lg:flex-row lg:justify-between items-stretch lg:items-center gap-3">
             {/* Assign Alliances Multi-Select */}
             <AllianceMultiSelect
               label="Assign Alliances"
@@ -909,7 +792,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
             />
             
             {/* Assignment configuration checkboxes */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className="flex flex-wrap items-center gap-2.5">
               <FilterCheckbox
                 label="Assign PM nations"
                 checked={includePeaceMode}
@@ -934,8 +817,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                   updateUrlParams({ staggerOnly: checked.toString() });
                 }}
               />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <label style={{ fontSize: '14px', color: '#333', fontWeight: '500' }}>
+              <div className="flex items-center gap-1.5">
+                <label className="text-sm text-gray-800 font-medium whitespace-nowrap">
                   Max recommendations:
                 </label>
                 <input
@@ -950,14 +833,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       updateUrlParams({ maxRecommendations: value.toString() });
                     }
                   }}
-                  style={{
-                    width: '60px',
-                    padding: '4px 8px',
-                    fontSize: '14px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    textAlign: 'center'
-                  }}
+                  className="w-[60px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
                 />
               </div>
             </div>
@@ -965,12 +841,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
         </div>
         
         {/* Defending Nations Filter Section */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
+        <div className="flex flex-wrap justify-start lg:justify-end items-center gap-2.5">
           <FilterCheckbox
             label="Needs Stagger?"
             checked={needsStagger}
@@ -1024,68 +895,46 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
 
       {/* Nation Wars Table */}
       {filteredNationWars.length > 0 ? (
-        <div style={{ overflowX: 'auto', width: '100%', maxWidth: 'none' }}>
-          <table style={{ 
-              borderCollapse: 'collapse', 
-              border: '1px solid #ddd',
-              fontSize: '14px',
-              minWidth: '1600px',
-              width: '100%'
-            }}>
+        <div className="overflow-x-auto w-full max-w-none">
+          <table className="border-collapse border border-slate-300 text-sm min-w-[1600px] w-full">
               <thead>
-                <tr style={{ backgroundColor: '#343a40' }}>
-                  <th style={{
-                    ...headerStyles.default,
-                    position: 'sticky',
-                    left: 0,
-                    zIndex: 200,
-                    backgroundColor: '#343a40',
-                    boxShadow: '2px 0 8px -2px rgba(0,0,0,0.3), 1px 0 0 0 #999'
-                  }}>Nation</th>
-                  <th style={headerStyles.center}>Warchest</th>
-                  <th style={headerStyles.center}>Nukes</th>
-                  <th style={headerStyles.center}>Last Nuked</th>
-                  <th style={headerStyles.center}>Attacking War 1</th>
-                  <th style={headerStyles.center}>Attacking War 2</th>
-                  <th style={headerStyles.center}>Attacking War 3</th>
-                  <th style={headerStyles.center}>Attacking War 4</th>
-                  <th style={headerStyles.center}>Defending War 1</th>
-                  <th style={headerStyles.center}>Defending War 2</th>
-                  <th style={headerStyles.center}>Defending War 3</th>
-                  <th style={headerStyles.center}>Staggered</th>
-                  <th style={headerStyles.center}>Should PM?</th>
-                  <th style={headerStyles.center}>Assignments</th>
+                <tr className="bg-gray-800">
+                  <th className={`${headerClasses.default} sticky left-0 z-[200] bg-gray-800 shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]`}>Nation</th>
+                  <th className={headerClasses.center}>Warchest</th>
+                  <th className={headerClasses.center}>Nukes</th>
+                  <th className={headerClasses.center}>Last Nuked</th>
+                  <th className={headerClasses.center}>Attacking War 1</th>
+                  <th className={headerClasses.center}>Attacking War 2</th>
+                  <th className={headerClasses.center}>Attacking War 3</th>
+                  <th className={headerClasses.center}>Attacking War 4</th>
+                  <th className={headerClasses.center}>Defending War 1</th>
+                  <th className={headerClasses.center}>Defending War 2</th>
+                  <th className={headerClasses.center}>Defending War 3</th>
+                  <th className={headerClasses.center}>Staggered</th>
+                  <th className={headerClasses.center}>Should PM?</th>
+                  <th className={headerClasses.center}>Assignments</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredNationWars.map((nationWar) => (
                   <tr key={nationWar.nation.id}>
-                    <td style={{ 
-                      ...columnStyles.nation,
-                      backgroundColor: getActivityColor(nationWar.nation.activity)
-                    }}>
-                      <div style={{ fontSize: '12px' }}>
+                    <td 
+                      className={columnClasses.nation}
+                      style={{ backgroundColor: getActivityColor(nationWar.nation.activity) }}
+                    >
+                      <div className="text-xs">
                         <strong>
                           <a 
                             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nationWar.nation.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{ 
-                              color: nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? '#d32f2f' : '#007bff', 
-                              textDecoration: 'none'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                            className={`no-underline hover:underline ${nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? 'text-red-600' : 'text-primary'}`}
                           >
                             {nationWar.nation.ruler} / {nationWar.nation.name}
                           </a>
                         </strong>
                         <br />
-                        <span style={{ 
-                          color: nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? '#d32f2f' : '#666', 
-                          fontSize: '10px',
-                          fontWeight: nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? 'bold' : 'normal'
-                        }}>
+                        <span className={`text-[10px] ${nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? 'text-red-600 font-bold' : 'text-gray-600 font-normal'}`}>
                           {formatNumber(nationWar.nation.strength)} NS / {formatTechnology(nationWar.nation.technology)} Tech
                         </span>
                         <br />
@@ -1093,184 +942,160 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       </div>
                     </td>
                     {/* Warchest Column */}
-                    <td style={{
-                      ...columnStyles.warchest,
-                      backgroundColor: nationWar.nation.warchest !== undefined ? getWarchestColor(nationWar.nation.warchest) : '#ffffff'
-                    }}>
+                    <td 
+                      className={columnClasses.warchest}
+                      style={{ backgroundColor: nationWar.nation.warchest !== undefined ? getWarchestColor(nationWar.nation.warchest) : '#ffffff' }}
+                    >
                       {nationWar.nation.warchest !== undefined ? (
-                        <div style={{ fontSize: '11px' }}>
-                          <div style={{ 
-                            color: '#2e7d32', 
-                            fontWeight: 'bold'
-                          }}>
+                        <div className="text-[11px]">
+                          <div className="text-green-800 font-bold">
                             {formatWarchest(nationWar.nation.warchest)}
                           </div>
                           {nationWar.nation.spyglassLastUpdated !== undefined && (
-                            <div style={{ 
-                              color: '#666', 
-                              fontSize: '9px',
-                              marginTop: '2px'
-                            }}>
+                            <div className="text-gray-600 text-[9px] mt-0.5">
                               ({nationWar.nation.spyglassLastUpdated}d)
                             </div>
                           )}
                         </div>
                       ) : (
-                        <span style={{ color: '#999', fontSize: '10px' }}>—</span>
+                        <span className="text-gray-400 text-[10px]">—</span>
                       )}
                     </td>
                     {/* Nuclear Weapons Column */}
-                    <td style={{ 
-                      ...columnStyles.nukes,
-                      backgroundColor: getNuclearWeaponsColor(nationWar.nation.nuclearWeapons)
-                    }}>
-                      <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#d32f2f' }}>
+                    <td 
+                      className={columnClasses.nukes}
+                      style={{ backgroundColor: getNuclearWeaponsColor(nationWar.nation.nuclearWeapons) }}
+                    >
+                      <div className="text-xs font-bold text-red-600">
                         {nationWar.nation.nuclearWeapons}
                       </div>
                     </td>
                     {/* Last Nuked Column */}
-                    <td style={{ ...columnStyles.lastNuked, backgroundColor: getLastNukedCellColor(nationWar.nation.lastNukedDate) }}>
-                      <div style={{ fontSize: '11px', color: '#333' }}>
+                    <td 
+                      className={columnClasses.lastNuked}
+                      style={{ backgroundColor: getLastNukedCellColor(nationWar.nation.lastNukedDate) }}
+                    >
+                      <div className="text-[11px] text-gray-800">
                         {formatLastNukedDisplay(nationWar.nation.lastNukedDate)}
                       </div>
                     </td>
                     {/* Attacking Wars Columns */}
                     {[0, 1, 2, 3].map(index => (
-                      <td key={`attacking-${index}`} style={{ 
-                        ...columnStyles.war,
-                        backgroundColor: nationWar.attackingWars[index] ? (nationWar.attackingWars[index].expirationColor || '#e8f5e8') : '#ffffff'
-                      }}>
+                      <td 
+                        key={`attacking-${index}`}
+                        className={columnClasses.war}
+                        style={{ backgroundColor: nationWar.attackingWars[index] ? (nationWar.attackingWars[index].expirationColor || '#e8f5e8') : '#ffffff' }}
+                      >
                         {nationWar.attackingWars[index] ? (
-                          <div style={{ fontSize: '11px' }}>
-                            <div style={{ 
-                              fontWeight: 'bold', 
-                              marginBottom: '2px',
-                              color: '#1976d2'
-                            }}>
+                          <div className="text-[11px]">
+                            <div className="font-bold mb-0.5 text-blue-700">
                               <a 
                                 href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nationWar.attackingWars[index].defendingNation.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                style={{ 
-                                  color: '#1976d2', 
-                                  textDecoration: 'none' 
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                                className="text-blue-700 no-underline hover:underline"
                               >
                                 {nationWar.attackingWars[index].defendingNation.name}
                               </a>
                             </div>
-                            <div style={{ fontSize: '9px', color: '#666', marginBottom: '2px' }}>
+                            <div className="text-[9px] text-gray-600 mb-0.5">
                               {nationWar.attackingWars[index].defendingNation.ruler} • {nationWar.attackingWars[index].defendingNation.alliance}
                             </div>
                             {nationWar.attackingWars[index].defendingNation.warchest !== undefined && (
-                              <div style={{ fontSize: '9px', marginBottom: '2px' }}>
-                                <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                              <div className="text-[9px] mb-0.5">
+                                <span className="text-green-800 font-bold">
                                   {formatWarchest(nationWar.attackingWars[index].defendingNation.warchest!)}
                                 </span>
                                 {nationWar.attackingWars[index].defendingNation.spyglassLastUpdated !== undefined && (
-                                  <span style={{ color: '#666', marginLeft: '3px' }}>
+                                  <span className="text-gray-600 ml-1">
                                     ({nationWar.attackingWars[index].defendingNation.spyglassLastUpdated}d)
                                   </span>
                                 )}
                               </div>
                             )}
-                            <div style={{ fontSize: '9px', color: '#666' }}>
+                            <div className="text-[9px] text-gray-600">
                               {nationWar.attackingWars[index].formattedEndDate || nationWar.attackingWars[index].endDate}
                             </div>
                           </div>
                         ) : (
-                          <span style={{ color: '#999', fontSize: '10px' }}>Empty</span>
+                          <span className="text-gray-400 text-[10px]">Empty</span>
                         )}
                       </td>
                     ))}
                     {/* Defending Wars Columns */}
                     {[0, 1, 2].map(index => (
-                      <td key={`defending-${index}`} style={{ 
-                        ...columnStyles.war,
-                        backgroundColor: nationWar.defendingWars[index] ? (nationWar.defendingWars[index].expirationColor || '#e8f5e8') : '#ffffff'
-                      }}>
+                      <td 
+                        key={`defending-${index}`}
+                        className={columnClasses.war}
+                        style={{ backgroundColor: nationWar.defendingWars[index] ? (nationWar.defendingWars[index].expirationColor || '#e8f5e8') : '#ffffff' }}
+                      >
                         {nationWar.defendingWars[index] ? (
-                          <div style={{ fontSize: '11px' }}>
-                            <div style={{ 
-                              fontWeight: 'bold', 
-                              marginBottom: '2px',
-                              color: '#d32f2f'
-                            }}>
+                          <div className="text-[11px]">
+                            <div className="font-bold mb-0.5 text-red-600">
                               <a 
                                 href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nationWar.defendingWars[index].attackingNation.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                style={{ 
-                                  color: '#d32f2f', 
-                                  textDecoration: 'none' 
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                                className="text-red-600 no-underline hover:underline"
                               >
                                 {nationWar.defendingWars[index].attackingNation.name}
                               </a>
                             </div>
-                            <div style={{ fontSize: '9px', color: '#666', marginBottom: '2px' }}>
+                            <div className="text-[9px] text-gray-600 mb-0.5">
                               {nationWar.defendingWars[index].attackingNation.ruler} • {nationWar.defendingWars[index].attackingNation.alliance}
                             </div>
                             {nationWar.defendingWars[index].attackingNation.warchest !== undefined && (
-                              <div style={{ fontSize: '9px', marginBottom: '2px' }}>
-                                <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                              <div className="text-[9px] mb-0.5">
+                                <span className="text-green-800 font-bold">
                                   {formatWarchest(nationWar.defendingWars[index].attackingNation.warchest!)}
                                 </span>
                                 {nationWar.defendingWars[index].attackingNation.spyglassLastUpdated !== undefined && (
-                                  <span style={{ color: '#666', marginLeft: '3px' }}>
+                                  <span className="text-gray-600 ml-1">
                                     ({nationWar.defendingWars[index].attackingNation.spyglassLastUpdated}d)
                                   </span>
                                 )}
                               </div>
                             )}
-                            <div style={{ fontSize: '9px', color: '#666' }}>
+                            <div className="text-[9px] text-gray-600">
                               {nationWar.defendingWars[index].formattedEndDate || nationWar.defendingWars[index].endDate}
                             </div>
                           </div>
                         ) : (
-                          <span style={{ color: '#999', fontSize: '10px' }}>Empty</span>
+                          <span className="text-gray-400 text-[10px]">Empty</span>
                         )}
                       </td>
                     ))}
                     {/* Staggered Column */}
-                    <td style={{ 
-                      ...columnStyles.staggered,
-                      backgroundColor: nationWar.staggeredStatus.color
-                    }}>
+                    <td 
+                      className={columnClasses.staggered}
+                      style={{ backgroundColor: nationWar.staggeredStatus.color }}
+                    >
                       {(() => {
                         const staggeredInfo = nationWar.staggeredStatus;
                         if (staggeredInfo.status === 'empty') {
-                          return <span style={{ color: '#999', fontSize: '10px' }}>—</span>;
+                          return <span className="text-gray-400 text-[10px]">—</span>;
                         } else if (staggeredInfo.status === 'staggered') {
-                          return <span style={{ color: '#2e7d32', fontSize: '10px', fontWeight: 'bold' }}>✓</span>;
+                          return <span className="text-green-800 text-[10px] font-bold">✓</span>;
                         } else {
-                          return <span style={{ color: '#d32f2f', fontSize: '10px', fontWeight: 'bold' }}>⚠</span>;
+                          return <span className="text-red-600 text-[10px] font-bold">⚠</span>;
                         }
                       })()}
                     </td>
                     {/* PM Column */}
-                    <td style={{ 
-                      ...columnStyles.pm,
-                      backgroundColor: shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? '#ffebee' : '#ffffff'
-                    }}>
+                    <td 
+                      className={columnClasses.pm}
+                      style={{ backgroundColor: shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? '#ffebee' : '#ffffff' }}
+                    >
                       {shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? (
-                        <span style={{ color: '#d32f2f', fontSize: '10px', fontWeight: 'bold' }}>✓</span>
+                        <span className="text-red-600 text-[10px] font-bold">✓</span>
                       ) : (
-                        <span style={{ color: '#999', fontSize: '10px' }}>—</span>
+                        <span className="text-gray-400 text-[10px]">—</span>
                       )}
                     </td>
                     {/* Stagger Recommendations Column */}
-                    <td style={{ 
-                      ...columnStyles.staggered,
-                      backgroundColor: '#ffffff',
-                      minWidth: '600px',
-                      maxWidth: '700px',
-                      textAlign: 'left'
-                    }}>
+                    <td 
+                      className={`${columnClasses.staggered} bg-white min-w-[600px] max-w-[700px] text-left`}
+                    >
                       {assignAllianceIds.length > 0 ? (
                         <StaggerRecommendationsCell 
                           defendingNation={nationWar.nation}
@@ -1282,7 +1107,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                           maxRecommendations={maxRecommendations}
                         />
                       ) : (
-                        <span style={{ color: '#999', fontSize: '10px' }}>Select alliances</span>
+                        <span className="text-gray-400 text-[10px]">Select alliances</span>
                       )}
                     </td>
                   </tr>
@@ -1291,7 +1116,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
             </table>
           </div>
       ) : (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+        <div className="text-center p-10 text-gray-600">
           No results found with current filters.
         </div>
       )}

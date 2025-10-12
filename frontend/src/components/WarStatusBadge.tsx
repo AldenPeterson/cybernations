@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 
 export interface WarStatusBadgeProps {
   inWarMode: boolean;
@@ -13,41 +14,27 @@ const WarStatusBadge: React.FC<WarStatusBadgeProps> = ({
   className = '',
   style = {}
 }) => {
-  const getVariantStyles = () => {
+  const getVariantClasses = () => {
     switch (variant) {
       case 'compact':
-        return {
-          padding: '1px 4px',
-          fontSize: '9px',
-          borderRadius: '3px'
-        };
       case 'inline':
-        return {
-          padding: '1px 4px',
-          fontSize: '9px',
-          borderRadius: '3px'
-        };
+        return 'px-1 py-px text-[9px] rounded-sm';
       default:
-        return {
-          padding: '2px 6px',
-          fontSize: '10px',
-          borderRadius: '4px'
-        };
+        return 'px-1.5 py-0.5 text-[10px] rounded';
     }
   };
 
   return (
     <span
-      className={className}
-      style={{
-        display: 'inline-block',
-        fontWeight: 'bold',
-        backgroundColor: inWarMode ? '#d4edda' : '#f8d7da',
-        color: inWarMode ? '#155724' : '#721c24',
-        border: `1px solid ${inWarMode ? '#c3e6cb' : '#f5c6cb'}`,
-        ...getVariantStyles(),
-        ...style
-      }}
+      className={clsx(
+        'inline-block font-bold',
+        inWarMode 
+          ? 'bg-green-100 text-green-800 border border-green-300'
+          : 'bg-red-100 text-red-800 border border-red-300',
+        getVariantClasses(),
+        className
+      )}
+      style={style}
     >
       {inWarMode ? 'War' : 'Peace'}
     </span>

@@ -151,7 +151,7 @@ const RecommendationsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', marginTop: '80px' }}>
+      <div className="p-5 text-center mt-20">
         Loading recommendations...
       </div>
     );
@@ -159,7 +159,7 @@ const RecommendationsPage: React.FC = () => {
 
   if (error) {
     return (
-      <div style={{ padding: '20px', color: 'red', marginTop: '80px' }}>
+      <div className="p-5 text-error mt-20">
         Error: {error}
       </div>
     );
@@ -167,7 +167,7 @@ const RecommendationsPage: React.FC = () => {
 
   if (!allianceId) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: '#666', marginTop: '80px' }}>
+      <div className="text-center p-10 text-gray-600 mt-20">
         Please select an alliance to view aid recommendations.
       </div>
     );
@@ -175,14 +175,14 @@ const RecommendationsPage: React.FC = () => {
 
   if (!alliance) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: '#666', marginTop: '80px' }}>
+      <div className="text-center p-10 text-gray-600 mt-20">
         Alliance not found.
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', marginTop: '80px' }}>
+    <div className="p-5 font-sans mt-20">
       <h1>{alliance.name} - Aid Recommendations</h1>
 
       {/* Slot Counts Summary */}
@@ -196,68 +196,24 @@ const RecommendationsPage: React.FC = () => {
 
       {/* Recommendations Table */}
       {recommendations.length > 0 && (
-        <div style={{ 
-          marginBottom: '20px', 
-          padding: '15px', 
-          backgroundColor: 'transparent', 
-          borderRadius: '8px',
-          border: '1px solid #ddd'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3 style={{ margin: 0 }}>Aid Recommendations</h3>
+        <div className="mb-5 p-4 bg-transparent rounded-lg border border-slate-300">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="m-0">Aid Recommendations</h3>
             <button
               onClick={copyDiscordText}
-              style={{
-                backgroundColor: '#5865F2',
-                color: 'white',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#4752C4';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#5865F2';
-              }}
+              className="bg-[#5865F2] text-white border-none px-4 py-2 rounded-md cursor-pointer text-sm font-bold flex items-center gap-2 hover:bg-[#4752C4] transition-colors"
             >
               📋 Copy Discord Text
             </button>
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ 
-              width: '100%', 
-              borderCollapse: 'collapse', 
-              border: '1px solid #ddd',
-              fontSize: '14px',
-              backgroundColor: 'white'
-            }}>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-slate-300 text-sm bg-white">
               <thead>
-                <tr style={{ backgroundColor: '#343a40' }}>
-                  <th style={{ 
-                    padding: '12px', 
-                    border: '1px solid #ddd', 
-                    textAlign: 'left',
-                    backgroundColor: '#343a40',
-                    color: 'white',
-                    fontWeight: 'bold'
-                  }}>
+                <tr className="bg-gray-800">
+                  <th className="p-3 border border-slate-300 text-left bg-gray-800 text-white font-bold">
                     Sender
                   </th>
-                  <th style={{ 
-                    padding: '12px', 
-                    border: '1px solid #ddd', 
-                    textAlign: 'left',
-                    backgroundColor: '#343a40',
-                    color: 'white',
-                    fontWeight: 'bold'
-                  }}>
+                  <th className="p-3 border border-slate-300 text-left bg-gray-800 text-white font-bold">
                     Recipients
                   </th>
                 </tr>
@@ -278,89 +234,58 @@ const RecommendationsPage: React.FC = () => {
                   }, {} as Record<number, { sender: any, recipients: any[] }>);
 
                   return Object.values(groupedBySender).map((group, groupIndex) => (
-                    <tr key={groupIndex} style={{ backgroundColor: 'white' }}>
-                      <td style={{ 
-                        padding: '8px', 
-                        border: '1px solid #ddd',
-                        color: 'black',
-                        backgroundColor: 'white',
-                        verticalAlign: 'top',
-                        width: '30%'
-                      }}>
+                    <tr key={groupIndex} className="bg-white hover:bg-slate-50">
+                      <td className="p-2 border border-slate-300 text-black bg-white align-top w-[30%]">
                         <div>
                           <strong>
                             <a 
                               href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${group.sender.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              style={{ 
-                                color: '#007bff', 
-                                textDecoration: 'none'
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                              onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                              className="text-primary no-underline hover:underline"
                             >
                               {group.sender.nationName}
                             </a>
                           </strong>
                           <br />
-                          <small style={{ color: '#666' }}>{group.sender.rulerName}</small>
+                          <small className="text-gray-600">{group.sender.rulerName}</small>
                           <br />
                           <WarStatusBadge inWarMode={group.sender.inWarMode} />
                         </div>
                       </td>
-                      <td style={{ 
-                        padding: '8px', 
-                        border: '1px solid #ddd',
-                        color: 'black',
-                        backgroundColor: 'white',
-                        verticalAlign: 'top'
-                      }}>
+                      <td className="p-2 border border-slate-300 text-black bg-white align-top">
                         {group.recipients.map((rec, recIndex) => (
-                          <div key={recIndex} style={{ 
-                            marginBottom: recIndex < group.recipients.length - 1 ? '8px' : '0',
-                            paddingBottom: recIndex < group.recipients.length - 1 ? '8px' : '0',
-                            borderBottom: recIndex < group.recipients.length - 1 ? '1px solid #eee' : 'none'
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-                                <span style={{ 
-                                  fontSize: '11px', 
-                                  padding: '1px 4px', 
-                                  borderRadius: '2px',
-                                  backgroundColor: rec.priority === 0 ? '#ffebee' : 
-                                    (rec.type && rec.type.includes('cross_alliance')) ? '#fff3e0' : '#e8f5e8',
-                                  color: rec.priority === 0 ? '#d32f2f' : 
-                                    (rec.type && rec.type.includes('cross_alliance')) ? '#f57c00' : '#2e7d32',
-                                  fontWeight: 'bold',
-                                  marginRight: '6px'
-                                }}>
+                          <div 
+                            key={recIndex}
+                            className={recIndex < group.recipients.length - 1 ? 'mb-2 pb-2 border-b border-slate-200' : ''}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center flex-wrap">
+                                <span 
+                                  className="text-[11px] px-1 py-px rounded-sm font-bold mr-1.5"
+                                  style={{ 
+                                    backgroundColor: rec.priority === 0 ? '#ffebee' : 
+                                      (rec.type && rec.type.includes('cross_alliance')) ? '#fff3e0' : '#e8f5e8',
+                                    color: rec.priority === 0 ? '#d32f2f' : 
+                                      (rec.type && rec.type.includes('cross_alliance')) ? '#f57c00' : '#2e7d32'
+                                  }}
+                                >
                                   {rec.type && rec.type.includes('cross_alliance') ? '🌐' : `P${rec.priority}`}
                                 </span>
-                                <span style={{ fontWeight: 'bold', marginRight: '6px', fontSize: '12px' }}>
+                                <span className="font-bold mr-1.5 text-xs">
                                   {rec.type && rec.type.includes('cash') ? '💰' : '🔬'}
                                 </span>
-                                <strong style={{ fontSize: '13px', marginRight: '6px' }}>
+                                <strong className="text-xs mr-1.5">
                                   <a 
                                     href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${rec.recipient.id}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    style={{ 
-                                      color: '#007bff', 
-                                      textDecoration: 'none'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                                    onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                                    className="text-primary no-underline hover:underline"
                                   >
                                     {rec.recipient.nationName}
                                   </a>
                                 </strong>
-                                <span style={{ 
-                                  fontSize: '11px', 
-                                  color: '#666', 
-                                  fontStyle: 'italic',
-                                  marginRight: '6px'
-                                }}>
+                                <span className="text-[11px] text-gray-600 italic mr-1.5">
                                   {rec.recipient.rulerName} • {rec.reason}
                                 </span>
                                 <WarStatusBadge inWarMode={rec.recipient.inWarMode} variant="compact" />
@@ -379,7 +304,7 @@ const RecommendationsPage: React.FC = () => {
       )}
 
       {recommendations.length === 0 && !loading && (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+        <div className="text-center p-10 text-gray-600">
           No aid recommendations available for this alliance.
         </div>
       )}

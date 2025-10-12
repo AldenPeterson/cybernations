@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 
 export interface StrengthRatioBadgeProps {
   ratio: number;
@@ -13,34 +14,25 @@ const StrengthRatioBadge: React.FC<StrengthRatioBadgeProps> = ({
 }) => {
   const percentage = (ratio * 100).toFixed(1);
   
-  // Determine color based on ratio
-  const getColor = (ratio: number) => {
-    if (ratio >= 0.95 && ratio <= 1.05) return '#059669'; // Green for close to 1:1
-    if (ratio >= 0.85 && ratio <= 1.15) return '#d97706'; // Orange for close to range
-    return '#dc2626'; // Red for far from optimal
-  };
-
-  const getBackgroundColor = (ratio: number) => {
-    if (ratio >= 0.95 && ratio <= 1.05) return '#d1fae5'; // Light green
-    if (ratio >= 0.85 && ratio <= 1.15) return '#fed7aa'; // Light orange
-    return '#fecaca'; // Light red
+  // Determine color classes based on ratio
+  const getColorClasses = (ratio: number) => {
+    if (ratio >= 0.95 && ratio <= 1.05) {
+      return 'bg-emerald-100 text-emerald-600 border-emerald-600/20'; // Green for close to 1:1
+    }
+    if (ratio >= 0.85 && ratio <= 1.15) {
+      return 'bg-orange-100 text-orange-600 border-orange-600/20'; // Orange for close to range
+    }
+    return 'bg-red-100 text-red-600 border-red-600/20'; // Red for far from optimal
   };
 
   return (
     <div
-      className={className}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        padding: '4px 8px',
-        borderRadius: '6px',
-        backgroundColor: getBackgroundColor(ratio),
-        color: getColor(ratio),
-        fontSize: '12px',
-        fontWeight: '600',
-        border: `1px solid ${getColor(ratio)}20`,
-        ...style
-      }}
+      className={clsx(
+        'inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold border',
+        getColorClasses(ratio),
+        className
+      )}
+      style={style}
     >
       {percentage}%
     </div>
