@@ -98,10 +98,10 @@ export const tableClasses = {
     row: 'mb-1 leading-tight font-mono flex items-center',
     nationName: 'min-w-[120px] md:min-w-[180px] overflow-hidden overflow-ellipsis whitespace-nowrap',
     strengthBadge: 'min-w-[35px] md:min-w-[50px]',
-    alliance: 'min-w-[80px] md:min-w-[120px] text-gray-600 overflow-hidden overflow-ellipsis whitespace-nowrap',
-    strength: 'min-w-[50px] md:min-w-[75px] text-gray-600 text-right',
-    technology: 'min-w-[50px] md:min-w-[75px] text-gray-600 text-right',
-    nukes: 'min-w-[45px] md:min-w-[60px] text-gray-600 text-right'
+    alliance: 'text-gray-600 whitespace-nowrap flex-shrink-0',
+    strength: 'min-w-[50px] md:min-w-[75px] text-gray-600 text-right flex-shrink-0',
+    technology: 'min-w-[50px] md:min-w-[75px] text-gray-600 text-right flex-shrink-0',
+    nukes: 'min-w-[45px] md:min-w-[60px] text-gray-600 text-right flex-shrink-0'
   }
 };
 
