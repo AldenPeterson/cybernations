@@ -73,6 +73,36 @@ export const tableClasses = {
   errorTitle: 'text-error m-0 mb-4',
   errorText: 'text-slate-500 m-0 mb-5',
   retryButton: 'bg-secondary text-white border-none rounded-lg px-5 py-2.5 cursor-pointer text-sm font-semibold hover:bg-blue-600 transition-colors',
+
+  // DefendingWarsTable specific column classes
+  defendingWarsColumns: {
+    nation: 'p-[2px] md:p-0.5 border border-slate-300 bg-slate-50 min-w-[100px] md:min-w-[150px] max-w-[130px] md:max-w-[200px] w-[100px] md:w-[150px] sticky left-0 z-[100] shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]',
+    warchest: 'p-[2px] md:p-0.5 px-0.5 md:px-1 border border-slate-300 text-center bg-slate-50 min-w-[55px] md:min-w-[80px] max-w-[70px] md:max-w-[100px] w-[60px] md:w-[90px]',
+    nukes: 'p-[2px] md:p-0.5 border border-slate-300 text-center bg-slate-50 min-w-[32px] md:min-w-[40px] max-w-[40px] md:max-w-[50px] w-[35px] md:w-[45px]',
+    lastNuked: 'p-[2px] md:p-0.5 px-0.5 md:px-1 border border-slate-300 text-center bg-white min-w-[38px] md:min-w-[50px] max-w-[45px] md:max-w-[60px] w-[40px] md:w-[55px]',
+    war: 'p-[2px] md:p-0.5 px-0.5 md:px-1 border border-slate-300 text-center bg-white min-w-[85px] md:min-w-[120px] max-w-[110px] md:max-w-[150px] w-[95px] md:w-[135px]',
+    staggered: 'px-0.5 md:px-1.5 py-0.5 md:py-1 border border-slate-300 text-center bg-white min-w-[40px] md:min-w-[60px] max-w-[55px] md:max-w-[80px] w-[45px] md:w-[70px]',
+    pm: 'px-0.5 md:px-1.5 py-0.5 md:py-1 border border-slate-300 text-center bg-white min-w-[38px] md:min-w-[50px] max-w-[50px] md:max-w-[70px] w-[42px] md:w-[60px]',
+    assignments: 'px-0.5 md:px-1.5 py-0.5 md:py-1 border border-slate-300 text-center bg-white text-left'
+  },
+
+  // DefendingWarsTable header classes
+  defendingWarsHeaders: {
+    default: 'px-0.5 md:px-1.5 py-1 md:py-2 border border-slate-300 text-left text-white font-bold text-[8px] md:text-sm',
+    center: 'px-0.5 md:px-1.5 py-1 md:py-2 border border-slate-300 text-center text-white font-bold text-[8px] md:text-sm'
+  },
+
+  // Assignment cell content classes
+  assignmentCell: {
+    container: 'text-[7px] md:text-[9px] text-left',
+    row: 'mb-1 leading-tight font-mono flex items-center',
+    nationName: 'min-w-[120px] md:min-w-[180px] overflow-hidden overflow-ellipsis whitespace-nowrap',
+    strengthBadge: 'min-w-[35px] md:min-w-[50px]',
+    alliance: 'min-w-[80px] md:min-w-[120px] text-gray-600 overflow-hidden overflow-ellipsis whitespace-nowrap',
+    strength: 'min-w-[50px] md:min-w-[75px] text-gray-600 text-right',
+    technology: 'min-w-[50px] md:min-w-[75px] text-gray-600 text-right',
+    nukes: 'min-w-[45px] md:min-w-[60px] text-gray-600 text-right'
+  }
 };
 
 // Helper function to combine classes (similar to combineStyles)

@@ -5,6 +5,7 @@ import FilterCheckbox from './FilterCheckbox';
 import NSPercentageBadge from './NSPercentageBadge';
 import AllianceMultiSelect from './AllianceMultiSelect';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
+import { tableClasses } from '../styles/tableClasses';
 
 interface StaggerRecommendationsCellProps {
   defendingNation: {
@@ -134,11 +135,11 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
   };
 
   if (loading && recommendations.length === 0) {
-    return <span className="text-gray-600 text-[7px] md:text-[9px]">Loading...</span>;
+    return <span className="text-gray-600 text-[9px]">Loading...</span>;
   }
 
   if (!loading && recommendations.length === 0) {
-    return <span className="text-gray-400 text-[7px] md:text-[9px]">None</span>;
+    return <span className="text-gray-400 text-[9px]">None</span>;
   }
 
   const totalRecommendations = recommendations.length;
@@ -146,10 +147,10 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
   const hasMore = totalRecommendations > maxRecommendations;
 
   return (
-    <div className="text-[7px] md:text-[9px] text-left">
+    <div className={tableClasses.assignmentCell.container}>
       {displayedRecommendations.map((attacker) => (
-        <div key={attacker.id} className="mb-1 leading-tight font-mono flex items-center">
-          <div className="min-w-[120px] md:min-w-[180px] max-w-[120px] md:max-w-[180px] overflow-hidden overflow-ellipsis whitespace-nowrap">
+        <div key={attacker.id} className={tableClasses.assignmentCell.row}>
+          <div className={tableClasses.assignmentCell.nationName}>
             <a 
               href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attacker.id}`}
               target="_blank"
@@ -160,21 +161,21 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
               {attacker.name} / {attacker.ruler}
             </a>
           </div>
-          <div className="min-w-[35px] md:min-w-[50px]">
+          <div className={tableClasses.assignmentCell.strengthBadge}>
             {attacker.strengthRatio && (
               <NSPercentageBadge strengthRatio={attacker.strengthRatio} />
             )}
           </div>
-          <div className="min-w-[80px] md:min-w-[120px] text-gray-600 overflow-hidden overflow-ellipsis whitespace-nowrap" title={attacker.alliance || 'None'}>
+          <div className={tableClasses.assignmentCell.alliance} title={attacker.alliance || 'None'}>
             {attacker.alliance || 'None'}
           </div>
-          <div className="min-w-[50px] md:min-w-[75px] text-gray-600 text-right">
+          <div className={tableClasses.assignmentCell.strength}>
             {formatNumber(attacker.strength)} NS
           </div>
-          <div className="min-w-[50px] md:min-w-[75px] text-gray-600 text-right">
+          <div className={tableClasses.assignmentCell.technology}>
             {formatTechnology(attacker.technology)} Tech
           </div>
-          <div className="min-w-[45px] md:min-w-[60px] text-gray-600 text-right">
+          <div className={tableClasses.assignmentCell.nukes}>
             {attacker.nuclearWeapons} nukes
           </div>
         </div>
@@ -182,7 +183,7 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
       {hasMore && (
         <div 
           onClick={() => setIsExpanded(!isExpanded)}
-          className="mt-2 px-2 py-1 bg-yellow-100 border border-yellow-400 rounded text-yellow-800 font-bold text-[7px] md:text-[9px] cursor-pointer select-none hover:bg-yellow-200"
+          className="mt-2 px-2 py-1 bg-yellow-100 border border-yellow-400 rounded text-yellow-800 font-bold text-[9px] cursor-pointer select-none hover:bg-yellow-200"
         >
           {isExpanded 
             ? `▲ Show less (${totalRecommendations} total)` 
@@ -368,22 +369,9 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     setAssignAllianceIdsOnly(validAllianceIds);
   }, [alliances, allianceId, setAssignAllianceIdsOnly]); // Remove searchParams from dependencies
 
-  // Column styles (Tailwind version) - Mobile responsive
-  const columnClasses = {
-    nation: 'p-[2px] md:p-0.5 border border-slate-300 bg-slate-50 min-w-[100px] md:min-w-[150px] max-w-[130px] md:max-w-[200px] w-[100px] md:w-[150px] sticky left-0 z-[100] shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]',
-    warchest: 'p-[2px] md:p-0.5 px-0.5 md:px-1 border border-slate-300 text-center bg-slate-50 min-w-[55px] md:min-w-[80px] max-w-[70px] md:max-w-[100px] w-[60px] md:w-[90px]',
-    nukes: 'p-[2px] md:p-0.5 border border-slate-300 text-center bg-slate-50 min-w-[32px] md:min-w-[40px] max-w-[40px] md:max-w-[50px] w-[35px] md:w-[45px]',
-    lastNuked: 'p-[2px] md:p-0.5 px-0.5 md:px-1 border border-slate-300 text-center bg-white min-w-[38px] md:min-w-[50px] max-w-[45px] md:max-w-[60px] w-[40px] md:w-[55px]',
-    war: 'p-[2px] md:p-0.5 px-0.5 md:px-1 border border-slate-300 text-center bg-white min-w-[85px] md:min-w-[120px] max-w-[110px] md:max-w-[150px] w-[95px] md:w-[135px]',
-    staggered: 'px-0.5 md:px-1.5 py-0.5 md:py-1 border border-slate-300 text-center bg-white min-w-[40px] md:min-w-[60px] max-w-[55px] md:max-w-[80px] w-[45px] md:w-[70px]',
-    pm: 'px-0.5 md:px-1.5 py-0.5 md:py-1 border border-slate-300 text-center bg-white min-w-[38px] md:min-w-[50px] max-w-[50px] md:max-w-[70px] w-[42px] md:w-[60px]'
-  };
-
-  // Header classes (Tailwind version) - Mobile responsive
-  const headerClasses = {
-    default: 'px-0.5 md:px-1.5 py-1 md:py-2 border border-slate-300 text-left text-white font-bold text-[8px] md:text-sm',
-    center: 'px-0.5 md:px-1.5 py-1 md:py-2 border border-slate-300 text-center text-white font-bold text-[8px] md:text-sm'
-  };
+  // Use column and header classes from tableClasses
+  const columnClasses = tableClasses.defendingWarsColumns;
+  const headerClasses = tableClasses.defendingWarsHeaders;
 
   useEffect(() => {
     if (allianceId) {
@@ -674,111 +662,111 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   return (
     <div className="w-full max-w-none">
       {/* Color Legend */}
-      <div className="mb-3 md:mb-5 mx-2 md:mx-5 p-2 md:p-4 bg-black border border-gray-700 rounded-lg text-[10px] md:text-xs">
-        <h4 className="m-0 mb-2 md:mb-3 text-xs md:text-sm font-bold text-white">
+      <div className="mb-5 mx-5 p-4 bg-black border border-gray-700 rounded-lg text-xs">
+        <h4 className="m-0 mb-3 text-sm font-bold text-white">
           Color Legend
         </h4>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] md:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-1.5 md:gap-2.5">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
           {/* War Expiration Colors */}
           <div>
-            <strong className="text-white text-[10px] md:text-xs">War Expiration:</strong>
+            <strong className="text-white text-xs">War Expiration:</strong>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#ffebee' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">Expires today/tomorrow</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffebee' }}></div>
+              <span className="text-[11px] text-white">Expires today/tomorrow</span>
             </div>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#fff3e0' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">Expires in 2 days</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fff3e0' }}></div>
+              <span className="text-[11px] text-white">Expires in 2 days</span>
             </div>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#fffde7' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">Expires in 3 days</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fffde7' }}></div>
+              <span className="text-[11px] text-white">Expires in 3 days</span>
             </div>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">Expires in 4+ days</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
+              <span className="text-[11px] text-white">Expires in 4+ days</span>
             </div>
           </div>
 
           {/* Activity Colors */}
           <div>
-            <strong className="text-white text-[10px] md:text-xs">Activity Status:</strong>
+            <strong className="text-white text-xs">Activity Status:</strong>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#d4edda' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">Active last 3 days</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#d4edda' }}></div>
+              <span className="text-[11px] text-white">Active last 3 days</span>
             </div>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#fff3cd' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">Active this week</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fff3cd' }}></div>
+              <span className="text-[11px] text-white">Active this week</span>
             </div>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#ffeaa7' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">Active last week</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffeaa7' }}></div>
+              <span className="text-[11px] text-white">Active last week</span>
             </div>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#f8d7da' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">Inactive 3+ weeks</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#f8d7da' }}></div>
+              <span className="text-[11px] text-white">Inactive 3+ weeks</span>
             </div>
           </div>
 
           {/* Nuclear Weapons Colors */}
           <div>
-            <strong className="text-white text-[10px] md:text-xs">Nuclear Weapons:</strong>
+            <strong className="text-white text-xs">Nuclear Weapons:</strong>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#ffebee' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">&lt; 10 nukes</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffebee' }}></div>
+              <span className="text-[11px] text-white">&lt; 10 nukes</span>
             </div>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#fffde7' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">10-18 nukes</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fffde7' }}></div>
+              <span className="text-[11px] text-white">10-18 nukes</span>
             </div>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">&gt; 18 nukes</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
+              <span className="text-[11px] text-white">&gt; 18 nukes</span>
             </div>
           </div>
 
           {/* Warchest Colors */}
           <div>
-            <strong className="text-white text-[10px] md:text-xs">Warchest:</strong>
+            <strong className="text-white text-xs">Warchest:</strong>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#ffebee' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">&lt; $100M</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffebee' }}></div>
+              <span className="text-[11px] text-white">&lt; $100M</span>
             </div>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#fffde7' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">$100M - $1B</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fffde7' }}></div>
+              <span className="text-[11px] text-white">$100M - $1B</span>
             </div>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">&gt; $1B</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
+              <span className="text-[11px] text-white">&gt; $1B</span>
             </div>
           </div>
 
           {/* Other Colors */}
           <div>
-            <strong className="text-white text-[10px] md:text-xs">Other Indicators:</strong>
+            <strong className="text-white text-xs">Other Indicators:</strong>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#d32f2f' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">Nation in anarchy (red text)</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#d32f2f' }}></div>
+              <span className="text-[11px] text-white">Nation in anarchy (red text)</span>
             </div>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">Staggered wars</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
+              <span className="text-[11px] text-white">Staggered wars</span>
             </div>
             <div className="flex items-center my-0.5">
-              <div className="w-[14px] md:w-[18px] h-[14px] md:h-[18px] border border-gray-600 mr-1 md:mr-2" style={{ backgroundColor: '#ffebee' }}></div>
-              <span className="text-[9px] md:text-[11px] text-white">Should be in Peace Mode</span>
+              <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffebee' }}></div>
+              <span className="text-[11px] text-white">Should be in Peace Mode</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filter Controls - positioned above table */}
-      <div className="mb-2 md:mb-4 mx-2 md:mx-5 flex flex-col gap-2 md:gap-4">
+      <div className="mb-4 mx-5 flex flex-col gap-4">
         {/* Target Assignment Controls Section */}
-        <div className="p-2 md:p-4 bg-slate-50 border border-slate-300 rounded-lg">
-          <h4 className="m-0 mb-2 md:mb-3 text-xs md:text-sm font-bold text-gray-800">
+        <div className="p-4 bg-slate-50 border border-slate-300 rounded-lg">
+          <h4 className="m-0 mb-3 text-sm font-bold text-gray-800">
             Target Assignment Configuration
           </h4>
           <div className="flex flex-col lg:flex-row lg:justify-between items-stretch lg:items-center gap-3">
@@ -896,7 +884,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       {/* Nation Wars Table */}
       {filteredNationWars.length > 0 ? (
         <div className="overflow-x-auto w-full max-w-none">
-          <table className="border-collapse border border-slate-300 text-[8px] md:text-sm min-w-[1100px] md:min-w-[1600px] w-full">
+          <table className="border-collapse border border-slate-300 text-sm min-w-[1600px] w-full">
               <thead>
                 <tr className="bg-gray-800">
                   <th className={`${headerClasses.default} sticky left-0 z-[200] bg-gray-800 shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]`}>Nation</th>
@@ -922,7 +910,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       className={columnClasses.nation}
                       style={{ backgroundColor: getActivityColor(nationWar.nation.activity) }}
                     >
-                      <div className="text-[8px] md:text-xs leading-tight">
+                      <div className="text-xs">
                         <strong>
                           <a 
                             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nationWar.nation.id}`}
@@ -934,7 +922,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                           </a>
                         </strong>
                         <br />
-                        <span className={`text-[7px] md:text-[10px] ${nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? 'text-red-600 font-bold' : 'text-gray-600 font-normal'}`}>
+                        <span className={`text-[10px] ${nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? 'text-red-600 font-bold' : 'text-gray-600 font-normal'}`}>
                           {formatNumber(nationWar.nation.strength)} NS / {formatTechnology(nationWar.nation.technology)} Tech
                         </span>
                         <br />
@@ -947,18 +935,18 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       style={{ backgroundColor: nationWar.nation.warchest !== undefined ? getWarchestColor(nationWar.nation.warchest) : '#ffffff' }}
                     >
                       {nationWar.nation.warchest !== undefined ? (
-                        <div className="text-[8px] md:text-[11px] leading-tight">
+                        <div className="text-[11px]">
                           <div className="text-green-800 font-bold">
                             {formatWarchest(nationWar.nation.warchest)}
                           </div>
                           {nationWar.nation.spyglassLastUpdated !== undefined && (
-                            <div className="text-gray-600 text-[7px] md:text-[9px] mt-0.5">
+                            <div className="text-gray-600 text-[9px] mt-0.5">
                               ({nationWar.nation.spyglassLastUpdated}d)
                             </div>
                           )}
                         </div>
                       ) : (
-                        <span className="text-gray-400 text-[8px] md:text-[10px]">—</span>
+                        <span className="text-gray-400 text-[10px]">—</span>
                       )}
                     </td>
                     {/* Nuclear Weapons Column */}
@@ -966,7 +954,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       className={columnClasses.nukes}
                       style={{ backgroundColor: getNuclearWeaponsColor(nationWar.nation.nuclearWeapons) }}
                     >
-                      <div className="text-[8px] md:text-xs font-bold text-red-600">
+                      <div className="text-xs font-bold text-red-600">
                         {nationWar.nation.nuclearWeapons}
                       </div>
                     </td>
@@ -975,7 +963,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       className={columnClasses.lastNuked}
                       style={{ backgroundColor: getLastNukedCellColor(nationWar.nation.lastNukedDate) }}
                     >
-                      <div className="text-[8px] md:text-[11px] text-gray-800">
+                      <div className="text-[11px] text-gray-800">
                         {formatLastNukedDisplay(nationWar.nation.lastNukedDate)}
                       </div>
                     </td>
@@ -987,22 +975,22 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                         style={{ backgroundColor: nationWar.attackingWars[index] ? (nationWar.attackingWars[index].expirationColor || '#e8f5e8') : '#ffffff' }}
                       >
                         {nationWar.attackingWars[index] ? (
-                          <div className="text-[8px] md:text-[11px] leading-tight">
-                            <div className={`font-bold mb-0.5 ${nationWar.attackingWars[index].defendingNation.governmentType.toLowerCase() === 'anarchy' ? 'text-red-600' : 'text-blue-700'}`}>
+                          <div className="text-[11px]">
+                            <div className="font-bold mb-0.5 text-blue-700">
                               <a 
                                 href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nationWar.attackingWars[index].defendingNation.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`no-underline hover:underline ${nationWar.attackingWars[index].defendingNation.governmentType.toLowerCase() === 'anarchy' ? 'text-red-600' : 'text-blue-700'}`}
+                                className="text-blue-700 no-underline hover:underline"
                               >
                                 {nationWar.attackingWars[index].defendingNation.name}
                               </a>
                             </div>
-                            <div className="text-[7px] md:text-[9px] text-gray-600 mb-0.5">
+                            <div className="text-[9px] text-gray-600 mb-0.5">
                               {nationWar.attackingWars[index].defendingNation.ruler} • {nationWar.attackingWars[index].defendingNation.alliance}
                             </div>
                             {nationWar.attackingWars[index].defendingNation.warchest !== undefined && (
-                              <div className="text-[7px] md:text-[9px] mb-0.5">
+                              <div className="text-[9px] mb-0.5">
                                 <span className="text-green-800 font-bold">
                                   {formatWarchest(nationWar.attackingWars[index].defendingNation.warchest!)}
                                 </span>
@@ -1013,12 +1001,12 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                                 )}
                               </div>
                             )}
-                            <div className="text-[7px] md:text-[9px] text-gray-600">
+                            <div className="text-[9px] text-gray-600">
                               {nationWar.attackingWars[index].formattedEndDate || nationWar.attackingWars[index].endDate}
                             </div>
                           </div>
                         ) : (
-                          <span className="text-gray-400 text-[8px] md:text-[10px]">Empty</span>
+                          <span className="text-gray-400 text-[10px]">Empty</span>
                         )}
                       </td>
                     ))}
@@ -1030,22 +1018,22 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                         style={{ backgroundColor: nationWar.defendingWars[index] ? (nationWar.defendingWars[index].expirationColor || '#e8f5e8') : '#ffffff' }}
                       >
                         {nationWar.defendingWars[index] ? (
-                          <div className="text-[8px] md:text-[11px] leading-tight">
-                            <div className={`font-bold mb-0.5 ${nationWar.defendingWars[index].attackingNation.governmentType.toLowerCase() === 'anarchy' ? 'text-red-600' : 'text-blue-700'}`}>
+                          <div className="text-[11px]">
+                            <div className="font-bold mb-0.5 text-red-600">
                               <a 
                                 href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nationWar.defendingWars[index].attackingNation.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`no-underline hover:underline ${nationWar.defendingWars[index].attackingNation.governmentType.toLowerCase() === 'anarchy' ? 'text-red-600' : 'text-blue-700'}`}
+                                className="text-red-600 no-underline hover:underline"
                               >
                                 {nationWar.defendingWars[index].attackingNation.name}
                               </a>
                             </div>
-                            <div className="text-[7px] md:text-[9px] text-gray-600 mb-0.5">
+                            <div className="text-[9px] text-gray-600 mb-0.5">
                               {nationWar.defendingWars[index].attackingNation.ruler} • {nationWar.defendingWars[index].attackingNation.alliance}
                             </div>
                             {nationWar.defendingWars[index].attackingNation.warchest !== undefined && (
-                              <div className="text-[7px] md:text-[9px] mb-0.5">
+                              <div className="text-[9px] mb-0.5">
                                 <span className="text-green-800 font-bold">
                                   {formatWarchest(nationWar.defendingWars[index].attackingNation.warchest!)}
                                 </span>
@@ -1056,12 +1044,12 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                                 )}
                               </div>
                             )}
-                            <div className="text-[7px] md:text-[9px] text-gray-600">
+                            <div className="text-[9px] text-gray-600">
                               {nationWar.defendingWars[index].formattedEndDate || nationWar.defendingWars[index].endDate}
                             </div>
                           </div>
                         ) : (
-                          <span className="text-gray-400 text-[8px] md:text-[10px]">Empty</span>
+                          <span className="text-gray-400 text-[10px]">Empty</span>
                         )}
                       </td>
                     ))}
@@ -1073,11 +1061,11 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       {(() => {
                         const staggeredInfo = nationWar.staggeredStatus;
                         if (staggeredInfo.status === 'empty') {
-                          return <span className="text-gray-400 text-[8px] md:text-[10px]">—</span>;
+                          return <span className="text-gray-400 text-[10px]">—</span>;
                         } else if (staggeredInfo.status === 'staggered') {
-                          return <span className="text-green-800 text-[8px] md:text-[10px] font-bold">✓</span>;
+                          return <span className="text-green-800 text-[10px] font-bold">✓</span>;
                         } else {
-                          return <span className="text-red-600 text-[8px] md:text-[10px] font-bold">⚠</span>;
+                          return <span className="text-red-600 text-[10px] font-bold">⚠</span>;
                         }
                       })()}
                     </td>
@@ -1087,14 +1075,14 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       style={{ backgroundColor: shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? '#ffebee' : '#ffffff' }}
                     >
                       {shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? (
-                        <span className="text-red-600 text-[8px] md:text-[10px] font-bold">✓</span>
+                        <span className="text-red-600 text-[10px] font-bold">✓</span>
                       ) : (
-                        <span className="text-gray-400 text-[8px] md:text-[10px]">—</span>
+                        <span className="text-gray-400 text-[10px]">—</span>
                       )}
                     </td>
                     {/* Stagger Recommendations Column */}
                     <td 
-                      className={`${columnClasses.staggered} bg-white min-w-[400px] md:min-w-[600px] max-w-[500px] md:max-w-[700px] text-left`}
+                      className={columnClasses.assignments}
                     >
                       {assignAllianceIds.length > 0 ? (
                         <StaggerRecommendationsCell 
@@ -1107,7 +1095,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                           maxRecommendations={maxRecommendations}
                         />
                       ) : (
-                        <span className="text-gray-400 text-[8px] md:text-[10px]">Select alliances</span>
+                        <span className="text-gray-400 text-[10px]">Select alliances</span>
                       )}
                     </td>
                   </tr>
