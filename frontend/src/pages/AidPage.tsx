@@ -154,6 +154,17 @@ const AidPage: React.FC = () => {
     return parts.join(' / ') || 'Empty';
   };
 
+  // Column and header classes (following DefendingWarsTable pattern)
+  const columnClasses = {
+    nation: 'p-2 border border-slate-300 min-w-[150px] max-w-[200px] w-[150px] sticky left-0 z-[100] shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]',
+    aidSlot: 'p-2 border border-slate-300 text-center'
+  };
+
+  const headerClasses = {
+    nation: 'p-3 border border-slate-300 text-left text-white font-bold sticky left-0 z-[200] bg-gray-800 shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]',
+    aidSlot: 'p-3 border border-slate-300 text-center text-white font-bold'
+  };
+
   const getExpirationCategory = (days: number): string => {
     if (days < 0) return 'expired';
     if (days === 0) return 'today';
@@ -368,15 +379,15 @@ const AidPage: React.FC = () => {
       {getFilteredAidSlots().length > 0 && (
         <div>
           <h2>Aid Slots by Nation</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-slate-300 text-sm">
+          <div className="overflow-x-auto w-full max-w-none">
+            <table className="border-collapse border border-slate-300 text-sm min-w-[1200px] w-full">
               <thead>
                 <tr className="bg-gray-800">
-                  <th className="p-3 border border-slate-300 text-left text-white font-bold">
+                  <th className={headerClasses.nation}>
                     Nation
                   </th>
                   {[1, 2, 3, 4, 5, 6].map(slotNum => (
-                    <th key={slotNum} className="p-3 border border-slate-300 text-center text-white font-bold">
+                    <th key={slotNum} className={headerClasses.aidSlot}>
                       Slot {slotNum}
                       <br />
                       <small className="text-gray-300">
@@ -390,7 +401,7 @@ const AidPage: React.FC = () => {
                 {getFilteredAidSlots().map((nationAidSlots) => (
                   <tr key={nationAidSlots.nation.id}>
                     <td 
-                      className="p-2 border border-slate-300"
+                      className={columnClasses.nation}
                       style={{ backgroundColor: getActivityColor(nationAidSlots.nation.activity) }}
                     >
                       <div>
@@ -425,7 +436,7 @@ const AidPage: React.FC = () => {
                       return (
                       <td 
                         key={slot.slotNumber}
-                        className="p-2 border border-slate-300 text-center"
+                        className={columnClasses.aidSlot}
                         style={{ backgroundColor: isBlackCell ? '#000000' : (slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff') }}
                       >
                         {isBlackCell ? (
