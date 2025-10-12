@@ -89,6 +89,11 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
             >
               {attacker.name} / {attacker.ruler}
             </a>
+            {!attacker.inWarMode && (
+              <span className="ml-1">
+                <WarStatusBadge inWarMode={false} variant="inline" />
+              </span>
+            )}
           </div>
           <div className={tableClasses.assignmentCell.strengthBadge}>
             {attacker.strengthRatio && (
@@ -106,6 +111,9 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
           </div>
           <div className={tableClasses.assignmentCell.nukes}>
             {attacker.nuclearWeapons} nukes
+          </div>
+          <div className={`${tableClasses.assignmentCell.wars} ${attacker.currentWars > 0 ? 'text-red-600 font-bold' : ''}`}>
+            {attacker.currentWars !== undefined ? `${attacker.currentWars} war${attacker.currentWars !== 1 ? 's' : ''}` : '—'}
           </div>
         </div>
       ))}

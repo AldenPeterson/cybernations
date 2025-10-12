@@ -96,12 +96,13 @@ export const tableClasses = {
   assignmentCell: {
     container: 'text-[7px] md:text-[9px] text-left',
     row: 'mb-1 leading-tight font-mono flex items-center',
-    nationName: 'min-w-[120px] md:min-w-[180px] overflow-hidden overflow-ellipsis whitespace-nowrap',
-    strengthBadge: 'min-w-[35px] md:min-w-[50px]',
-    alliance: 'text-gray-600 whitespace-nowrap flex-shrink-0',
-    strength: 'min-w-[50px] md:min-w-[75px] text-gray-600 text-right flex-shrink-0',
-    technology: 'min-w-[50px] md:min-w-[75px] text-gray-600 text-right flex-shrink-0',
-    nukes: 'min-w-[45px] md:min-w-[60px] text-gray-600 text-right flex-shrink-0'
+    nationName: 'w-[120px] md:w-[180px] overflow-hidden overflow-ellipsis whitespace-nowrap flex-shrink-0',
+    strengthBadge: 'w-[35px] md:w-[50px] flex-shrink-0',
+    alliance: 'w-[100px] md:w-[130px] text-gray-600 whitespace-nowrap overflow-hidden overflow-ellipsis flex-shrink-0',
+    strength: 'w-[50px] md:w-[75px] text-gray-600 text-right flex-shrink-0',
+    technology: 'w-[50px] md:w-[75px] text-gray-600 text-right flex-shrink-0',
+    nukes: 'w-[45px] md:w-[60px] text-gray-600 text-right flex-shrink-0',
+    wars: 'w-[50px] md:w-[65px] text-gray-600 text-right flex-shrink-0'
   }
 };
 
