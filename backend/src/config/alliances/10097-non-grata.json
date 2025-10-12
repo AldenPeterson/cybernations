@@ -18,7 +18,7 @@
       "current_stats": {
         "technology": "9,888.80",
         "infrastructure": "10,383.32",
-        "strength": "94517.898"
+        "strength": "97540.358"
       },
       "notes": ""
     },
@@ -58,7 +58,7 @@
       "current_stats": {
         "technology": "10,150.20",
         "infrastructure": "14,708.15",
-        "strength": "112047.078"
+        "strength": "112527.078"
       },
       "notes": ""
     },
@@ -76,9 +76,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "8,794.61",
+        "technology": "8,824.98",
         "infrastructure": "11,522.09",
-        "strength": "86590.507"
+        "strength": "95521.44"
       },
       "notes": ""
     },
@@ -192,12 +192,14 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 0,
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
-        "technology": "10,644.06",
-        "infrastructure": "1,162.68",
-        "strength": "61427.016"
+        "technology": "10,577.52",
+        "infrastructure": "953.45",
+        "strength": "61027.86"
       }
     },
     "155031": {
@@ -211,8 +213,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
-        "receive_priority": 2
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "9,508.60",
@@ -254,9 +256,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "6,731.13",
-        "infrastructure": "13,646.01",
-        "strength": "89714.41"
+        "technology": "6,705.94",
+        "infrastructure": "13,401.48",
+        "strength": "89736.692"
       },
       "notes": ""
     },
@@ -274,9 +276,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "6,750.70",
-        "infrastructure": "6,751.57",
-        "strength": "69738.086"
+        "technology": "6,770.78",
+        "infrastructure": "6,736.98",
+        "strength": "70288.812"
       },
       "notes": ""
     },
@@ -314,9 +316,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "8,474.82",
+        "technology": "8,549.09",
         "infrastructure": "12,040.19",
-        "strength": "90019.682"
+        "strength": "90627.987"
       },
       "notes": ""
     },
@@ -330,7 +332,9 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 0,
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "7,998.99",
@@ -353,9 +357,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "9,951.99",
-        "infrastructure": "14,193.61",
-        "strength": "104615.763"
+        "technology": "9,935.25",
+        "infrastructure": "13,995.01",
+        "strength": "107306.77"
       }
     },
     "234369": {
@@ -372,9 +376,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "7,470.32",
+        "technology": "7,497.77",
         "infrastructure": "13,712.20",
-        "strength": "100147.914"
+        "strength": "100410.039"
       },
       "notes": ""
     },
@@ -432,9 +436,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "10,460.91",
-        "infrastructure": "15,388.44",
-        "strength": "120806.322"
+        "technology": "10,207.52",
+        "infrastructure": "15,064.61",
+        "strength": "117551.575"
       },
       "notes": ""
     },
@@ -448,7 +452,9 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 0,
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "23,880.30",
@@ -466,7 +472,9 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 0,
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "7,420.29",
@@ -489,9 +497,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "8,923.27",
+        "technology": "8,953.92",
         "infrastructure": "9,999.99",
-        "strength": "93922.888"
+        "strength": "94085.509"
       }
     },
     "276365": {
@@ -544,12 +552,14 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 0,
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
-        "technology": "9,541.01",
+        "technology": "9,573.02",
         "infrastructure": "3,961.78",
-        "strength": "70453.235"
+        "strength": "70861.741"
       }
     },
     "314185": {
@@ -568,7 +578,7 @@
       "current_stats": {
         "technology": "6,954.43",
         "infrastructure": "11,812.75",
-        "strength": "96974.443"
+        "strength": "96894.443"
       },
       "notes": ""
     },
@@ -627,9 +637,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "9,247.89",
-        "infrastructure": "13,524.38",
-        "strength": "108927.206"
+        "technology": "9,236.89",
+        "infrastructure": "13,470.64",
+        "strength": "108700.186"
       }
     },
     "341362": {
@@ -646,9 +656,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "99.91",
+        "technology": "254.46",
         "infrastructure": "12,863.91",
-        "strength": "56066.595"
+        "strength": "55940.963"
       },
       "notes": ""
     },
@@ -767,9 +777,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "10,488.34",
-        "infrastructure": "14,157.73",
-        "strength": "98576.269"
+        "technology": "10,252.34",
+        "infrastructure": "13,271.00",
+        "strength": "102131.269"
       }
     },
     "473088": {
@@ -788,7 +798,7 @@
       "current_stats": {
         "technology": "9,125.06",
         "infrastructure": "6,999.99",
-        "strength": "75689.104"
+        "strength": "76739.104"
       },
       "notes": ""
     },
@@ -807,30 +817,30 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "9,652.62",
-        "infrastructure": "15,999.94",
-        "strength": "112018.975"
+        "technology": "9,416.62",
+        "infrastructure": "15,246.22",
+        "strength": "112303.975"
       }
     },
     "475014": {
       "ruler_name": "cirk2",
       "nation_name": "Agatea",
       "discord_handle": "",
-      "has_dra": true,
+      "has_dra": false,
+      "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
-        "receive_priority": 2
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "8,702.54",
         "infrastructure": "5,864.57",
         "strength": "77704.188"
-      },
-      "notes": ""
+      }
     },
     "484657": {
       "ruler_name": "Augustus Caesar",
@@ -843,8 +853,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
-        "receive_priority": 2
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "3,333.89",
@@ -887,30 +897,30 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "8,000.24",
+        "technology": "8,015.19",
         "infrastructure": "20,000.00",
-        "strength": "119771.201"
+        "strength": "131062.093"
       }
     },
     "528479": {
       "ruler_name": "paul711",
       "nation_name": "Paulinca",
       "discord_handle": "",
-      "has_dra": true,
+      "has_dra": false,
+      "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
-        "receive_priority": 2
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "10,499.46",
         "infrastructure": "14,434.86",
         "strength": "105629.161"
-      },
-      "notes": ""
+      }
     },
     "529964": {
       "ruler_name": "Pelzig",
@@ -942,12 +952,14 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 0,
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "211.90",
         "infrastructure": "1,058.59",
-        "strength": "6349.548"
+        "strength": "6369.548"
       }
     },
     "538690": {
@@ -984,9 +996,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "501.88",
-        "infrastructure": "9,274.38",
-        "strength": "39431.669"
+        "technology": "503.13",
+        "infrastructure": "9,017.03",
+        "strength": "37856.291"
       },
       "notes": ""
     },
@@ -1024,9 +1036,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "1,011.38",
-        "infrastructure": "12,727.84",
-        "strength": "65850.722"
+        "technology": "948.26",
+        "infrastructure": "12,505.83",
+        "strength": "58208.271"
       },
       "notes": ""
     },
@@ -1034,21 +1046,21 @@
       "ruler_name": "Cydonian Knight",
       "nation_name": "Strodemia",
       "discord_handle": "",
-      "has_dra": true,
+      "has_dra": false,
+      "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
-        "receive_priority": 2
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "11,390.97",
         "infrastructure": "4,899.74",
         "strength": "79219.172"
-      },
-      "notes": ""
+      }
     },
     "584157": {
       "ruler_name": "Sheekyz",
@@ -1066,7 +1078,7 @@
       "current_stats": {
         "technology": "5,017.85",
         "infrastructure": "18,730.08",
-        "strength": "125759.406"
+        "strength": "126129.406"
       },
       "notes": ""
     },
@@ -1084,9 +1096,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "458.46",
-        "infrastructure": "7,418.36",
-        "strength": "38158.961"
+        "technology": "548.26",
+        "infrastructure": "7,686.99",
+        "strength": "40443.511"
       },
       "notes": ""
     },
@@ -1105,9 +1117,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "9,658.69",
+        "technology": "9,690.96",
         "infrastructure": "9,887.77",
-        "strength": "97226.159"
+        "strength": "93898.741"
       }
     },
     "599455": {
@@ -1147,7 +1159,7 @@
       "current_stats": {
         "technology": "9,969.40",
         "infrastructure": "10,289.13",
-        "strength": "104297.718"
+        "strength": "99832.509"
       }
     },
     "612276": {
@@ -1160,12 +1172,14 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 0,
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
-        "technology": "239.47",
+        "technology": "259.96",
         "infrastructure": "2,825.60",
-        "strength": "16145.703"
+        "strength": "13692.162"
       }
     },
     "613432": {
@@ -1183,9 +1197,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "7,558.60",
+        "technology": "7,608.91",
         "infrastructure": "12,533.02",
-        "strength": "101263.245"
+        "strength": "100806.693"
       }
     },
     "618150": {
@@ -1203,9 +1217,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "501.98",
-        "infrastructure": "9,701.07",
-        "strength": "49297.035"
+        "technology": "505.15",
+        "infrastructure": "9,455.67",
+        "strength": "47032.268"
       }
     },
     "623644": {
@@ -1224,7 +1238,7 @@
       "current_stats": {
         "technology": "282.45",
         "infrastructure": "3,457.66",
-        "strength": "12633.829"
+        "strength": "12883.829"
       },
       "notes": ""
     },
@@ -1265,7 +1279,7 @@
       "current_stats": {
         "technology": "72.38",
         "infrastructure": "3,453.24",
-        "strength": "19389.689"
+        "strength": "18703.328"
       }
     },
     "626678": {
@@ -1284,7 +1298,7 @@
       "current_stats": {
         "technology": "307.53",
         "infrastructure": "5,914.12",
-        "strength": "26923.237"
+        "strength": "27173.237"
       },
       "notes": ""
     },
@@ -1302,8 +1316,8 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "128.73",
-        "infrastructure": "14,929.85",
+        "technology": "75.21",
+        "infrastructure": "14,699.03",
         "strength": "60957.255"
       },
       "notes": ""
@@ -1319,13 +1333,13 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
-        "receive_priority": 2
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "9,545.06",
         "infrastructure": "12,955.28",
-        "strength": "97097.462"
+        "strength": "96917.462"
       }
     },
     "627572": {
@@ -1364,7 +1378,7 @@
       "current_stats": {
         "technology": "1,000.02",
         "infrastructure": "13,299.99",
-        "strength": "59804.395"
+        "strength": "60594.395"
       },
       "notes": ""
     },
@@ -1404,7 +1418,7 @@
       "current_stats": {
         "technology": "200.06",
         "infrastructure": "7,211.41",
-        "strength": "30606.868"
+        "strength": "30996.868"
       },
       "notes": ""
     },
@@ -1421,9 +1435,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "261.77",
-        "infrastructure": "10,817.08",
-        "strength": "42181.479"
+        "technology": "187.07",
+        "infrastructure": "10,581.91",
+        "strength": "42868.799"
       }
     },
     "634448": {
@@ -1440,9 +1454,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "8,306.54",
-        "infrastructure": "12,405.20",
-        "strength": "105666.057"
+        "technology": "8,096.72",
+        "infrastructure": "11,942.82",
+        "strength": "101128.781"
       },
       "notes": ""
     },
@@ -1476,7 +1490,9 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 0,
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "100.90",
@@ -1516,9 +1532,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "60.61",
+        "technology": "100.11",
         "infrastructure": "5,249.84",
-        "strength": "20384.22"
+        "strength": "19752.476"
       },
       "notes": ""
     },
@@ -1532,7 +1548,9 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 0,
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "110.44",
@@ -1570,7 +1588,9 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 0,
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "100.00",
@@ -1608,12 +1628,14 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 0,
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "62.76",
         "infrastructure": "385.62",
-        "strength": "2705.818"
+        "strength": "2723.618"
       }
     },
     "645946": {
@@ -1646,7 +1668,9 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0
+        "getCash": 0,
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "200.19",
@@ -1665,8 +1689,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
-        "receive_priority": 2
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "100.00",
