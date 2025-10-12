@@ -167,17 +167,20 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
           >
             Aid Recommendations
           </Link>
-          <Link 
-            to={getTabLink('nations')}
-            className={clsx(
-              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
-              isActiveTab('nations') 
-                ? 'bg-primary text-white font-semibold shadow-md' 
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            Nation Editor
-          </Link>
+          {/* Only show Nation Editor in development */}
+          {import.meta.env.DEV && (
+            <Link 
+              to={getTabLink('nations')}
+              className={clsx(
+                'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
+                isActiveTab('nations') 
+                  ? 'bg-primary text-white font-semibold shadow-md' 
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              )}
+            >
+              Nation Editor
+            </Link>
+          )}
           <Link 
             to={getTabLink('wars')}
             className={clsx(
@@ -274,18 +277,21 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             >
               Aid Recommendations
             </Link>
-            <Link 
-              to={getTabLink('nations')}
-              onClick={() => setMobileMenuOpen(false)}
-              className={clsx(
-                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
-                isActiveTab('nations') 
-                  ? 'bg-primary text-white font-semibold shadow-md' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              Nation Editor
-            </Link>
+            {/* Only show Nation Editor in development */}
+            {import.meta.env.DEV && (
+              <Link 
+                to={getTabLink('nations')}
+                onClick={() => setMobileMenuOpen(false)}
+                className={clsx(
+                  'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
+                  isActiveTab('nations') 
+                    ? 'bg-primary text-white font-semibold shadow-md' 
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                )}
+              >
+                Nation Editor
+              </Link>
+            )}
             <Link 
               to={getTabLink('wars')}
               onClick={() => setMobileMenuOpen(false)}

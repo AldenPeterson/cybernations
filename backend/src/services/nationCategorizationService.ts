@@ -1,5 +1,6 @@
 import { findNationById } from '../utils/allianceDataLoader.js';
 import { CategorizedNation, AidSlots, AidType } from '../models/Nation.js';
+import { getDiscordHandle } from '../utils/nationDiscordHandles.js';
 
 /**
  * Checks if a nation exists in the nations.json data and returns its has_dra flag
@@ -40,11 +41,20 @@ export function categorizeNation(nation: any): CategorizedNation {
   if (jsonData.exists) {
     const result = findNationById(nation.id);
     if (result && result.nation.slots) {
+      // Merge with defaults to ensure priority fields are always present
+      const mergedSlots: AidSlots = {
+        ...defaultSlots,
+        ...result.nation.slots
+      };
+      
+      // Get discord handle from separate file, falling back to alliance data
+      const discordHandle = getDiscordHandle(nation.id) || result.nation.discord_handle || '';
+      
       return {
         ...nation,
         has_dra: result.nation.has_dra,
-        discord_handle: result.nation.discord_handle,
-        slots: result.nation.slots,
+        discord_handle: discordHandle,
+        slots: mergedSlots,
         inWarMode: nation.inWarMode || false
       };
     }

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { loadNationDiscordHandles } from './nationDiscordHandles.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +21,8 @@ export interface AllianceData {
         sendCash: number;
         getTech: number;
         getCash: number;
+        send_priority?: number;
+        receive_priority?: number;
       };
       current_stats?: {
         technology: string;
@@ -42,6 +45,8 @@ export interface NationData {
     sendCash: number;
     getTech: number;
     getCash: number;
+    send_priority?: number;
+    receive_priority?: number;
   };
   current_stats?: {
     technology: string;
@@ -247,6 +252,9 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
   aidOffers: any[];
   useJsonData: boolean;
 }> {
+  // Load discord handles from separate file
+  const discordHandles = loadNationDiscordHandles();
+  
   // First try to load from JSON configuration
   const allianceData = loadAllianceById(allianceId);
   
@@ -262,28 +270,38 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
     const rawNationsDict = createNationsDictionary(rawNations);
 
     // Convert JSON data to the format expected by the frontend and enrich with war mode status
-    const nationsArray = Object.entries(allianceData.nations).map(([nationId, nationData]) => ({
-      id: parseInt(nationId),
-      nation_id: parseInt(nationId),
-      rulerName: nationData.ruler_name,
-      nationName: nationData.nation_name,
-      discord_handle: nationData.discord_handle,
-      alliance: allianceData.alliance_name,
-      allianceId: allianceId,
-      team: '', // Not available in JSON
-      strength: parseFloat(nationData.current_stats?.strength?.replace(/,/g, '') || '0'),
-      activity: '', // Not available in JSON
-      technology: nationData.current_stats?.technology || '0',
-      infrastructure: nationData.current_stats?.infrastructure || '0',
-      inWarMode: rawNationsDict[parseInt(nationId)]?.inWarMode ?? false,
-      has_dra: nationData.has_dra,
-      slots: nationData.slots || {
+    const nationsArray = Object.entries(allianceData.nations).map(([nationId, nationData]) => {
+      // Ensure all slots have default values including priorities
+      const defaultSlots = {
         sendTech: 0,
         sendCash: 0,
         getTech: 0,
-        getCash: 0
-      }
-    }));
+        getCash: 0,
+        send_priority: 3,
+        receive_priority: 3
+      };
+      
+      // Get discord handle from separate file, falling back to alliance data if not found
+      const discordHandle = discordHandles[nationId]?.discord_handle || nationData.discord_handle || '';
+      
+      return {
+        id: parseInt(nationId),
+        nation_id: parseInt(nationId),
+        rulerName: nationData.ruler_name,
+        nationName: nationData.nation_name,
+        discord_handle: discordHandle,
+        alliance: allianceData.alliance_name,
+        allianceId: allianceId,
+        team: '', // Not available in JSON
+        strength: parseFloat(nationData.current_stats?.strength?.replace(/,/g, '') || '0'),
+        activity: '', // Not available in JSON
+        technology: nationData.current_stats?.technology || '0',
+        infrastructure: nationData.current_stats?.infrastructure || '0',
+        inWarMode: rawNationsDict[parseInt(nationId)]?.inWarMode ?? false,
+        has_dra: nationData.has_dra,
+        slots: { ...defaultSlots, ...nationData.slots }
+      };
+    });
     
     return {
       nations: nationsArray,

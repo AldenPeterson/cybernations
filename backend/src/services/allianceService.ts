@@ -11,6 +11,7 @@ import {
   createNationsDictionary
 } from './dataProcessingService.js';
 import { Nation } from '../models/Nation.js';
+import { loadNationDiscordHandles } from '../utils/nationDiscordHandles.js';
 
 export class AllianceService {
   /**
@@ -83,6 +84,9 @@ export class AllianceService {
    */
   static async getNationsConfig(allianceId: number) {
     const allianceData = loadAllianceById(allianceId);
+    
+    // Load discord handles from separate file
+    const discordHandles = loadNationDiscordHandles();
 
     // Get raw nations data and convert to dictionary for efficient lookups
     const { nations: rawNations } = await loadDataFromFilesWithUpdate();
@@ -105,7 +109,7 @@ export class AllianceService {
           nation_id: n.id,
           ruler_name: n.rulerName,
           nation_name: n.nationName,
-          discord_handle: '',
+          discord_handle: discordHandles[n.id.toString()]?.discord_handle || '',
           has_dra: false,
           slots: { ...defaultSlots },
           current_stats: {
@@ -141,9 +145,13 @@ export class AllianceService {
         receive_priority: 3
       };
       
+      // Get discord handle from separate file, falling back to alliance data if not found
+      const discordHandle = discordHandles[nationId]?.discord_handle || nationData.discord_handle || '';
+      
       const completeNationData = {
         nation_id: nationIdNum,
         ...nationData,
+        discord_handle: discordHandle,
         slots: { ...defaultSlots, ...nationData.slots }, // Merge defaults with existing slots
         inWarMode: rawNationsDict[nationIdNum]?.inWarMode ?? false
       };

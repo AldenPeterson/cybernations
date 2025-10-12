@@ -109,17 +109,20 @@ async function syncAllianceData(allianceData: AllianceData, newNations: Nation[]
     if (!allianceData.nations[nationId]) {
        console.log(`  Adding new nation: ${newNation.nationName}`);
       // Add new nation with default values
+      // Note: discord_handle is now stored in a separate file (nation_discord_handles.json)
       updatedAlliance.nations[nationId] = {
         ruler_name: newNation.rulerName,
         nation_name: newNation.nationName,
-        discord_handle: '', // Will need to be filled in manually
+        discord_handle: '', // Deprecated: now stored in nation_discord_handles.json
         has_dra: false, // Default to false, will need to be updated manually
         notes: '',
         slots: {
           sendTech: 0,
           sendCash: 0,
           getTech: 0,
-          getCash: 0
+          getCash: 0,
+          send_priority: 3,
+          receive_priority: 3
         },
         current_stats: {
           technology: newNation.technology,
@@ -186,8 +189,9 @@ async function syncAllianceData(allianceData: AllianceData, newNations: Nation[]
         hasChanges = true;
       }
       
-      // Preserve existing custom fields (discord_handle, has_dra, notes, slots)
+      // Preserve existing custom fields (has_dra, notes, slots)
       // These are not updated from the raw data and should remain as configured
+      // Note: discord_handle is stored separately in nation_discord_handles.json and not synced here
       
       if (hasChanges) {
         updatedNations.push(newNation.nationName);

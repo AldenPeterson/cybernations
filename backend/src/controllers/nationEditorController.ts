@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AllianceService } from '../services/allianceService.js';
+import { updateDiscordHandle, getDiscordHandle } from '../utils/nationDiscordHandles.js';
 
 export class NationEditorController {
   /**
@@ -121,12 +122,8 @@ export class NationEditorController {
         });
       }
 
-      // Prepare updates
+      // Prepare updates (excluding discord_handle which is saved separately)
       const updates: any = {};
-      
-      if (discord_handle !== undefined) {
-        updates.discord_handle = discord_handle;
-      }
       
       if (has_dra !== undefined) {
         updates.has_dra = has_dra;
@@ -140,7 +137,15 @@ export class NationEditorController {
         updates.slots = slots;
       }
 
-      // Update using the service
+      // Handle discord_handle separately - save to separate file
+      if (discord_handle !== undefined) {
+        const discordSuccess = updateDiscordHandle(nationId, discord_handle);
+        if (!discordSuccess) {
+          console.warn('Failed to update discord handle for nation', nationId);
+        }
+      }
+
+      // Update using the service (only alliance-specific data)
       const success = AllianceService.updateNationData(allianceId, nationId, updates);
       
       if (!success) {
@@ -150,16 +155,18 @@ export class NationEditorController {
         });
       }
 
-      // Get the updated nation data
+      // Get the updated nation data and merge with discord handle
       const updatedAlliance = AllianceService.getAllianceById(allianceId);
       const updatedNation = updatedAlliance?.nations[nationId];
+      const discordHandleValue = getDiscordHandle(nationId);
 
       res.json({
         success: true,
         message: 'Nation updated successfully',
         nation: {
           nation_id: nationId,
-          ...updatedNation
+          ...updatedNation,
+          discord_handle: discordHandleValue || updatedNation?.discord_handle || ''
         }
       });
     } catch (error) {

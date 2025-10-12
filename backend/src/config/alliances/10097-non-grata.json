@@ -173,8 +173,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
-        "receive_priority": 2
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "400.19",
@@ -1121,8 +1121,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
-        "receive_priority": 2
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "100.37",
@@ -1192,21 +1192,21 @@
       "ruler_name": "Lyanna Mormont",
       "nation_name": "Bear Island 4 Lyfe",
       "discord_handle": "",
-      "has_dra": true,
+      "has_dra": false,
+      "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
-        "receive_priority": 2
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "501.98",
         "infrastructure": "9,701.07",
         "strength": "49297.035"
-      },
-      "notes": ""
+      }
     },
     "623644": {
       "ruler_name": "Van Hoo X",
@@ -1544,21 +1544,21 @@
       "ruler_name": "TheCompany0",
       "nation_name": "Malacipe",
       "discord_handle": "",
-      "has_dra": true,
+      "has_dra": false,
+      "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
-        "receive_priority": 2
+        "send_priority": 3,
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "502.10",
         "infrastructure": "8,588.18",
         "strength": "48477.121"
-      },
-      "notes": ""
+      }
     },
     "643981": {
       "ruler_name": "ONXwat",
