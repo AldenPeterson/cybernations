@@ -22,7 +22,7 @@ const NSPercentageBadge: React.FC<NSPercentageBadgeProps> = ({ strengthRatio }) 
   return (
     <span
       className={clsx(
-        'inline-block px-1 py-px rounded-sm text-white text-[8px] font-bold font-mono ml-1 min-w-[24px] text-center',
+        'inline-block px-0.5 md:px-1 py-px rounded-sm text-white text-[7px] md:text-[8px] font-bold font-mono ml-0.5 md:ml-1 min-w-[20px] md:min-w-[24px] text-center',
         getBadgeClasses(percentage)
       )}
     >

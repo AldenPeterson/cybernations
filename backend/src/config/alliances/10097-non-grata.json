@@ -1408,6 +1408,24 @@
       },
       "notes": ""
     },
+    "633611": {
+      "ruler_name": "Speeder",
+      "nation_name": "Dronterlands",
+      "discord_handle": "",
+      "has_dra": false,
+      "notes": "",
+      "slots": {
+        "sendTech": 0,
+        "sendCash": 0,
+        "getTech": 0,
+        "getCash": 0
+      },
+      "current_stats": {
+        "technology": "248.85",
+        "infrastructure": "10,876.65",
+        "strength": "43440.963"
+      }
+    },
     "634448": {
       "ruler_name": "Stewie",
       "nation_name": "Stewieland III",
@@ -1447,6 +1465,42 @@
         "strength": "12579.613"
       },
       "notes": ""
+    },
+    "634903": {
+      "ruler_name": "ToasterOven",
+      "nation_name": "Pancake Republic",
+      "discord_handle": "",
+      "has_dra": false,
+      "notes": "",
+      "slots": {
+        "sendTech": 0,
+        "sendCash": 0,
+        "getTech": 0,
+        "getCash": 0
+      },
+      "current_stats": {
+        "technology": "100.90",
+        "infrastructure": "10,999.99",
+        "strength": "44772.758"
+      }
+    },
+    "638461": {
+      "ruler_name": "Jerby",
+      "nation_name": "Simulacra",
+      "discord_handle": "",
+      "has_dra": false,
+      "notes": "",
+      "slots": {
+        "sendTech": 0,
+        "sendCash": 0,
+        "getTech": 0,
+        "getCash": 0
+      },
+      "current_stats": {
+        "technology": "305.89",
+        "infrastructure": "10,660.96",
+        "strength": "42286.084"
+      }
     },
     "638567": {
       "ruler_name": "Cobert",

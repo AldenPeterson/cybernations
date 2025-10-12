@@ -18,9 +18,9 @@ const WarStatusBadge: React.FC<WarStatusBadgeProps> = ({
     switch (variant) {
       case 'compact':
       case 'inline':
-        return 'px-1 py-px text-[9px] rounded-sm';
+        return 'px-0.5 md:px-1 py-px text-[7px] md:text-[9px] rounded-sm';
       default:
-        return 'px-1.5 py-0.5 text-[10px] rounded';
+        return 'px-1 md:px-1.5 py-px md:py-0.5 text-[8px] md:text-[10px] rounded';
     }
   };
 
