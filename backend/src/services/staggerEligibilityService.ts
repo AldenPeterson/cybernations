@@ -44,9 +44,10 @@ export class StaggerEligibilityService {
     defendingAllianceId: number,
     hideAnarchy: boolean = false,
     hidePeaceMode: boolean = false,
-    hideNonPriority: boolean = false
+    hideNonPriority: boolean = false,
+    includeFullTargets: boolean = false
   ): Promise<StaggerEligibilityData[]> {
-    console.log(`StaggerEligibilityService called with hideAnarchy=${hideAnarchy}, hidePeaceMode=${hidePeaceMode}, hideNonPriority=${hideNonPriority}`);
+    console.log(`StaggerEligibilityService called with hideAnarchy=${hideAnarchy}, hidePeaceMode=${hidePeaceMode}, hideNonPriority=${hideNonPriority}, includeFullTargets=${includeFullTargets}`);
     const { nations, wars } = await loadDataFromFilesWithUpdate();
     
     // Get nations from both alliances
@@ -68,19 +69,16 @@ export class StaggerEligibilityService {
       nationWarCounts.set(nation.id, { attacking: attackingWars, defending: defendingWars });
     });
     
-    // For each defending alliance nation in war mode with open slots, find eligible attackers
+    // For each defending alliance nation, find eligible attackers
     const staggerData: StaggerEligibilityData[] = [];
     
     defendingAllianceNations.forEach(defendingNation => {
-      // Only consider nations in war mode
-      if (!defendingNation.inWarMode) return;
-      
       // Calculate open war slots (assume max 3 defensive wars)
       const currentDefendingWars = nationWarCounts.get(defendingNation.id)?.defending || 0;
       const openWarSlots = Math.max(0, 3 - currentDefendingWars);
       
-      // Skip if no open war slots
-      if (openWarSlots <= 0) return;
+      // Skip if no open war slots (unless includeFullTargets is true)
+      if (openWarSlots <= 0 && !includeFullTargets) return;
       
       // Find eligible attackers from attacking alliance
       const eligibleAttackers = attackingAllianceNations

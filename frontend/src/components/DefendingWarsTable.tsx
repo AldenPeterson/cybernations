@@ -24,31 +24,27 @@ interface StaggerRecommendationsCellProps {
     spyglassLastUpdated?: number;
   };
   assignAllianceIds: number[];
-  hideNonPriority: boolean;
   includePeaceMode: boolean;
   assignOnlyPositive: boolean;
-  staggerOnly: boolean;
   maxRecommendations: number;
+  showForFullTargets: boolean;
+  defendingWarsCount: number;
 }
 
 const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({ 
   defendingNation, 
   assignAllianceIds,
-  hideNonPriority,
   includePeaceMode,
   assignOnlyPositive,
-  staggerOnly,
-  maxRecommendations
+  maxRecommendations,
+  showForFullTargets,
+  defendingWarsCount
 }) => {
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [rawRecommendations, setRawRecommendations] = useState<any[]>([]); // Store unfiltered API data
   const [loading, setLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Reset expanded state when recommendations change
-  useEffect(() => {
-    setIsExpanded(false);
-  }, [recommendations.length, maxRecommendations]);
-
+  // Fetch data only when alliance selection changes
   useEffect(() => {
     const fetchStaggerRecommendations = async () => {
       try {
@@ -56,9 +52,10 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
         const allRecommendations: any[] = [];
         
         // Fetch recommendations for each selected assign alliance
+        // Get ALL data without any filters - we'll filter client-side
         for (const assignAllianceId of assignAllianceIds) {
           try {
-            const url = `${API_ENDPOINTS.staggerEligibility}/${assignAllianceId}/${defendingNation.allianceId}?hideAnarchy=true&hidePeaceMode=${!includePeaceMode}&hideNonPriority=${hideNonPriority}`;
+            const url = `${API_ENDPOINTS.staggerEligibility}/${assignAllianceId}/${defendingNation.allianceId}?hideAnarchy=true&hidePeaceMode=false&hideNonPriority=false&includeFullTargets=true`;
             const response = await apiCall(url);
             const data = await response.json();
             
@@ -76,24 +73,19 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
           }
         }
         
-        // Remove duplicates based on attacker ID and apply filters
-        let uniqueRecommendations = allRecommendations
+        // Remove duplicates based on attacker ID
+        const uniqueRecommendations = allRecommendations
           .filter((rec, index, self) => 
             index === self.findIndex(r => r.id === rec.id)
           );
         
-        // Apply "Assign only positive" filter - only show attackers with >= 100% NS
-        if (assignOnlyPositive) {
-          uniqueRecommendations = uniqueRecommendations.filter(rec => rec.strengthRatio >= 1.0);
-        }
-        
         // Sort by strength (highest first)
         uniqueRecommendations.sort((a, b) => b.strength - a.strength);
         
-        setRecommendations(uniqueRecommendations);
+        setRawRecommendations(uniqueRecommendations);
       } catch (err) {
         console.error('Failed to fetch stagger recommendations:', err);
-        setRecommendations([]);
+        setRawRecommendations([]);
       } finally {
         setLoading(false);
       }
@@ -110,10 +102,32 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
       };
     } else {
       // Only clear recommendations if there are no alliances selected
-      setRecommendations([]);
+      setRawRecommendations([]);
       setLoading(false);
     }
-  }, [assignAllianceIds, defendingNation.id, defendingNation.allianceId, hideNonPriority, includePeaceMode, assignOnlyPositive, staggerOnly]);
+  }, [assignAllianceIds, defendingNation.id, defendingNation.allianceId]);
+
+  // Apply filters client-side whenever filter settings change
+  const filteredRecommendations = React.useMemo(() => {
+    let filtered = [...rawRecommendations];
+    
+    // Apply "Include Peace Mode" filter
+    if (!includePeaceMode) {
+      filtered = filtered.filter(rec => rec.inWarMode);
+    }
+    
+    // Apply "Assign only positive" filter - only show attackers with >= 100% NS
+    if (assignOnlyPositive) {
+      filtered = filtered.filter(rec => rec.strengthRatio >= 1.0);
+    }
+    
+    return filtered;
+  }, [rawRecommendations, includePeaceMode, assignOnlyPositive]);
+
+  // Reset expanded state when recommendations change
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [filteredRecommendations.length, maxRecommendations]);
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
@@ -134,16 +148,21 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
     return tech.toString();
   };
 
-  if (loading && recommendations.length === 0) {
+  // If showForFullTargets is false and nation has full defending war slots (3), don't show assignments
+  if (!showForFullTargets && defendingWarsCount >= 3) {
+    return <span className="text-gray-400 text-[9px]">Full</span>;
+  }
+
+  if (loading && filteredRecommendations.length === 0) {
     return <span className="text-gray-600 text-[9px]">Loading...</span>;
   }
 
-  if (!loading && recommendations.length === 0) {
+  if (!loading && filteredRecommendations.length === 0) {
     return <span className="text-gray-400 text-[9px]">None</span>;
   }
 
-  const totalRecommendations = recommendations.length;
-  const displayedRecommendations = isExpanded ? recommendations : recommendations.slice(0, maxRecommendations);
+  const totalRecommendations = filteredRecommendations.length;
+  const displayedRecommendations = isExpanded ? filteredRecommendations : filteredRecommendations.slice(0, maxRecommendations);
   const hasMore = totalRecommendations > maxRecommendations;
 
   return (
@@ -288,6 +307,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [urgentTargets, setUrgentTargets] = useState<boolean>(false);
   const [blownStaggers, setBlownStaggers] = useState<boolean>(false);
   const [showPMNations, setShowPMNations] = useState<boolean>(false);
+  const [showForFullTargets, setShowForFullTargets] = useState<boolean>(true);
   const [alliances, setAlliances] = useState<Alliance[]>([]);
   const [assignAllianceIds, setAssignAllianceIds] = useState<number[]>([]);
 
@@ -342,6 +362,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     setNeedsNuke(parseBooleanParam(searchParams.get('needsNuke')));
     setAssignOnlyPositive(parseBooleanParam(searchParams.get('assignOnlyPositive')));
     setStaggerOnly(parseBooleanParam(searchParams.get('staggerOnly'), true)); // default true
+    setShowForFullTargets(parseBooleanParam(searchParams.get('showForFullTargets'), true)); // default true
     setUrgentTargets(parseBooleanParam(searchParams.get('urgentTargets')));
     setBlownStaggers(parseBooleanParam(searchParams.get('blownStaggers')));
     setShowPMNations(parseBooleanParam(searchParams.get('showPMNations')));
@@ -805,6 +826,14 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                   updateUrlParams({ staggerOnly: checked.toString() });
                 }}
               />
+              <FilterCheckbox
+                label="Show for full targets"
+                checked={showForFullTargets}
+                onChange={(checked) => {
+                  setShowForFullTargets(checked);
+                  updateUrlParams({ showForFullTargets: checked.toString() });
+                }}
+              />
               <div className="flex items-center gap-1.5">
                 <label className="text-sm text-gray-800 font-medium whitespace-nowrap">
                   Max recommendations:
@@ -1088,11 +1117,11 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                         <StaggerRecommendationsCell 
                           defendingNation={nationWar.nation}
                           assignAllianceIds={assignAllianceIds}
-                          hideNonPriority={hideNonPriority}
                           includePeaceMode={includePeaceMode}
                           assignOnlyPositive={assignOnlyPositive}
-                          staggerOnly={staggerOnly}
                           maxRecommendations={maxRecommendations}
+                          showForFullTargets={showForFullTargets}
+                          defendingWarsCount={nationWar.defendingWars.length}
                         />
                       ) : (
                         <span className="text-gray-400 text-[10px]">Select alliances</span>

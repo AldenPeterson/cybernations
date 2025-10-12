@@ -12,6 +12,7 @@ export class StaggerEligibilityController {
       const hideAnarchy = req.query.hideAnarchy === 'true';
       const hidePeaceMode = req.query.hidePeaceMode === 'true';
       const hideNonPriority = req.query.hideNonPriority === 'true';
+      const includeFullTargets = req.query.includeFullTargets === 'true';
       
       if (isNaN(attackingAllianceId)) {
         return res.status(400).json({
@@ -39,7 +40,8 @@ export class StaggerEligibilityController {
         defendingAllianceId,
         hideAnarchy,
         hidePeaceMode,
-        hideNonPriority
+        hideNonPriority,
+        includeFullTargets
       );
       
       res.json({
@@ -50,7 +52,8 @@ export class StaggerEligibilityController {
         filters: {
           hideAnarchy,
           hidePeaceMode,
-          hideNonPriority
+          hideNonPriority,
+          includeFullTargets
         }
       });
       

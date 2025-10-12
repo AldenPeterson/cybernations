@@ -44092,5 +44092,95 @@
     "defendingNation": "216336",
     "result": "Direct Hit",
     "sentAt": "10/11/2025 9:00:44 PM"
+  },
+  "481103_89235_1760282026000": {
+    "attackingNation": "481103",
+    "defendingNation": "89235",
+    "result": "Thwarted",
+    "sentAt": "10/12/2025 9:13:46 AM"
+  },
+  "481103_89235_1760282019000": {
+    "attackingNation": "481103",
+    "defendingNation": "89235",
+    "result": "Thwarted",
+    "sentAt": "10/12/2025 9:13:39 AM"
+  },
+  "346540_552359_1760282018000": {
+    "attackingNation": "346540",
+    "defendingNation": "552359",
+    "result": "Thwarted",
+    "sentAt": "10/12/2025 9:13:38 AM"
+  },
+  "481103_89235_1760281867000": {
+    "attackingNation": "481103",
+    "defendingNation": "89235",
+    "result": "Thwarted",
+    "sentAt": "10/12/2025 9:11:07 AM"
+  },
+  "629286_513467_1760281318000": {
+    "attackingNation": "629286",
+    "defendingNation": "513467",
+    "result": "Direct Hit",
+    "sentAt": "10/12/2025 9:01:58 AM"
+  },
+  "629286_513467_1760281289000": {
+    "attackingNation": "629286",
+    "defendingNation": "513467",
+    "result": "Thwarted",
+    "sentAt": "10/12/2025 9:01:29 AM"
+  },
+  "629286_513467_1760281221000": {
+    "attackingNation": "629286",
+    "defendingNation": "513467",
+    "result": "Thwarted",
+    "sentAt": "10/12/2025 9:00:21 AM"
+  },
+  "560632_592036_1760280948000": {
+    "attackingNation": "560632",
+    "defendingNation": "592036",
+    "result": "Direct Hit",
+    "sentAt": "10/12/2025 8:55:48 AM"
+  },
+  "560632_592036_1760280908000": {
+    "attackingNation": "560632",
+    "defendingNation": "592036",
+    "result": "Thwarted",
+    "sentAt": "10/12/2025 8:55:08 AM"
+  },
+  "560632_592036_1760280904000": {
+    "attackingNation": "560632",
+    "defendingNation": "592036",
+    "result": "Thwarted",
+    "sentAt": "10/12/2025 8:55:04 AM"
+  },
+  "560632_592036_1760280900000": {
+    "attackingNation": "560632",
+    "defendingNation": "592036",
+    "result": "Thwarted",
+    "sentAt": "10/12/2025 8:55:00 AM"
+  },
+  "560632_592036_1760280896000": {
+    "attackingNation": "560632",
+    "defendingNation": "592036",
+    "result": "Thwarted",
+    "sentAt": "10/12/2025 8:54:56 AM"
+  },
+  "83518_552359_1760282499000": {
+    "attackingNation": "83518",
+    "defendingNation": "552359",
+    "result": "Direct Hit",
+    "sentAt": "10/12/2025 9:21:39 AM"
+  },
+  "187132_439338_1760282335000": {
+    "attackingNation": "187132",
+    "defendingNation": "439338",
+    "result": "Direct Hit",
+    "sentAt": "10/12/2025 9:18:55 AM"
+  },
+  "187132_439338_1760282330000": {
+    "attackingNation": "187132",
+    "defendingNation": "439338",
+    "result": "Thwarted",
+    "sentAt": "10/12/2025 9:18:50 AM"
   }
 }
