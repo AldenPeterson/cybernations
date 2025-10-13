@@ -60,11 +60,26 @@ function downloadFile(url: string, filePath: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(filePath);
     
+    // Add error handler to the file stream immediately
+    file.on('error', (err) => {
+      fs.unlink(filePath, () => {}); // Delete the file on error
+      reject(err);
+    });
+    
     https.get(url, (response) => {
       if (response.statusCode !== 200) {
+        file.close();
+        fs.unlink(filePath, () => {});
         reject(new Error(`Failed to download file from ${url}: ${response.statusCode}`));
         return;
       }
+      
+      // Add error handler to the response stream
+      response.on('error', (err) => {
+        file.close();
+        fs.unlink(filePath, () => {});
+        reject(err);
+      });
       
       response.pipe(file);
       
@@ -72,12 +87,9 @@ function downloadFile(url: string, filePath: string): Promise<void> {
         file.close();
         resolve();
       });
-      
-      file.on('error', (err) => {
-        fs.unlink(filePath, () => {}); // Delete the file on error
-        reject(err);
-      });
     }).on('error', (err) => {
+      file.close();
+      fs.unlink(filePath, () => {});
       reject(err);
     });
   });
