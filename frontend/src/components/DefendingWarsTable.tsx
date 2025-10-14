@@ -585,10 +585,11 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     });
   }
 
-  // Filter to show only urgent targets (newest war expires in 0 or 1 days)
+  // Filter to show only urgent targets (newest war expires in 0 or 1 days, or no defending wars)
   if (urgentTargets) {
     filteredNationWars = filteredNationWars.filter(nationWar => {
-      if (nationWar.defendingWars.length === 0) return false;
+      // Show nations with no defending wars as urgent targets
+      if (nationWar.defendingWars.length === 0) return true;
       
       // Find the newest war (most recently started) by finding the one with most days until expiration
       const newestWar = nationWar.defendingWars.reduce((newest, current) => {
