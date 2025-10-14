@@ -196,11 +196,23 @@ function getStaleFileTypesFromLatestDownloads(): FileType[] {
     // Fresh if we have downloaded at or after the most recent scheduled time
     const isFreshByTime = record.timestamp >= lastScheduledUtcMs;
     
-    // Also check if the filename matches what we expect for the current time
+    // Check if a custom filename is being used (via environment variable or manual download)
+    const customFilename = getCustomFilename(item.type);
     const expectedFileInfo = getFileInfo(item.type);
     const isFreshByFilename = record.originalFile === expectedFileInfo.name;
     
-    if (!isFreshByTime || !isFreshByFilename) {
+    // Consider file fresh if:
+    // 1. Using a custom filename AND timestamp is recent, OR
+    // 2. Both timestamp and filename match expected values
+    const isFreshWithCustom = customFilename && isFreshByTime;
+    const isFreshWithAuto = isFreshByTime && isFreshByFilename;
+    
+    // If we have a recent timestamp but non-matching filename, it's likely from manual download
+    // In this case, trust the recent timestamp (consider fresh if downloaded in last 24 hours)
+    const isRecentManualDownload = isFreshByTime && !isFreshByFilename && 
+                                    (nowUtcMs - record.timestamp < 24 * 60 * 60 * 1000);
+    
+    if (!isFreshWithCustom && !isFreshWithAuto && !isRecentManualDownload) {
       stale.push(item.type);
     }
   }
@@ -445,13 +457,49 @@ export async function ensureRecentFiles(): Promise<void> {
 }
 
 /**
+ * Get custom filename from environment variables if specified
+ */
+function getCustomFilename(fileType: FileType): string | undefined {
+  const envVarMap = {
+    [FileType.NATION_STATS]: 'CUSTOM_NATION_STATS_FILE',
+    [FileType.AID_STATS]: 'CUSTOM_AID_STATS_FILE',
+    [FileType.WAR_STATS]: 'CUSTOM_WAR_STATS_FILE'
+  };
+  
+  const envVar = envVarMap[fileType];
+  const customFilename = process.env[envVar];
+  
+  if (customFilename) {
+    console.log(`Using custom filename from ${envVar}: ${customFilename}`);
+  }
+  
+  return customFilename;
+}
+
+/**
  * Try to download a file with fallback to previous time periods
+ * Supports custom filename override via environment variables
  */
 async function downloadFileWithFallback(
   baseUrl: string,
   fileType: FileType,
   tempZipPath: string
 ): Promise<{ success: boolean; filename: string }> {
+  // Check for custom filename override first
+  const customFilename = getCustomFilename(fileType);
+  if (customFilename) {
+    const url = `${baseUrl}${customFilename}`;
+    try {
+      console.log(`Trying to download custom file: ${customFilename}...`);
+      await downloadFile(url, tempZipPath);
+      console.log(`✓ Successfully downloaded ${customFilename}`);
+      return { success: true, filename: customFilename };
+    } catch (error: any) {
+      console.error(`Failed to download custom file ${customFilename}:`, error.message);
+      throw error;
+    }
+  }
+
   const flag_map = {
     [FileType.NATION_STATS]: '51000',
     [FileType.AID_STATS]: '52000',
