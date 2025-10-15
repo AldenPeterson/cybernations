@@ -910,3 +910,213 @@ Alliance: The Legion
 Strength: 6,219.900
 Warchest: $30,657,349
 Last Updated: 10 days old
+1. Arkalay
+Ruler: Jordan Lindeman
+Alliance: Global Alliance And Treaty Organization
+Strength: 619,754.709
+Warchest: $10,688,067,493
+Last Updated: 6 days old
+2. Weaver
+Ruler: weaverc
+Alliance: Global Alliance and Treaty Organization
+Strength: 244,203.411
+Warchest: $288,979,012
+Last Updated: 2 days old
+3. Nirvash
+Ruler: Gekko the Batosai
+Alliance: Global Alliance And Treaty Organization
+Strength: 242,456.549
+Warchest: $6,227,338,594
+Last Updated: 4 days old
+4. The Kingdom of Kaos
+Ruler: Chris Kaos
+Alliance: Global Alliance And Treaty Organization
+Strength: 220,249.866
+Warchest: $5,084,617,808
+Last Updated: 4 days old
+5. Maritime
+Ruler: Captain Stage
+Alliance: Global Alliance And Treaty Organization
+Strength: 170,670.110
+Warchest: $13,961,872,677
+Last Updated: 3 days old
+6. Ellisonia
+Ruler: Laserwolf
+Alliance: Global Alliance and Treaty Organization
+Strength: 166,703.901
+Warchest: $21,392,985,252
+Last Updated: 4 days old
+7. Mikeville
+Ruler: Mad Mike
+Alliance: Global Alliance And Treaty Organization
+Strength: 160,220.019
+Warchest: $42,257,462,556
+Last Updated: 4 days old
+8. The Cyan Kingdom
+Ruler: King Cyan
+Alliance: Global Alliance And Treaty Organization
+Strength: 159,837.436
+Warchest: $28,640,957,451
+Last Updated: 1 days old
+9. Morte
+Ruler: LittleVlad
+Alliance: Global Alliance and Treaty Organization
+Strength: 145,858.877
+Warchest: $9,011,333,774
+Last Updated: 4 days old
+10. DeKalb
+Ruler: jsims8
+Alliance: Global Alliance and Treaty Organization
+Strength: 140,505.368
+Warchest: $699,573,337
+Last Updated: 3 days old
+11. Eisenherz
+Ruler: Bmk812
+Alliance: Global Alliance And Treaty Organization
+Strength: 140,405.643
+Warchest: $8,285,772,971
+Last Updated: 279 days old
+12. Wootrovia
+Ruler: Wootmeister
+Alliance: Global Alliance And Treaty Organization
+Strength: 139,048.773
+Warchest: $10,781,977,829
+Last Updated: 3 days old
+13. Turtle Empire
+Ruler: tnnnn
+Alliance: Global Alliance and Treaty Organization
+Strength: 131,612.443
+Warchest: $5,256,323,970
+Last Updated: 4 days old
+14. The New Empire
+Ruler: MasterChief777
+Alliance: Global Alliance And Treaty Organization
+Strength: 119,632.966
+Warchest: $1,479,108,445
+Last Updated: 6 days old
+15. Parkview 12
+Ruler: Hankidan
+Alliance: Global Alliance And Treaty Organization
+Strength: 107,904.881
+Warchest: $2,170,756,769
+Last Updated: 6 days old
+1. Uelen
+Ruler: Uelen
+Alliance: Global Alliance and Treaty Organization
+Strength: 107,830.394
+Warchest: $2,393,878,926
+Last Updated: 2 days old
+2. frequathrive
+Ruler: Democzar
+Alliance: Global Alliance And Treaty Organization
+Strength: 101,556.975
+Warchest: $1,805,545,854
+Last Updated: 2 days old
+3. Dragon Spire
+Ruler: DragonsPhyre
+Alliance: Global Alliance And Treaty Organization
+Strength: 92,560.009
+Warchest: $5,848,311,877
+Last Updated: 4 days old
+4. Kievan Rus
+Ruler: InconspicuousBarrel
+Alliance: Global Alliance And Treaty Organization
+Strength: 91,513.591
+Warchest: $15,048,079,732
+Last Updated: 5 days old
+5. Jianada
+Ruler: Kuzuryusen
+Alliance: Global Alliance And Treaty Organization
+Strength: 80,928.622
+Warchest: $4,516,392,212
+Last Updated: 2 days old
+6. Fraise de Sang
+Ruler: Katahdin
+Alliance: Global Alliance and Treaty Organization
+Strength: 77,394.198
+Warchest: $14,330,483,629
+Last Updated: 2 days old
+7. MK4Slowride
+Ruler: MK4Slowride
+Alliance: Global Alliance And Treaty Organization
+Strength: 70,378.148
+Warchest: $2,235,359,892
+Last Updated: 2 days old
+8. Caesura
+Ruler: Manis B
+Alliance: Global Alliance and Treaty Organization
+Strength: 69,403.288
+Warchest: $862,134,662
+Last Updated: 6 days old
+9. Dominion of the Duck
+Ruler: Mallardius
+Alliance: Global Alliance And Treaty Organization
+Strength: 65,643.057
+Warchest: $317,981,911
+Last Updated: 5 days old
+10. Barataria
+Ruler: Jacksonians
+Alliance: Global Alliance And Treaty Organization
+Strength: 61,161.781
+Warchest: $649,209,281
+Last Updated: 6 days old
+11. Crudite
+Ruler: lizardo
+Alliance: Global Alliance and Treaty Organization
+Strength: 58,996.685
+Warchest: $10,060,913,160
+Last Updated: 2 days old
+12. wussys
+Ruler: Overlord Wes
+Alliance: Global Alliance and Treaty Organization
+Strength: 58,869.840
+Warchest: $8,470,161,423
+Last Updated: 6 days old
+13. Attarnia
+Ruler: Michael Dalton
+Alliance: Global Alliance And Treaty Organization
+Strength: 57,441.371
+Warchest: $681,782,397
+Last Updated: 2 days old
+14. Land of SuperNig
+Ruler: SuperNig
+Alliance: Global Alliance And Treaty Organization
+Strength: 54,351.890
+Warchest: $2,939,642,973
+Last Updated: 5 days old
+15. NukemLand
+Ruler: Duke Nukem
+Alliance: Global Alliance And Treaty Organization
+Strength: 53,387.492
+Warchest: $2,802,753,974
+Last Updated: 2 days old
+1. DeWitt
+Ruler: Empress Elizabeth
+Alliance: Global Alliance And Treaty Organization
+Strength: 52,573.531
+Warchest: $1,606,135,644
+Last Updated: 2 days old
+2. Whumbhadambha
+Ruler: swifty
+Alliance: Global Alliance and Treaty Organization
+Strength: 48,201.508
+Warchest: $3,576,117,316
+Last Updated: 2 days old
+3. Zernograd
+Ruler: Czar Cootie
+Alliance: Global Alliance And Treaty Organization
+Strength: 45,787.813
+Warchest: $337,506,906
+Last Updated: 2 days old
+4. Greater Mustangistan
+Ruler: HorseElectrolytes
+Alliance: Global Alliance And Treaty Organization
+Strength: 36,999.894
+Warchest: $471,023,168
+Last Updated: 4 days old
+5. Cadii
+Ruler: SlimCad
+Alliance: Global Alliance And Treaty Organization
+Strength: 33,448.996
+Warchest: $1,400,917,523
+Last Updated: 4 days old
