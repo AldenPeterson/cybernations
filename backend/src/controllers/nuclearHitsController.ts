@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { NuclearReportInput, readNuclearHits, upsertNuclearReports } from '../services/nuclearHitsService.js';
+import { NuclearReportInput, readNuclearHits, upsertNuclearReports, computeNuclearAttemptDistribution } from '../services/nuclearHitsService.js';
+import { loadDataFromFilesWithUpdate, createNationsDictionary } from '../services/dataProcessingService.js';
 
 export class NuclearHitsController {
   static ingest = (req: Request, res: Response) => {
@@ -16,6 +17,33 @@ export class NuclearHitsController {
   static all = (_req: Request, res: Response) => {
     const store = readNuclearHits();
     return res.json(store);
+  };
+
+  static stats = async (_req: Request, res: Response) => {
+    const stats = computeNuclearAttemptDistribution();
+    try {
+      const { nations } = await loadDataFromFilesWithUpdate();
+      const dict = createNationsDictionary(nations);
+      const byPairEnriched = (stats.byPair || []).map((row: any) => {
+        const attackerId = parseInt(row.attackingNation) || 0;
+        const defenderId = parseInt(row.defendingNation) || 0;
+        const a = dict[attackerId];
+        const d = dict[defenderId];
+        return {
+          ...row,
+          attackerId,
+          attackerNationName: a?.nationName || row.attackingNation,
+          attackerRulerName: a?.rulerName || undefined,
+          defenderId,
+          defenderNationName: d?.nationName || row.defendingNation,
+          defenderRulerName: d?.rulerName || undefined,
+        };
+      });
+      return res.json({ ...stats, byPair: byPairEnriched });
+    } catch (_e) {
+      // Fallback to raw ids if nation loading fails
+      return res.json(stats);
+    }
   };
 }
 

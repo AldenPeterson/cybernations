@@ -74,12 +74,12 @@ function ReusableTable<T>({
     <div className={clsx(tableClasses.tableWrapper, className)}>
       <table className={tableClasses.table}>
         <thead>
-          <tr className={tableClasses.headerRow}>
+          <tr className={'bg-gray-800'}>
             {columns.map((column) => (
               <th
                 key={String(column.key)}
                 className={clsx(
-                  tableClasses.headerCell,
+                  'px-3 py-3 font-bold text-sm border border-slate-300 text-white',
                   column.sortable && 'cursor-pointer'
                 )}
                 style={{

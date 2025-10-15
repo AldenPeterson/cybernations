@@ -68,4 +68,5 @@ export const API_ENDPOINTS = {
   staggerEligibility: '/api/stagger-eligibility',
   smallAidOffers: '/api/small-aid-offers',
   statsDecode: '/api/stats/decode',
+  nuclearStats: '/api/nuclear/stats',
 } as const;

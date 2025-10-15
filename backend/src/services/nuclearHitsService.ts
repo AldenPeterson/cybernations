@@ -151,3 +151,144 @@ export function upsertNuclearReports(inputs: NuclearReportInput[]): { added: num
 }
 
 
+
+// Classify a result string into thwarted/hit/unknown
+function classifyResult(result?: string): 'thwarted' | 'hit' | 'unknown' {
+  if (!result) return 'unknown';
+  const s = result.toLowerCase();
+  if (s.includes('thwart')) return 'thwarted';
+  // Consider generic success phrases
+  if (s.includes('hit') || s.includes('detonat') || s.includes('struck') || s.includes('landed')) return 'hit';
+  return 'unknown';
+}
+
+export interface ThwartedBeforeHitByPair {
+  attackingNation: string;
+  defendingNation: string;
+  thwartedBeforeHit: number;
+  hitAchieved: boolean;
+  date: string; // YYYY-MM-DD (Central Time)
+  firstEventAt?: string; // first attempt timestamp for context
+  firstHitAt?: string; // timestamp of first successful hit, if any
+}
+
+export interface NuclearAttemptDistribution {
+  byPair: ThwartedBeforeHitByPair[];
+  distribution: Record<string, number>; // thwarted count -> pairs that later hit
+  distributionNoHit: Record<string, number>; // thwarted count -> pairs that never hit
+  onlyThwartedPairs: number; // pairs with attempts but no hit
+}
+
+/**
+ * Compute, for each attacker→defender pair, how many thwarted attempts occurred before the first hit,
+ * and whether a hit was ever achieved. Also returns an aggregated distribution across all pairs that achieved a hit.
+ */
+export function computeNuclearAttemptDistribution(): NuclearAttemptDistribution {
+  const store = readNuclearHits();
+
+  // Group attempts by attacker->defender pair
+  const grouped: Record<string, { a: string; d: string; events: { t: number; sentAt: string; result?: string }[] }> = {};
+  for (const rec of Object.values(store)) {
+    const a = rec.attackingNation;
+    const d = rec.defendingNation;
+    const key = `${a}→${d}`;
+    const t = (() => {
+      try {
+        return parseTimestampMs(rec.sentAt);
+      } catch {
+        return Number.NaN;
+      }
+    })();
+    if (!grouped[key]) grouped[key] = { a, d, events: [] };
+    grouped[key].events.push({ t, sentAt: rec.sentAt, result: rec.result });
+  }
+
+  const byPair: ThwartedBeforeHitByPair[] = [];
+  const distribution: Record<string, number> = {};
+  const distributionNoHit: Record<string, number> = {};
+  let onlyThwartedPairs = 0;
+
+  for (const { a, d, events } of Object.values(grouped)) {
+    // Sort by timestamp ascending; fall back to original order for NaN
+    events.sort((e1, e2) => {
+      const t1 = Number.isNaN(e1.t) ? 0 : e1.t;
+      const t2 = Number.isNaN(e2.t) ? 0 : e2.t;
+      return t1 - t2;
+    });
+
+    // Now split into daily sequences (Central Time date of sentAt)
+    const byDate: Record<string, { t: number; sentAt: string; result?: string }[]> = {};
+    for (const ev of events) {
+      // Build date key in Central Time
+      let dateKey = 'invalid-date';
+      try {
+        const dt = parseCentralTimeDate(ev.sentAt);
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, '0');
+        const d2 = String(dt.getDate()).padStart(2, '0');
+        dateKey = `${y}-${m}-${d2}`;
+      } catch {
+        // keep invalid-date; will still group but unlikely
+      }
+      if (!byDate[dateKey]) byDate[dateKey] = [];
+      byDate[dateKey].push(ev);
+    }
+
+    let anyHitForPair = false;
+    let anyAttemptsForPair = false;
+
+    for (const [dateKey, dayEvents] of Object.entries(byDate)) {
+      dayEvents.sort((e1, e2) => {
+        const t1 = Number.isNaN(e1.t) ? 0 : e1.t;
+        const t2 = Number.isNaN(e2.t) ? 0 : e2.t;
+        return t1 - t2;
+      });
+
+      if (dayEvents.length === 0) continue;
+      anyAttemptsForPair = true;
+
+      let thwartedCount = 0;
+      let hitAchieved = false;
+      const firstEventAt = dayEvents[0]?.sentAt;
+      let firstHitAt: string | undefined = undefined;
+
+      for (const ev of dayEvents) {
+        const cls = classifyResult(ev.result);
+        if (cls === 'thwarted') {
+          if (!hitAchieved) thwartedCount += 1;
+        } else if (cls === 'hit') {
+          if (!hitAchieved) {
+            hitAchieved = true;
+            firstHitAt = ev.sentAt;
+            break;
+          }
+        }
+      }
+
+      const k = String(thwartedCount);
+      if (!hitAchieved) {
+        distributionNoHit[k] = (distributionNoHit[k] || 0) + 1;
+      } else {
+        distribution[k] = (distribution[k] || 0) + 1;
+        anyHitForPair = true;
+      }
+
+      byPair.push({
+        attackingNation: a,
+        defendingNation: d,
+        date: dateKey,
+        thwartedBeforeHit: thwartedCount,
+        hitAchieved,
+        firstEventAt,
+        firstHitAt
+      });
+    }
+
+    if (anyAttemptsForPair && !anyHitForPair) {
+      onlyThwartedPairs += 1;
+    }
+  }
+
+  return { byPair, distribution, distributionNoHit, onlyThwartedPairs };
+}
+

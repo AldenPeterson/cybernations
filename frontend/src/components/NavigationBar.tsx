@@ -109,6 +109,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         return 'Wars';
       case 'shame-offers':
         return 'Shame Offers';
+      case 'nuclear-stats':
+        return 'Nuclear Stats';
       default:
         return 'CyberNations';
     }
@@ -202,6 +204,17 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             )}
           >
             Shame Offers
+          </Link>
+          <Link 
+            to={'/nuclear-stats'}
+            className={clsx(
+              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
+              isActiveTab('nuclear-stats') 
+                ? 'bg-primary text-white font-semibold shadow-md' 
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+            )}
+          >
+            Nuclear Stats
           </Link>
         </div>
 
@@ -315,6 +328,18 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
               )}
             >
               Shame Offers
+            </Link>
+            <Link 
+              to={'/nuclear-stats'}
+              onClick={() => setMobileMenuOpen(false)}
+              className={clsx(
+                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
+                isActiveTab('nuclear-stats') 
+                  ? 'bg-primary text-white font-semibold shadow-md' 
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              )}
+            >
+              Nuclear Stats
             </Link>
           </div>
         </div>

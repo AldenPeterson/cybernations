@@ -9,4 +9,7 @@ nuclearHitsRoutes.post('/nuclear/ingest', NuclearHitsController.ingest);
 // Retrieve all stored nuclear hits (keyed object)
 nuclearHitsRoutes.get('/nuclear', NuclearHitsController.all);
 
+// Retrieve computed nuclear attempt distribution stats
+nuclearHitsRoutes.get('/nuclear/stats', NuclearHitsController.stats);
+
 
