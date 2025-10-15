@@ -19,7 +19,7 @@ export const tableClasses = {
   filterSelect: 'px-4 py-3 border-2 border-slate-400 rounded-lg text-base font-medium bg-white text-slate-800 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 hover:border-slate-500',
 
   // Table wrapper
-  tableWrapper: 'overflow-x-auto rounded-xl shadow-md bg-white w-full max-w-full h-[90vh] overflow-y-auto relative',
+  tableWrapper: 'overflow-x-auto rounded-xl shadow-md bg-white w-full max-w-full max-h-[65vh] overflow-y-auto relative',
 
   // Table styles
   table: 'w-full min-w-[1000px] border-separate border-spacing-0 bg-white rounded-xl overflow-visible',

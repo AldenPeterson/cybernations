@@ -178,7 +178,7 @@ const NuclearStatsPage: React.FC = () => {
         <p className={tableClasses.subtitle}>Distribution of thwarted attempts.</p>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-2">
         <h2 className="text-xl font-bold mb-2 text-slate-800">Summary</h2>
         <ReusableTable<SummaryRow>
           data={summaryRows}
