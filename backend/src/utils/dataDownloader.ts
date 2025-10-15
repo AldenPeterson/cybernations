@@ -382,10 +382,10 @@ async function extractCsvToStandardFile(zipPath: string, outputPath: string, fil
     // Extract zip to temp directory
     await extractZipFile(zipPath, tempExtractDir);
     
-    // Find the extracted CSV file
+    // Find the extracted CSV file that matches the expected file type
     const extractedFiles = fs.readdirSync(tempExtractDir, { recursive: true }) as string[];
     const csvFile = extractedFiles.find((file: string) => 
-      file.endsWith('.txt') && file.includes('CyberNations_SE')
+      file.endsWith('.txt') && file.includes('CyberNations_SE') && file.includes(fileType)
     );
     
     if (!csvFile) {
@@ -506,32 +506,16 @@ async function downloadFileWithFallback(
     [FileType.WAR_STATS]: '52500'
   };
 
-  // Try current time, then fallback to 12 hours ago, then 24 hours ago, then 36 hours ago
-  const hoursOffsets = [0, 12, 24, 36];
-  
-  for (const hoursOffset of hoursOffsets) {
-    const flag = flag_map[fileType];
-    const timestamp = getDownloadNumberSlug(flag, hoursOffset);
-    const filename = `CyberNations_SE_${fileType}_${timestamp}.zip`;
-    const url = `${baseUrl}${filename}`;
-    
-    try {
-      console.log(`Trying to download ${filename}${hoursOffset > 0 ? ` (${hoursOffset}h ago)` : ''}...`);
-      await downloadFile(url, tempZipPath);
-      console.log(`✓ Successfully downloaded ${filename}`);
-      return { success: true, filename };
-    } catch (error: any) {
-      if (error.message && error.message.includes('404')) {
-        console.log(`✗ File not available: ${filename}`);
-        // Continue to next fallback
-        continue;
-      }
-      // For other errors, throw immediately
-      throw error;
-    }
-  }
-  
-  throw new Error(`Failed to download ${fileType} after trying ${hoursOffsets.length} time periods`);
+  // Always compute filename strictly from current Central date and day-part
+  const flag = flag_map[fileType];
+  const timestamp = getDownloadNumberSlug(flag, 0);
+  const filename = `CyberNations_SE_${fileType}_${timestamp}.zip`;
+  const url = `${baseUrl}${filename}`;
+
+  console.log(`Attempting download for scheduled file: ${filename} (central-date/day-part)`);
+  await downloadFile(url, tempZipPath);
+  console.log(`✓ Successfully downloaded ${filename}`);
+  return { success: true, filename };
 }
 
 /**
