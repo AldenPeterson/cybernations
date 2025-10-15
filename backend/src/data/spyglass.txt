@@ -1,844 +1,912 @@
-Spyglass Results - Spied Nations
-1. Star Command
-Ruler: xxLENZxx
-Alliance: The Legion
-Strength: 345,737.663
-Warchest: $19,140,509,402
-Last Updated: 1 days old
-2. kolsara
-Ruler: mojo882
-Alliance: The Legion
-Strength: 281,778.003
-Warchest: $21,705,988,674
-Last Updated: 4 days old
-3. Midgaard
-Ruler: Otto Stolz
-Alliance: The Legion
-Strength: 253,889.639
-Warchest: $29,861,931,712
-Last Updated: 1 days old
-4. Sicara
-Ruler: filgod
-Alliance: The Legion
-Strength: 242,751.499
-Warchest: $7,934,691,800
-Last Updated: 1 days old
-5. Kleptoville
-Ruler: Juleandor
-Alliance: The Legion
-Strength: 216,147.269
-Warchest: $20,710,405,904
-Last Updated: 4 days old
-6. Wadi El Bezaz
-Ruler: Sultan Adly
-Alliance: The Legion
-Strength: 202,999.444
-Warchest: $12,771,077,935
-Last Updated: 1 days old
-7. Revengia
-Ruler: VLs Revenge
-Alliance: The Legion
-Strength: 198,897.144
-Warchest: $22,424,586,060
-Last Updated: 4 days old
-8. Wyvren
-Ruler: madalchemist
-Alliance: The Legion
-Strength: 192,156.115
-Warchest: $13,883,573,604
-Last Updated: 4 days old
-9. Wychwood
-Ruler: Colin Myrhh
-Alliance: The Legion
-Strength: 190,378.329
-Warchest: $11,215,962,866
-Last Updated: 4 days old
-10. my own little workd
-Ruler: king qaz
-Alliance: The Legion
-Strength: 170,542.529
-Warchest: $46,352,931,036
-Last Updated: 4 days old
-11. Arrakis2
-Ruler: deathbiter
-Alliance: The Legion
-Strength: 166,850.766
-Warchest: $67,189,600,712
-Last Updated: 4 days old
-12. There be rabbits
-Ruler: tom the pit leader
-Alliance: The Legion
-Strength: 157,598.969
-Warchest: $31,438,619,298
-Last Updated: 1 days old
-13. Promethixia
-Ruler: Promethixian
-Alliance: The Legion
-Strength: 150,470.130
-Warchest: $4,096,251,177
-Last Updated: 14 days old
-14. Dubrovkin
-Ruler: Fissure
-Alliance: The Legion
-Strength: 129,557.979
-Warchest: $644,016,764
-Last Updated: 1 days old
-15. Lance
-Ruler: DeadASS
-Alliance: The Legion
-Strength: 129,483.385
-Warchest: $8,558,954,691
-Last Updated: 14 days old
-
-
-1. Freytopia
-Ruler: Frey the Great
-Alliance: The Legion
-Strength: 128,755.799
-Warchest: $27,195,374,866
-Last Updated: 5 days old
-2. North Brightbanner
-Ruler: Dread October
-Alliance: The Legion
-Strength: 126,158.596
-Warchest: $13,668,329,945
-Last Updated: 4 days old
-3. Regnum Saoirse
-Ruler: Lord Windmark
-Alliance: The Legion
-Strength: 120,532.728
-Warchest: $15,148,662,251
-Last Updated: 12 days old
-4. Lego Builds
-Ruler: Lego2Builds
-Alliance: The Legion
-Strength: 118,042.838
-Warchest: $6,313,582,085
-Last Updated: 1 days old
-5. Kuzai
-Ruler: deanimator
-Alliance: The Legion
-Strength: 114,619.573
-Warchest: $9,430,460,889
-Last Updated: 1 days old
-6. Belgrade
-Ruler: phate408
-Alliance: The Legion
-Strength: 114,158.284
-Warchest: $10,683,297,142
-Last Updated: 6 days old
-7. baklava
-Ruler: Aristarchus of Samos
-Alliance: The Legion
-Strength: 111,886.808
-Warchest: $5,263,029,421
-Last Updated: 5 days old
-8. Nueva Argentina
-Ruler: Leonel Badano
-Alliance: The Legion
-Strength: 108,171.964
-Warchest: $21,958,153,669
-Last Updated: 1 days old
-9. Charlesland
-Ruler: Carpenters Rule
-Alliance: The Legion
-Strength: 99,147.150
-Warchest: $1,076,706,376
-Last Updated: 5 days old
-10. Apostolica
-Ruler: Pyroponce
-Alliance: The Legion
-Strength: 95,099.074
-Warchest: $4,141,993,203
-Last Updated: 3 days old
-11. Coronia
-Ruler: Darth Vicious
-Alliance: The Legion
-Strength: 93,692.790
-Warchest: $5,293,682,212
-Last Updated: 8 days old
-12. Sirius
-Ruler: asacavanagh
-Alliance: The Legion
-Strength: 80,522.176
-Warchest: $2,265,962,403
-Last Updated: 10 days old
-13. Argiriahn
-Ruler: Argirioc
-Alliance: The Legion
-Strength: 80,448.759
-Warchest: $48,567,823,921
-Last Updated: 1 days old
-14. Bocorz
-Ruler: jumali
-Alliance: The Legion
-Strength: 80,424.264
-Warchest: $4,616,557,403
-Last Updated: 2 days old
-15. USEAR
-Ruler: HK Boris
-Alliance: The Legion
-Strength: 72,915.416
-Warchest: $18,986,391,265
-Last Updated: 14 days old
-
-1. Machas
-Ruler: Thrash
-Alliance: The Legion
-Strength: 72,699.868
-Warchest: $15,400,965,740
-Last Updated: 2 days old
-2. The Shelter
-Ruler: TzarRob
-Alliance: The Legion
-Strength: 70,830.924
-Warchest: $9,161,018,546
-Last Updated: 5 days old
-3. Ithaca
-Ruler: the god of lightning
-Alliance: The Legion
-Strength: 69,013.219
-Warchest: $70,772,247,093
-Last Updated: 9 days old
-4. BoSox Nation
-Ruler: Ramirez Papelbon
-Alliance: The Legion
-Strength: 61,521.987
-Warchest: $1,915,981,965
-Last Updated: 4 days old
-5. Um
-Ruler: Xineoph
-Alliance: The Legion
-Strength: 59,801.719
-Warchest: $20,084,178,426
-Last Updated: 14 days old
-6. Fields Of Justice
-Ruler: PlasticTastic
-Alliance: The Legion
-Strength: 59,422.620
-Warchest: $11,523,635,859
-Last Updated: 1 days old
-7. British Republic
-Ruler: Northstar
-Alliance: The Legion
-Strength: 58,524.014
-Warchest: $10,907,523,725
-Last Updated: 9 days old
-8. Strana Mechty
-Ruler: Alexander Kerensky
-Alliance: The Legion
-Strength: 56,030.982
-Warchest: $2,615,155,312
-Last Updated: 10 days old
-9. Darkram
-Ruler: kker22
-Alliance: The Legion
-Strength: 52,424.675
-Warchest: $13,937,341,553
-Last Updated: 10 days old
-10. Caesalpinia
-Ruler: OBrienIngsoc
-Alliance: The Legion
-Strength: 51,959.871
-Warchest: $5,425,190
-Last Updated: 12 days old
-11. Xindi
-Ruler: Tector
-Alliance: The Legion
-Strength: 50,352.909
-Warchest: $8,648,114,641
-Last Updated: 5 days old
-12. ftcows
-Ruler: ftcows
-Alliance: The Legion
-Strength: 50,253.413
-Warchest: $713,946,343.00
-Last Updated: 9 days old
-13. Aoxomoxoa
-Ruler: DarkStar1348
-Alliance: The Legion
-Strength: 35,148.829
-Warchest: $3,930,721,168
-Last Updated: 1 days old
-14. konkrage1
-Ruler: konkrage1
-Alliance: The Legion
-Strength: 33,519.476
-Warchest: $4,280,361,140
-Last Updated: 3 days old
-15. Glister
-Ruler: Kingzing
-Alliance: The Legion
-Strength: 32,910.406
-Warchest: $7,102,119,387
-Last Updated: 7 days old
-
-1. Virtual Empire
-Ruler: Silver Witch
-Alliance: The Legion
-Strength: 30,068.334
-Warchest: $1,365,261,274
-Last Updated: 4 days old
-2. Kenoland
-Ruler: scozy
-Alliance: The Legion
-Strength: 29,695.193
-Warchest: $8,930,826,667
-Last Updated: 1 days old
-3. Giantland
-Ruler: Gveil
-Alliance: The Legion
-Strength: 27,804.185
-Warchest: $7,462,437,514
-Last Updated: 4 days old
-4. Kingdom of Islam
-Ruler: TravisPernell
-Alliance: The Legion
-Strength: 21,818.104
-Warchest: $7,249,275,186
-Last Updated: 3 days old
-5. Metalocolypse
-Ruler: FabricatorGeneral
-Alliance: The Legion
-Strength: 21,135.184
-Warchest: $11,829,387
-Last Updated: 2 days old
-6. KingDutchison
-Ruler: KingDutchison
-Alliance: The Legion
-Strength: 20,473.700
-Warchest: $205,215,088
-Last Updated: 9 days old
-7. Kamaroon
-Ruler: Mirin Kamar
-Alliance: The Legion
-Strength: 20,084.350
-Warchest: $212,407,960
-Last Updated: 5 days old
-8. PrussiaBavaria
-Ruler: Oscarcars
-Alliance: The Legion
-Strength: 19,910.110
-Warchest: $2,041,304,713
-Last Updated: 4 days old
-9. Indigo Federation
-Ruler: LordTGT
-Alliance: The Legion
-Strength: 19,292.785
-Warchest: $219,164,261
-Last Updated: 11 days old
-10. RekEm Republic
-Ruler: RekEm Republic
-Alliance: The Legion
-Strength: 18,677.693
-Warchest: $308,276,514
-Last Updated: 5 days old
-11. TerraExtraxi
-Ruler: Extractum11
-Alliance: The Legion
-Strength: 18,567.320
-Warchest: $430,922,220
-Last Updated: 8 days old
-12. Hive Fleet Kronos
-Ruler: Hive Fleet Kronos
-Alliance: The Legion
-Strength: 15,724.092
-Warchest: $187,445,628
-Last Updated: 5 days old
-13. Fjord Republic
-Ruler: texwarhawk
-Alliance: The Legion
-Strength: 15,516.995
-Warchest: $460,758,052
-Last Updated: 8 days old
-14. Rebelia
-Ruler: Rebel21
-Alliance: The Legion
-Strength: 14,876.492
-Warchest: $3,369,706,040
-Last Updated: 10 days old
-15. Blue Ribbon
-Ruler: AlphaB
-Alliance: The Legion
-Strength: 13,447.000
-Warchest: $145,388,776
-Last Updated: 5 days old
-
-1. Eschatosia
-Ruler: Telikos Terakhir
-Alliance: The Legion
-Strength: 12,617.796
-Warchest: $1,428,385,058
-Last Updated: 6 days old
-2. temple of perversion
-Ruler: tuomas
-Alliance: The Legion
-Strength: 12,421.669
-Warchest: $246,323,910
-Last Updated: 11 days old
-3. Eythl Republic
-Ruler: Eythl Achilles
-Alliance: The Legion
-Strength: 12,048.463
-Warchest: $34,349,885
-Last Updated: 10 days old
-4. Clavos
-Ruler: Nailz
-Alliance: The Legion
-Strength: 11,976.548
-Warchest: $190,422,637
-Last Updated: 12 days old
-5. South Maghrebia
-Ruler: Hasan AlQaziz
-Alliance: The Legion
-Strength: 11,013.545
-Warchest: $27,666,630
-Last Updated: 11 days old
-6. Havorithia
-Ruler: Havorithian
-Alliance: The Legion
-Strength: 9,149.410
-Warchest: $209,594,730
-Last Updated: 10 days old
-7. Jenock
-Ruler: RyuNura
-Alliance: The Legion
-Strength: 8,975.450
-Warchest: $51,703,145
-Last Updated: 7 days old
-8. Shafar
-Ruler: Marshal Kendall
-Alliance: The Legion
-Strength: 7,909.136
-Warchest: $30,657,349
-Last Updated: 6 days old
-
 1. BlackAngels
 Ruler: KittyPride207
 Alliance: New Polar Order
 Strength: 146,089.710
 Warchest: $27,583,057,371
-Last Updated: 4 days old
-2. Zeronia
-Ruler: Justine27
-Alliance: New Polar Order
-Strength: 132,901.339
-Warchest: $10,861,253,975
-Last Updated: 2 days old
-3. fordminia
-Ruler: patriot lee
-Alliance: New Polar Order
-Strength: 125,821.197
-Warchest: $2,814,616,002
-Last Updated: 2 days old
-4. whiskey island
+Last Updated: 8 days old
+2. whiskey island
 Ruler: moonshiner
 Alliance: New Polar Order
 Strength: 125,046.077
 Warchest: $13,757,809,822
-Last Updated: 16 days old
-5. AlaskianSpecOpsBase
+Last Updated: 20 days old
+3. AlaskianSpecOpsBase
 Ruler: 19thSpecOps
 Alliance: New Polar Order
 Strength: 116,748.232
 Warchest: $13,160,528,388
-Last Updated: 13 days old
-6. UTC Labs
-Ruler: Zombie Glaucon
-Alliance: New Polar Order
-Strength: 104,199.834
-Warchest: $17,861,754,154
-Last Updated: 12 days old
-7. Kiljarit
-Ruler: Linden16
-Alliance: New Polar Order
-Strength: 98,084.897
-Warchest: $13,734,453,456
-Last Updated: 12 days old
-8. Rhination
+Last Updated: 17 days old
+4. Rhination
 Ruler: atoastgirl
 Alliance: New Polar Order
-Strength: 97,324.368
+Strength: 97,224.368
 Warchest: $8,567,466,490
-Last Updated: 2 days old
-9. Slacklanta
+Last Updated: 6 days old
+5. Slacklanta
 Ruler: Robert tilton
 Alliance: New Polar Order
 Strength: 92,174.588
 Warchest: $29,109,265,385
-Last Updated: 11 days old
-10. Beefy
-Ruler: Beefbone
+Last Updated: 15 days old
+6. fordminia
+Ruler: patriot lee
 Alliance: New Polar Order
-Strength: 87,254.311
-Warchest: $9,743,635,464
-Last Updated: 13 days old
-11. Dendarii Federation
-Ruler: Andrew III
+Strength: 90,099.668
+Warchest: $2,814,616,002
+Last Updated: 6 days old
+7. UTC Labs
+Ruler: Zombie Glaucon
 Alliance: New Polar Order
-Strength: 86,078.507
-Warchest: $28,607,966,549
-Last Updated: 14 days old
-12. Frontline
-Ruler: Kongen
+Strength: 85,428.774
+Warchest: $17,578,123,910
+Last Updated: 2 days old
+8. Tol Eressea
+Ruler: WhitEarendur
 Alliance: New Polar Order
-Strength: 83,709.879
-Warchest: $12,063,211,499
-Last Updated: 12 days old
-13. Eleytheria
-Ruler: IceFlyer
-Alliance: New Polar Order
-Strength: 82,585.321
-Warchest: $3,032,069,786
-Last Updated: 9 days old
-14. Saderia
-Ruler: Sadero
-Alliance: New Polar Order
-Strength: 80,194.990
-Warchest: $24,682,878,360
-Last Updated: 13 days old
-15. Pacific Sun
+Strength: 79,761.927
+Warchest: $3,351,325,466
+Last Updated: 16 days old
+9. Pacific Sun
 Ruler: crusaderoflight88
 Alliance: New Polar Order
-Strength: 80,124.712
+Strength: 78,621.311
 Warchest: $26,945,463,262
-Last Updated: 13 days old
-
-1. Mars Colony
+Last Updated: 17 days old
+10. SCOPII
+Ruler: Aquiles
+Alliance: New Polar Order
+Strength: 78,089.153
+Warchest: $47,248,180,002
+Last Updated: 18 days old
+11. Mars Colony
 Ruler: Pentix
 Alliance: New Polar Order
-Strength: 79,064.984
+Strength: 76,054.445
 Warchest: $23,504,527,228
-Last Updated: 12 days old
+Last Updated: 16 days old
+12. Beefy
+Ruler: Beefbone
+Alliance: New Polar Order
+Strength: 75,106.377
+Warchest: $9,636,441,463
+Last Updated: 3 days old
+13. Kiljarit
+Ruler: Linden16
+Alliance: New Polar Order
+Strength: 74,074.776
+Warchest: $13,734,453,456
+Last Updated: 16 days old
+14. Mayoabu
+Ruler: tenbob
+Alliance: New Polar Order
+Strength: 71,875.366
+Warchest: $20,762,709,008
+Last Updated: 20 days old
+15. EggmanEmpire
+Ruler: hazardousdoc
+Alliance: New Polar Order
+Strength: 70,594.488
+Warchest: $29,464,336,045
+Last Updated: 13 days old
+1. Saderia
+Ruler: Sadero
+Alliance: New Polar Order
+Strength: 67,489.619
+Warchest: $24,682,878,360
+Last Updated: 17 days old
 2. vittatorio
 Ruler: archduke jack
 Alliance: New Polar Order
-Strength: 76,138.347
+Strength: 65,357.113
 Warchest: $392,025,672
-Last Updated: 13 days old
-3. EggmanEmpire
-Ruler: hazardousdoc
+Last Updated: 17 days old
+3. Zeronia
+Ruler: Justine27
 Alliance: New Polar Order
-Strength: 75,995.053
-Warchest: $29,464,336,045
-Last Updated: 9 days old
-4. C1995
-Ruler: Jamo199599
+Strength: 64,998.243
+Warchest: $10,861,253,975
+Last Updated: 6 days old
+4. Frontline
+Ruler: Kongen
 Alliance: New Polar Order
-Strength: 73,611.185
-Warchest: $596,163,757
-Last Updated: 12 days old
-5. Tol Eressea
-Ruler: WhitEarendur
-Alliance: New Polar Order
-Strength: 73,242.244
-Warchest: $3,351,325,466
-Last Updated: 12 days old
-6. Vermin
-Ruler: Pesticide
-Alliance: New Polar Order
-Strength: 70,148.267
-Warchest: $19,026,267,587
-Last Updated: 9 days old
-7. Mayoabu
-Ruler: tenbob
-Alliance: New Polar Order
-Strength: 68,970.374
-Warchest: $20,762,709,008
+Strength: 64,566.079
+Warchest: $12,063,211,499
 Last Updated: 16 days old
-8. SCOPII
-Ruler: Aquiles
+5. Eleytheria
+Ruler: IceFlyer
 Alliance: New Polar Order
-Strength: 67,773.541
-Warchest: $47,248,180,002
-Last Updated: 14 days old
-9. Johhny
-Ruler: Johnny123
-Alliance: New Polar Order
-Strength: 63,112.232
-Warchest: $6,661,980,327
-Last Updated: 14 days old
-10. Sarin
-Ruler: Ciroton
-Alliance: New Polar Order
-Strength: 62,203.920
-Warchest: $7,335,756,205
-Last Updated: 11 days old
-11. Aguda
-Ruler: Mindbraker
-Alliance: New Polar Order
-Strength: 60,801.109
-Warchest: $2,781,331,017
-Last Updated: 2 days old
-12. Habitopia
-Ruler: Palotark
-Alliance: New Polar Order
-Strength: 60,307.823
-Warchest: $598,064,710
-Last Updated: 14 days old
-13. Vaule
-Ruler: Imperator Azenquor
-Alliance: New Polar Order
-Strength: 59,864.676
-Warchest: $6,002,475,846
-Last Updated: 12 days old
-14. Dark Zone Elite
+Strength: 63,734.077
+Warchest: $870,544,731
+Last Updated: 4 days old
+6. Dark Zone Elite
 Ruler: Dark Zone Elite
 Alliance: New Polar Order
-Strength: 57,025.395
+Strength: 63,522.073
 Warchest: $3,300,086,256
-Last Updated: 3 days old
-15. Nowa Polska
-Ruler: Kamil
+Last Updated: 7 days old
+7. Aguda
+Ruler: Mindbraker
 Alliance: New Polar Order
-Strength: 55,535.736
-Warchest: $28,056,416,401
-Last Updated: 14 days old
-
-1. Limetown
-Ruler: Lime Like The Bean
+Strength: 57,774.663
+Warchest: $2,781,331,017
+Last Updated: 6 days old
+8. Johhny
+Ruler: Johnny123
 Alliance: New Polar Order
-Strength: 55,362.973
-Warchest: $3,788,971,812
-Last Updated: 14 days old
-2. Relanation
+Strength: 57,507.802
+Warchest: $6,497,550,569
+Last Updated: 2 days old
+9. Vermin
+Ruler: Pesticide
+Alliance: New Polar Order
+Strength: 54,492.037
+Warchest: $19,026,267,587
+Last Updated: 13 days old
+10. Vaule
+Ruler: Imperator Azenquor
+Alliance: New Polar Order
+Strength: 52,451.302
+Warchest: $6,002,475,846
+Last Updated: 16 days old
+11. Sarin
+Ruler: Ciroton
+Alliance: New Polar Order
+Strength: 50,999.382
+Warchest: $7,335,756,205
+Last Updated: 15 days old
+12. Relanation
 Ruler: Mr Relavator
 Alliance: New Polar Order
-Strength: 51,188.228
+Strength: 50,020.351
 Warchest: $1,200,104,892
-Last Updated: 14 days old
-3. Vicrimanland
-Ruler: Vartan
+Last Updated: 18 days old
+13. Limetown
+Ruler: Lime Like The Bean
 Alliance: New Polar Order
-Strength: 49,297.885
-Warchest: $13,399,639,282
-Last Updated: 14 days old
-4. Wild Thing
-Ruler: Marebito
+Strength: 49,059.178
+Warchest: $3,788,971,812
+Last Updated: 18 days old
+14. Habitopia
+Ruler: Palotark
 Alliance: New Polar Order
-Strength: 48,272.962
-Warchest: $892,310,802
-Last Updated: 14 days old
-5. Andymatron
+Strength: 48,647.621
+Warchest: $197,764,097
+Last Updated: 3 days old
+15. Andymatron
 Ruler: Andymatron
 Alliance: New Polar Order
 Strength: 48,184.454
 Warchest: $255,593,522
-Last Updated: 12 days old
-6. Disktopia
+Last Updated: 16 days old
+1. C1995
+Ruler: Jamo199599
+Alliance: New Polar Order
+Strength: 46,557.593
+Warchest: $184,906,729.47
+Last Updated: 16 days old
+2. Disktopia
 Ruler: Dajobo
 Alliance: New Polar Order
-Strength: 45,472.254
+Strength: 46,038.369
 Warchest: $7,006,395,491
-Last Updated: 12 days old
+Last Updated: 16 days old
+3. Nowa Polska
+Ruler: Kamil
+Alliance: New Polar Order
+Strength: 44,441.329
+Warchest: $28,056,416,401
+Last Updated: 18 days old
+4. Vicrimanland
+Ruler: Vartan
+Alliance: New Polar Order
+Strength: 44,290.793
+Warchest: $13,399,639,282
+Last Updated: 18 days old
+5. Dendarii Federation
+Ruler: Andrew III
+Alliance: New Polar Order
+Strength: 42,464.102
+Warchest: $28,607,966,549
+Last Updated: 18 days old
+6. Wild Thing
+Ruler: Marebito
+Alliance: New Polar Order
+Strength: 42,276.769
+Warchest: $697,310,802
+Last Updated: 2 days old
 7. Curel
 Ruler: JayMillz
 Alliance: New Polar Order
-Strength: 43,895.094
+Strength: 39,512.077
 Warchest: $12,689,843,707
-Last Updated: 13 days old
-8. Gallifrey
-Ruler: Fyston
-Alliance: New Polar Order
-Strength: 39,558.425
-Warchest: $1,501,099,258
-Last Updated: 14 days old
-9. Union of Grub
-Ruler: AlmightyGrub
-Alliance: New Polar Order
-Strength: 37,689.636
-Warchest: $13,628,874,157
-Last Updated: 12 days old
-10. Srboslavija
-Ruler: srboslav
-Alliance: New Polar Order
-Strength: 35,136.862
-Warchest: $17,241,998,777
-Last Updated: 11 days old
-11. MiamiU
-Ruler: RedHawkRuler
-Alliance: New Polar Order
-Strength: 33,904.030
-Warchest: $2,320,756,632
-Last Updated: 12 days old
-12. Michelleville
-Ruler: King Matt
-Alliance: New Polar Order
-Strength: 33,853.415
-Warchest: $966,030,342
-Last Updated: 9 days old
-13. Shimazu Conglomerate
-Ruler: Skaros Thunderbane
-Alliance: New Polar Order
-Strength: 32,862.263
-Warchest: $10,437,815,518
-Last Updated: 11 days old
-14. Sirrahistan
+Last Updated: 17 days old
+8. Sirrahistan
 Ruler: mikharr123
 Alliance: New Polar Order
-Strength: 32,676.827
+Strength: 36,954.155
 Warchest: $4,823,119,964
-Last Updated: 12 days old
-15. Germanic Empire
-Ruler: Willaim Kreiger
+Last Updated: 16 days old
+9. Shimazu Conglomerate
+Ruler: Skaros Thunderbane
 Alliance: New Polar Order
-Strength: 31,431.333
-Warchest: $17,151,498,263
-Last Updated: 14 days old
-
-1. The Crucible
-Ruler: black dove
+Strength: 35,433.436
+Warchest: $10,437,815,518
+Last Updated: 15 days old
+10. Gallifrey
+Ruler: Fyston
 Alliance: New Polar Order
-Strength: 31,205.657
-Warchest: $6,138,864,760
-Last Updated: 12 days old
-2. Cryogenicland
+Strength: 34,308.382
+Warchest: $1,501,099,258
+Last Updated: 18 days old
+11. Union of Grub
+Ruler: AlmightyGrub
+Alliance: New Polar Order
+Strength: 32,652.359
+Warchest: $13,628,874,157
+Last Updated: 16 days old
+12. Cryogenicland
 Ruler: Cryogenicland
 Alliance: New Polar Order
-Strength: 29,671.246
+Strength: 32,249.906
 Warchest: $9,440,919,696
-Last Updated: 11 days old
+Last Updated: 15 days old
+13. Germanic Empire
+Ruler: Willaim Kreiger
+Alliance: New Polar Order
+Strength: 30,428.417
+Warchest: $17,151,498,263
+Last Updated: 18 days old
+14. MiamiU
+Ruler: RedHawkRuler
+Alliance: New Polar Order
+Strength: 29,770.199
+Warchest: $2,320,756,632
+Last Updated: 16 days old
+15. Srboslavija
+Ruler: srboslav
+Alliance: New Polar Order
+Strength: 29,397.394
+Warchest: $17,241,998,777
+Last Updated: 15 days old
+1. Michelleville
+Ruler: King Matt
+Alliance: New Polar Order
+Strength: 29,369.289
+Warchest: $966,030,342
+Last Updated: 13 days old
+2. The Crucible
+Ruler: black dove
+Alliance: New Polar Order
+Strength: 28,980.471
+Warchest: $6,138,864,760
+Last Updated: 16 days old
 3. Hantou
 Ruler: aml520
 Alliance: New Polar Order
-Strength: 26,818.689
+Strength: 25,890.225
 Warchest: $4,305,767,745
-Last Updated: 12 days old
-4. Thunnalai
+Last Updated: 16 days old
+4. Daeltheria
+Ruler: JadenStar10
+Alliance: New Polar Order
+Strength: 24,146.968
+Warchest: $38,660,000.53
+Last Updated: 16 days old
+5. Thunnalai
 Ruler: Tharu
 Alliance: New Polar Order
-Strength: 25,907.455
+Strength: 24,110.908
 Warchest: $102,273,116
-Last Updated: 14 days old
-5. Imbratoria
-Ruler: AlQsar
+Last Updated: 18 days old
+6. Dunsinane
+Ruler: Macbeth
 Alliance: New Polar Order
-Strength: 22,232.983
-Warchest: $416,735,930
-Last Updated: 12 days old
-6. Good Game
-Ruler: ToiletGaming3000
-Alliance: New Polar Order
-Strength: 22,217.982
-Warchest: $538,282,486
+Strength: 21,619.142
+Warchest: $463,312,356
 Last Updated: 11 days old
 7. Celess Mob
 Ruler: Celess
 Alliance: New Polar Order
-Strength: 22,001.923
+Strength: 19,964.414
 Warchest: $12,544,083,069
-Last Updated: 12 days old
-8. Northern America
-Ruler: XxWatchmanxX
-Alliance: New Polar Order
-Strength: 20,492.344
-Warchest: $11,120,979
-Last Updated: 12 days old
-9. Omsmos
-Ruler: The 73MPL4R
-Alliance: New Polar Order
-Strength: 20,094.832
-Warchest: $1,037,810,701
-Last Updated: 11 days old
-10. The Dutch Dragonborn
-Ruler: The dutch Dragonborn
-Alliance: New Polar Order
-Strength: 19,297.759
-Warchest: $3,320,803,093
-Last Updated: 13 days old
-11. Dunsinane
-Ruler: Macbeth
-Alliance: New Polar Order
-Strength: 17,691.385
-Warchest: $463,312,356
-Last Updated: 7 days old
-12. Kerajaan Majapahit
+Last Updated: 16 days old
+8. Kerajaan Majapahit
 Ruler: Raden Wijaya
 Alliance: New Polar Order
-Strength: 16,458.731
+Strength: 19,916.525
 Warchest: $610,594,831
-Last Updated: 11 days old
+Last Updated: 15 days old
+9. Northern America
+Ruler: XxWatchmanxX
+Alliance: New Polar Order
+Strength: 19,414.049
+Warchest: $11,120,979
+Last Updated: 16 days old
+10. Good Game
+Ruler: ToiletGaming3000
+Alliance: New Polar Order
+Strength: 16,292.580
+Warchest: $538,282,486
+Last Updated: 15 days old
+11. Imbratoria
+Ruler: AlQsar
+Alliance: New Polar Order
+Strength: 15,995.836
+Warchest: $416,735,930
+Last Updated: 16 days old
+12. The Dutch Dragonborn
+Ruler: The dutch Dragonborn
+Alliance: New Polar Order
+Strength: 15,651.294
+Warchest: $3,320,803,093
+Last Updated: 17 days old
 13. Fania
 Ruler: vedacool
 Alliance: New Polar Order
-Strength: 15,947.449
+Strength: 15,102.521
 Warchest: $7,975,325,663
-Last Updated: 12 days old
-14. Friheden
-Ruler: Nerdslayerx
+Last Updated: 16 days old
+14. Omsmos
+Ruler: The 73MPL4R
 Alliance: New Polar Order
-Strength: 15,680.509
-Warchest: $84,310,682
-Last Updated: 238 days old
-15. Roisin Dubh
-Ruler: Dubh Caireallain
-Alliance: New Polar Order
-Strength: 15,469.208
-Warchest: $5,264,566,632
-Last Updated: 12 days old
-1. Maurya Dynasty
-Ruler: Chandragupta Maurya
-Alliance: New Polar Order
-Strength: 15,248.580
-Warchest: $936,888,458
-Last Updated: 12 days old
-2. Ecateca
-Ruler: medic32
-Alliance: New Polar Order
-Strength: 13,317.579
-Warchest: $6,578,910,866
-Last Updated: 12 days old
-3. Republic of Onivlac
-Ruler: Mihail the Just
-Alliance: New Polar Order
-Strength: 12,944.217
-Warchest: $815,030,094.00
-Last Updated: 14 days old
-4. Sudentor
-Ruler: DERVISHchaff
-Alliance: New Polar Order
-Strength: 12,318.681
-Warchest: $11,295,607
-Last Updated: 252 days old
-5. Gemini Technocracy
+Strength: 14,650.875
+Warchest: $1,037,810,701
+Last Updated: 15 days old
+15. Gemini Technocracy
 Ruler: LongFist
 Alliance: New Polar Order
-Strength: 11,909.195
+Strength: 14,455.874
 Warchest: $340,042,220
-Last Updated: 14 days old
-6. Tarmon Gaidon
-Ruler: Darth Actorbass
+Last Updated: 18 days old
+1. Roisin Dubh
+Ruler: Dubh Caireallain
 Alliance: New Polar Order
-Strength: 11,351.199
-Warchest: $516,259,277
-Last Updated: 10 days old
-7. Daeltheria
-Ruler: JadenStar10
+Strength: 12,931.760
+Warchest: $5,264,566,632
+Last Updated: 16 days old
+2. Maurya Dynasty
+Ruler: Chandragupta Maurya
 Alliance: New Polar Order
-Strength: 10,924.527
-Warchest: $72,408,329.11
-Last Updated: 12 days old
-8. Cruithne
+Strength: 12,624.888
+Warchest: $936,888,458
+Last Updated: 16 days old
+3. Friheden
+Ruler: Nerdslayerx
+Alliance: New Polar Order
+Strength: 10,676.583
+Warchest: $84,310,682
+Last Updated: 242 days old
+4. Republic of Onivlac
+Ruler: Mihail the Just
+Alliance: New Polar Order
+Strength: 10,402.745
+Warchest: $815,030,094.00
+Last Updated: 18 days old
+5. Cruithne
 Ruler: Morgaine
 Alliance: New Polar Order
-Strength: 10,577.640
+Strength: 10,387.977
 Warchest: $163,573,261
-Last Updated: 244 days old
+Last Updated: 248 days old
+6. Sudentor
+Ruler: DERVISHchaff
+Alliance: New Polar Order
+Strength: 9,921.122
+Warchest: $11,295,607
+Last Updated: 256 days old
+7. Tarmon Gaidon
+Ruler: Darth Actorbass
+Alliance: New Polar Order
+Strength: 8,346.793
+Warchest: $516,259,277
+Last Updated: 14 days old
+8. Ecateca
+Ruler: medic32
+Alliance: New Polar Order
+Strength: 8,300.770
+Warchest: $6,578,910,866
+Last Updated: 16 days old
 9. Funktopia
 Ruler: Ryan Greenberg
 Alliance: New Polar Order
-Strength: 4,959.090
+Strength: 3,818.997
 Warchest: $22,928,071
-Last Updated: 12 days old
+Last Updated: 16 days old
 10. Quantum Leap
 Ruler: VickiB
 Alliance: New Polar Order
-Strength: 4,216.040
+Strength: 1,604.034
 Warchest: $23,871,131
-Last Updated: 12 days old
+Last Updated: 16 days old
 11. Chrisenstein
 Ruler: Jaguar1
 Alliance: New Polar Order
-Strength: 1,283.223
+Strength: 496.009
 Warchest: $41,015,780
+Last Updated: 18 days old
+1. Star Command
+Ruler: xxLENZxx
+Alliance: The Legion
+Strength: 348,380.780
+Warchest: $19,140,509,402
+Last Updated: 5 days old
+2. TOOTLOCAHD
+Ruler: Lord of Coke and Hot Dogs
+Alliance: The Legion
+Strength: 305,612.773
+Warchest: $29,870,204,486
+Last Updated: 2 days old
+3. Manitae
+Ruler: happy5214
+Alliance: The Legion
+Strength: 301,657.845
+Warchest: $48,619,101,427
+Last Updated: 1 days old
+4. Mongol Empire
+Ruler: Temujin Khan
+Alliance: The Legion
+Strength: 254,408.029
+Warchest: $3,407,525,468
+Last Updated: 4 days old
+5. Midgaard
+Ruler: Otto Stolz
+Alliance: The Legion
+Strength: 253,929.639
+Warchest: $29,861,931,712
+Last Updated: 5 days old
+6. Republic of China
+Ruler: Magnate
+Alliance: The Legion
+Strength: 252,182.079
+Warchest: $3,581,348,120
+Last Updated: 3 days old
+7. Blue Cat Nation
+Ruler: Ozark
+Alliance: The Legion
+Strength: 251,293.246
+Warchest: $8,297,102,571
+Last Updated: 2 days old
+8. Sicara
+Ruler: filgod
+Alliance: The Legion
+Strength: 239,516.070
+Warchest: $7,934,691,800
+Last Updated: 5 days old
+9. Parisi
+Ruler: land of hops
+Alliance: The Legion
+Strength: 201,028.582
+Warchest: $5,124,829,416
+Last Updated: 4 days old
+10. Kingdom of Frelia
+Ruler: King Hayden
+Alliance: The Legion
+Strength: 197,794.436
+Warchest: $8,661,939,149
+Last Updated: 4 days old
+11. Iwait
+Ruler: killer04
+Alliance: The Legion
+Strength: 170,641.897
+Warchest: $16,341,296,795
+Last Updated: 4 days old
+12. Kleptoville
+Ruler: Juleandor
+Alliance: The Legion
+Strength: 158,740.345
+Warchest: $20,710,405,904
+Last Updated: 8 days old
+13. There be rabbits
+Ruler: tom the pit leader
+Alliance: The Legion
+Strength: 157,918.969
+Warchest: $31,438,619,298
+Last Updated: 5 days old
+14. Wadi El Bezaz
+Ruler: Sultan Adly
+Alliance: The Legion
+Strength: 155,917.213
+Warchest: $12,771,077,935
+Last Updated: 5 days old
+15. kolsara
+Ruler: mojo882
+Alliance: The Legion
+Strength: 151,502.313
+Warchest: $21,705,988,674
+Last Updated: 8 days old
+1. my own little workd
+Ruler: king qaz
+Alliance: The Legion
+Strength: 149,068.664
+Warchest: $46,352,931,036
+Last Updated: 8 days old
+2. Wychwood
+Ruler: Colin Myrhh
+Alliance: The Legion
+Strength: 132,612.833
+Warchest: $9,844,548,096
+Last Updated: 1 days old
+3. Arrakis2
+Ruler: deathbiter
+Alliance: The Legion
+Strength: 130,539.356
+Warchest: $67,189,600,712
+Last Updated: 8 days old
+4. Lance
+Ruler: DeadASS
+Alliance: The Legion
+Strength: 129,483.385
+Warchest: $8,558,954,691
+Last Updated: 18 days old
+5. Traigal
+Ruler: Baron Praxis
+Alliance: The Legion
+Strength: 129,348.824
+Warchest: $39,727,539,798
+Last Updated: 2 days old
+6. Freytopia
+Ruler: Frey the Great
+Alliance: The Legion
+Strength: 128,755.799
+Warchest: $27,195,374,866
+Last Updated: 9 days old
+7. Promethixia
+Ruler: Promethixian
+Alliance: The Legion
+Strength: 127,272.851
+Warchest: $4,096,251,177
+Last Updated: 18 days old
+8. Revengia
+Ruler: VLs Revenge
+Alliance: The Legion
+Strength: 120,573.972
+Warchest: $21,804,432,823
+Last Updated: 1 days old
+9. Dubrovkin
+Ruler: Fissure
+Alliance: The Legion
+Strength: 115,949.764
+Warchest: $634,016,764.00
+Last Updated: 5 days old
+10. baklava
+Ruler: Aristarchus of Samos
+Alliance: The Legion
+Strength: 111,886.808
+Warchest: $5,263,029,421
+Last Updated: 9 days old
+11. North Brightbanner
+Ruler: Dread October
+Alliance: The Legion
+Strength: 110,396.798
+Warchest: $13,668,329,945
+Last Updated: 8 days old
+12. Kuzai
+Ruler: deanimator
+Alliance: The Legion
+Strength: 109,879.148
+Warchest: $9,430,460,889
+Last Updated: 5 days old
+13. Wyvren
+Ruler: madalchemist
+Alliance: The Legion
+Strength: 109,172.794
+Warchest: $13,459,184,972
+Last Updated: 1 days old
+14. Devland
+Ruler: Dev3000
+Alliance: The Legion
+Strength: 104,936.960
+Warchest: $9,780,751,346
+Last Updated: 2 days old
+15. Lego Builds
+Ruler: Lego2Builds
+Alliance: The Legion
+Strength: 100,699.022
+Warchest: $6,313,582,085
+Last Updated: 5 days old
+1. Charlesland
+Ruler: Carpenters Rule
+Alliance: The Legion
+Strength: 99,147.150
+Warchest: $1,076,706,376
+Last Updated: 9 days old
+2. Belgrade
+Ruler: phate408
+Alliance: The Legion
+Strength: 96,300.863
+Warchest: $10,683,297,142
+Last Updated: 10 days old
+3. Nueva Argentina
+Ruler: Leonel Badano
+Alliance: The Legion
+Strength: 94,992.760
+Warchest: $21,958,153,669
+Last Updated: 5 days old
+4. Regnum Saoirse
+Ruler: Lord Windmark
+Alliance: The Legion
+Strength: 94,872.345
+Warchest: $15,148,662,251
+Last Updated: 16 days old
+5. Apostolica
+Ruler: Pyroponce
+Alliance: The Legion
+Strength: 92,824.516
+Warchest: $4,141,993,203
+Last Updated: 7 days old
+6. Argiriahn
+Ruler: Argirioc
+Alliance: The Legion
+Strength: 82,128.759
+Warchest: $48,567,823,921
+Last Updated: 5 days old
+7. Coronia
+Ruler: Darth Vicious
+Alliance: The Legion
+Strength: 80,910.928
+Warchest: $5,293,682,212
+Last Updated: 12 days old
+8. Bocorz
+Ruler: jumali
+Alliance: The Legion
+Strength: 80,424.264
+Warchest: $4,616,557,403
+Last Updated: 6 days old
+9. USEAR
+Ruler: HK Boris
+Alliance: The Legion
+Strength: 68,253.898
+Warchest: $18,986,391,265
+Last Updated: 18 days old
+10. Machas
+Ruler: Thrash
+Alliance: The Legion
+Strength: 65,117.152
+Warchest: $15,400,965,740
+Last Updated: 6 days old
+11. The Shelter
+Ruler: TzarRob
+Alliance: The Legion
+Strength: 58,313.072
+Warchest: $9,161,018,546
+Last Updated: 9 days old
+12. BoSox Nation
+Ruler: Ramirez Papelbon
+Alliance: The Legion
+Strength: 54,662.308
+Warchest: $1,915,981,965
+Last Updated: 8 days old
+13. Ithaca
+Ruler: the god of lightning
+Alliance: The Legion
+Strength: 53,424.649
+Warchest: $70,772,247,093
+Last Updated: 13 days old
+14. Fields Of Justice
+Ruler: PlasticTastic
+Alliance: The Legion
+Strength: 53,008.463
+Warchest: $11,523,635,859
+Last Updated: 4 days old
+15. Caesalpinia
+Ruler: OBrienIngsoc
+Alliance: The Legion
+Strength: 49,370.185
+Warchest: $21,904,869.72
+Last Updated: 16 days old
+1. Strana Mechty
+Ruler: Alexander Kerensky
+Alliance: The Legion
+Strength: 48,236.579
+Warchest: $2,615,155,312
 Last Updated: 14 days old
+2. Darkram
+Ruler: kker22
+Alliance: The Legion
+Strength: 47,632.184
+Warchest: $13,937,341,553
+Last Updated: 14 days old
+3. British Republic
+Ruler: Northstar
+Alliance: The Legion
+Strength: 46,210.009
+Warchest: $10,907,523,725
+Last Updated: 13 days old
+4. ftcows
+Ruler: ftcows
+Alliance: The Legion
+Strength: 44,324.946
+Warchest: $713,946,343.00
+Last Updated: 13 days old
+5. Xindi
+Ruler: Tector
+Alliance: The Legion
+Strength: 36,569.496
+Warchest: $8,648,114,641
+Last Updated: 9 days old
+6. Sirius
+Ruler: asacavanagh
+Alliance: The Legion
+Strength: 34,691.511
+Warchest: $2,265,962,403
+Last Updated: 14 days old
+7. Um
+Ruler: Xineoph
+Alliance: The Legion
+Strength: 34,560.940
+Warchest: $20,084,178,426
+Last Updated: 18 days old
+8. Aberdeenshyre
+Ruler: LadyAberdeen
+Alliance: The Legion
+Strength: 31,750.536
+Warchest: $1,649,880,436
+Last Updated: 3 days old
+9. Hunns
+Ruler: Donny
+Alliance: The Legion
+Strength: 31,461.602
+Warchest: $1,826,188,672
+Last Updated: 3 days old
+10. Virtual Empire
+Ruler: Silver Witch
+Alliance: The Legion
+Strength: 30,068.334
+Warchest: $1,344,459,351
+Last Updated: 4 days old
+11. Kenoland
+Ruler: scozy
+Alliance: The Legion
+Strength: 29,585.715
+Warchest: $8,930,826,667
+Last Updated: 5 days old
+12. Aoxomoxoa
+Ruler: DarkStar1348
+Alliance: The Legion
+Strength: 26,540.235
+Warchest: $3,930,721,168
+Last Updated: 5 days old
+13. Glister
+Ruler: Kingzing
+Alliance: The Legion
+Strength: 25,031.234
+Warchest: $6,899,122,277
+Last Updated: 3 days old
+14. konkrage1
+Ruler: konkrage1
+Alliance: The Legion
+Strength: 23,139.348
+Warchest: $4,280,361,140
+Last Updated: 7 days old
+15. Kamaroon
+Ruler: Mirin Kamar
+Alliance: The Legion
+Strength: 20,294.350
+Warchest: $212,407,960
+Last Updated: 9 days old
+1. Giantland
+Ruler: Gveil
+Alliance: The Legion
+Strength: 20,091.611
+Warchest: $7,301,290,726
+Last Updated: 4 days old
+2. Kingdom of Islam
+Ruler: TravisPernell
+Alliance: The Legion
+Strength: 16,203.996
+Warchest: $7,229,244,422
+Last Updated: 2 days old
+3. Metalocolypse
+Ruler: FabricatorGeneral
+Alliance: The Legion
+Strength: 14,900.651
+Warchest: $11,829,387
+Last Updated: 6 days old
+4. RekEm Republic
+Ruler: RekEm Republic
+Alliance: The Legion
+Strength: 14,630.382
+Warchest: $308,276,514
+Last Updated: 9 days old
+5. KingDutchison
+Ruler: KingDutchison
+Alliance: The Legion
+Strength: 14,139.856
+Warchest: $205,215,088
+Last Updated: 13 days old
+6. TerraExtraxi
+Ruler: Extractum11
+Alliance: The Legion
+Strength: 13,612.233
+Warchest: $430,922,220
+Last Updated: 12 days old
+7. Blue Ribbon
+Ruler: AlphaB
+Alliance: The Legion
+Strength: 13,447.000
+Warchest: $145,388,776
+Last Updated: 9 days old
+8. Rebelia
+Ruler: Rebel21
+Alliance: The Legion
+Strength: 13,317.921
+Warchest: $3,369,706,040
+Last Updated: 14 days old
+9. Indigo Federation
+Ruler: LordTGT
+Alliance: The Legion
+Strength: 13,146.866
+Warchest: $219,164,261
+Last Updated: 15 days old
+10. PrussiaBavaria
+Ruler: Oscarcars
+Alliance: The Legion
+Strength: 12,715.959
+Warchest: $2,041,304,713
+Last Updated: 8 days old
+11. Fjord Republic
+Ruler: texwarhawk
+Alliance: The Legion
+Strength: 12,325.221
+Warchest: $460,758,052
+Last Updated: 12 days old
+12. Clavos
+Ruler: Nailz
+Alliance: The Legion
+Strength: 11,976.548
+Warchest: $190,422,637
+Last Updated: 16 days old
+13. Eschatosia
+Ruler: Telikos Terakhir
+Alliance: The Legion
+Strength: 11,150.881
+Warchest: $1,428,385,058
+Last Updated: 10 days old
+14. Eythl Republic
+Ruler: Eythl Achilles
+Alliance: The Legion
+Strength: 10,462.151
+Warchest: $34,349,885
+Last Updated: 14 days old
+15. South Maghrebia
+Ruler: Hasan AlQaziz
+Alliance: The Legion
+Strength: 9,059.578
+Warchest: $106,059
+Last Updated: 3 days old
+1. Rhinoveia
+Ruler: KingArmen
+Alliance: The Legion
+Strength: 9,050.577
+Warchest: $1,442,785,014
+Last Updated: 4 days old
+2. Hive Fleet Kronos
+Ruler: Hive Fleet Kronos
+Alliance: The Legion
+Strength: 8,633.810
+Warchest: $187,445,628
+Last Updated: 9 days old
+3. temple of perversion
+Ruler: tuomas
+Alliance: The Legion
+Strength: 7,609.623
+Warchest: $246,323,910
+Last Updated: 15 days old
+4. Havorithia
+Ruler: Havorithian
+Alliance: The Legion
+Strength: 6,917.444
+Warchest: $151,945,201
+Last Updated: 3 days old
+5. Jenock
+Ruler: RyuNura
+Alliance: The Legion
+Strength: 6,503.586
+Warchest: $51,703,145
+Last Updated: 11 days old
+6. Shafar
+Ruler: Marshal Kendall
+Alliance: The Legion
+Strength: 6,219.900
+Warchest: $30,657,349
+Last Updated: 10 days old
