@@ -6,7 +6,7 @@
       "ruler_name": "Crymson",
       "nation_name": "Crymson",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -26,7 +26,7 @@
       "ruler_name": "Crown Prince Mishka",
       "nation_name": "Tygaland",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -46,7 +46,7 @@
       "ruler_name": "ak47don",
       "nation_name": "sicily mafia",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -66,7 +66,7 @@
       "ruler_name": "John Orris",
       "nation_name": "Commonwealth of John",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -109,8 +109,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 4,
-        "getTech": 2,
+        "sendCash": 6,
+        "getTech": 0,
         "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
@@ -146,7 +146,7 @@
       "ruler_name": "Buds The Man",
       "nation_name": "New Budsland",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -186,7 +186,7 @@
       "ruler_name": "Lizzzz",
       "nation_name": "Elisabethan",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -209,8 +209,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
-        "getTech": 6,
+        "sendCash": 6,
+        "getTech": 0,
         "getCash": 0,
         "send_priority": 2,
         "receive_priority": 1
@@ -229,8 +229,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 3,
-        "getTech": 3,
+        "sendCash": 6,
+        "getTech": 0,
         "getCash": 0,
         "send_priority": 1,
         "receive_priority": 2
@@ -246,7 +246,7 @@
       "ruler_name": "Bomber66",
       "nation_name": "Baxter",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -269,8 +269,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 3,
-        "getTech": 3,
+        "sendCash": 6,
+        "getTech": 0,
         "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
@@ -326,15 +326,15 @@
       "ruler_name": "paperwings2007",
       "nation_name": "Paper Island",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
+        "getCash": 6,
         "send_priority": 3,
-        "receive_priority": 3
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "3,496.42",
@@ -346,7 +346,7 @@
       "ruler_name": "tayloj7",
       "nation_name": "Rabbitopia",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -369,12 +369,12 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 6,
+        "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
+        "getCash": 6,
         "send_priority": 2,
-        "receive_priority": 2
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "330.96",
@@ -406,7 +406,7 @@
       "ruler_name": "NikolaP",
       "nation_name": "Wiggles",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -527,8 +527,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 4,
-        "getTech": 2,
+        "sendCash": 6,
+        "getTech": 0,
         "getCash": 0,
         "send_priority": 1,
         "receive_priority": 2
@@ -587,8 +587,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 3,
-        "getTech": 3,
+        "sendCash": 6,
+        "getTech": 0,
         "getCash": 0,
         "send_priority": 2,
         "receive_priority": 2
@@ -607,12 +607,12 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 6,
+        "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
+        "getCash": 6,
         "send_priority": 2,
-        "receive_priority": 2
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "156.67",
@@ -704,12 +704,12 @@
       "ruler_name": "Comrade Marx",
       "nation_name": "GreaterGoonSyndicate",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 0,
+        "getTech": 6,
         "getCash": 0,
         "send_priority": 3,
         "receive_priority": 3
@@ -724,7 +724,7 @@
       "ruler_name": "BringMeTheHorizon",
       "nation_name": "Dakotas",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -744,8 +744,8 @@
       "ruler_name": "Lord Xamaeron",
       "nation_name": "Celtic Forest",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
+      "notes": "DS",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
@@ -764,7 +764,7 @@
       "ruler_name": "mikeymikes",
       "nation_name": "batmanism",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -791,7 +791,7 @@
         "getTech": 0,
         "getCash": 6,
         "send_priority": 2,
-        "receive_priority": 2
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "200.67",
@@ -806,12 +806,12 @@
       "discord_handle": "",
       "has_dra": true,
       "slots": {
-        "sendTech": 6,
+        "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
+        "getCash": 6,
         "send_priority": 2,
-        "receive_priority": 2
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "100.32",
@@ -884,13 +884,13 @@
       "ruler_name": "Hermes Observer",
       "nation_name": "Radchaai",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
+        "getCash": 6,
         "send_priority": 3,
         "receive_priority": 3
       },
