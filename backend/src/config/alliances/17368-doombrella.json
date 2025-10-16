@@ -369,10 +369,10 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 6,
+        "getCash": 0,
         "send_priority": 2,
         "receive_priority": 3
       },
