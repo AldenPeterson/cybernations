@@ -857,24 +857,21 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                 <label className="text-sm text-gray-800 font-medium whitespace-nowrap">
                   Max recommendations:
                 </label>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  min="1"
-                  max="100"
+                <select
                   value={maxRecommendations}
                   onChange={(e) => {
                     const value = parseInt(e.target.value);
-                    if (!isNaN(value) && value > 0) {
-                      setMaxRecommendations(value);
-                      updateUrlParams({ maxRecommendations: value.toString() });
-                    }
+                    setMaxRecommendations(value);
+                    updateUrlParams({ maxRecommendations: value.toString() });
                   }}
-                  className="w-[60px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 touch-manipulation"
-                />
+                  className="w-[80px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30].map(num => (
+                    <option key={num} value={num}>{num}</option>
+                  ))}
+                </select>
               </div>
-              <div className="flex items-center gap-1.5 p-2 border border-gray-300 rounded bg-gray-50">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-1.5 p-2 border border-gray-300 rounded bg-gray-50">
                 <FilterCheckbox
                   label="Sell down?"
                   checked={sellDownEnabled}
@@ -968,23 +965,20 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                 updateUrlParams({ allWarsEndingInDays: checked.toString() });
               }}
             />
-            <input
-              type="number"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              min="1"
-              max="30"
+            <select
               value={warsEndingInDays}
               onChange={(e) => {
                 const value = parseInt(e.target.value);
-                if (!isNaN(value) && value > 0) {
-                  setWarsEndingInDays(value);
-                  updateUrlParams({ warsEndingInDays: value.toString() });
-                }
+                setWarsEndingInDays(value);
+                updateUrlParams({ warsEndingInDays: value.toString() });
               }}
               disabled={!allWarsEndingInDays}
-              className="w-[60px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:bg-gray-100 disabled:text-gray-500 touch-manipulation"
-            />
+              className="w-[80px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:bg-gray-100 disabled:text-gray-500"
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
+                <option key={num} value={num}>{num}</option>
+              ))}
+            </select>
             <span className="text-sm text-gray-800 font-medium">days</span>
           </div>
         </div>
