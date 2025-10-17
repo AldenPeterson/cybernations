@@ -72,11 +72,26 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
     }
     .alliance-multiselect option:hover {
       background-color: #f3f4f6 !important;
+      color: #374151 !important;
     }
     @media (max-width: 640px) {
       .alliance-multiselect option {
         font-size: 16px !important;
         padding: 12px !important;
+        background-color: white !important;
+        color: #1f2937 !important;
+        -webkit-text-fill-color: #1f2937 !important;
+        -webkit-opacity: 1 !important;
+      }
+      .alliance-multiselect option:checked {
+        background-color: #3498db !important;
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+      }
+      .alliance-multiselect option:hover {
+        background-color: #f3f4f6 !important;
+        color: #1f2937 !important;
+        -webkit-text-fill-color: #1f2937 !important;
       }
     }
   `;
