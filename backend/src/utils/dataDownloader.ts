@@ -379,11 +379,35 @@ async function extractCsvToStandardFile(zipPath: string, outputPath: string, fil
   const tempExtractDir = path.join(path.dirname(zipPath), 'temp_extract');
   
   try {
+    // Ensure temp extraction directory exists
+    if (!fs.existsSync(tempExtractDir)) {
+      fs.mkdirSync(tempExtractDir, { recursive: true });
+    }
+    
     // Extract zip to temp directory
     await extractZipFile(zipPath, tempExtractDir);
     
     // Find the extracted CSV file that matches the expected file type
-    const extractedFiles = fs.readdirSync(tempExtractDir, { recursive: true }) as string[];
+    // Use a recursive function to find files since readdirSync recursive might not be available
+    const findFilesRecursively = (dir: string): string[] => {
+      const files: string[] = [];
+      try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            files.push(...findFilesRecursively(fullPath));
+          } else {
+            files.push(path.relative(tempExtractDir, fullPath));
+          }
+        }
+      } catch (error) {
+        console.warn(`Error reading directory ${dir}:`, error);
+      }
+      return files;
+    };
+    
+    const extractedFiles = findFilesRecursively(tempExtractDir);
     const csvFile = extractedFiles.find((file: string) => 
       file.endsWith('.txt') && file.includes('CyberNations_SE') && file.includes(fileType)
     );
