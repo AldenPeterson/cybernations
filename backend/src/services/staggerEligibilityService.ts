@@ -38,15 +38,20 @@ export interface StaggerEligibilityData {
 
 export class StaggerEligibilityService {
   /**
-   * Calculate if a nation can sell down infrastructure and land to get within stagger range
+   * Calculate if a nation can sell down infrastructure and land to become eligible
+   * This includes both NS range eligibility and rank range eligibility
    * Infrastructure is worth 3 NS per unit, land is worth 1.5 NS per unit
    * Stagger range is 75%-133% of defending nation's strength
+   * Rank range is +/- 100 ranks
    */
   private static canSellDownToTarget(
     attacker: any, 
     defendingNation: any, 
-    militaryNS: number
+    militaryNS: number,
+    allNations?: any[]
   ): boolean {
+    console.log(`canSellDownToTarget called: attacker ${attacker.name} (rank ${attacker.rank}, NS ${attacker.strength}), defender ${defendingNation.name} (rank ${defendingNation.rank}, NS ${defendingNation.strength}), militaryNS ${militaryNS}`);
+    
     try {
       const attackerInfra = parseFloat((attacker.infrastructure || '0').replace(/,/g, '')) || 0;
       const attackerLand = parseFloat((attacker.land || '0').replace(/,/g, '')) || 0;
@@ -58,71 +63,78 @@ export class StaggerEligibilityService {
       const maxLandReduction = attackerLand * 1.5; // Each land unit = 1.5 NS
       const maxTotalReduction = maxInfraReduction + maxLandReduction;
       
+      console.log(`Max reduction possible: infra ${maxInfraReduction}, land ${maxLandReduction}, total ${maxTotalReduction}`);
+      
       // Calculate the stagger range (75%-133% of defending nation's strength)
       const minStaggerNS = defendingNS * 0.75;
       const maxStaggerNS = defendingNS * 1.33;
       
-      if (attackerCurrentNS > 120000) {
-        console.log(`canSellDownToTarget debug: attacker=${attackerCurrentNS} NS, defender=${defendingNS} NS, militaryNS=${militaryNS}, staggerRange=${minStaggerNS}-${maxStaggerNS}, maxReduction=${maxTotalReduction}`);
-      }
-      
       // Calculate effective NS after reducing by militaryNS amount
       const effectiveNS = attackerCurrentNS - militaryNS;
       
-      // If militaryNS is 0, check if nation is already within range
-      if (militaryNS === 0) {
-        if (attackerCurrentNS > 120000) {
-          console.log(`militaryNS=0 branch: attackerCurrentNS=${attackerCurrentNS}, minStaggerNS=${minStaggerNS}, maxStaggerNS=${maxStaggerNS}`);
-        }
-        
-        // Check if current NS is within stagger range
-        if (attackerCurrentNS >= minStaggerNS && attackerCurrentNS <= maxStaggerNS) {
-          if (attackerCurrentNS > 120000) {
-            console.log(`Attacker within range: returning true`);
-          }
-          return true;
-        }
-        
-        // If current NS is too high, check if we can sell down enough infrastructure/land
-        if (attackerCurrentNS > maxStaggerNS) {
-          const reductionNeeded = attackerCurrentNS - maxStaggerNS;
-          if (attackerCurrentNS > 120000) {
-            console.log(`Attacker too high: reductionNeeded=${reductionNeeded}, maxTotalReduction=${maxTotalReduction}, canReduce=${reductionNeeded <= maxTotalReduction}`);
-          }
-          return reductionNeeded <= maxTotalReduction;
-        }
-        
-        // If current NS is too low, they can't sell down to get into range
-        // (selling down would make them even lower)
-        if (attackerCurrentNS > 120000) {
-          console.log(`Attacker too low: returning false`);
-        }
-        return false;
-      }
+      console.log(`NS analysis: current ${attackerCurrentNS}, effective ${effectiveNS}, stagger range ${minStaggerNS}-${maxStaggerNS}`);
       
-      // Handle case when militaryNS > 0 (military reduction applied)
-      // Check if effective NS is within stagger range
+      // Check 1: Can they get within NS range by selling down?
+      let canGetWithinNSRange = false;
+      
       if (effectiveNS >= minStaggerNS && effectiveNS <= maxStaggerNS) {
-        // Effective NS is within range, can sell down
-        return true;
+        // Already within NS range
+        canGetWithinNSRange = true;
+        console.log(`Already within NS range`);
+      } else if (effectiveNS > maxStaggerNS) {
+        // Too high, check if we can sell down enough
+        const reductionNeeded = effectiveNS - maxStaggerNS;
+        canGetWithinNSRange = reductionNeeded <= maxTotalReduction;
+        console.log(`Too high NS, reduction needed: ${reductionNeeded}, can reduce: ${maxTotalReduction}, result: ${canGetWithinNSRange}`);
+      } else {
+        // Too low, can't sell down to get higher
+        canGetWithinNSRange = false;
+        console.log(`Too low NS, cannot sell down to get higher`);
       }
       
-      // If effective NS is still too high, check if we can sell down enough infrastructure/land
-      if (effectiveNS > maxStaggerNS) {
-        // Calculate additional NS reduction needed beyond militaryNS
-        const additionalReductionNeeded = effectiveNS - maxStaggerNS;
+      // Check 2: Can they get within rank range by selling down?
+      let canGetWithinRankRange = false;
+      
+      if (attacker.rank && defendingNation.rank && allNations) {
+        const currentRankDifference = Math.abs(attacker.rank - defendingNation.rank);
+        console.log(`Current rank difference: ${currentRankDifference}`);
         
-        // Check if we can reduce enough additional NS through infrastructure/land sales
-        return additionalReductionNeeded <= maxTotalReduction;
+        if (currentRankDifference > 100) {
+          // Calculate NS after maximum possible sell-down
+          const nsAfterSellDown = effectiveNS - maxTotalReduction;
+          console.log(`NS after sell-down: ${nsAfterSellDown}`);
+          
+          // Find what rank this NS would correspond to in the current nation list
+          const sortedNations = [...allNations].sort((a, b) => b.strength - a.strength);
+          let estimatedRank = sortedNations.length; // Start with worst rank
+          
+          for (let i = 0; i < sortedNations.length; i++) {
+            if (sortedNations[i].strength <= nsAfterSellDown) {
+              estimatedRank = i + 1; // Rank is 1-based
+              break;
+            }
+          }
+          
+          console.log(`Estimated rank after sell-down: ${estimatedRank}`);
+          
+          // Check if the estimated rank would be within +/- 100 of defending nation's rank
+          const newRankDifference = Math.abs(estimatedRank - defendingNation.rank);
+          console.log(`New rank difference: ${newRankDifference}`);
+          
+          canGetWithinRankRange = newRankDifference <= 100;
+          console.log(`Can get within rank range: ${canGetWithinRankRange}`);
+        } else {
+          console.log(`Already within rank range`);
+          canGetWithinRankRange = true;
+        }
       }
       
-      // If effective NS is too low, they can't sell down to get into range
-      // (selling down would make them even lower)
-      if (effectiveNS < minStaggerNS) {
-        return false;
-      }
+      // Return true if they can get within either NS range OR rank range
+      const result = canGetWithinNSRange || canGetWithinRankRange;
+      console.log(`Final result: ${result} (NS: ${canGetWithinNSRange}, Rank: ${canGetWithinRankRange})`);
       
-      return false;
+      return result;
+      
     } catch (error) {
       console.error('Error in canSellDownToTarget:', error, { attacker, defendingNation, militaryNS });
       return false;
@@ -188,10 +200,6 @@ export class StaggerEligibilityService {
           const effectiveStrength = sellDownEnabled && militaryNS > 0 ? attacker.strength - militaryNS : attacker.strength;
           const strengthRatio = effectiveStrength / defendingNation.strength;
           
-          // Debug: Log high NS attackers being processed
-          if (attacker.strength > 120000) {
-            console.log(`Processing high NS attacker: ${attacker.name} (${attacker.strength} NS) vs defender ${defendingNation.nationName} (${defendingNation.strength} NS)`);
-          }
           
           return {
             id: attacker.id,
@@ -213,50 +221,28 @@ export class StaggerEligibilityService {
           };
         })
         .filter(attacker => {
-          // Debug: Count high NS attackers at each filter step
-          const isHighNS = attacker.strength > 120000;
-          if (isHighNS) {
-            console.log(`Checking eligibility for: ${attacker.name} (${attacker.strength} NS)`);
-          }
-          
           // Check 1: Are they within the NS range (75%-133%)?
           const strengthRatio = attacker.strengthRatio;
           const withinNSRange = strengthRatio >= 0.75 && strengthRatio <= 1.33;
-          if (isHighNS) {
-            console.log(`NS range check: strengthRatio=${strengthRatio}, withinNSRange=${withinNSRange}`);
-          }
           
           // Check 2: Are they within the rank range (+/- 100 ranks)?
           let withinRankRange = true;
           if (attacker.rank && defendingNation.rank) {
             const rankDifference = Math.abs(attacker.rank - defendingNation.rank);
             withinRankRange = rankDifference <= 100;
-            if (isHighNS) {
-              console.log(`Rank range check: rankDifference=${rankDifference}, withinRankRange=${withinRankRange}`);
-            }
           }
           
           // Check 3: Can they sell down (if sell-down toggle is enabled)?
           let canSellDown = false;
           if (sellDownEnabled) {
-            canSellDown = this.canSellDownToTarget(attacker, defendingNation, militaryNS);
-            if (isHighNS) {
-              console.log(`Sell-down check: sellDownEnabled=${sellDownEnabled}, militaryNS=${militaryNS}, canSellDown=${canSellDown}`);
-            }
-          } else if (isHighNS) {
-            console.log(`Sell-down check: sellDownEnabled=${sellDownEnabled}, skipping sell-down check`);
+            canSellDown = this.canSellDownToTarget(attacker, defendingNation, militaryNS, nations);
+            console.log(`Sell-down result for ${attacker.name}: ${canSellDown}`);
           }
           
           // Include if ANY of the three criteria are met
           const isEligible = withinNSRange || withinRankRange || canSellDown;
-          if (isHighNS) {
-            console.log(`Final eligibility: withinNSRange=${withinNSRange}, withinRankRange=${withinRankRange}, canSellDown=${canSellDown}, isEligible=${isEligible}`);
-          }
           
           if (!isEligible) {
-            if (isHighNS) {
-              console.log(`Filtered out: ${attacker.name} - failed all criteria`);
-            }
             return false;
           }
           
