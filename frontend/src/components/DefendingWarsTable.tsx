@@ -228,6 +228,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [blownStaggers, setBlownStaggers] = useState<boolean>(false);
   const [showPMNations, setShowPMNations] = useState<boolean>(false);
   const [showForFullTargets, setShowForFullTargets] = useState<boolean>(true);
+  const [allWarsEndingInDays, setAllWarsEndingInDays] = useState<boolean>(false);
+  const [warsEndingInDays, setWarsEndingInDays] = useState<number>(7);
   const [alliances, setAlliances] = useState<Alliance[]>([]);
   const [assignAllianceIds, setAssignAllianceIds] = useState<number[]>([]);
   const [staggerRecommendationsMap, setStaggerRecommendationsMap] = useState<Map<number, any[]>>(new Map());
@@ -287,11 +289,19 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     setUrgentTargets(parseBooleanParam(searchParams.get('urgentTargets')));
     setBlownStaggers(parseBooleanParam(searchParams.get('blownStaggers')));
     setShowPMNations(parseBooleanParam(searchParams.get('showPMNations')));
+    setAllWarsEndingInDays(parseBooleanParam(searchParams.get('allWarsEndingInDays')));
     const maxRecsParam = searchParams.get('maxRecommendations');
     if (maxRecsParam) {
       const parsed = parseInt(maxRecsParam);
       if (!isNaN(parsed) && parsed > 0) {
         setMaxRecommendations(parsed);
+      }
+    }
+    const warsEndingParam = searchParams.get('warsEndingInDays');
+    if (warsEndingParam) {
+      const parsed = parseInt(warsEndingParam);
+      if (!isNaN(parsed) && parsed > 0) {
+        setWarsEndingInDays(parsed);
       }
     }
   }, []); // Empty dependency array - only run on mount
@@ -647,6 +657,25 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     });
   }
 
+  // Filter to show only nations where all wars end within X days
+  if (allWarsEndingInDays) {
+    filteredNationWars = filteredNationWars.filter(nationWar => {
+      // Get all wars (attacking + defending)
+      const allWars = [...nationWar.attackingWars, ...nationWar.defendingWars];
+      
+      // If no wars, exclude this nation
+      if (allWars.length === 0) {
+        return false;
+      }
+      
+      // Check if ALL wars end within the specified number of days
+      return allWars.every(war => {
+        const daysUntilExpiration = war.daysUntilExpiration ?? 0;
+        return daysUntilExpiration <= warsEndingInDays;
+      });
+    });
+  }
+
 
 
 
@@ -887,6 +916,32 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
               updateUrlParams({ showPMNations: checked.toString() });
             }}
           />
+          <div className="flex items-center gap-1.5 p-2 border border-gray-300 rounded bg-gray-50">
+            <FilterCheckbox
+              label="Wars ending in under"
+              checked={allWarsEndingInDays}
+              onChange={(checked) => {
+                setAllWarsEndingInDays(checked);
+                updateUrlParams({ allWarsEndingInDays: checked.toString() });
+              }}
+            />
+            <input
+              type="number"
+              min="1"
+              max="30"
+              value={warsEndingInDays}
+              onChange={(e) => {
+                const value = parseInt(e.target.value);
+                if (!isNaN(value) && value > 0) {
+                  setWarsEndingInDays(value);
+                  updateUrlParams({ warsEndingInDays: value.toString() });
+                }
+              }}
+              disabled={!allWarsEndingInDays}
+              className="w-[60px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:bg-gray-100 disabled:text-gray-500"
+            />
+            <span className="text-sm text-gray-800 font-medium">days</span>
+          </div>
         </div>
       </div>
 
