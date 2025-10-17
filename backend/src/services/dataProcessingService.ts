@@ -18,6 +18,7 @@ const __dirname = path.dirname(__filename);
 async function parseNationsFromFile(filePath: string): Promise<Nation[]> {
   return new Promise((resolve, reject) => {
     const nations: Nation[] = [];
+    let currentRank = 1; // Start at rank 1 (strongest nation)
     
     createReadStream(filePath)
       .pipe(csv({
@@ -33,6 +34,7 @@ async function parseNationsFromFile(filePath: string): Promise<Nation[]> {
             alliance: decodeHtmlEntities(row.alliance || ''),
             allianceId: parseInt(row.allianceId) || 0,
             team: row.team || '',
+            rank: currentRank, // Assign current rank
             strength: parseFloat(row.strength?.replace(/,/g, '') || '0'),
             activity: row.activity || '',
             technology: row.technology || '0',
@@ -42,6 +44,7 @@ async function parseNationsFromFile(filePath: string): Promise<Nation[]> {
             governmentType: row.governmentType || '',
             inWarMode: row.warStatus === 'War Mode'
           });
+          currentRank++; // Increment rank for next nation
         }
       })
       .on('end', () => {
@@ -204,6 +207,7 @@ export function parseNationStats(filePath: string): Promise<Nation[]> {
     const nations: Nation[] = [];
     let headerColumns: string[] = [];
     let isFirstRow = true;
+    let currentRank = 1; // Start at rank 1 (strongest nation)
 
     createReadStream(filePath)
       .pipe(csv({
@@ -227,6 +231,7 @@ export function parseNationStats(filePath: string): Promise<Nation[]> {
           alliance: decodeHtmlEntities(row['Alliance'] as string || ''),
           allianceId: parseInt(row['Alliance ID'] as string) || 0,
           team: row['Team'] as string || '',
+          rank: currentRank, // Assign current rank
           strength: parseFloat((row['Strength'] as string)?.replace(/,/g, '')) || 0,
           activity: row['Activity'] as string || '',
           technology: row['Technology'] as string || '0',
@@ -239,6 +244,7 @@ export function parseNationStats(filePath: string): Promise<Nation[]> {
           defensiveCasualties: parseInt((row['Defensive Casualties'] as string)?.replace(/,/g, '')) || 0
         };
         nations.push(nation);
+        currentRank++; // Increment rank for next nation
       })
       .on('end', () => {
         resolve(nations);

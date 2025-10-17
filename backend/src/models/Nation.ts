@@ -17,6 +17,7 @@ export interface Nation {
   defensiveCasualties?: number;
   warchest?: number;
   spyglassLastUpdated?: number; // days old
+  rank?: number; // nation rank (1-based, where rank 1 is the strongest nation)
 }
 
 export interface CategorizedNation {
