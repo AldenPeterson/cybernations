@@ -115,9 +115,11 @@ export const EditableNumberInput: React.FC<EditableNumberInputProps> = ({
 }) => (
   <input
     type="number"
+    inputMode="numeric"
+    pattern="[0-9]*"
     value={value}
     onChange={(e) => onChange(parseInt(e.target.value) || 0)}
-    className={clsx(tableClasses.inputField, tableClasses.numberInput, 'h-10', className)}
+    className={clsx(tableClasses.inputField, tableClasses.numberInput, 'h-10 touch-manipulation', className)}
     min={min}
     max={max}
   />

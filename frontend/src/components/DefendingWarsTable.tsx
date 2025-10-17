@@ -859,6 +859,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                 </label>
                 <input
                   type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   min="1"
                   max="100"
                   value={maxRecommendations}
@@ -869,7 +871,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       updateUrlParams({ maxRecommendations: value.toString() });
                     }
                   }}
-                  className="w-[60px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                  className="w-[60px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 touch-manipulation"
                 />
               </div>
               <div className="flex items-center gap-1.5 p-2 border border-gray-300 rounded bg-gray-50">
@@ -887,6 +889,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                   </label>
                   <input
                     type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     min="0"
                     value={militaryNS}
                     onChange={(e) => {
@@ -897,7 +901,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       }
                     }}
                     disabled={!sellDownEnabled}
-                    className="w-[80px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:bg-gray-100 disabled:text-gray-500"
+                    className="w-[80px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:bg-gray-100 disabled:text-gray-500 touch-manipulation"
                   />
                 </div>
               </div>
@@ -966,6 +970,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
             />
             <input
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
               min="1"
               max="30"
               value={warsEndingInDays}
@@ -977,7 +983,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                 }
               }}
               disabled={!allWarsEndingInDays}
-              className="w-[60px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:bg-gray-100 disabled:text-gray-500"
+              className="w-[60px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:bg-gray-100 disabled:text-gray-500 touch-manipulation"
             />
             <span className="text-sm text-gray-800 font-medium">days</span>
           </div>
