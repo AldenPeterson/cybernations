@@ -50,6 +50,12 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
 
   const selectValue = selectedAllianceIds.map(id => id.toString());
 
+  // Get selected alliance names for display
+  const selectedAllianceNames = selectedAllianceIds.map(id => {
+    const alliance = alliances.find(a => a.id === id);
+    return alliance ? alliance.name : '';
+  }).filter(name => name !== '');
+
   // Add CSS to ensure selected options are always visible and fix mobile issues
   const cssStyle = `
     .alliance-multiselect {
@@ -112,32 +118,56 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
       <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
         {label}:
       </label>
-      <select
-        className="alliance-multiselect px-3.5 py-2.5 border-2 border-blue-500 rounded-md font-sans text-sm sm:text-[15px] font-medium w-full sm:min-w-[280px] min-h-[100px] shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:bg-slate-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:opacity-60"
-        multiple
-        value={selectValue}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        disabled={disabled}
-        style={{ 
-          WebkitAppearance: 'none',
-          appearance: 'none',
-          backgroundImage: 'none',
-          backgroundColor: 'white',
-          color: '#1f2937',
-          WebkitTextFillColor: '#1f2937',
-          opacity: 1
-        } as React.CSSProperties}
-      >
-        {availableAlliances.map(alliance => (
-          <option 
-            key={alliance.id} 
-            value={alliance.id.toString()}
-          >
-            {alliance.name} ({alliance.nationCount} nations)
-          </option>
-        ))}
-      </select>
+      <div className="flex flex-col gap-2 w-full sm:min-w-[280px]">
+        <select
+          className="alliance-multiselect px-3.5 py-2.5 border-2 border-blue-500 rounded-md font-sans text-sm sm:text-[15px] font-medium w-full min-h-[100px] shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:bg-slate-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:opacity-60"
+          multiple
+          value={selectValue}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          disabled={disabled}
+          style={{ 
+            WebkitAppearance: 'none',
+            appearance: 'none',
+            backgroundImage: 'none',
+            backgroundColor: 'white',
+            color: '#1f2937',
+            WebkitTextFillColor: '#1f2937',
+            opacity: 1
+          } as React.CSSProperties}
+        >
+          {availableAlliances.map(alliance => (
+            <option 
+              key={alliance.id} 
+              value={alliance.id.toString()}
+            >
+              {alliance.name} ({alliance.nationCount} nations)
+            </option>
+          ))}
+        </select>
+        {/* Mobile display of selected alliances */}
+        <div className="block sm:hidden">
+          {selectedAllianceNames.length > 0 ? (
+            <div className="p-2 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="text-xs font-semibold text-blue-800 mb-1">
+                Selected Alliances ({selectedAllianceNames.length}):
+              </div>
+              <div className="text-xs text-blue-700 space-y-1">
+                {selectedAllianceNames.map((name, index) => (
+                  <div key={index} className="flex items-center">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2 flex-shrink-0"></span>
+                    {name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="p-2 bg-gray-50 border border-gray-200 rounded-md">
+              <div className="text-xs text-gray-600">No alliances selected</div>
+            </div>
+          )}
+        </div>
+      </div>
       <div className="text-xs text-gray-600 font-medium max-w-full sm:max-w-[140px] leading-tight">
         {placeholder}
       </div>
