@@ -198,7 +198,9 @@ function getStaleFileTypesFromLatestDownloads(): FileType[] {
     
     // Check if a custom filename is being used (via environment variable or manual download)
     const customFilename = getCustomFilename(item.type);
+    console.log(`Custom filename: ${customFilename}`);
     const expectedFileInfo = getFileInfo(item.type);
+    console.log(`Expected filename: ${expectedFileInfo.name}`);
     const isFreshByFilename = record.originalFile === expectedFileInfo.name;
     
     // Consider file fresh if:
@@ -212,7 +214,7 @@ function getStaleFileTypesFromLatestDownloads(): FileType[] {
     const isRecentManualDownload = isFreshByTime && !isFreshByFilename && 
                                     (nowUtcMs - record.timestamp < 24 * 60 * 60 * 1000);
     
-    if (!isFreshWithCustom && !isFreshWithAuto && !isRecentManualDownload) {
+    if (!isFreshByFilename || (!customFilename && !isFreshWithCustom && !isFreshWithAuto && !isRecentManualDownload)) {
       stale.push(item.type);
     }
   }
