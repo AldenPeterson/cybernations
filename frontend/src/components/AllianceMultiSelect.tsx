@@ -52,6 +52,10 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
 
   // Add CSS to ensure selected options are always visible and fix mobile issues
   const cssStyle = `
+    .alliance-multiselect {
+      background-color: white !important;
+      color: #1f2937 !important;
+    }
     .alliance-multiselect option:checked {
       background-color: #3498db !important;
       color: white !important;
@@ -62,7 +66,7 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
     }
     .alliance-multiselect option {
       background-color: white !important;
-      color: #374151 !important;
+      color: #1f2937 !important;
       padding: 8px !important;
       font-size: 14px !important;
       line-height: 1.4 !important;
@@ -72,9 +76,15 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
     }
     .alliance-multiselect option:hover {
       background-color: #f3f4f6 !important;
-      color: #374151 !important;
+      color: #1f2937 !important;
     }
     @media (max-width: 640px) {
+      .alliance-multiselect {
+        background-color: white !important;
+        color: #1f2937 !important;
+        -webkit-text-fill-color: #1f2937 !important;
+        -webkit-opacity: 1 !important;
+      }
       .alliance-multiselect option {
         font-size: 16px !important;
         padding: 12px !important;
@@ -112,8 +122,12 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
         style={{ 
           WebkitAppearance: 'none',
           appearance: 'none',
-          backgroundImage: 'none'
-        }}
+          backgroundImage: 'none',
+          backgroundColor: 'white',
+          color: '#1f2937',
+          WebkitTextFillColor: '#1f2937',
+          opacity: 1
+        } as React.CSSProperties}
       >
         {availableAlliances.map(alliance => (
           <option 
