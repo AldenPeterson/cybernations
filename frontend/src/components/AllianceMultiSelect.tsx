@@ -50,7 +50,7 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
 
   const selectValue = selectedAllianceIds.map(id => id.toString());
 
-  // Add CSS to ensure selected options are always visible
+  // Add CSS to ensure selected options are always visible and fix mobile issues
   const cssStyle = `
     .alliance-multiselect option:checked {
       background-color: #3498db !important;
@@ -59,6 +59,25 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
     .alliance-multiselect option:checked:not(:focus) {
       background-color: #3498db !important;
       color: white !important;
+    }
+    .alliance-multiselect option {
+      background-color: white !important;
+      color: #374151 !important;
+      padding: 8px !important;
+      font-size: 14px !important;
+      line-height: 1.4 !important;
+      border: none !important;
+      display: block !important;
+      visibility: visible !important;
+    }
+    .alliance-multiselect option:hover {
+      background-color: #f3f4f6 !important;
+    }
+    @media (max-width: 640px) {
+      .alliance-multiselect option {
+        font-size: 16px !important;
+        padding: 12px !important;
+      }
     }
   `;
 
@@ -75,12 +94,16 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
+        style={{ 
+          WebkitAppearance: 'none',
+          appearance: 'none',
+          backgroundImage: 'none'
+        }}
       >
         {availableAlliances.map(alliance => (
           <option 
             key={alliance.id} 
             value={alliance.id.toString()}
-            className="p-1.5 text-sm sm:text-[15px] font-medium text-gray-700 bg-white leading-snug"
           >
             {alliance.name} ({alliance.nationCount} nations)
           </option>
