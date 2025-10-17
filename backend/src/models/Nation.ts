@@ -9,6 +9,7 @@ export interface Nation {
   activity: string;
   technology: string;
   infrastructure: string;
+  land: string;
   nuclearWeapons: number;
   governmentType: string;
   inWarMode: boolean;

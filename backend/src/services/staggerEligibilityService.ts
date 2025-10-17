@@ -37,6 +37,69 @@ export interface StaggerEligibilityData {
 
 export class StaggerEligibilityService {
   /**
+   * Calculate if a nation can sell down infrastructure and land to get within stagger range
+   * Infrastructure is worth 3 NS per unit, land is worth 1.5 NS per unit
+   * Stagger range is 75%-133% of defending nation's strength
+   */
+  private static canSellDownToTarget(
+    attacker: any, 
+    defendingNation: any, 
+    militaryNS: number
+  ): boolean {
+    if (militaryNS <= 0) return false;
+    
+    try {
+      const attackerInfra = parseFloat((attacker.infrastructure || '0').replace(/,/g, '')) || 0;
+      const attackerLand = parseFloat((attacker.land || '0').replace(/,/g, '')) || 0;
+      const attackerCurrentNS = attacker.strength;
+      const defendingNS = defendingNation.strength;
+      
+      // Calculate how much NS we can reduce by selling infrastructure and land
+      const maxInfraReduction = attackerInfra * 3; // Each infrastructure unit = 3 NS
+      const maxLandReduction = attackerLand * 1.5; // Each land unit = 1.5 NS
+      const maxTotalReduction = maxInfraReduction + maxLandReduction;
+      
+      // Calculate the stagger range (75%-133% of defending nation's strength)
+      const minStaggerNS = defendingNS * 0.75;
+      const maxStaggerNS = defendingNS * 1.33;
+      
+      // Calculate effective NS after reducing by militaryNS amount
+      const effectiveNS = attackerCurrentNS - militaryNS;
+      
+      // Check if effective NS is within stagger range
+      if (effectiveNS >= minStaggerNS && effectiveNS <= maxStaggerNS) {
+        // Effective NS is within range, can sell down
+        return true;
+      }
+      
+      // If effective NS is still too high, check if we can sell down enough infrastructure/land
+      if (effectiveNS > maxStaggerNS) {
+        // Calculate additional NS reduction needed beyond militaryNS
+        const additionalReductionNeeded = effectiveNS - maxStaggerNS;
+        
+        // Check if we can reduce enough additional NS through infrastructure/land sales
+        return additionalReductionNeeded <= maxTotalReduction;
+      }
+      
+      // If effective NS is too low, check if we can sell down less infrastructure/land
+      // to get closer to the minimum stagger range
+      if (effectiveNS < minStaggerNS) {
+        // Calculate how much NS we need to add back (sell less infrastructure/land)
+        const nsToAddBack = minStaggerNS - effectiveNS;
+        
+        // Check if we have enough infrastructure/land to not sell down as much
+        // This means we can sell down (maxTotalReduction - nsToAddBack) worth of infrastructure/land
+        return nsToAddBack <= maxTotalReduction;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error in canSellDownToTarget:', error, { attacker, defendingNation, militaryNS });
+      return false;
+    }
+  }
+
+  /**
    * Get stagger eligibility data for attacking alliance vs defending alliance
    */
   static async getStaggerEligibility(
@@ -45,14 +108,20 @@ export class StaggerEligibilityService {
     hideAnarchy: boolean = false,
     hidePeaceMode: boolean = false,
     hideNonPriority: boolean = false,
-    includeFullTargets: boolean = false
+    includeFullTargets: boolean = false,
+    sellDownEnabled: boolean = false,
+    militaryNS: number = 0
   ): Promise<StaggerEligibilityData[]> {
-    console.log(`StaggerEligibilityService called with hideAnarchy=${hideAnarchy}, hidePeaceMode=${hidePeaceMode}, hideNonPriority=${hideNonPriority}, includeFullTargets=${includeFullTargets}`);
-    const { nations, wars } = await loadDataFromFilesWithUpdate();
+    console.log(`StaggerEligibilityService called with hideAnarchy=${hideAnarchy}, hidePeaceMode=${hidePeaceMode}, hideNonPriority=${hideNonPriority}, includeFullTargets=${includeFullTargets}, sellDownEnabled=${sellDownEnabled}, militaryNS=${militaryNS}`);
     
-    // Get nations from both alliances
-    const attackingAllianceNations = nations.filter(nation => nation.allianceId === attackingAllianceId);
-    const defendingAllianceNations = nations.filter(nation => nation.allianceId === defendingAllianceId);
+    try {
+      const { nations, wars } = await loadDataFromFilesWithUpdate();
+      console.log(`Loaded ${nations.length} nations and ${wars.length} wars`);
+    
+      // Get nations from both alliances
+      const attackingAllianceNations = nations.filter(nation => nation.allianceId === attackingAllianceId);
+      const defendingAllianceNations = nations.filter(nation => nation.allianceId === defendingAllianceId);
+      console.log(`Found ${attackingAllianceNations.length} attacking nations and ${defendingAllianceNations.length} defending nations`);
     
     // Get active wars to calculate current war counts and open slots
     const activeWars = wars.filter(war => 
@@ -84,7 +153,9 @@ export class StaggerEligibilityService {
       const eligibleAttackers = attackingAllianceNations
         .map(attacker => {
           const currentAttackingWars = nationWarCounts.get(attacker.id)?.attacking || 0;
-          const strengthRatio = attacker.strength / defendingNation.strength;
+          // Use effective NS for strength ratio calculation when sell-down is enabled
+          const effectiveStrength = sellDownEnabled && militaryNS > 0 ? attacker.strength - militaryNS : attacker.strength;
+          const strengthRatio = effectiveStrength / defendingNation.strength;
           
           return {
             id: attacker.id,
@@ -99,13 +170,22 @@ export class StaggerEligibilityService {
             inWarMode: attacker.inWarMode,
             governmentType: attacker.governmentType,
             currentWars: currentAttackingWars,
-            strengthRatio
+            strengthRatio,
+            infrastructure: attacker.infrastructure,
+            land: attacker.land
           };
         })
         .filter(attacker => {
-          // Only include eligible nations (strength within 75%-133% range)
-          if (attacker.strengthRatio < 0.75 || attacker.strengthRatio > 1.33) {
-            return false;
+          // If sell-down is enabled, check if nation can sell down to reach target
+          if (sellDownEnabled && militaryNS > 0) {
+            if (!this.canSellDownToTarget(attacker, defendingNation, militaryNS)) {
+              return false;
+            }
+          } else {
+            // Only include eligible nations (strength within 75%-133% range)
+            if (attacker.strengthRatio < 0.75 || attacker.strengthRatio > 1.33) {
+              return false;
+            }
           }
           
           // Apply additional filters
@@ -165,9 +245,14 @@ export class StaggerEligibilityService {
       }
     });
     
-    // Sort by defending nation strength (highest first)
-    staggerData.sort((a, b) => b.defendingNation.strength - a.defendingNation.strength);
-    
-    return staggerData;
+      // Sort by defending nation strength (highest first)
+      staggerData.sort((a, b) => b.defendingNation.strength - a.defendingNation.strength);
+      
+      console.log(`Returning ${staggerData.length} stagger data entries`);
+      return staggerData;
+    } catch (error) {
+      console.error('Error in StaggerEligibilityService:', error);
+      throw error;
+    }
   }
 }

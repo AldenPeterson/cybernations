@@ -37,6 +37,7 @@ async function parseNationsFromFile(filePath: string): Promise<Nation[]> {
             activity: row.activity || '',
             technology: row.technology || '0',
             infrastructure: row.infrastructure || '0',
+            land: row.baseLand || '0',
             nuclearWeapons: parseInt(row.nukes) || 0,
             governmentType: row.governmentType || '',
             inWarMode: row.warStatus === 'War Mode'
@@ -230,6 +231,7 @@ export function parseNationStats(filePath: string): Promise<Nation[]> {
           activity: row['Activity'] as string || '',
           technology: row['Technology'] as string || '0',
           infrastructure: row['Infrastructure'] as string || '0',
+          land: row['Base Land'] as string || '0',
           nuclearWeapons: parseInt(row['Nukes'] as string) || 0,
           governmentType: row['Government Type'] as string || '',
           inWarMode: row['War Status'] ? (row['War Status'] as string).toLowerCase().includes('war') : false,

@@ -233,6 +233,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [alliances, setAlliances] = useState<Alliance[]>([]);
   const [assignAllianceIds, setAssignAllianceIds] = useState<number[]>([]);
   const [staggerRecommendationsMap, setStaggerRecommendationsMap] = useState<Map<number, any[]>>(new Map());
+  const [sellDownEnabled, setSellDownEnabled] = useState<boolean>(false);
+  const [militaryNS, setMilitaryNS] = useState<number>(0);
 
   // Helper function to parse boolean from URL parameter
   const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
@@ -304,6 +306,14 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
         setWarsEndingInDays(parsed);
       }
     }
+    setSellDownEnabled(parseBooleanParam(searchParams.get('sellDownEnabled')));
+    const militaryNSParam = searchParams.get('militaryNS');
+    if (militaryNSParam) {
+      const parsed = parseInt(militaryNSParam);
+      if (!isNaN(parsed) && parsed >= 0) {
+        setMilitaryNS(parsed);
+      }
+    }
   }, []); // Empty dependency array - only run on mount
 
   // Initialize assign alliances from URL (when alliances load or allianceId changes)
@@ -349,7 +359,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
         // Fetch stagger eligibility data for each assign alliance
         for (const assignAllianceId of assignAllianceIds) {
           try {
-            const url = `${API_ENDPOINTS.staggerEligibility}/${assignAllianceId}/${allianceId}?hideAnarchy=true&hidePeaceMode=false&hideNonPriority=false&includeFullTargets=true`;
+            const url = `${API_ENDPOINTS.staggerEligibility}/${assignAllianceId}/${allianceId}?hideAnarchy=true&hidePeaceMode=false&hideNonPriority=false&includeFullTargets=true&sellDownEnabled=${sellDownEnabled}&militaryNS=${militaryNS}`;
             const response = await apiCall(url);
             const data = await response.json();
 
@@ -391,7 +401,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     };
 
     fetchAllStaggerRecommendations();
-  }, [assignAllianceIds, allianceId]);
+  }, [assignAllianceIds, allianceId, sellDownEnabled, militaryNS]);
 
 
   const fetchAlliances = async () => {
@@ -861,6 +871,35 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                   }}
                   className="w-[60px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
                 />
+              </div>
+              <div className="flex items-center gap-1.5 p-2 border border-gray-300 rounded bg-gray-50">
+                <FilterCheckbox
+                  label="Sell down?"
+                  checked={sellDownEnabled}
+                  onChange={(checked) => {
+                    setSellDownEnabled(checked);
+                    updateUrlParams({ sellDownEnabled: checked.toString() });
+                  }}
+                />
+                <div className="flex items-center gap-1.5">
+                  <label className="text-sm text-gray-800 font-medium whitespace-nowrap">
+                    Military NS:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={militaryNS}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      if (!isNaN(value) && value >= 0) {
+                        setMilitaryNS(value);
+                        updateUrlParams({ militaryNS: value.toString() });
+                      }
+                    }}
+                    disabled={!sellDownEnabled}
+                    className="w-[80px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:bg-gray-100 disabled:text-gray-500"
+                  />
+                </div>
               </div>
             </div>
           </div>
