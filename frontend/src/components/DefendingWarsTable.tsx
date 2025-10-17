@@ -883,7 +883,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                 />
                 <div className="flex items-center gap-1.5">
                   <label className="text-sm text-gray-800 font-medium whitespace-nowrap">
-                    Military NS:
+                    Fixed Military NS to drop:
                   </label>
                   <input
                     type="number"
