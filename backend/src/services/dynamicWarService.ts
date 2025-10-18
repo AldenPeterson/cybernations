@@ -40,11 +40,17 @@ export class DynamicWarService {
   private static async initialize(): Promise<void> {
     if (this.initialized) return;
 
+    console.log(`Attempting to load dynamic wars from: ${DYNAMIC_WARS_FILE}`);
+    console.log(`Environment: VERCEL=${process.env.VERCEL}, NODE_ENV=${process.env.NODE_ENV}`);
+
     try {
       await fs.access(DYNAMIC_WARS_FILE);
+      console.log('Dynamic wars file exists, reading...');
       const data = await fs.readFile(DYNAMIC_WARS_FILE, 'utf-8');
       this.dynamicWars = JSON.parse(data);
+      console.log(`Loaded ${this.dynamicWars.length} dynamic wars from file`);
     } catch (error) {
+      console.log(`Failed to load dynamic wars file: ${error}`);
       // File doesn't exist or is invalid, start with empty array
       this.dynamicWars = [];
       // Only try to save file in development environment
