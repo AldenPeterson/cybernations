@@ -8,6 +8,7 @@ import { Nation } from '../models/Nation.js';
 import { AidOffer } from '../models/AidOffer.js';
 import { Alliance } from '../models/Alliance.js';
 import { AidSlot, NationAidSlots } from '../models/AidSlot.js';
+import { DynamicWarService } from './dynamicWarService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -482,7 +483,12 @@ export async function loadDataFromFiles(): Promise<{ nations: Nation[]; aidOffer
 }
 
 export async function loadDataFromFilesWithUpdate(): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {
-  return await loadDataFromFiles();
+  const { nations, aidOffers, wars } = await loadDataFromFiles();
+  
+  // Merge CSV wars with dynamic wars
+  const mergedWars = await DynamicWarService.mergeWithCSVWars(wars);
+  
+  return { nations, aidOffers, wars: mergedWars };
 }
 
 export function groupNationsByAlliance(nations: Nation[]): Alliance[] {

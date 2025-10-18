@@ -219,6 +219,42 @@ export function formatWarEndDate(endDate: string): string {
 }
 
 /**
+ * Formats a war end date to show the actual end date
+ * For CSV wars: the timestamp represents the last day of war, so we add one day to get the actual end date
+ * For dynamic wars: the date already represents the end date, so we return it as-is
+ * @param endDate - The original end date string
+ * @returns Formatted date string in MM/DD/YYYY format showing the actual end date
+ */
+export function formatActualWarEndDate(endDate: string): string {
+  // If the endDate is just a date (no time), it's likely from dynamic wars and already represents the end date
+  if (endDate.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+    // Dynamic war - date already represents the end date, return as-is
+    return endDate;
+  }
+  
+  // If the endDate has a time component that looks like it was added by normalizeDateString (12:00:00 AM),
+  // extract just the date part since this is likely from dynamic wars
+  if (endDate.match(/^\d{1,2}\/\d{1,2}\/\d{4} 12:00:00 AM$/)) {
+    // Extract just the date part
+    const datePart = endDate.split(' ')[0];
+    return datePart;
+  }
+  
+  // CSV war - timestamp represents last day of war, add one day to get actual end date
+  const date = parseCentralTimeDate(endDate);
+  
+  // Get the Central Time date components
+  const centralYear = parseInt(date.toLocaleDateString('en-US', { timeZone: 'America/Chicago', year: 'numeric' }));
+  const centralMonth = parseInt(date.toLocaleDateString('en-US', { timeZone: 'America/Chicago', month: 'numeric' }));
+  const centralDay = parseInt(date.toLocaleDateString('en-US', { timeZone: 'America/Chicago', day: 'numeric' }));
+  
+  // Add one day to get the actual end date
+  const centralDate = new Date(centralYear, centralMonth - 1, centralDay + 1);
+  
+  return formatCentralTimeDate(centralDate);
+}
+
+/**
  * Calculates the number of days until a war expires
  * @param endDate - The war end date string (Central Time)
  * @returns Number of days until expiration (0 or positive)
@@ -306,7 +342,7 @@ export function calculateStaggeredStatus(defendingWars: { endDate: string }[]): 
  */
 export function calculateWarDateInfo(endDate: string): WarDateCalculations {
   return {
-    formattedEndDate: formatWarEndDate(endDate),
+    formattedEndDate: formatActualWarEndDate(endDate),
     daysUntilExpiration: getWarDaysUntilExpiration(endDate),
     expirationColor: getWarExpirationColor(endDate),
     isExpired: isWarExpired(endDate)

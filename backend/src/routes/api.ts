@@ -4,6 +4,7 @@ import { AllianceController } from '../controllers/allianceController.js';
 import { aidRoutes } from './aidRoutes.js';
 import { nationEditorRoutes } from './nationEditorRoutes.js';
 import { defendingWarsRoutes } from './defendingWarsRoutes.js';
+import { dynamicWarRoutes } from './dynamicWarRoutes.js';
 import staggerEligibilityRoutes from './staggerEligibilityRoutes.js';
 import { nuclearHitsRoutes } from './nuclearHitsRoutes.js';
 
@@ -17,6 +18,9 @@ apiRoutes.use('/', nationEditorRoutes);
 
 // Use defending wars routes
 apiRoutes.use('/', defendingWarsRoutes);
+
+// Use dynamic wars routes
+apiRoutes.use('/', dynamicWarRoutes);
 
 // Use stagger eligibility routes
 apiRoutes.use('/stagger-eligibility', staggerEligibilityRoutes);
