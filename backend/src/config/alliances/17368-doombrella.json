@@ -57,9 +57,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "21,183.36",
-        "infrastructure": "1,029.80",
-        "strength": "111266.209"
+        "technology": "21,039.60",
+        "infrastructure": "430.33",
+        "strength": "108748.995"
       }
     },
     "139809": {
@@ -79,7 +79,7 @@
       "current_stats": {
         "technology": "19,753.41",
         "infrastructure": "9,327.46",
-        "strength": "138866.387"
+        "strength": "139200.907"
       }
     },
     "141164": {
@@ -97,9 +97,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "72,845.44",
-        "infrastructure": "22,194.02",
-        "strength": "480049.948"
+        "technology": "72,021.42",
+        "infrastructure": "20,386.00",
+        "strength": "453463.932"
       }
     },
     "142120": {
@@ -116,9 +116,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "33,599.52",
-        "infrastructure": "5,045.85",
-        "strength": "203132.556"
+        "technology": "33,210.02",
+        "infrastructure": "2,741.09",
+        "strength": "195039.67"
       },
       "notes": ""
     },
@@ -136,9 +136,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "31,367.27",
-        "infrastructure": "15,898.18",
-        "strength": "257731.504"
+        "technology": "30,938.81",
+        "infrastructure": "14,353.28",
+        "strength": "242513.905"
       },
       "notes": ""
     },
@@ -176,9 +176,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "30,064.37",
-        "infrastructure": "6,532.23",
-        "strength": "190462.037"
+        "technology": "30,208.97",
+        "infrastructure": "6,475.14",
+        "strength": "194401.451"
       },
       "notes": ""
     },
@@ -216,9 +216,9 @@
         "receive_priority": 1
       },
       "current_stats": {
-        "technology": "25,681.79",
-        "infrastructure": "7,919.40",
-        "strength": "168823.935"
+        "technology": "24,958.46",
+        "infrastructure": "5,945.12",
+        "strength": "156790.027"
       },
       "notes": ""
     },
@@ -236,9 +236,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "34,285.12",
-        "infrastructure": "5,912.85",
-        "strength": "196683.747"
+        "technology": "34,166.27",
+        "infrastructure": "5,402.60",
+        "strength": "192814.754"
       },
       "notes": ""
     },
@@ -276,9 +276,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "44,585.93",
-        "infrastructure": "623.89",
-        "strength": "233548.434"
+        "technology": "44,340.23",
+        "infrastructure": "0.00",
+        "strength": "228325.193"
       },
       "notes": ""
     },
@@ -316,9 +316,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "91,145.70",
+        "technology": "91,338.09",
         "infrastructure": "15,813.13",
-        "strength": "530742.4"
+        "strength": "531477.787"
       },
       "notes": ""
     },
@@ -337,9 +337,9 @@
         "receive_priority": 1
       },
       "current_stats": {
-        "technology": "3,388.26",
-        "infrastructure": "7,993.21",
-        "strength": "54925.175"
+        "technology": "3,386.74",
+        "infrastructure": "7,986.75",
+        "strength": "54896.592"
       }
     },
     "342957": {
@@ -379,7 +379,7 @@
       "current_stats": {
         "technology": "330.96",
         "infrastructure": "3,999.95",
-        "strength": "20458.621"
+        "strength": "21138.621"
       }
     },
     "374321": {
@@ -396,9 +396,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "39,842.38",
-        "infrastructure": "15,992.58",
-        "strength": "302949.086"
+        "technology": "39,352.64",
+        "infrastructure": "13,826.19",
+        "strength": "289740.813"
       },
       "notes": ""
     },
@@ -417,8 +417,8 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "13,646.47",
-        "infrastructure": "8,394.09",
+        "technology": "13,629.34",
+        "infrastructure": "8,318.59",
         "strength": "108586.195"
       }
     },
@@ -437,9 +437,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "110.37",
-        "infrastructure": "4,509.54",
-        "strength": "18924.167"
+        "technology": "110.15",
+        "infrastructure": "4,343.07",
+        "strength": "17924.307"
       }
     },
     "433854": {
@@ -457,9 +457,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "164.00",
-        "infrastructure": "2,394.06",
-        "strength": "10177.063"
+        "technology": "306.04",
+        "infrastructure": "2,437.91",
+        "strength": "11049.162"
       }
     },
     "445021": {
@@ -475,9 +475,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "338.90",
-        "infrastructure": "8,011.55",
-        "strength": "36363.197"
+        "technology": "243.64",
+        "infrastructure": "7,635.25",
+        "strength": "34248.377"
       }
     },
     "446109": {
@@ -495,9 +495,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "208.43",
-        "infrastructure": "4,526.31",
-        "strength": "23293"
+        "technology": "368.53",
+        "infrastructure": "4,500.89",
+        "strength": "25664.828"
       }
     },
     "470323": {
@@ -517,7 +517,7 @@
       "current_stats": {
         "technology": "65,444.74",
         "infrastructure": "11,208.46",
-        "strength": "411341.098"
+        "strength": "412101.098"
       }
     },
     "481103": {
@@ -535,9 +535,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "2.52",
+        "technology": "602.52",
         "infrastructure": "2,656.91",
-        "strength": "9265.807"
+        "strength": "15721.957"
       }
     },
     "484851": {
@@ -554,9 +554,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "27,515.09",
-        "infrastructure": "14,228.15",
-        "strength": "197423.076"
+        "technology": "26,809.38",
+        "infrastructure": "12,211.46",
+        "strength": "186819.519"
       },
       "notes": ""
     },
@@ -594,9 +594,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "35,049.77",
-        "infrastructure": "9,840.39",
-        "strength": "215552.178"
+        "technology": "35,230.26",
+        "infrastructure": "9,277.10",
+        "strength": "215710.199"
       },
       "notes": ""
     },
@@ -614,9 +614,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "58,431.66",
-        "infrastructure": "17,720.82",
-        "strength": "380346.572"
+        "technology": "57,812.62",
+        "infrastructure": "16,331.92",
+        "strength": "370698.032"
       },
       "notes": ""
     },
@@ -635,9 +635,9 @@
         "receive_priority": 1
       },
       "current_stats": {
-        "technology": "54.03",
-        "infrastructure": "4,034.41",
-        "strength": "15677.976"
+        "technology": "48.00",
+        "infrastructure": "3,963.70",
+        "strength": "15421.725"
       }
     },
     "567720": {
@@ -655,9 +655,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "11,054.81",
+        "technology": "11,125.56",
         "infrastructure": "5,991.26",
-        "strength": "76772.03"
+        "strength": "83813.251"
       }
     },
     "582974": {
@@ -735,9 +735,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "17,479.19",
+        "technology": "17,603.10",
         "infrastructure": "15,887.09",
-        "strength": "167793.247"
+        "strength": "168038.801"
       }
     },
     "626860": {
@@ -775,9 +775,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "12,295.78",
-        "infrastructure": "4,956.41",
-        "strength": "98962.613"
+        "technology": "12,316.52",
+        "infrastructure": "4,429.17",
+        "strength": "98198.44"
       }
     },
     "634284": {
@@ -795,9 +795,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "3,094.82",
+        "technology": "3,123.68",
         "infrastructure": "7,855.75",
-        "strength": "51099.852"
+        "strength": "57986.131"
       }
     },
     "635159": {
@@ -896,7 +896,7 @@
       "current_stats": {
         "technology": "81.61",
         "infrastructure": "4,596.09",
-        "strength": "15922.377"
+        "strength": "16032.377"
       },
       "notes": ""
     },
@@ -936,7 +936,7 @@
       "current_stats": {
         "technology": "81.76",
         "infrastructure": "4,393.17",
-        "strength": "16103.943"
+        "strength": "16233.943"
       },
       "notes": ""
     },
@@ -1015,9 +1015,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "50.03",
-        "infrastructure": "1,200.56",
-        "strength": "4469.811"
+        "technology": "45.41",
+        "infrastructure": "1,292.01",
+        "strength": "4616.398"
       }
     }
   }
