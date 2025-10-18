@@ -1,8 +1,35 @@
 import { DynamicWar } from '../models/DynamicWar.js';
 import { promises as fs } from 'fs';
+import fsSync from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-const DYNAMIC_WARS_FILE = path.join(process.cwd(), 'src', 'data', 'dynamic_wars.json');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Try multiple possible paths for dynamic wars file in different environments
+const getDynamicWarsFilePath = (): string | null => {
+  const possiblePaths = [
+    path.join(process.cwd(), 'src', 'data', 'dynamic_wars.json'),
+    path.join(__dirname, '..', 'data', 'dynamic_wars.json'),
+    path.join(process.cwd(), 'dist', 'src', 'data', 'dynamic_wars.json'),
+    path.join(__dirname, '..', '..', 'data', 'dynamic_wars.json')
+  ];
+  
+  for (const filePath of possiblePaths) {
+    try {
+      if (fsSync.existsSync(filePath)) {
+        console.log(`Found dynamic wars file at: ${filePath}`);
+        return filePath;
+      }
+    } catch (error) {
+      // Continue to next path
+    }
+  }
+  
+  console.log('Dynamic wars file not found in any of the expected locations');
+  return null;
+};
 
 export class DynamicWarService {
   private static dynamicWars: DynamicWar[] = [];
@@ -40,23 +67,28 @@ export class DynamicWarService {
   private static async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    console.log(`Attempting to load dynamic wars from: ${DYNAMIC_WARS_FILE}`);
     console.log(`Environment: VERCEL=${process.env.VERCEL}, NODE_ENV=${process.env.NODE_ENV}`);
-
-    try {
-      await fs.access(DYNAMIC_WARS_FILE);
-      console.log('Dynamic wars file exists, reading...');
-      const data = await fs.readFile(DYNAMIC_WARS_FILE, 'utf-8');
-      this.dynamicWars = JSON.parse(data);
-      console.log(`Loaded ${this.dynamicWars.length} dynamic wars from file`);
-    } catch (error) {
-      console.log(`Failed to load dynamic wars file: ${error}`);
-      // File doesn't exist or is invalid, start with empty array
-      this.dynamicWars = [];
-      // Only try to save file in development environment
-      if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
-        await this.saveToFile();
+    
+    const dynamicWarsFilePath = getDynamicWarsFilePath();
+    
+    if (dynamicWarsFilePath) {
+      try {
+        console.log('Dynamic wars file found, reading...');
+        const data = await fs.readFile(dynamicWarsFilePath, 'utf-8');
+        this.dynamicWars = JSON.parse(data);
+        console.log(`Loaded ${this.dynamicWars.length} dynamic wars from file`);
+      } catch (error) {
+        console.log(`Failed to load dynamic wars file: ${error}`);
+        this.dynamicWars = [];
       }
+    } else {
+      console.log('Dynamic wars file not found, starting with empty array');
+      this.dynamicWars = [];
+    }
+
+    // Only try to save file in development environment
+    if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
+      await this.saveToFile();
     }
 
     this.initialized = true;
@@ -73,11 +105,21 @@ export class DynamicWarService {
     }
 
     try {
-      await fs.mkdir(path.dirname(DYNAMIC_WARS_FILE), { recursive: true });
-      await fs.writeFile(DYNAMIC_WARS_FILE, JSON.stringify(this.dynamicWars, null, 2));
+      const dynamicWarsFilePath = getDynamicWarsFilePath();
+      if (dynamicWarsFilePath) {
+        await fs.writeFile(dynamicWarsFilePath, JSON.stringify(this.dynamicWars, null, 2));
+      } else {
+        // Use the first possible path for development
+        const devPath = path.join(process.cwd(), 'src', 'data', 'dynamic_wars.json');
+        await fs.mkdir(path.dirname(devPath), { recursive: true });
+        await fs.writeFile(devPath, JSON.stringify(this.dynamicWars, null, 2));
+      }
     } catch (error) {
       console.error('Error saving dynamic wars to file:', error);
-      throw new Error('Failed to save dynamic wars');
+      // Don't throw error in production, just log it
+      if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
+        throw new Error('Failed to save dynamic wars');
+      }
     }
   }
 
