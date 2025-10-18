@@ -47,7 +47,10 @@ export class DynamicWarService {
     } catch (error) {
       // File doesn't exist or is invalid, start with empty array
       this.dynamicWars = [];
-      await this.saveToFile();
+      // Only try to save file in development environment
+      if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
+        await this.saveToFile();
+      }
     }
 
     this.initialized = true;
@@ -57,6 +60,12 @@ export class DynamicWarService {
    * Save dynamic wars to file
    */
   private static async saveToFile(): Promise<void> {
+    // Skip file operations in serverless environments like Vercel
+    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+      console.log('Skipping dynamic wars save in serverless environment');
+      return;
+    }
+
     try {
       await fs.mkdir(path.dirname(DYNAMIC_WARS_FILE), { recursive: true });
       await fs.writeFile(DYNAMIC_WARS_FILE, JSON.stringify(this.dynamicWars, null, 2));
