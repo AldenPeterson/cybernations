@@ -1,17 +1,17 @@
 {
   "Nation_Stats": {
-    "timestamp": 1761226827923,
+    "timestamp": 1761239167223,
     "originalFile": "CyberNations_SE_Nation_Stats_10232025510001.zip",
-    "downloadTime": "2025-10-23T13:40:27.923Z"
+    "downloadTime": "2025-10-23T17:06:07.223Z"
   },
   "Aid_Stats": {
-    "timestamp": 1761226827963,
+    "timestamp": 1761239167301,
     "originalFile": "CyberNations_SE_Aid_Stats_10232025520001.zip",
-    "downloadTime": "2025-10-23T13:40:27.963Z"
+    "downloadTime": "2025-10-23T17:06:07.301Z"
   },
   "War_Stats": {
-    "timestamp": 1761226828024,
+    "timestamp": 1761239167383,
     "originalFile": "CyberNations_SE_War_Stats_10232025525001.zip",
-    "downloadTime": "2025-10-23T13:40:28.024Z"
+    "downloadTime": "2025-10-23T17:06:07.383Z"
   }
 }
