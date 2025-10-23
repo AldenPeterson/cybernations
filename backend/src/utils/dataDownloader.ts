@@ -26,7 +26,18 @@ function getDownloadNumberSlug(file_flag: string, hoursOffset: number = 0): stri
   const month = centralDate.getMonth() + 1;
   const day = centralDate.getDate();
   const hours = centralDate.getHours();
- 
+
+  // Between 12am-6am Central, use the previous day's date
+  // Between 6am-12am Central, use the current day's date
+  let actualDate = centralDate;
+  if (hours >= 0 && hours < 6) {
+    actualDate = new Date(centralDate);
+    actualDate.setDate(actualDate.getDate() - 1);
+  }
+  
+  const actualYear = actualDate.getFullYear();
+  const actualMonth = actualDate.getMonth() + 1;
+  const actualDay = actualDate.getDate();
   
   // Determine if it's between 6am and 6pm Central Time
   const isDaytime = hours >= 6 && hours < 18;
@@ -34,7 +45,7 @@ function getDownloadNumberSlug(file_flag: string, hoursOffset: number = 0): stri
   
   // Format: MMDDYYYYXXXX where XXXX is 4-digit file identifier + toggle
   // Example: 91820250002 (9/18/2025, file 0002, daytime=1)
-  return `${month}${day}${year}${file_flag}${timeSuffix}`;
+  return `${actualMonth}${actualDay}${actualYear}${file_flag}${timeSuffix}`;
 }
 
 
