@@ -532,16 +532,30 @@ async function downloadFileWithFallback(
     [FileType.WAR_STATS]: '52500'
   };
 
-  // Always compute filename strictly from current Central date and day-part
   const flag = flag_map[fileType];
-  const timestamp = getDownloadNumberSlug(flag, 0);
-  const filename = `CyberNations_SE_${fileType}_${timestamp}.zip`;
-  const url = `${baseUrl}${filename}`;
+  
+  // Try current day first, then fallback to previous days
+  for (let hoursOffset = 0; hoursOffset <= 48; hoursOffset += 24) {
+    const timestamp = getDownloadNumberSlug(flag, hoursOffset);
+    const filename = `CyberNations_SE_${fileType}_${timestamp}.zip`;
+    const url = `${baseUrl}${filename}`;
 
-  console.log(`Attempting download for scheduled file: ${filename} (central-date/day-part)`);
-  await downloadFile(url, tempZipPath);
-  console.log(`✓ Successfully downloaded ${filename}`);
-  return { success: true, filename };
+    try {
+      console.log(`Attempting download for scheduled file: ${filename} (offset: ${hoursOffset}h)`);
+      await downloadFile(url, tempZipPath);
+      console.log(`✓ Successfully downloaded ${filename}`);
+      return { success: true, filename };
+    } catch (error: any) {
+      console.log(`Failed to download ${filename}: ${error.message}`);
+      if (hoursOffset === 48) {
+        // Last attempt failed, throw the error
+        throw error;
+      }
+      // Continue to next fallback attempt
+    }
+  }
+
+  throw new Error('All fallback attempts failed');
 }
 
 /**
