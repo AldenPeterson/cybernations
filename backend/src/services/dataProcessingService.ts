@@ -360,12 +360,14 @@ export function parseWarStats(filePath: string): Promise<any[]> {
   });
 }
 
-export async function loadDataFromFiles(): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {
+export async function loadDataFromFiles(checkForUpdates: boolean = true): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {
   // Ensure we have recent files before attempting to read standardized CSVs
-  try {
-    await ensureRecentFiles();
-  } catch (e) {
-    console.warn('ensureRecentFiles failed, proceeding with available files:', e);
+  if (checkForUpdates) {
+    try {
+      await ensureRecentFiles();
+    } catch (e) {
+      console.warn('ensureRecentFiles failed, proceeding with available files:', e);
+    }
   }
 
   // Always try standardized data files first, especially in production
@@ -440,8 +442,14 @@ export async function loadDataFromFiles(): Promise<{ nations: Nation[]; aidOffer
     // In development, use the normal flow with file downloads
     rawDataPath = path.join(process.cwd(), 'src', 'raw_data', 'extracted');
     
-    // Ensure we have recent files
-    await ensureRecentFiles();
+    // Ensure we have recent files (only if checkForUpdates is true)
+    if (checkForUpdates) {
+      try {
+        await ensureRecentFiles();
+      } catch (e) {
+        console.warn('ensureRecentFiles failed, proceeding with available files:', e);
+      }
+    }
     
     // Ensure the extracted directory exists
     if (!fs.existsSync(rawDataPath)) {

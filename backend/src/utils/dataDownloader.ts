@@ -466,7 +466,7 @@ export async function ensureRecentFiles(): Promise<void> {
       // Fallback to full download in prod for simplicity/timeouts
       await downloadWithTimeout();
     } catch (error) {
-      console.warn('Download failed in production, using existing files:', error);
+      console.warn('Download failed in production, gracefully falling back to existing data:', error);
       return;
     }
   } else {
@@ -474,7 +474,8 @@ export async function ensureRecentFiles(): Promise<void> {
       console.log('Development environment detected, downloading stale standardized files:', staleTypes.join(', '));
       await performSelectiveDownload(staleTypes);
     } catch (error) {
-      console.warn('Selective standardized download failed in development:', error);
+      console.warn('Selective standardized download failed in development, gracefully falling back to existing data:', error);
+      return;
     }
   }
 
@@ -482,14 +483,14 @@ export async function ensureRecentFiles(): Promise<void> {
   try {
     console.log('Syncing alliance files with refreshed data...');
     const { loadDataFromFiles } = await import('../services/dataProcessingService.js');
-    const { nations } = await loadDataFromFiles();
+    const { nations } = await loadDataFromFiles(false); // Pass false to prevent circular dependency
     if (nations.length > 0) {
       await syncAllianceFilesWithNewData(nations);
     } else {
       console.log('No nation data found after download, skipping alliance sync');
     }
   } catch (error) {
-    console.error('Error syncing alliance files after download:', error);
+    console.warn('Error syncing alliance files after download, continuing with existing data:', error);
   }
 }
 
