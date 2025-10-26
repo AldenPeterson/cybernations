@@ -45,7 +45,9 @@ function getDownloadNumberSlug(file_flag: string, hoursOffset: number = 0): stri
   
   // Format: MMDDYYYYXXXX where XXXX is 4-digit file identifier + toggle
   // Example: 91820250002 (9/18/2025, file 0002, daytime=1)
-  return `${actualMonth}${actualDay}${actualYear}${file_flag}${timeSuffix}`;
+  const slug = `${actualMonth}${actualDay}${actualYear}${file_flag}${timeSuffix}`;
+  console.log(`Slug: ${slug}`);
+  return slug;
 }
 
 
@@ -515,8 +517,9 @@ function getCustomFilename(fileType: FileType): string | undefined {
 }
 
 /**
- * Try to download a file with fallback to previous time periods
+ * Try to download a file based on current timestamp
  * Supports custom filename override via environment variables
+ * If the file doesn't exist, throws an error (caller will use existing data)
  */
 async function downloadFileWithFallback(
   baseUrl: string,
@@ -546,28 +549,15 @@ async function downloadFileWithFallback(
 
   const flag = flag_map[fileType];
   
-  // Try current day first, then fallback to previous days
-  for (let hoursOffset = 0; hoursOffset <= 48; hoursOffset += 24) {
-    const timestamp = getDownloadNumberSlug(flag, hoursOffset);
-    const filename = `CyberNations_SE_${fileType}_${timestamp}.zip`;
-    const url = `${baseUrl}${filename}`;
+  // Only try current timestamp - no fallback to older files
+  const timestamp = getDownloadNumberSlug(flag, 0);
+  const filename = `CyberNations_SE_${fileType}_${timestamp}.zip`;
+  const url = `${baseUrl}${filename}`;
 
-    try {
-      console.log(`Attempting download for scheduled file: ${filename} (offset: ${hoursOffset}h)`);
-      await downloadFile(url, tempZipPath);
-      console.log(`✓ Successfully downloaded ${filename}`);
-      return { success: true, filename };
-    } catch (error: any) {
-      console.log(`Failed to download ${filename}: ${error.message}`);
-      if (hoursOffset === 48) {
-        // Last attempt failed, throw the error
-        throw error;
-      }
-      // Continue to next fallback attempt
-    }
-  }
-
-  throw new Error('All fallback attempts failed');
+  console.log(`Attempting download for current file: ${filename}`);
+  await downloadFile(url, tempZipPath);
+  console.log(`✓ Successfully downloaded ${filename}`);
+  return { success: true, filename };
 }
 
 /**
