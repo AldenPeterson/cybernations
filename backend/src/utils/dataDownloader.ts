@@ -72,39 +72,60 @@ export function getFileInfo(fileType: FileType): FileInfo {
 function downloadFile(url: string, filePath: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(filePath);
+    let rejected = false;
     
-    // Add error handler to the file stream immediately
-    file.on('error', (err) => {
-      fs.unlink(filePath, () => {}); // Delete the file on error
-      reject(err);
-    });
+    const cleanup = () => {
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    };
     
-    https.get(url, (response) => {
-      if (response.statusCode !== 200) {
-        file.close();
-        fs.unlink(filePath, () => {});
-        reject(new Error(`Failed to download file from ${url}: ${response.statusCode}`));
+    const handleError = (err: Error) => {
+      if (!rejected) {
+        rejected = true;
+        try {
+          file.destroy();
+        } catch (e) {
+          // Ignore destroy errors
+        }
+        cleanup();
+        reject(err);
+      }
+    };
+    
+    // Suppress unhandled errors on file stream
+    file.on('error', handleError);
+    
+    const req = https.get(url, (response) => {
+      if (rejected) {
+        response.destroy();
         return;
       }
       
-      // Add error handler to the response stream
-      response.on('error', (err) => {
-        file.close();
-        fs.unlink(filePath, () => {});
-        reject(err);
-      });
+      // Handle any errors during the response
+      response.on('error', handleError);
+      
+      if (response.statusCode !== 200) {
+        response.destroy();
+        handleError(new Error(`Failed to download file from ${url}: ${response.statusCode}`));
+        return;
+      }
       
       response.pipe(file);
       
       file.on('finish', () => {
-        file.close();
-        resolve();
+        if (!rejected) {
+          file.close();
+          resolve();
+        }
       });
-    }).on('error', (err) => {
-      file.close();
-      fs.unlink(filePath, () => {});
-      reject(err);
     });
+    
+    req.on('error', handleError);
   });
 }
 
@@ -493,6 +514,26 @@ export async function ensureRecentFiles(): Promise<void> {
     }
   } catch (error) {
     console.warn('Error syncing alliance files after download, continuing with existing data:', error);
+  }
+}
+
+/**
+ * Manually sync alliance files with current data files
+ * This can be called to refresh alliance configurations after data updates
+ */
+export async function syncAllianceFiles(): Promise<void> {
+  try {
+    console.log('Manually syncing alliance files...');
+    const { loadDataFromFiles } = await import('../services/dataProcessingService.js');
+    const { nations } = await loadDataFromFiles(false);
+    if (nations.length > 0) {
+      await syncAllianceFilesWithNewData(nations);
+    } else {
+      console.log('No nation data found, skipping alliance sync');
+    }
+  } catch (error) {
+    console.error('Error syncing alliance files:', error);
+    throw error;
   }
 }
 

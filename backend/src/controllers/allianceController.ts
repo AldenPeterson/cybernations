@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { loadDataFromFilesWithUpdate, groupNationsByAlliance } from '../services/dataProcessingService.js';
 import { AllianceService } from '../services/allianceService.js';
+import { syncAllianceFiles } from '../utils/dataDownloader.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -157,24 +158,11 @@ export class AllianceController {
   static async syncAlliances(req: Request, res: Response) {
     try {
       console.log('Manual alliance sync requested');
-      
-      // Get the latest nation data
-      const { nations } = await loadDataFromFilesWithUpdate();
-      
-      if (nations.length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'No nation data available for sync'
-        });
-      }
-      
-      // Sync alliance files
-      await AllianceService.syncAllianceFilesWithNewData(nations);
+      await syncAllianceFiles();
       
       res.json({
         success: true,
-        message: 'Alliance files synchronized successfully',
-        nationsProcessed: nations.length
+        message: 'Alliance files synchronized successfully'
       });
     } catch (error) {
       console.error('Error syncing alliance files:', error);
