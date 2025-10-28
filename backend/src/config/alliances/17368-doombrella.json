@@ -6,7 +6,7 @@
       "ruler_name": "Crymson",
       "nation_name": "Crymson",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -17,16 +17,16 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "597.38",
-        "infrastructure": "9,402.65",
-        "strength": "36838.559"
+        "technology": "856.68",
+        "infrastructure": "10,562.50",
+        "strength": "48615.083"
       }
     },
     "66883": {
       "ruler_name": "Crown Prince Mishka",
       "nation_name": "Tygaland",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -37,16 +37,16 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "20,571.08",
-        "infrastructure": "12,355.23",
-        "strength": "157916.577"
+        "technology": "21,335.20",
+        "infrastructure": "15,090.71",
+        "strength": "175095.229"
       }
     },
     "101493": {
       "ruler_name": "ak47don",
       "nation_name": "sicily mafia",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -57,36 +57,16 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "18,539.92",
-        "infrastructure": "729.31",
-        "strength": "94887.513"
-      }
-    },
-    "127226": {
-      "ruler_name": "LJ Scott",
-      "nation_name": "Republic of Jutland",
-      "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
-      "slots": {
-        "sendTech": 0,
-        "sendCash": 0,
-        "getTech": 0,
-        "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
-      },
-      "current_stats": {
-        "technology": "48,442.16",
-        "infrastructure": "8,479.78",
-        "strength": "285797.323"
+        "technology": "18,892.10",
+        "infrastructure": "1,045.66",
+        "strength": "97657.504"
       }
     },
     "139809": {
       "ruler_name": "John Orris",
       "nation_name": "Commonwealth of John",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -99,7 +79,7 @@
       "current_stats": {
         "technology": "19,853.41",
         "infrastructure": "9,327.46",
-        "strength": "142538.607"
+        "strength": "141338.607"
       }
     },
     "141164": {
@@ -117,56 +97,56 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "71,906.87",
+        "technology": "71,806.87",
         "infrastructure": "8,149.89",
-        "strength": "407187.121"
+        "strength": "405407.121"
       }
     },
     "142120": {
       "ruler_name": "Commander Thrawn",
       "nation_name": "Csilla",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 6,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
-        "technology": "30,324.08",
-        "infrastructure": "799.75",
-        "strength": "165003.212"
-      }
+        "technology": "30,851.28",
+        "infrastructure": "3,000.30",
+        "strength": "176522.757"
+      },
+      "notes": ""
     },
     "144708": {
       "ruler_name": "Matthew PK",
       "nation_name": "Commonwealth of LoL",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 6,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 1,
+        "receive_priority": 2
       },
       "current_stats": {
-        "technology": "30,177.03",
-        "infrastructure": "6,473.86",
-        "strength": "208476.979"
-      }
+        "technology": "30,735.92",
+        "infrastructure": "9,113.10",
+        "strength": "225572.128"
+      },
+      "notes": ""
     },
     "148460": {
       "ruler_name": "Buds The Man",
       "nation_name": "New Budsland",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -177,36 +157,36 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "5,409.03",
-        "infrastructure": "3,876.94",
-        "strength": "40311.599"
+        "technology": "6,008.62",
+        "infrastructure": "5,413.29",
+        "strength": "55536.189"
       }
     },
     "151268": {
       "ruler_name": "Zerileous",
       "nation_name": "Monkey Time",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
-        "getTech": 0,
+        "sendCash": 2,
+        "getTech": 4,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "28,378.08",
-        "infrastructure": "3,500.76",
-        "strength": "160354.242"
-      }
+        "infrastructure": "2,000.76",
+        "strength": "155285.742"
+      },
+      "notes": ""
     },
     "184221": {
       "ruler_name": "Lizzzz",
       "nation_name": "Elisabethan",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -226,47 +206,47 @@
       "ruler_name": "Franz Ferdinand",
       "nation_name": "L252beck",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 6,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
-        "technology": "22,993.64",
-        "infrastructure": "4,000.01",
-        "strength": "138427.079"
-      }
+        "technology": "22,893.64",
+        "infrastructure": "2,500.01",
+        "strength": "131478.639"
+      },
+      "notes": ""
     },
     "187132": {
       "ruler_name": "White Majik",
       "nation_name": "VSOP United",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 6,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 1,
+        "receive_priority": 2
       },
       "current_stats": {
-        "technology": "31,644.16",
-        "infrastructure": "4,770.72",
-        "strength": "185900.957"
-      }
+        "technology": "31,471.89",
+        "infrastructure": "4,999.99",
+        "strength": "180581.671"
+      },
+      "notes": ""
     },
     "199494": {
       "ruler_name": "Bomber66",
       "nation_name": "Baxter",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -279,28 +259,28 @@
       "current_stats": {
         "technology": "16,846.83",
         "infrastructure": "12,693.81",
-        "strength": "141684.569"
+        "strength": "140744.569"
       }
     },
     "202255": {
       "ruler_name": "onelove",
       "nation_name": "We Are One Love",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "41,541.73",
-        "infrastructure": "2,000.99",
-        "strength": "214736.506"
-      }
+        "infrastructure": "86.09",
+        "strength": "208679.506"
+      },
+      "notes": "broke"
     },
     "230799": {
       "ruler_name": "Raymond Jaeger",
@@ -338,7 +318,7 @@
       "current_stats": {
         "technology": "90,237.73",
         "infrastructure": "11,186.32",
-        "strength": "506939.872"
+        "strength": "505939.872"
       },
       "notes": ""
     },
@@ -346,27 +326,27 @@
       "ruler_name": "paperwings2007",
       "nation_name": "Paper Island",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
+        "getCash": 6,
         "send_priority": 3,
-        "receive_priority": 3
+        "receive_priority": 1
       },
       "current_stats": {
-        "technology": "2,914.59",
-        "infrastructure": "4,828.89",
-        "strength": "42367.516"
+        "technology": "2,858.72",
+        "infrastructure": "4,924.95",
+        "strength": "40221.47"
       }
     },
     "342957": {
       "ruler_name": "tayloj7",
       "nation_name": "Rabbitopia",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -377,56 +357,56 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "21,679.61",
-        "infrastructure": "5,507.43",
-        "strength": "130709.853"
+        "technology": "22,862.28",
+        "infrastructure": "9,839.01",
+        "strength": "156215.836"
       }
     },
     "356682": {
       "ruler_name": "Logic",
       "nation_name": "8Bit Nation",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
+        "send_priority": 2,
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "184.15",
-        "infrastructure": "1,870.61",
-        "strength": "11236.548"
+        "technology": "345.62",
+        "infrastructure": "2,143.05",
+        "strength": "11911.09"
       }
     },
     "374321": {
       "ruler_name": "Clash",
       "nation_name": "Discord",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 6,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 1,
+        "receive_priority": 2
       },
       "current_stats": {
-        "technology": "39,294.50",
-        "infrastructure": "4,287.89",
-        "strength": "226776.987"
-      }
+        "technology": "39,237.52",
+        "infrastructure": "7,485.06",
+        "strength": "264794.729"
+      },
+      "notes": ""
     },
     "402492": {
       "ruler_name": "NikolaP",
       "nation_name": "Wiggles",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -437,49 +417,49 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "11,657.40",
-        "infrastructure": "889.50",
-        "strength": "68937.268"
+        "technology": "11,898.88",
+        "infrastructure": "1,671.87",
+        "strength": "71230.504"
       }
     },
     "426185": {
       "ruler_name": "DeathAdder",
       "nation_name": "Westfalen",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "400.74",
         "infrastructure": "3,396.67",
-        "strength": "17489.563"
+        "strength": "17169.563"
       }
     },
     "433854": {
       "ruler_name": "Auctor",
       "nation_name": "Wyrdgar",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "200.40",
         "infrastructure": "2,162.57",
-        "strength": "11122.417"
+        "strength": "9890.417"
       }
     },
     "445021": {
@@ -492,34 +472,32 @@
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "getCash": 0
       },
       "current_stats": {
-        "technology": "400.78",
-        "infrastructure": "5,716.70",
-        "strength": "27114.483"
+        "technology": "366.53",
+        "infrastructure": "6,280.54",
+        "strength": "31597.96"
       }
     },
     "446109": {
       "ruler_name": "VVhite Majik",
       "nation_name": "VS0P United",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
-        "technology": "210.21",
-        "infrastructure": "2,044.80",
-        "strength": "14316.684"
+        "technology": "0.42",
+        "infrastructure": "2,965.05",
+        "strength": "14268.475"
       }
     },
     "470323": {
@@ -546,41 +524,41 @@
       "ruler_name": "AzureShadow",
       "nation_name": "Coobie",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "420.11",
         "infrastructure": "2,391.31",
-        "strength": "11702.242"
+        "strength": "11942.242"
       }
     },
     "484851": {
       "ruler_name": "enderland",
       "nation_name": "Fields of Elysium",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 6,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 1,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "25,413.59",
-        "infrastructure": "8,610.81",
-        "strength": "170305.904"
-      }
+        "infrastructure": "8,510.81",
+        "strength": "168010.904"
+      },
+      "notes": ""
     },
     "502087": {
       "ruler_name": "Astryl",
@@ -606,101 +584,101 @@
       "ruler_name": "StevieG",
       "nation_name": "Dinglebay",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 6,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
-        "technology": "32,277.65",
-        "infrastructure": "4,133.02",
-        "strength": "185022.129"
-      }
+        "technology": "32,452.00",
+        "infrastructure": "2,996.37",
+        "strength": "182568.221"
+      },
+      "notes": ""
     },
     "541774": {
       "ruler_name": "Das Blitzkrieger",
       "nation_name": "Leistungsstarke",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 6,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "58,092.03",
         "infrastructure": "9,809.26",
-        "strength": "342029.238"
-      }
+        "strength": "341347.598"
+      },
+      "notes": ""
     },
     "566736": {
       "ruler_name": "amossio",
       "nation_name": "amossio",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "getCash": 6,
+        "send_priority": 2,
+        "receive_priority": 1
       },
       "current_stats": {
-        "technology": "143.27",
-        "infrastructure": "1,148.60",
-        "strength": "6753.147"
+        "technology": "115.08",
+        "infrastructure": "1,003.39",
+        "strength": "5533.117"
       }
     },
     "567720": {
       "ruler_name": "Cosmic Chocolate",
       "nation_name": "Soaring Eagle",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
+      "notes": "DS",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
-        "technology": "10,315.15",
-        "infrastructure": "4,106.82",
-        "strength": "73081.383"
+        "technology": "10,362.89",
+        "infrastructure": "5,481.45",
+        "strength": "79351.146"
       }
     },
     "582974": {
       "ruler_name": "SeekerSeeks",
       "nation_name": "Seeking",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "600.00",
         "infrastructure": "8,500.00",
         "strength": "50863.541"
-      }
+      },
+      "notes": ""
     },
     "585631": {
       "ruler_name": "Srivatsan",
@@ -726,32 +704,32 @@
       "ruler_name": "Epimethys",
       "nation_name": "Pyrrha",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "100.00",
         "infrastructure": "4,999.99",
         "strength": "15791.885"
-      }
+      },
+      "notes": ""
     },
     "623822": {
       "ruler_name": "Comrade Marx",
       "nation_name": "GreaterGoonSyndicate",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 0,
+        "getTech": 6,
         "getCash": 0,
         "send_priority": 3,
         "receive_priority": 3
@@ -759,14 +737,14 @@
       "current_stats": {
         "technology": "17,048.62",
         "infrastructure": "13,613.36",
-        "strength": "152639.523"
+        "strength": "150479.523"
       }
     },
     "626860": {
       "ruler_name": "BringMeTheHorizon",
       "nation_name": "Dakotas",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -777,17 +755,17 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "16,442.61",
-        "infrastructure": "5,528.71",
-        "strength": "109552.855"
+        "technology": "16,558.57",
+        "infrastructure": "7,498.07",
+        "strength": "124262.969"
       }
     },
     "627592": {
       "ruler_name": "Lord Xamaeron",
       "nation_name": "Celtic Forest",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
+      "notes": "DS",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
@@ -797,70 +775,70 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "12,077.86",
+        "technology": "11,777.86",
         "infrastructure": "11,111.28",
-        "strength": "117314.735"
+        "strength": "114978.935"
       }
     },
     "634284": {
       "ruler_name": "mikeymikes",
       "nation_name": "batmanism",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 6,
         "getTech": 0,
         "getCash": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "4,185.59",
-        "infrastructure": "4,193.86",
-        "strength": "41332.943"
+        "technology": "4,444.78",
+        "infrastructure": "5,293.23",
+        "strength": "52128.502"
       }
     },
     "635159": {
       "ruler_name": "xAnri",
       "nation_name": "xRoan",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
-        "send_priority": 3,
+        "getCash": 6,
+        "send_priority": 2,
         "receive_priority": 3
       },
       "current_stats": {
         "technology": "200.67",
         "infrastructure": "4,999.99",
         "strength": "16883.591"
-      }
+      },
+      "notes": ""
     },
     "645236": {
       "ruler_name": "Roq Fanclub Presiden",
       "nation_name": "Roq Fanclub",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
-        "send_priority": 3,
+        "getCash": 6,
+        "send_priority": 2,
         "receive_priority": 3
       },
       "current_stats": {
         "technology": "100.32",
         "infrastructure": "4,999.99",
         "strength": "19145.196"
-      }
+      },
+      "notes": ""
     },
     "645427": {
       "ruler_name": "Clank",
@@ -879,60 +857,60 @@
       "current_stats": {
         "technology": "312.40",
         "infrastructure": "4,965.56",
-        "strength": "22322.589"
+        "strength": "21512.589"
       }
     },
     "645571": {
       "ruler_name": "cantbelieveimback",
       "nation_name": "Techlandia",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "100.71",
         "infrastructure": "5,300.01",
         "strength": "22052.531"
-      }
+      },
+      "notes": ""
     },
     "645768": {
       "ruler_name": "Sitthemdown",
       "nation_name": "Emperor Protects",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
-        "sendTech": 0,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
-        "technology": "200.61",
-        "infrastructure": "5,000.09",
-        "strength": "19169.377"
-      }
+        "technology": "81.61",
+        "infrastructure": "4,596.09",
+        "strength": "17112.377"
+      },
+      "notes": ""
     },
     "646307": {
       "ruler_name": "Hermes Observer",
       "nation_name": "Radchaai",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
+        "getCash": 6,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -946,61 +924,61 @@
       "ruler_name": "Waffless",
       "nation_name": "Wafflandia",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "getCash": 6,
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
-        "technology": "32.20",
-        "infrastructure": "2,602.67",
-        "strength": "8803.982"
-      }
+        "technology": "86.36",
+        "infrastructure": "3,628.09",
+        "strength": "13762.118"
+      },
+      "notes": ""
     },
     "646947": {
       "ruler_name": "Hawggystyle",
       "nation_name": "Djibigbouti",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
-        "sendTech": 0,
+        "sendTech": 3,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "getCash": 3,
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "199.55",
         "infrastructure": "5,499.99",
         "strength": "21761.22"
-      }
+      },
+      "notes": ""
     },
     "646975": {
       "ruler_name": "Thomassh",
       "nation_name": "HighGateHaven",
       "discord_handle": "",
-      "has_dra": false,
-      "notes": "",
+      "has_dra": true,
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "getCash": 6,
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "108.86",
         "infrastructure": "4,999.99",
         "strength": "16581.872"
-      }
+      },
+      "notes": ""
     },
     "647449": {
       "ruler_name": "thelostsoul",
@@ -1037,9 +1015,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "129.99",
-        "infrastructure": "1,598.86",
-        "strength": "7509.336"
+        "technology": "197.57",
+        "infrastructure": "1,985.83",
+        "strength": "9136.172"
       }
     },
     "647787": {
