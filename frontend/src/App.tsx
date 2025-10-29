@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import NavigationBar from './components/NavigationBar'
+import GlobalWarsPage from './pages/GlobalWarsPage'
 import AidPage from './pages/AidPage'
 import RecommendationsPage from './pages/RecommendationsPage'
 import NationsPage from './pages/NationsPage'
@@ -41,7 +42,7 @@ function App() {
       <Routes>
         {/* Default redirect to aid */}
         <Route path="/" element={<Navigate to="/aid" replace />} />
-        
+        <Route path="/global-wars" element={<GlobalWarsPage />} />
         {/* Alliance-specific routes */}
         <Route path="/aid/:allianceId" element={<AidPage />} />
         <Route path="/aid" element={<Navigate to="/aid" replace />} />

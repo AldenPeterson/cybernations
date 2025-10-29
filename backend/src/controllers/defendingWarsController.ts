@@ -70,6 +70,7 @@ export class DefendingWarsController {
   static async getDefendingWarsStats(req: Request, res: Response) {
     try {
       const allianceId = parseInt(req.params.allianceId);
+      const includeExpired = req.query.includeExpired === 'true';
       
       if (isNaN(allianceId)) {
         return res.status(400).json({
@@ -78,15 +79,72 @@ export class DefendingWarsController {
         });
       }
 
-      const stats = await DefendingWarsService.getDefendingWarsStats(allianceId);
+      const stats = await DefendingWarsService.getDefendingWarsStats(allianceId, includeExpired);
 
       res.json({
         success: true,
         allianceId,
-        stats
+        stats,
+        includeExpired
       });
     } catch (error) {
       console.error('Error fetching defending wars stats:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  /**
+   * Get active war counts (attacking vs defending) for an alliance
+   */
+  static async getAllianceWarCounts(req: Request, res: Response) {
+    try {
+      const allianceId = parseInt(req.params.allianceId);
+      const includeExpired = req.query.includeExpired === 'true';
+
+      if (isNaN(allianceId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid alliance ID'
+        });
+      }
+
+      const stats = await DefendingWarsService.getDefendingWarsStats(allianceId, includeExpired);
+
+      // Merge attacking/defending counts by opposing alliance
+      const byAllianceMap = new Map<number, { allianceId: number; allianceName: string; attacking: number; defending: number; total: number }>();
+
+      for (const a of stats.attackingByAlliance) {
+        const current = byAllianceMap.get(a.allianceId) || { allianceId: a.allianceId, allianceName: a.allianceName, attacking: 0, defending: 0, total: 0 };
+        current.attacking += a.count;
+        current.total = current.attacking + current.defending;
+        byAllianceMap.set(a.allianceId, current);
+      }
+
+      for (const d of stats.defendingByAlliance) {
+        const current = byAllianceMap.get(d.allianceId) || { allianceId: d.allianceId, allianceName: d.allianceName, attacking: 0, defending: 0, total: 0 };
+        current.defending += d.count;
+        current.total = current.attacking + current.defending;
+        byAllianceMap.set(d.allianceId, current);
+      }
+
+      const byAlliance = Array.from(byAllianceMap.values()).sort((a, b) => b.total - a.total);
+
+      res.json({
+        success: true,
+        allianceId,
+        counts: {
+          attacking: stats.totalAttackingWars,
+          defending: stats.totalDefendingWars,
+          activeTotal: stats.totalActiveWars,
+          byAlliance
+        },
+        includeExpired
+      });
+    } catch (error) {
+      console.error('Error fetching alliance war counts:', error);
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'

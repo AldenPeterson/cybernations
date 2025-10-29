@@ -107,6 +107,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         return 'Nation Editor';
       case 'wars':
         return 'Wars';
+      case 'global-wars':
+        return 'Global Wars';
       case 'shame-offers':
         return 'Shame Offers';
       case 'nuclear-stats':
@@ -193,6 +195,17 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             )}
           >
             Wars
+          </Link>
+          <Link 
+            to={'/global-wars'}
+            className={clsx(
+              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
+              isActiveTab('global-wars') 
+                ? 'bg-primary text-white font-semibold shadow-md' 
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+            )}
+          >
+            Global Wars
           </Link>
           <Link 
             to={getTabLink('shame-offers')}
@@ -316,6 +329,18 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
               )}
             >
               Wars
+            </Link>
+            <Link 
+              to={'/global-wars'}
+              onClick={() => setMobileMenuOpen(false)}
+              className={clsx(
+                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
+                isActiveTab('global-wars') 
+                  ? 'bg-primary text-white font-semibold shadow-md' 
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              )}
+            >
+              Global Wars
             </Link>
             <Link 
               to={getTabLink('shame-offers')}

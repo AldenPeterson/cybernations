@@ -12,3 +12,6 @@ defendingWarsRoutes.get('/alliances/:allianceId/defending-wars', validateAllianc
 
 // Get defending wars statistics for an alliance
 defendingWarsRoutes.get('/alliances/:allianceId/defending-wars-stats', validateAllianceId, DefendingWarsController.getDefendingWarsStats);
+
+// Get active war counts (attacking vs defending) for an alliance
+defendingWarsRoutes.get('/alliances/:allianceId/war-counts', validateAllianceId, DefendingWarsController.getAllianceWarCounts);
