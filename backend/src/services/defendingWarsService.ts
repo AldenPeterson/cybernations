@@ -3,7 +3,7 @@ import {
 } from './dataProcessingService.js';
 import { AllianceService } from './allianceService.js';
 import { War } from '../models/index.js';
-import { calculateWarDateInfo, calculateStaggeredStatus, parseCentralTimeDate, formatCentralTimeDate } from '../utils/dateUtils.js';
+import { calculateWarDateInfo, calculateStaggeredStatus, parseCentralTimeDate, formatCentralTimeDate, isWarExpired } from '../utils/dateUtils.js';
 import { readNuclearHits } from './nuclearHitsService.js';
 import { loadSpyglassData, getSpyglassDataForNation } from './spyglassService.js';
 
@@ -51,11 +51,22 @@ export class DefendingWarsService {
       allianceNations = allianceNations.filter(nation => nation.inWarMode);
     }
     
-    // Get all active wars (exclude ended/expired wars)
-    const activeWars = wars.filter(war => 
-      war.status.toLowerCase() !== 'ended' &&
-      war.status.toLowerCase() !== 'expired'
-    );
+    // Get all active wars (exclude ended/expired wars by status or date)
+    const activeWars = wars.filter(war => {
+      // Filter by status first
+      if (war.status.toLowerCase() === 'ended' || war.status.toLowerCase() === 'expired') {
+        return false;
+      }
+      
+      // Also filter by date - check if the war has expired based on its end date
+      try {
+        return !isWarExpired(war.endDate);
+      } catch (error) {
+        // If we can't parse the date, exclude the war to be safe
+        console.warn(`Failed to parse end date for war ${war.warId}: ${error}`);
+        return false;
+      }
+    });
     
     // Find all wars involving current alliance members
     const allianceNationIds = new Set(allianceNations.map(nation => nation.id));

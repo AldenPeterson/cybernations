@@ -156,7 +156,7 @@ const AidPage: React.FC = () => {
 
   // Column and header classes (following DefendingWarsTable pattern)
   const columnClasses = {
-    nation: 'p-2 border border-slate-300 min-w-[150px] max-w-[200px] w-[150px] sticky left-0 z-[100] shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]',
+    nation: 'p-2 border border-slate-300 min-w-[110px] max-w-[140px] w-[120px] sticky left-0 z-[100] shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]',
     aidSlot: 'p-2 border border-slate-300 text-center'
   };
 
@@ -380,7 +380,7 @@ const AidPage: React.FC = () => {
         <div>
           <h2>Aid Slots by Nation</h2>
           <div className="overflow-x-auto w-full max-w-none">
-            <table className="border-collapse border border-slate-300 text-sm min-w-[1200px] w-full">
+            <table className="border-collapse border border-slate-300 text-sm w-full">
               <thead>
                 <tr className="bg-gray-800">
                   <th className={headerClasses.nation}>

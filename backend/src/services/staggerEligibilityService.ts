@@ -2,6 +2,7 @@ import {
   loadDataFromFilesWithUpdate
 } from './dataProcessingService.js';
 import { Nation, War } from '../models/index.js';
+import { isWarExpired } from '../utils/dateUtils.js';
 
 export interface StaggerEligibilityData {
   defendingNation: {
@@ -167,10 +168,21 @@ export class StaggerEligibilityService {
       console.log(`Found ${attackingAllianceNations.length} attacking nations and ${defendingAllianceNations.length} defending nations`);
     
     // Get active wars to calculate current war counts and open slots
-    const activeWars = wars.filter(war => 
-      war.status.toLowerCase() !== 'ended' &&
-      war.status.toLowerCase() !== 'expired'
-    );
+    const activeWars = wars.filter(war => {
+      // Filter by status first
+      if (war.status.toLowerCase() === 'ended' || war.status.toLowerCase() === 'expired') {
+        return false;
+      }
+      
+      // Also filter by date - check if the war has expired based on its end date
+      try {
+        return !isWarExpired(war.endDate);
+      } catch (error) {
+        // If we can't parse the date, exclude the war to be safe
+        console.warn(`Failed to parse end date for war ${war.warId}: ${error}`);
+        return false;
+      }
+    });
     
     // Calculate war counts for each nation
     const nationWarCounts = new Map<number, { attacking: number; defending: number }>();

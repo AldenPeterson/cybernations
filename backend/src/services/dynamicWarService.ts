@@ -3,6 +3,7 @@ import { promises as fs } from 'fs';
 import fsSync from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { isWarExpired } from '../utils/dateUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -156,14 +157,27 @@ export class DynamicWarService {
   }
 
   /**
-   * Get dynamic wars that are active (not ended/expired)
+   * Get dynamic wars that are active (not ended/expired by status or date)
    */
   static async getActiveDynamicWars(): Promise<DynamicWar[]> {
     await this.initialize();
-    return this.dynamicWars.filter(war => 
-      war.status.toLowerCase() !== 'ended' &&
-      war.status.toLowerCase() !== 'expired'
-    );
+    return this.dynamicWars.filter(war => {
+      // Filter by status first
+      if (war.status.toLowerCase() === 'ended' || war.status.toLowerCase() === 'expired') {
+        return false;
+      }
+      
+      // Also filter by date - check if the war has expired based on its end date
+      try {
+        // Normalize the end date to ensure it has a time component
+        const normalizedEndDate = this.normalizeDateString(war.endDate);
+        return !isWarExpired(normalizedEndDate);
+      } catch (error) {
+        // If we can't parse the date, exclude the war to be safe
+        console.warn(`Failed to parse end date for war ${war.warId}: ${error}`);
+        return false;
+      }
+    });
   }
 
   /**
