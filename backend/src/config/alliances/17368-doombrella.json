@@ -17,9 +17,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "300.52",
-        "infrastructure": "7,042.96",
-        "strength": "23190.981"
+        "technology": "290.21",
+        "infrastructure": "6,970.19",
+        "strength": "22910.799"
       }
     },
     "66883": {
@@ -136,9 +136,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "28,391.60",
-        "infrastructure": "481.24",
-        "strength": "150694.05"
+        "technology": "28,506.33",
+        "infrastructure": "2,000.24",
+        "strength": "157305.266"
       },
       "notes": ""
     },
@@ -156,9 +156,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "29,777.54",
-        "infrastructure": "4,987.05",
-        "strength": "190521.516"
+        "technology": "29,427.01",
+        "infrastructure": "3,985.28",
+        "strength": "183811.328"
       },
       "notes": ""
     },
@@ -198,7 +198,7 @@
       "current_stats": {
         "technology": "28,678.08",
         "infrastructure": "3,500.76",
-        "strength": "163814.242"
+        "strength": "164414.242"
       },
       "notes": ""
     },
@@ -218,7 +218,7 @@
       "current_stats": {
         "technology": "22,110.43",
         "infrastructure": "2,882.07",
-        "strength": "128580.361"
+        "strength": "129433.241"
       },
       "notes": ""
     },
@@ -236,9 +236,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "30,416.44",
-        "infrastructure": "3,211.04",
-        "strength": "166809.3"
+        "technology": "30,365.46",
+        "infrastructure": "2,980.87",
+        "strength": "169815.899"
       },
       "notes": ""
     },
@@ -337,9 +337,9 @@
         "receive_priority": 1
       },
       "current_stats": {
-        "technology": "2,747.69",
+        "technology": "2,754.15",
         "infrastructure": "5,296.34",
-        "strength": "38776.998"
+        "strength": "43679.157"
       }
     },
     "342957": {
@@ -379,7 +379,7 @@
       "current_stats": {
         "technology": "234.15",
         "infrastructure": "1,999.99",
-        "strength": "12357.166"
+        "strength": "12877.166"
       }
     },
     "374321": {
@@ -396,9 +396,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "39,124.09",
-        "infrastructure": "4,487.32",
-        "strength": "221297.736"
+        "technology": "38,745.44",
+        "infrastructure": "3,320.39",
+        "strength": "215441.66"
       },
       "notes": ""
     },
@@ -417,9 +417,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "11,433.74",
+        "technology": "11,633.74",
         "infrastructure": "416.69",
-        "strength": "64944.421"
+        "strength": "65944.421"
       }
     },
     "426185": {
@@ -439,7 +439,7 @@
       "current_stats": {
         "technology": "170.85",
         "infrastructure": "2,792.34",
-        "strength": "12210.761"
+        "strength": "12802.421"
       }
     },
     "433854": {
@@ -457,9 +457,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "100.00",
+        "technology": "0.00",
         "infrastructure": "1,188.10",
-        "strength": "5984.303"
+        "strength": "5484.303"
       }
     },
     "445021": {
@@ -475,9 +475,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "422.29",
-        "infrastructure": "4,499.61",
-        "strength": "22884.724"
+        "technology": "343.50",
+        "infrastructure": "4,205.71",
+        "strength": "19731.97"
       }
     },
     "446109": {
@@ -497,7 +497,7 @@
       "current_stats": {
         "technology": "128.32",
         "infrastructure": "1,614.47",
-        "strength": "11619.545"
+        "strength": "11768.985"
       }
     },
     "470323": {
@@ -535,9 +535,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "500.25",
-        "infrastructure": "2,136.38",
-        "strength": "13669.177"
+        "technology": "485.89",
+        "infrastructure": "2,074.68",
+        "strength": "13579.821"
       }
     },
     "484851": {
@@ -554,9 +554,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "25,061.44",
-        "infrastructure": "7,327.09",
-        "strength": "161587.391"
+        "technology": "25,152.72",
+        "infrastructure": "7,287.07",
+        "strength": "162018.917"
       },
       "notes": ""
     },
@@ -614,9 +614,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "58,353.62",
+        "technology": "58,491.80",
         "infrastructure": "8,740.09",
-        "strength": "343868.494"
+        "strength": "343236.224"
       },
       "notes": ""
     },
@@ -635,9 +635,9 @@
         "receive_priority": 1
       },
       "current_stats": {
-        "technology": "186.64",
-        "infrastructure": "991.01",
-        "strength": "6572.542"
+        "technology": "188.13",
+        "infrastructure": "931.47",
+        "strength": "6692.34"
       }
     },
     "567720": {
@@ -655,9 +655,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "9,698.96",
+        "technology": "9,798.96",
         "infrastructure": "3,375.21",
-        "strength": "68789.589"
+        "strength": "65598.049"
       }
     },
     "582974": {
@@ -755,9 +755,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "15,235.81",
-        "infrastructure": "165.73",
-        "strength": "77121.844"
+        "technology": "15,239.15",
+        "infrastructure": "1,999.29",
+        "strength": "83293.616"
       }
     },
     "627592": {
@@ -777,7 +777,7 @@
       "current_stats": {
         "technology": "12,001.72",
         "infrastructure": "10,253.22",
-        "strength": "119600.243"
+        "strength": "119660.243"
       }
     },
     "634284": {
@@ -795,9 +795,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "3,937.74",
-        "infrastructure": "4,468.58",
-        "strength": "44539.037"
+        "technology": "3,855.01",
+        "infrastructure": "4,199.94",
+        "strength": "38334.065"
       }
     },
     "635159": {

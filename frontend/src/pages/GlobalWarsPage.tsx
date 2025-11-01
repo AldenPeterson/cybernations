@@ -34,12 +34,17 @@ type AllianceRow = {
   expanded: boolean;
 };
 
+type SortColumn = 'alliance' | 'attacking' | 'defending' | 'total' | 'nations';
+type SortDirection = 'asc' | 'desc';
+
 const GlobalWarsPage: React.FC = () => {
   const [rows, setRows] = useState<AllianceRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [includeExpired, setIncludeExpired] = useState<boolean>(false);
   const [avgPerNation, setAvgPerNation] = useState<boolean>(false);
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   useEffect(() => {
     let cancelled = false;
@@ -97,6 +102,87 @@ const GlobalWarsPage: React.FC = () => {
     };
   }, []);
 
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      // Toggle direction if clicking the same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new column and default to descending
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
+
+  const sortedRows = useMemo(() => {
+    if (!sortColumn) return rows;
+    
+    return [...rows].sort((a, b) => {
+      let valueA: number | string;
+      let valueB: number | string;
+      
+      switch (sortColumn) {
+        case 'alliance':
+          valueA = a.alliance.name.toLowerCase();
+          valueB = b.alliance.name.toLowerCase();
+          break;
+        case 'attacking': {
+          const countsA = includeExpired ? a.allCounts : a.activeCounts;
+          const countsB = includeExpired ? b.allCounts : b.activeCounts;
+          if (avgPerNation) {
+            const denomA = a.alliance.nationCount || 0;
+            const denomB = b.alliance.nationCount || 0;
+            valueA = (!countsA || !denomA) ? -Infinity : countsA.attacking / denomA;
+            valueB = (!countsB || !denomB) ? -Infinity : countsB.attacking / denomB;
+          } else {
+            valueA = countsA?.attacking ?? -Infinity;
+            valueB = countsB?.attacking ?? -Infinity;
+          }
+          break;
+        }
+        case 'defending': {
+          const countsA = includeExpired ? a.allCounts : a.activeCounts;
+          const countsB = includeExpired ? b.allCounts : b.activeCounts;
+          if (avgPerNation) {
+            const denomA = a.alliance.nationCount || 0;
+            const denomB = b.alliance.nationCount || 0;
+            valueA = (!countsA || !denomA) ? -Infinity : countsA.defending / denomA;
+            valueB = (!countsB || !denomB) ? -Infinity : countsB.defending / denomB;
+          } else {
+            valueA = countsA?.defending ?? -Infinity;
+            valueB = countsB?.defending ?? -Infinity;
+          }
+          break;
+        }
+        case 'total': {
+          const countsA = includeExpired ? a.allCounts : a.activeCounts;
+          const countsB = includeExpired ? b.allCounts : b.activeCounts;
+          if (avgPerNation) {
+            const denomA = a.alliance.nationCount || 0;
+            const denomB = b.alliance.nationCount || 0;
+            valueA = (!countsA || !denomA) ? -Infinity : countsA.activeTotal / denomA;
+            valueB = (!countsB || !denomB) ? -Infinity : countsB.activeTotal / denomB;
+          } else {
+            valueA = countsA?.activeTotal ?? -Infinity;
+            valueB = countsB?.activeTotal ?? -Infinity;
+          }
+          break;
+        }
+        case 'nations':
+          valueA = a.alliance.nationCount ?? 0;
+          valueB = b.alliance.nationCount ?? 0;
+          break;
+      }
+      
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        const comparison = valueA.localeCompare(valueB);
+        return sortDirection === 'asc' ? comparison : -comparison;
+      } else {
+        const comparison = (valueA as number) - (valueB as number);
+        return sortDirection === 'asc' ? comparison : -comparison;
+      }
+    });
+  }, [rows, sortColumn, sortDirection, includeExpired, avgPerNation]);
+
   const totals = useMemo(() => {
     const toOneDecimal = (n: number) => Number(n.toFixed(1));
     if (!avgPerNation) {
@@ -128,6 +214,15 @@ const GlobalWarsPage: React.FC = () => {
 
   const toggleExpand = (id: number) => {
     setRows(prev => prev.map(r => r.alliance.id === id ? { ...r, expanded: !r.expanded } : r));
+  };
+
+  const getSortIndicator = (column: SortColumn) => {
+    if (sortColumn !== column) return null;
+    return (
+      <span className="ml-1 text-gray-400">
+        {sortDirection === 'asc' ? '↑' : '↓'}
+      </span>
+    );
   };
 
   return (
@@ -165,15 +260,55 @@ const GlobalWarsPage: React.FC = () => {
         <table className="min-w-full divide-y divide-gray-700">
           <thead>
             <tr className="bg-gray-800">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300">Alliance</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-300">Attacking</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-300">Defending</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-300">Total</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-300">Nations</th>
+              <th 
+                className="px-4 py-3 text-left text-xs font-semibold text-gray-300 cursor-pointer hover:bg-gray-700 select-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSort('alliance');
+                }}
+              >
+                Alliance{getSortIndicator('alliance')}
+              </th>
+              <th 
+                className="px-4 py-3 text-right text-xs font-semibold text-gray-300 cursor-pointer hover:bg-gray-700 select-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSort('attacking');
+                }}
+              >
+                Attacking{getSortIndicator('attacking')}
+              </th>
+              <th 
+                className="px-4 py-3 text-right text-xs font-semibold text-gray-300 cursor-pointer hover:bg-gray-700 select-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSort('defending');
+                }}
+              >
+                Defending{getSortIndicator('defending')}
+              </th>
+              <th 
+                className="px-4 py-3 text-right text-xs font-semibold text-gray-300 cursor-pointer hover:bg-gray-700 select-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSort('total');
+                }}
+              >
+                Total{getSortIndicator('total')}
+              </th>
+              <th 
+                className="px-4 py-3 text-right text-xs font-semibold text-gray-300 cursor-pointer hover:bg-gray-700 select-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSort('nations');
+                }}
+              >
+                Nations{getSortIndicator('nations')}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
-            {rows.map(r => (
+            {sortedRows.map(r => (
               <React.Fragment key={r.alliance.id}>
                 <tr className="hover:bg-gray-800/50 cursor-pointer" onClick={() => toggleExpand(r.alliance.id)}>
                   <td className="px-4 py-3 text-sm text-gray-200 flex items-center gap-2">
