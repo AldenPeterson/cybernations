@@ -51,10 +51,11 @@ export class DefendingWarsService {
       allianceNations = allianceNations.filter(nation => nation.inWarMode);
     }
     
-    // Get all active wars (exclude ended/expired wars by status or date)
+    // Get all active wars (exclude ended/expired/peace wars by status or date)
     const activeWars = wars.filter(war => {
       // Filter by status first
-      if (war.status.toLowerCase() === 'ended' || war.status.toLowerCase() === 'expired') {
+      const statusLower = war.status.toLowerCase();
+      if (statusLower === 'ended' || statusLower === 'expired' || statusLower === 'peace') {
         return false;
       }
       
@@ -217,11 +218,13 @@ export class DefendingWarsService {
     const allianceNationIds = new Set(allianceNations.map(nation => nation.id));
     
     // Filter wars where current alliance members are defending (receiving attacks)
-    const defendingWars = wars.filter(war => 
-      allianceNationIds.has(war.receivingId) && 
-      war.status.toLowerCase() !== 'ended' &&
-      war.status.toLowerCase() !== 'expired'
-    );
+    const defendingWars = wars.filter(war => {
+      const statusLower = war.status.toLowerCase();
+      return allianceNationIds.has(war.receivingId) && 
+             statusLower !== 'ended' &&
+             statusLower !== 'expired' &&
+             statusLower !== 'peace';
+    });
 
     // Add nation information to each war
     const warsWithNationInfo = defendingWars.map(war => {
@@ -286,7 +289,7 @@ export class DefendingWarsService {
       if (!involves) return false;
       if (includeExpired) return true;
       const status = war.status.toLowerCase();
-      return status !== 'ended' && status !== 'expired';
+      return status !== 'ended' && status !== 'expired' && status !== 'peace';
     });
 
     const defendingWars = allianceWars.filter(war => allianceNationIds.has(war.receivingId));
