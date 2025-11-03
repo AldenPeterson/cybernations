@@ -17,9 +17,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "447.88",
-        "infrastructure": "6,818.90",
-        "strength": "26681.629"
+        "technology": "513.72",
+        "infrastructure": "6,798.20",
+        "strength": "29809.593"
       }
     },
     "66883": {
@@ -39,7 +39,7 @@
       "current_stats": {
         "technology": "19,741.00",
         "infrastructure": "10,461.12",
-        "strength": "146668.343"
+        "strength": "147308.343"
       }
     },
     "101493": {
@@ -138,7 +138,7 @@
       "current_stats": {
         "technology": "28,506.33",
         "infrastructure": "2,000.24",
-        "strength": "157305.266"
+        "strength": "157705.266"
       },
       "notes": ""
     },
@@ -196,9 +196,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "28,778.08",
-        "infrastructure": "3,500.76",
-        "strength": "164914.242"
+        "technology": "28,873.99",
+        "infrastructure": "1,351.70",
+        "strength": "157739.945"
       },
       "notes": ""
     },
@@ -216,9 +216,9 @@
         "receive_priority": 1
       },
       "current_stats": {
-        "technology": "21,821.51",
-        "infrastructure": "3,099.99",
-        "strength": "129225.987"
+        "technology": "21,496.60",
+        "infrastructure": "2,447.89",
+        "strength": "121554.668"
       },
       "notes": ""
     },
@@ -318,7 +318,7 @@
       "current_stats": {
         "technology": "90,537.73",
         "infrastructure": "11,186.32",
-        "strength": "512738.932"
+        "strength": "513228.932"
       },
       "notes": ""
     },
@@ -339,7 +339,7 @@
       "current_stats": {
         "technology": "2,755.74",
         "infrastructure": "5,296.34",
-        "strength": "43911.838"
+        "strength": "43891.838"
       }
     },
     "342957": {
@@ -359,7 +359,7 @@
       "current_stats": {
         "technology": "20,543.97",
         "infrastructure": "1,714.31",
-        "strength": "115691.445"
+        "strength": "115811.445"
       }
     },
     "356682": {
@@ -398,7 +398,7 @@
       "current_stats": {
         "technology": "38,725.56",
         "infrastructure": "3,220.99",
-        "strength": "214970.724"
+        "strength": "214890.724"
       },
       "notes": ""
     },
@@ -437,9 +437,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "417.17",
-        "infrastructure": "2,784.73",
-        "strength": "16685.759"
+        "technology": "264.27",
+        "infrastructure": "2,262.06",
+        "strength": "14315.602"
       }
     },
     "433854": {
@@ -457,9 +457,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "100.07",
-        "infrastructure": "1,999.99",
-        "strength": "8288.155"
+        "technology": "135.13",
+        "infrastructure": "1,928.93",
+        "strength": "7909.476"
       }
     },
     "445021": {
@@ -475,9 +475,9 @@
         "getCash": 0
       },
       "current_stats": {
-        "technology": "503.50",
-        "infrastructure": "5,205.71",
-        "strength": "30743.35"
+        "technology": "362.84",
+        "infrastructure": "4,749.76",
+        "strength": "21983.71"
       }
     },
     "446109": {
@@ -495,9 +495,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "0.02",
-        "infrastructure": "1,970.08",
-        "strength": "12757.589"
+        "technology": "0.00",
+        "infrastructure": "1,756.92",
+        "strength": "10475.024"
       }
     },
     "470323": {
@@ -535,9 +535,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "481.64",
+        "technology": "488.66",
         "infrastructure": "2,053.45",
-        "strength": "13347.795"
+        "strength": "13510.67"
       }
     },
     "484851": {
@@ -554,9 +554,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "25,171.90",
-        "infrastructure": "6,388.91",
-        "strength": "158848.899"
+        "technology": "24,538.07",
+        "infrastructure": "5,784.78",
+        "strength": "149988.696"
       },
       "notes": ""
     },
@@ -594,9 +594,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "31,393.50",
+        "technology": "31,493.50",
         "infrastructure": "1,000.99",
-        "strength": "165017.707"
+        "strength": "165837.707"
       },
       "notes": ""
     },
@@ -635,9 +635,9 @@
         "receive_priority": 1
       },
       "current_stats": {
-        "technology": "183.96",
+        "technology": "207.50",
         "infrastructure": "869.79",
-        "strength": "6461.422"
+        "strength": "6519.775"
       }
     },
     "567720": {
@@ -655,9 +655,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "9,667.54",
+        "technology": "9,783.68",
         "infrastructure": "2,771.40",
-        "strength": "60447.924"
+        "strength": "64338.471"
       }
     },
     "582974": {
@@ -775,9 +775,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "12,038.37",
+        "technology": "12,075.88",
         "infrastructure": "9,593.62",
-        "strength": "111348.371"
+        "strength": "115343.771"
       }
     },
     "634284": {
@@ -795,9 +795,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "3,864.75",
-        "infrastructure": "4,599.94",
-        "strength": "41386.138"
+        "technology": "3,735.58",
+        "infrastructure": "4,983.59",
+        "strength": "45188.165"
       }
     },
     "635159": {
@@ -934,9 +934,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "97.62",
-        "infrastructure": "1,870.91",
-        "strength": "7946.907"
+        "technology": "52.22",
+        "infrastructure": "1,549.09",
+        "strength": "6858.754"
       },
       "notes": ""
     },
