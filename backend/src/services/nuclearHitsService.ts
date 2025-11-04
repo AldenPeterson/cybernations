@@ -179,6 +179,22 @@ export interface NuclearAttemptDistribution {
   onlyThwartedPairs: number; // pairs with attempts but no hit
 }
 
+export interface NuclearTimelineBucket {
+  start: string; // ISO string representing the start of the bucket in Central Time offset
+  end: string;   // ISO string representing the end of the bucket
+  thwarted: number;
+  hit: number;
+  unknown: number;
+}
+
+export interface NuclearTimelineResponse {
+  intervalMinutes: number;
+  buckets: NuclearTimelineBucket[];
+  totalEvents: number;
+  firstEvent?: string;
+  lastEvent?: string;
+}
+
 /**
  * Compute, for each attacker→defender pair, how many thwarted attempts occurred before the first hit,
  * and whether a hit was ever achieved. Also returns an aggregated distribution across all pairs that achieved a hit.
@@ -290,5 +306,112 @@ export function computeNuclearAttemptDistribution(): NuclearAttemptDistribution 
   }
 
   return { byPair, distribution, distributionNoHit, onlyThwartedPairs };
+}
+
+/**
+ * Compute a timeline of nuclear attempts aggregated by time of day only (ignoring date).
+ * Groups all events that occur in the same time interval across all days (default 5 minutes).
+ * All parsing respects Central Time via parseCentralTimeDate.
+ */
+export function computeNuclearTimeline(intervalMinutes: number = 5): NuclearTimelineResponse {
+  const store = readNuclearHits();
+  const intervalMinutesActual = Math.max(1, Math.floor(intervalMinutes));
+  const intervalsPerDay = Math.floor((24 * 60) / intervalMinutesActual); // e.g., 288 for 5-minute intervals
+
+  // Helper to extract Central Time hours and minutes directly from the string
+  // Format: "M/D/YYYY H:MM:SS AM/PM" or "M/D/YYYY H:MM:SS"
+  const extractCentralTimeHoursMinutes = (timeStr: string): { hours: number; minutes: number } | null => {
+    try {
+      const parts = timeStr.split(' ');
+      if (parts.length < 2) return null;
+      
+      // parts[0] = "M/D/YYYY", parts[1] = "H:MM:SS", parts[2] = "AM/PM" (if present)
+      const timePart = parts[1]; // "H:MM:SS"
+      const period = parts.length >= 3 ? parts[2] : undefined; // "AM" or "PM" or undefined
+      
+      const timeParts = timePart.split(':');
+      if (timeParts.length < 2) return null;
+      
+      const hours = parseInt(timeParts[0]);
+      const minutes = parseInt(timeParts[1]);
+      
+      if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+      
+      let hour24 = hours;
+      if (period) {
+        // 12-hour format with AM/PM
+        const periodUpper = period.toUpperCase();
+        if (periodUpper === 'PM' && hour24 !== 12) hour24 += 12;
+        if (periodUpper === 'AM' && hour24 === 12) hour24 = 0;
+      }
+      
+      return { hours: hour24, minutes };
+    } catch {
+      return null;
+    }
+  };
+
+  const events: { minutesOfDay: number; sentAt: string; cls: 'thwarted' | 'hit' | 'unknown' }[] = [];
+  for (const rec of Object.values(store)) {
+    try {
+      const timeInfo = extractCentralTimeHoursMinutes(rec.sentAt);
+      if (!timeInfo) continue;
+      
+      // Validate hours and minutes are in valid range
+      if (timeInfo.hours < 0 || timeInfo.hours >= 24 || timeInfo.minutes < 0 || timeInfo.minutes >= 60) {
+        continue;
+      }
+      
+      const minutesOfDay = timeInfo.hours * 60 + timeInfo.minutes;
+      // Ensure minutesOfDay is within valid 24-hour range (0-1439)
+      if (minutesOfDay < 0 || minutesOfDay >= 1440) {
+        continue;
+      }
+      
+      const cls = classifyResult(rec.result);
+      events.push({ minutesOfDay, sentAt: rec.sentAt, cls });
+    } catch {
+      // skip invalid
+    }
+  }
+
+  if (events.length === 0) {
+    return { intervalMinutes: intervalMinutesActual, buckets: [], totalEvents: 0 };
+  }
+
+  // Create buckets for each time interval in a 24-hour day
+  const buckets: NuclearTimelineBucket[] = [];
+  for (let i = 0; i < intervalsPerDay; i++) {
+    const startMinutes = i * intervalMinutesActual;
+    const endMinutes = startMinutes + intervalMinutesActual;
+    const startHours = Math.floor(startMinutes / 60);
+    const startMins = startMinutes % 60;
+    const endHours = Math.floor(endMinutes / 60);
+    const endMins = endMinutes % 60;
+    
+    // Format as "HH:MM" for display
+    const startStr = `${String(startHours).padStart(2, '0')}:${String(startMins).padStart(2, '0')}`;
+    const endStr = `${String(endHours % 24).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
+    
+    buckets.push({ start: startStr, end: endStr, thwarted: 0, hit: 0, unknown: 0 });
+  }
+
+  // Index events into buckets based on time of day
+  for (const ev of events) {
+    const bucketIdx = Math.floor(ev.minutesOfDay / intervalMinutesActual);
+    if (bucketIdx < 0 || bucketIdx >= buckets.length) continue;
+    const b = buckets[bucketIdx];
+    if (ev.cls === 'thwarted') b.thwarted += 1;
+    else if (ev.cls === 'hit') b.hit += 1;
+    else b.unknown += 1;
+  }
+
+  return {
+    intervalMinutes: intervalMinutesActual,
+    buckets,
+    totalEvents: events.length,
+    firstEvent: undefined, // Not applicable when grouping by time of day
+    lastEvent: undefined
+  };
 }
 

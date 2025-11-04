@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { NuclearReportInput, readNuclearHits, upsertNuclearReports, computeNuclearAttemptDistribution } from '../services/nuclearHitsService.js';
+import { NuclearReportInput, readNuclearHits, upsertNuclearReports, computeNuclearAttemptDistribution, computeNuclearTimeline } from '../services/nuclearHitsService.js';
 import { loadDataFromFilesWithUpdate, createNationsDictionary } from '../services/dataProcessingService.js';
 
 export class NuclearHitsController {
@@ -44,6 +44,19 @@ export class NuclearHitsController {
       // Fallback to raw ids if nation loading fails
       return res.json(stats);
     }
+  };
+
+  static timeline = (req: Request, res: Response) => {
+    const intervalParam = req.query.intervalMinutes;
+    let intervalMinutes = 5;
+    if (typeof intervalParam === 'string') {
+      const n = parseInt(intervalParam);
+      if (!Number.isNaN(n) && n > 0 && n <= 24 * 60) {
+        intervalMinutes = n;
+      }
+    }
+    const result = computeNuclearTimeline(intervalMinutes);
+    return res.json(result);
   };
 }
 
