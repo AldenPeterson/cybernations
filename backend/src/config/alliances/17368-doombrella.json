@@ -39,7 +39,7 @@
       "current_stats": {
         "technology": "19,741.00",
         "infrastructure": "10,461.12",
-        "strength": "148828.343"
+        "strength": "149708.343"
       }
     },
     "101493": {
@@ -59,7 +59,7 @@
       "current_stats": {
         "technology": "16,723.84",
         "infrastructure": "287.15",
-        "strength": "88768.4"
+        "strength": "84658.346"
       }
     },
     "127226": {
@@ -196,9 +196,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "28,222.49",
+        "technology": "28,483.57",
         "infrastructure": "2,204.05",
-        "strength": "153580.773"
+        "strength": "158308.14"
       },
       "notes": ""
     },
@@ -216,9 +216,9 @@
         "receive_priority": 1
       },
       "current_stats": {
-        "technology": "20,665.48",
-        "infrastructure": "3,500.01",
-        "strength": "120970.646"
+        "technology": "20,314.66",
+        "infrastructure": "2,805.84",
+        "strength": "114157.349"
       },
       "notes": ""
     },
@@ -238,7 +238,7 @@
       "current_stats": {
         "technology": "30,262.75",
         "infrastructure": "2,342.56",
-        "strength": "162140.06"
+        "strength": "162180.06"
       },
       "notes": ""
     },
@@ -398,7 +398,7 @@
       "current_stats": {
         "technology": "38,725.56",
         "infrastructure": "3,220.99",
-        "strength": "216141.074"
+        "strength": "216781.074"
       },
       "notes": ""
     },
@@ -497,7 +497,7 @@
       "current_stats": {
         "technology": "200.00",
         "infrastructure": "1,756.92",
-        "strength": "10100.164"
+        "strength": "10500.164"
       }
     },
     "470323": {
@@ -535,9 +535,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "487.60",
-        "infrastructure": "1,989.58",
-        "strength": "12789.414"
+        "technology": "478.30",
+        "infrastructure": "1,948.15",
+        "strength": "12371.833"
       }
     },
     "484851": {
@@ -556,7 +556,7 @@
       "current_stats": {
         "technology": "24,367.20",
         "infrastructure": "3,773.54",
-        "strength": "145178.304"
+        "strength": "145158.304"
       },
       "notes": ""
     },
@@ -596,7 +596,7 @@
       "current_stats": {
         "technology": "31,493.50",
         "infrastructure": "1,000.99",
-        "strength": "166717.707"
+        "strength": "171822.707"
       },
       "notes": ""
     },
@@ -616,7 +616,7 @@
       "current_stats": {
         "technology": "58,626.21",
         "infrastructure": "8,293.81",
-        "strength": "342532.756"
+        "strength": "342732.756"
       },
       "notes": ""
     },
@@ -635,9 +635,9 @@
         "receive_priority": 1
       },
       "current_stats": {
-        "technology": "236.02",
-        "infrastructure": "698.18",
-        "strength": "5898.754"
+        "technology": "228.42",
+        "infrastructure": "636.54",
+        "strength": "5576.306"
       }
     },
     "567720": {
@@ -656,8 +656,8 @@
       },
       "current_stats": {
         "technology": "9,412.10",
-        "infrastructure": "4,360.27",
-        "strength": "64995.429"
+        "infrastructure": "6,060.27",
+        "strength": "71940.925"
       }
     },
     "582974": {
@@ -757,7 +757,7 @@
       "current_stats": {
         "technology": "15,224.44",
         "infrastructure": "1,940.47",
-        "strength": "87446.201"
+        "strength": "87926.201"
       }
     },
     "627592": {
@@ -775,9 +775,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "11,874.16",
-        "infrastructure": "7,787.14",
-        "strength": "104950.805"
+        "technology": "11,796.41",
+        "infrastructure": "7,263.15",
+        "strength": "100825.056"
       }
     },
     "634284": {
@@ -896,7 +896,7 @@
       "current_stats": {
         "technology": "200.61",
         "infrastructure": "5,000.09",
-        "strength": "21089.377"
+        "strength": "21479.377"
       },
       "notes": ""
     },
