@@ -17,9 +17,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "384.15",
-        "infrastructure": "6,106.35",
-        "strength": "21232.183"
+        "technology": "323.03",
+        "infrastructure": "5,904.56",
+        "strength": "19713.563"
       }
     },
     "66883": {
@@ -37,9 +37,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "19,741.00",
+        "technology": "19,841.00",
         "infrastructure": "10,461.12",
-        "strength": "150668.343"
+        "strength": "151168.343"
       }
     },
     "101493": {
@@ -59,14 +59,14 @@
       "current_stats": {
         "technology": "16,677.00",
         "infrastructure": "105.93",
-        "strength": "84658.346"
+        "strength": "83747.682"
       }
     },
     "127226": {
       "ruler_name": "LJ Scott",
       "nation_name": "Republic of Jutland",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -117,9 +117,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "72,106.87",
+        "technology": "72,306.87",
         "infrastructure": "8,999.99",
-        "strength": "413757.423"
+        "strength": "414757.423"
       }
     },
     "142120": {
@@ -218,7 +218,7 @@
       "current_stats": {
         "technology": "20,314.66",
         "infrastructure": "2,805.84",
-        "strength": "114157.349"
+        "strength": "119492.689"
       },
       "notes": ""
     },
@@ -237,8 +237,8 @@
       },
       "current_stats": {
         "technology": "30,262.75",
-        "infrastructure": "2,342.56",
-        "strength": "162180.06"
+        "infrastructure": "9,499.99",
+        "strength": "183652.351"
       },
       "notes": ""
     },
@@ -286,7 +286,7 @@
       "ruler_name": "Raymond Jaeger",
       "nation_name": "New Alabama",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -310,7 +310,7 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 3,
-        "getTech": 3,
+        "getTech": 0,
         "getCash": 0,
         "send_priority": 1,
         "receive_priority": 3
@@ -320,7 +320,7 @@
         "infrastructure": "11,186.32",
         "strength": "513743.772"
       },
-      "notes": ""
+      "notes": "3x from DoD"
     },
     "340559": {
       "ruler_name": "paperwings2007",
@@ -339,7 +339,7 @@
       "current_stats": {
         "technology": "2,755.74",
         "infrastructure": "5,296.34",
-        "strength": "44851.838"
+        "strength": "45291.838"
       }
     },
     "342957": {
@@ -379,7 +379,7 @@
       "current_stats": {
         "technology": "234.15",
         "infrastructure": "1,999.99",
-        "strength": "14917.166"
+        "strength": "15757.166"
       }
     },
     "374321": {
@@ -477,7 +477,7 @@
       "current_stats": {
         "technology": "404.65",
         "infrastructure": "4,749.76",
-        "strength": "25101.883"
+        "strength": "25781.883"
       }
     },
     "446109": {
@@ -497,14 +497,14 @@
       "current_stats": {
         "technology": "200.00",
         "infrastructure": "1,756.92",
-        "strength": "10500.164"
+        "strength": "10980.164"
       }
     },
     "470323": {
       "ruler_name": "plaw44",
       "nation_name": "infinite desire",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -535,9 +535,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "478.30",
+        "technology": "278.30",
         "infrastructure": "1,948.15",
-        "strength": "12371.833"
+        "strength": "11993.253"
       }
     },
     "484851": {
@@ -556,7 +556,7 @@
       "current_stats": {
         "technology": "24,367.20",
         "infrastructure": "3,773.54",
-        "strength": "145158.304"
+        "strength": "145283.304"
       },
       "notes": ""
     },
@@ -564,7 +564,7 @@
       "ruler_name": "Astryl",
       "nation_name": "Ethereal",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "",
       "slots": {
         "sendTech": 0,
@@ -607,7 +607,7 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 6,
+        "sendCash": 4,
         "getTech": 0,
         "getCash": 0,
         "send_priority": 2,
@@ -616,7 +616,7 @@
       "current_stats": {
         "technology": "58,726.21",
         "infrastructure": "8,293.81",
-        "strength": "343232.756"
+        "strength": "343432.756"
       },
       "notes": ""
     },
@@ -637,7 +637,7 @@
       "current_stats": {
         "technology": "228.42",
         "infrastructure": "636.54",
-        "strength": "5576.306"
+        "strength": "5656.306"
       }
     },
     "567720": {
@@ -655,9 +655,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "9,205.28",
+        "technology": "9,305.28",
         "infrastructure": "5,427.75",
-        "strength": "72944.278"
+        "strength": "73764.278"
       }
     },
     "582974": {
@@ -694,9 +694,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "56,399.07",
+        "technology": "56,399.57",
         "infrastructure": "25,999.99",
-        "strength": "402668.706"
+        "strength": "402671.206"
       },
       "notes": ""
     },
@@ -735,9 +735,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "17,248.62",
+        "technology": "17,448.62",
         "infrastructure": "13,613.36",
-        "strength": "156279.523"
+        "strength": "157279.523"
       }
     },
     "626860": {
@@ -757,7 +757,7 @@
       "current_stats": {
         "technology": "15,224.44",
         "infrastructure": "1,940.47",
-        "strength": "87926.201"
+        "strength": "88486.201"
       }
     },
     "627592": {
@@ -777,7 +777,7 @@
       "current_stats": {
         "technology": "11,796.41",
         "infrastructure": "7,263.15",
-        "strength": "101970.056"
+        "strength": "102197.556"
       }
     },
     "634284": {
@@ -855,9 +855,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "312.40",
-        "infrastructure": "4,965.56",
-        "strength": "24072.589"
+        "technology": "309.75",
+        "infrastructure": "4,952.32",
+        "strength": "26326.822"
       }
     },
     "645571": {
@@ -917,7 +917,7 @@
       "current_stats": {
         "technology": "0.00",
         "infrastructure": "4,999.99",
-        "strength": "18285.17"
+        "strength": "18365.17"
       }
     },
     "646870": {
@@ -936,7 +936,7 @@
       "current_stats": {
         "technology": "75.22",
         "infrastructure": "1,549.09",
-        "strength": "6818.494"
+        "strength": "6888.494"
       },
       "notes": ""
     },
