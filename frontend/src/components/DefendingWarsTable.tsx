@@ -456,6 +456,25 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     return tech.toFixed(0);
   };
 
+  const renderCondensedWarStats = (strength: number, technology: string, nuclearWeapons: number) => {
+    const techValue = formatTechnology(technology).replace(/K/g, 'k');
+    const nukesBackground = getNuclearWeaponsColor(nuclearWeapons);
+    return (
+      <span className="inline-flex items-center gap-1 text-[9px] text-gray-600">
+        <span>{`${formatNumber(strength)}NS`}</span>
+        <span>|</span>
+        <span>{techValue}</span>
+        <span>|</span>
+        <span
+          className="px-1 rounded text-gray-800 font-semibold"
+          style={{ backgroundColor: nukesBackground }}
+        >
+          {nuclearWeapons}
+        </span>
+      </span>
+    );
+  };
+
   const formatWarchest = (warchest: number): string => {
     if (warchest >= 1000000000) {
       return '$' + (warchest / 1000000000).toFixed(1) + 'B';
@@ -1071,91 +1090,105 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       </div>
                     </td>
                     {/* Attacking Wars Columns */}
-                    {[0, 1, 2, 3].map(index => (
-                      <td 
+                    {[0, 1, 2, 3].map(index => {
+                      const attackingWar = nationWar.attackingWars[index];
+                      const defendingNation = attackingWar?.defendingNation;
+                      return (
+                      <td
                         key={`attacking-${index}`}
                         className={columnClasses.war}
-                        style={{ backgroundColor: nationWar.attackingWars[index] ? (nationWar.attackingWars[index].expirationColor || '#e8f5e8') : '#ffffff' }}
+                        style={{ backgroundColor: attackingWar ? (attackingWar.expirationColor || '#e8f5e8') : '#ffffff' }}
                       >
-                        {nationWar.attackingWars[index] ? (
+                        {attackingWar && defendingNation ? (
                           <div className="text-[11px]">
                             <div className="font-bold mb-0.5 text-blue-700">
                               <a 
-                                href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nationWar.attackingWars[index].defendingNation.id}`}
+                                href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${defendingNation.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-700 no-underline hover:underline"
                               >
-                                {nationWar.attackingWars[index].defendingNation.name}
+                                {defendingNation.ruler} / {defendingNation.name}
                               </a>
                             </div>
                             <div className="text-[9px] text-gray-600 mb-0.5">
-                              {nationWar.attackingWars[index].defendingNation.ruler} • {nationWar.attackingWars[index].defendingNation.alliance}
+                              {defendingNation.alliance}
                             </div>
-                            {nationWar.attackingWars[index].defendingNation.warchest !== undefined && (
+                            <div className="mb-0.5">
+                              {renderCondensedWarStats(defendingNation.strength, defendingNation.technology, defendingNation.nuclearWeapons)}
+                            </div>
+                            {defendingNation.warchest !== undefined && (
                               <div className="text-[9px] mb-0.5">
                                 <span className="text-green-800 font-bold">
-                                  {formatWarchest(nationWar.attackingWars[index].defendingNation.warchest!)}
+                                  {formatWarchest(defendingNation.warchest!)}
                                 </span>
-                                {nationWar.attackingWars[index].defendingNation.spyglassLastUpdated !== undefined && (
+                                {defendingNation.spyglassLastUpdated !== undefined && (
                                   <span className="text-gray-600 ml-1">
-                                    ({nationWar.attackingWars[index].defendingNation.spyglassLastUpdated}d)
+                                    ({defendingNation.spyglassLastUpdated}d)
                                   </span>
                                 )}
                               </div>
                             )}
                             <div className="text-[9px] text-gray-600">
-                              {nationWar.attackingWars[index].formattedEndDate || nationWar.attackingWars[index].endDate}
+                              {attackingWar.formattedEndDate || attackingWar.endDate}
                             </div>
                           </div>
                         ) : (
                           <span className="text-gray-400 text-[10px]">Empty</span>
                         )}
                       </td>
-                    ))}
+                      );
+                    })}
                     {/* Defending Wars Columns */}
-                    {[0, 1, 2].map(index => (
-                      <td 
+                    {[0, 1, 2].map(index => {
+                      const defendingWar = nationWar.defendingWars[index];
+                      const attackingNation = defendingWar?.attackingNation;
+                      return (
+                      <td
                         key={`defending-${index}`}
                         className={columnClasses.war}
-                        style={{ backgroundColor: nationWar.defendingWars[index] ? (nationWar.defendingWars[index].expirationColor || '#e8f5e8') : '#ffffff' }}
+                        style={{ backgroundColor: defendingWar ? (defendingWar.expirationColor || '#e8f5e8') : '#ffffff' }}
                       >
-                        {nationWar.defendingWars[index] ? (
+                        {defendingWar && attackingNation ? (
                           <div className="text-[11px]">
                             <div className="font-bold mb-0.5 text-red-600">
                               <a 
-                                href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nationWar.defendingWars[index].attackingNation.id}`}
+                                href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attackingNation.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-red-600 no-underline hover:underline"
                               >
-                                {nationWar.defendingWars[index].attackingNation.name}
+                                {attackingNation.ruler} / {attackingNation.name}
                               </a>
                             </div>
                             <div className="text-[9px] text-gray-600 mb-0.5">
-                              {nationWar.defendingWars[index].attackingNation.ruler} • {nationWar.defendingWars[index].attackingNation.alliance}
+                              {attackingNation.alliance}
                             </div>
-                            {nationWar.defendingWars[index].attackingNation.warchest !== undefined && (
+                            <div className="mb-0.5">
+                              {renderCondensedWarStats(attackingNation.strength, attackingNation.technology, attackingNation.nuclearWeapons)}
+                            </div>
+                            {attackingNation.warchest !== undefined && (
                               <div className="text-[9px] mb-0.5">
                                 <span className="text-green-800 font-bold">
-                                  {formatWarchest(nationWar.defendingWars[index].attackingNation.warchest!)}
+                                  {formatWarchest(attackingNation.warchest!)}
                                 </span>
-                                {nationWar.defendingWars[index].attackingNation.spyglassLastUpdated !== undefined && (
+                                {attackingNation.spyglassLastUpdated !== undefined && (
                                   <span className="text-gray-600 ml-1">
-                                    ({nationWar.defendingWars[index].attackingNation.spyglassLastUpdated}d)
+                                    ({attackingNation.spyglassLastUpdated}d)
                                   </span>
                                 )}
                               </div>
                             )}
                             <div className="text-[9px] text-gray-600">
-                              {nationWar.defendingWars[index].formattedEndDate || nationWar.defendingWars[index].endDate}
+                              {defendingWar.formattedEndDate || defendingWar.endDate}
                             </div>
                           </div>
                         ) : (
                           <span className="text-gray-400 text-[10px]">Empty</span>
                         )}
                       </td>
-                    ))}
+                      );
+                    })}
                     {/* Staggered Column */}
                     <td 
                       className={columnClasses.staggered}
