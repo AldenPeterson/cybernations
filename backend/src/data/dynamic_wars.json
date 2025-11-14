@@ -13260,5 +13260,24 @@
     "reason": "Hi",
     "addedAt": "2025-11-13T15:29:00.559Z",
     "source": "api"
+  },
+  {
+    "warId": 875169,
+    "declaringId": 634243,
+    "declaringRuler": "KhanterWinters",
+    "declaringNation": "Utrennyaya Zvezda",
+    "declaringAlliance": "Doom Squad",
+    "declaringAllianceId": 16454,
+    "receivingId": 377259,
+    "receivingRuler": "Legecki",
+    "receivingNation": "A VisionOfKings",
+    "receivingAlliance": "",
+    "receivingAllianceId": 0,
+    "status": "Active",
+    "date": "11/13/2025 3:59:47 PM",
+    "endDate": "11/21/2025",
+    "reason": "Raid Tech, Peace Sent",
+    "addedAt": "2025-11-14T04:39:26.466Z",
+    "source": "api"
   }
 ]
