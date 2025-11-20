@@ -198,6 +198,10 @@ export class AidService {
     const incomingCashExisting = new Map<number, number>();
     const outgoingTechExisting = new Map<number, number>();
     const incomingTechExisting = new Map<number, number>();
+    
+    // Count external offers (where sender or receiver is not in the alliance)
+    const externalOffersUsed = new Map<number, number>();
+    
     existingOffers.forEach(offer => {
       // Only count tracked offers (both sender and receiver in same alliance)
       const isTrackedOffer = offer.declaringAllianceId === allianceId && offer.receivingAllianceId === allianceId;
@@ -212,6 +216,19 @@ export class AidService {
         if (isTech) {
           outgoingTechExisting.set(offer.declaringId, (outgoingTechExisting.get(offer.declaringId) || 0) + 1);
           incomingTechExisting.set(offer.receivingId, (incomingTechExisting.get(offer.receivingId) || 0) + 1);
+        }
+      } else {
+        // This is an external offer - count it for both sender and receiver if they're in our alliance
+        const isOutgoingExternal = offer.declaringAllianceId === allianceId && offer.receivingAllianceId !== allianceId;
+        const isIncomingExternal = offer.declaringAllianceId !== allianceId && offer.receivingAllianceId === allianceId;
+        
+        if (isOutgoingExternal) {
+          // Sender is in our alliance, receiver is not - counts against sender's external slots
+          externalOffersUsed.set(offer.declaringId, (externalOffersUsed.get(offer.declaringId) || 0) + 1);
+        }
+        if (isIncomingExternal) {
+          // Receiver is in our alliance, sender is not - counts against receiver's external slots
+          externalOffersUsed.set(offer.receivingId, (externalOffersUsed.get(offer.receivingId) || 0) + 1);
         }
       }
     });
@@ -706,9 +723,12 @@ export class AidService {
         });
       }
 
-      // External (no usage tracking needed, just show if assigned > 0)
+      // External - subtract external offers that are currently active
       const externalAssigned = nation.slots.external || 0;
-      if (externalAssigned > 0) {
+      const externalUsed = externalOffersUsed.get(nation.id) || 0;
+      const externalAvailable = externalAssigned - externalUsed;
+      // Show if has assigned slots, none are in use
+      if (externalAssigned > 0 && externalUsed === 0) {
         availableSlots.external.push({
           nation: {
             id: nation.id,
@@ -716,7 +736,193 @@ export class AidService {
             rulerName: nation.rulerName,
             inWarMode: nation.inWarMode
           },
-          available: externalAssigned
+          available: externalAvailable
+        });
+      }
+    });
+
+    // Find mismatched offers - offers that don't map to configured slots
+    const mismatchedOffers = {
+      allianceOffers: {
+        sendCash: [] as Array<{ nation: any; offers: any[] }>,
+        sendTech: [] as Array<{ nation: any; offers: any[] }>,
+        getCash: [] as Array<{ nation: any; offers: any[] }>,
+        getTech: [] as Array<{ nation: any; offers: any[] }>
+      },
+      externalMismatches: [] as Array<{ nation: any; offers: any[] }>
+    };
+
+    // Create a map of nations by ID for quick lookup
+    const nationMap = new Map<number, any>();
+    allianceNationsOnly.forEach(nation => {
+      nationMap.set(nation.id, nation);
+    });
+
+    // Track offers that exceed configured slots for each slot type
+    const sendCashOffersByNation = new Map<number, any[]>();
+    const sendTechOffersByNation = new Map<number, any[]>();
+    const getCashOffersByNation = new Map<number, any[]>();
+    const getTechOffersByNation = new Map<number, any[]>();
+    const internalOffersByNation = new Map<number, any[]>();
+
+    existingOffers.forEach(offer => {
+      const isTrackedOffer = offer.declaringAllianceId === allianceId && offer.receivingAllianceId === allianceId;
+      
+      if (isTrackedOffer) {
+        const senderNation = nationMap.get(offer.declaringId);
+        const receiverNation = nationMap.get(offer.receivingId);
+        
+        const isCash = offer.money > 0;
+        const isTech = offer.technology > 0;
+
+        // Track outgoing offers
+        if (senderNation) {
+          if (isCash) {
+            if (!sendCashOffersByNation.has(offer.declaringId)) {
+              sendCashOffersByNation.set(offer.declaringId, []);
+            }
+            sendCashOffersByNation.get(offer.declaringId)!.push({
+              ...offer,
+              direction: 'sent',
+              type: 'cash'
+            });
+          }
+          if (isTech) {
+            if (!sendTechOffersByNation.has(offer.declaringId)) {
+              sendTechOffersByNation.set(offer.declaringId, []);
+            }
+            sendTechOffersByNation.get(offer.declaringId)!.push({
+              ...offer,
+              direction: 'sent',
+              type: 'tech'
+            });
+          }
+          
+          // Track all internal offers for external mismatch detection
+          if (!internalOffersByNation.has(offer.declaringId)) {
+            internalOffersByNation.set(offer.declaringId, []);
+          }
+          internalOffersByNation.get(offer.declaringId)!.push({
+            ...offer,
+            direction: 'sent',
+            type: isCash ? 'cash' : 'tech'
+          });
+        }
+
+        // Track incoming offers
+        if (receiverNation) {
+          if (isCash) {
+            if (!getCashOffersByNation.has(offer.receivingId)) {
+              getCashOffersByNation.set(offer.receivingId, []);
+            }
+            getCashOffersByNation.get(offer.receivingId)!.push({
+              ...offer,
+              direction: 'received',
+              type: 'cash'
+            });
+          }
+          if (isTech) {
+            if (!getTechOffersByNation.has(offer.receivingId)) {
+              getTechOffersByNation.set(offer.receivingId, []);
+            }
+            getTechOffersByNation.get(offer.receivingId)!.push({
+              ...offer,
+              direction: 'received',
+              type: 'tech'
+            });
+          }
+          
+          // Track all internal offers for external mismatch detection
+          if (!internalOffersByNation.has(offer.receivingId)) {
+            internalOffersByNation.set(offer.receivingId, []);
+          }
+          internalOffersByNation.get(offer.receivingId)!.push({
+            ...offer,
+            direction: 'received',
+            type: isCash ? 'cash' : 'tech'
+          });
+        }
+      }
+    });
+
+    // Find offers that exceed configured slots for each slot type
+    allianceNationsOnly.forEach(nation => {
+      // Send Cash mismatches
+      const sendCashAssigned = nation.slots.sendCash || 0;
+      const sendCashOffers = sendCashOffersByNation.get(nation.id) || [];
+      if (sendCashOffers.length > sendCashAssigned) {
+        const excessOffers = sendCashOffers.slice(sendCashAssigned);
+        mismatchedOffers.allianceOffers.sendCash.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          offers: excessOffers
+        });
+      }
+
+      // Send Tech mismatches
+      const sendTechAssigned = nation.slots.sendTech || 0;
+      const sendTechOffers = sendTechOffersByNation.get(nation.id) || [];
+      if (sendTechOffers.length > sendTechAssigned) {
+        const excessOffers = sendTechOffers.slice(sendTechAssigned);
+        mismatchedOffers.allianceOffers.sendTech.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          offers: excessOffers
+        });
+      }
+
+      // Get Cash mismatches
+      const getCashAssigned = nation.slots.getCash || 0;
+      const getCashOffers = getCashOffersByNation.get(nation.id) || [];
+      if (getCashOffers.length > getCashAssigned) {
+        const excessOffers = getCashOffers.slice(getCashAssigned);
+        mismatchedOffers.allianceOffers.getCash.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          offers: excessOffers
+        });
+      }
+
+      // Get Tech mismatches
+      const getTechAssigned = nation.slots.getTech || 0;
+      const getTechOffers = getTechOffersByNation.get(nation.id) || [];
+      if (getTechOffers.length > getTechAssigned) {
+        const excessOffers = getTechOffers.slice(getTechAssigned);
+        mismatchedOffers.allianceOffers.getTech.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          offers: excessOffers
+        });
+      }
+
+      // External mismatches: nations with external slots but internal offers
+      const externalAssigned = nation.slots.external || 0;
+      const internalOffers = internalOffersByNation.get(nation.id) || [];
+      if (externalAssigned > 0 && internalOffers.length > 0) {
+        mismatchedOffers.externalMismatches.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          offers: internalOffers
         });
       }
     });
@@ -724,7 +930,8 @@ export class AidService {
     return {
       recommendations,
       slotCounts,
-      availableSlots
+      availableSlots,
+      mismatchedOffers
     };
   }
 

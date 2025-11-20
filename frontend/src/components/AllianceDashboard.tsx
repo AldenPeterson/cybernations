@@ -124,6 +124,32 @@ interface AvailableSlots {
   external: AvailableSlot[];
 }
 
+interface MismatchedOffer {
+  aidId: number;
+  declaringId: number;
+  declaringNation: string;
+  declaringRuler: string;
+  receivingId: number;
+  receivingNation: string;
+  receivingRuler: string;
+  money: number;
+  technology: number;
+  direction: 'sent' | 'received';
+  type: 'cash' | 'tech';
+  date: string;
+  reason: string;
+}
+
+interface MismatchedOffers {
+  allianceOffers: {
+    sendCash: Array<{ nation: any; offers: MismatchedOffer[] }>;
+    sendTech: Array<{ nation: any; offers: MismatchedOffer[] }>;
+    getCash: Array<{ nation: any; offers: MismatchedOffer[] }>;
+    getTech: Array<{ nation: any; offers: MismatchedOffer[] }>;
+  };
+  externalMismatches: Array<{ nation: any; offers: MismatchedOffer[] }>;
+}
+
 interface AllianceDashboardProps {
   selectedAllianceId: number | null;
   setSelectedAllianceId: (id: number | null) => void;
@@ -143,6 +169,7 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
   // Nation categories removed - using slot-based statistics instead
   const [slotCounts, setSlotCounts] = useState<SlotCounts | null>(null);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlots | null>(null);
+  const [mismatchedOffers, setMismatchedOffers] = useState<MismatchedOffers | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expirationFilter, setExpirationFilter] = useState<string[]>(['empty', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days']);
@@ -244,6 +271,7 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
         // Nation categories removed
         setSlotCounts(data.slotCounts);
         setAvailableSlots(data.availableSlots || null);
+        setMismatchedOffers(data.mismatchedOffers || null);
       }
     } catch (err) {
       console.error('Failed to fetch recommendations:', err);

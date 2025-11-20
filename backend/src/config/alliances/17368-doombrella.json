@@ -911,10 +911,10 @@
       "discord_handle": "",
       "has_dra": true,
       "slots": {
-        "sendTech": 1,
+        "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 5,
+        "getCash": 6,
         "external": 0,
         "send_priority": 2,
         "receive_priority": 2
