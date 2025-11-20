@@ -366,10 +366,10 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 2,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 4,
+        "getCash": 0,
         "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
@@ -534,10 +534,10 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 2,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 4,
+        "getCash": 0,
         "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
@@ -618,8 +618,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 1,
-        "getTech": 1,
+        "sendCash": 2,
+        "getTech": 0,
         "getCash": 0,
         "untracked": 4,
         "send_priority": 2,
@@ -681,8 +681,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 1,
-        "getTech": 1,
+        "sendCash": 2,
+        "getTech": 0,
         "getCash": 0,
         "untracked": 4,
         "send_priority": 1,
@@ -702,10 +702,10 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 2,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 4,
+        "getCash": 0,
         "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
@@ -891,13 +891,13 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 2,
+        "sendTech": 5,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 4,
+        "getCash": 1,
         "untracked": 0,
-        "send_priority": 3,
-        "receive_priority": 3
+        "send_priority": 2,
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "0.00",
@@ -911,10 +911,10 @@
       "discord_handle": "",
       "has_dra": true,
       "slots": {
-        "sendTech": 2,
+        "sendTech": 1,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 4,
+        "getCash": 5,
         "untracked": 0,
         "send_priority": 2,
         "receive_priority": 2
@@ -975,10 +975,10 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 2,
+        "sendTech": 4,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 4,
+        "getCash": 2,
         "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
