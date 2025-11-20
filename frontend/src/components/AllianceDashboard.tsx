@@ -976,6 +976,226 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
               )}
             </div>
           )}
+
+          {/* Mismatched Offers Section */}
+          {mismatchedOffers && (
+            <div className="mb-5 p-4 bg-transparent rounded-lg border border-red-300">
+              <h3 className="m-0 mb-4 text-lg font-bold text-red-900">⚠️ Mismatched Offers (Exceed Configured Slots)</h3>
+              
+              {/* Alliance Offers Mismatches */}
+              <div className="mb-4">
+                <h4 className="text-sm font-bold mb-2 text-slate-900">Alliance Offers</h4>
+                
+                {/* Send Cash Mismatches */}
+                {mismatchedOffers.allianceOffers.sendCash.length > 0 && (
+                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded">
+                    <div className="font-bold text-sm mb-2 text-red-900">💰 Send Cash</div>
+                    {mismatchedOffers.allianceOffers.sendCash.map((item) => (
+                      <div key={item.nation.id} className="mb-3 last:mb-0">
+                        <div className="font-semibold text-sm text-slate-900 mb-1">
+                          <a 
+                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${item.nation.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 hover:underline"
+                          >
+                            {item.nation.nationName}
+                          </a>
+                          {' '}({item.nation.rulerName}) - {item.offers.length} excess offer{item.offers.length > 1 ? 's' : ''}
+                        </div>
+                        <div className="ml-4 space-y-1">
+                          {item.offers.map((offer) => (
+                            <div key={offer.aidId} className="text-xs text-slate-700">
+                              <span className="font-medium">Sent</span> to{' '}
+                              <a 
+                                href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.receivingId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                {offer.receivingNation}
+                              </a>
+                              {' '}({offer.receivingRuler}): ${(offer.money / 1000000).toFixed(2)}M
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Send Tech Mismatches */}
+                {mismatchedOffers.allianceOffers.sendTech.length > 0 && (
+                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded">
+                    <div className="font-bold text-sm mb-2 text-red-900">🔬 Send Tech</div>
+                    {mismatchedOffers.allianceOffers.sendTech.map((item) => (
+                      <div key={item.nation.id} className="mb-3 last:mb-0">
+                        <div className="font-semibold text-sm text-slate-900 mb-1">
+                          <a 
+                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${item.nation.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 hover:underline"
+                          >
+                            {item.nation.nationName}
+                          </a>
+                          {' '}({item.nation.rulerName}) - {item.offers.length} excess offer{item.offers.length > 1 ? 's' : ''}
+                        </div>
+                        <div className="ml-4 space-y-1">
+                          {item.offers.map((offer) => (
+                            <div key={offer.aidId} className="text-xs text-slate-700">
+                              <span className="font-medium">Sent</span> to{' '}
+                              <a 
+                                href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.receivingId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                {offer.receivingNation}
+                              </a>
+                              {' '}({offer.receivingRuler}): {offer.technology} tech
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Get Cash Mismatches */}
+                {mismatchedOffers.allianceOffers.getCash.length > 0 && (
+                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded">
+                    <div className="font-bold text-sm mb-2 text-red-900">💰 Get Cash</div>
+                    {mismatchedOffers.allianceOffers.getCash.map((item) => (
+                      <div key={item.nation.id} className="mb-3 last:mb-0">
+                        <div className="font-semibold text-sm text-slate-900 mb-1">
+                          <a 
+                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${item.nation.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 hover:underline"
+                          >
+                            {item.nation.nationName}
+                          </a>
+                          {' '}({item.nation.rulerName}) - {item.offers.length} excess offer{item.offers.length > 1 ? 's' : ''}
+                        </div>
+                        <div className="ml-4 space-y-1">
+                          {item.offers.map((offer) => (
+                            <div key={offer.aidId} className="text-xs text-slate-700">
+                              <span className="font-medium">Received</span> from{' '}
+                              <a 
+                                href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.declaringId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                {offer.declaringNation}
+                              </a>
+                              {' '}({offer.declaringRuler}): ${(offer.money / 1000000).toFixed(2)}M
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Get Tech Mismatches */}
+                {mismatchedOffers.allianceOffers.getTech.length > 0 && (
+                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded">
+                    <div className="font-bold text-sm mb-2 text-red-900">🔬 Get Tech</div>
+                    {mismatchedOffers.allianceOffers.getTech.map((item) => (
+                      <div key={item.nation.id} className="mb-3 last:mb-0">
+                        <div className="font-semibold text-sm text-slate-900 mb-1">
+                          <a 
+                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${item.nation.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 hover:underline"
+                          >
+                            {item.nation.nationName}
+                          </a>
+                          {' '}({item.nation.rulerName}) - {item.offers.length} excess offer{item.offers.length > 1 ? 's' : ''}
+                        </div>
+                        <div className="ml-4 space-y-1">
+                          {item.offers.map((offer) => (
+                            <div key={offer.aidId} className="text-xs text-slate-700">
+                              <span className="font-medium">Received</span> from{' '}
+                              <a 
+                                href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.declaringId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                {offer.declaringNation}
+                              </a>
+                              {' '}({offer.declaringRuler}): {offer.technology} tech
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* External Mismatches */}
+              {mismatchedOffers.externalMismatches.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-bold mb-2 text-slate-900">External Slot Mismatches</h4>
+                  <div className="p-3 bg-orange-50 border border-orange-200 rounded">
+                    <div className="text-sm text-slate-700 mb-2">
+                      Nations with external slots configured but have internal (alliance) offers:
+                    </div>
+                    {mismatchedOffers.externalMismatches.map((item) => (
+                      <div key={item.nation.id} className="mb-3 last:mb-0">
+                        <div className="font-semibold text-sm text-slate-900 mb-1">
+                          <a 
+                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${item.nation.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 hover:underline"
+                          >
+                            {item.nation.nationName}
+                          </a>
+                          {' '}({item.nation.rulerName}) - {item.offers.length} internal offer{item.offers.length > 1 ? 's' : ''}
+                        </div>
+                        <div className="ml-4 space-y-1">
+                          {item.offers.map((offer) => (
+                            <div key={offer.aidId} className="text-xs text-slate-700">
+                              <span className="font-medium">{offer.direction === 'sent' ? 'Sent' : 'Received'}</span>{' '}
+                              {offer.direction === 'sent' ? 'to' : 'from'}{' '}
+                              <a 
+                                href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.direction === 'sent' ? offer.receivingId : offer.declaringId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                {offer.direction === 'sent' ? offer.receivingNation : offer.declaringNation}
+                              </a>
+                              {' '}({offer.direction === 'sent' ? offer.receivingRuler : offer.declaringRuler}):{' '}
+                              {offer.type === 'cash' ? `$${(offer.money / 1000000).toFixed(2)}M` : `${offer.technology} tech`}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Show message if no mismatches */}
+              {mismatchedOffers.allianceOffers.sendCash.length === 0 && 
+               mismatchedOffers.allianceOffers.sendTech.length === 0 && 
+               mismatchedOffers.allianceOffers.getCash.length === 0 && 
+               mismatchedOffers.allianceOffers.getTech.length === 0 && 
+               mismatchedOffers.externalMismatches.length === 0 && (
+                <div className="text-center p-3 text-slate-700 text-sm">
+                  No mismatched offers found. All offers map correctly to configured slots.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

@@ -618,8 +618,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 2,
-        "getTech": 0,
+        "sendCash": 1,
+        "getTech": 1,
         "getCash": 0,
         "external": 4,
         "send_priority": 2,

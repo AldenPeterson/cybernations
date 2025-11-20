@@ -207,8 +207,9 @@ export class AidService {
       const isTrackedOffer = offer.declaringAllianceId === allianceId && offer.receivingAllianceId === allianceId;
       
       if (isTrackedOffer) {
-        const isCash = offer.money > 0;
+        // If offer has tech, treat as tech only (even if it also has cash)
         const isTech = offer.technology > 0;
+        const isCash = offer.money > 0 && offer.technology === 0; // Only cash if no tech
         if (isCash) {
           outgoingCashExisting.set(offer.declaringId, (outgoingCashExisting.get(offer.declaringId) || 0) + 1);
           incomingCashExisting.set(offer.receivingId, (incomingCashExisting.get(offer.receivingId) || 0) + 1);
@@ -772,8 +773,10 @@ export class AidService {
         const senderNation = nationMap.get(offer.declaringId);
         const receiverNation = nationMap.get(offer.receivingId);
         
-        const isCash = offer.money > 0;
+        // If offer has tech, treat as tech only (even if it also has cash)
         const isTech = offer.technology > 0;
+        const isCash = offer.money > 0 && offer.technology === 0; // Only cash if no tech
+        const offerType = isTech ? 'tech' : 'cash'; // Prioritize tech
 
         // Track outgoing offers
         if (senderNation) {
@@ -805,7 +808,7 @@ export class AidService {
           internalOffersByNation.get(offer.declaringId)!.push({
             ...offer,
             direction: 'sent',
-            type: isCash ? 'cash' : 'tech'
+            type: offerType
           });
         }
 
@@ -839,7 +842,7 @@ export class AidService {
           internalOffersByNation.get(offer.receivingId)!.push({
             ...offer,
             direction: 'received',
-            type: isCash ? 'cash' : 'tech'
+            type: offerType
           });
         }
       }
@@ -911,10 +914,16 @@ export class AidService {
         });
       }
 
-      // External mismatches: nations with external slots but internal offers
+      // External mismatches: nations with external slots configured but internal offers that exceed tracked slots
       const externalAssigned = nation.slots.external || 0;
       const internalOffers = internalOffersByNation.get(nation.id) || [];
-      if (externalAssigned > 0 && internalOffers.length > 0) {
+      // Calculate total tracked slots (excluding external)
+      const totalTrackedSlots = (nation.slots.sendCash || 0) + (nation.slots.sendTech || 0) + 
+                                (nation.slots.getCash || 0) + (nation.slots.getTech || 0);
+      // Only flag if external slots are configured AND internal offers exceed tracked slots
+      if (externalAssigned > 0 && internalOffers.length > totalTrackedSlots) {
+        // Only show the offers that exceed the tracked slots
+        const excessOffers = internalOffers.slice(totalTrackedSlots);
         mismatchedOffers.externalMismatches.push({
           nation: {
             id: nation.id,
@@ -922,7 +931,7 @@ export class AidService {
             rulerName: nation.rulerName,
             inWarMode: nation.inWarMode
           },
-          offers: internalOffers
+          offers: excessOffers
         });
       }
     });
