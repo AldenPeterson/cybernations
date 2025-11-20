@@ -121,6 +121,7 @@ async function syncAllianceData(allianceData: AllianceData, newNations: Nation[]
           sendCash: 0,
           getTech: 0,
           getCash: 0,
+          external: 0,
           send_priority: 3,
           receive_priority: 3
         },
