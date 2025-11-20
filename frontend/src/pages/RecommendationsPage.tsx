@@ -44,11 +44,30 @@ interface SlotCounts {
   activeSendTech?: number;
 }
 
+interface AvailableSlot {
+  nation: {
+    id: number;
+    nationName: string;
+    rulerName: string;
+    inWarMode: boolean;
+  };
+  available: number;
+}
+
+interface AvailableSlots {
+  sendCash: AvailableSlot[];
+  sendTech: AvailableSlot[];
+  getCash: AvailableSlot[];
+  getTech: AvailableSlot[];
+  external: AvailableSlot[];
+}
+
 const RecommendationsPage: React.FC = () => {
   const { allianceId } = useParams<{ allianceId: string }>();
   const [alliance, setAlliance] = useState<Alliance | null>(null);
   const [recommendations, setRecommendations] = useState<AidRecommendation[]>([]);
   const [slotCounts, setSlotCounts] = useState<SlotCounts | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<AvailableSlots | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [crossAllianceEnabled, setCrossAllianceEnabled] = useState<boolean>(true);
@@ -81,6 +100,7 @@ const RecommendationsPage: React.FC = () => {
         if (recommendationsData.success) {
           setRecommendations(recommendationsData.recommendations);
           setSlotCounts(recommendationsData.slotCounts);
+          setAvailableSlots(recommendationsData.availableSlots || null);
         }
       } catch (err) {
         console.error('Failed to fetch recommendations:', err);
@@ -306,6 +326,164 @@ const RecommendationsPage: React.FC = () => {
       {recommendations.length === 0 && !loading && (
         <div className="text-center p-10 text-gray-600">
           No aid recommendations available for this alliance.
+        </div>
+      )}
+
+      {/* Available Slots Section */}
+      {availableSlots && (
+        <div className="mb-5 p-4 bg-transparent rounded-lg border border-slate-300">
+          <h3 className="m-0 mb-4 text-lg font-bold text-slate-900">Available Unassigned Slots</h3>
+          
+          {/* Send Types */}
+          <div className="mb-4">
+            <h4 className="text-sm font-bold mb-2 text-slate-900">Send Types</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Send Cash */}
+              {availableSlots.sendCash.length > 0 && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                  <div className="font-bold text-sm mb-2 text-yellow-900">💰 Send Cash ({availableSlots.sendCash.reduce((sum, s) => sum + s.available, 0)} total)</div>
+                  <div className="space-y-1">
+                    {availableSlots.sendCash.map((slot) => (
+                      <div key={slot.nation.id} className="text-sm flex items-center justify-between gap-3">
+                        <span className="text-slate-900">
+                          <a 
+                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 font-medium no-underline hover:underline"
+                          >
+                            {slot.nation.nationName}
+                          </a>
+                          {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                        </span>
+                        <span className="font-bold text-yellow-900 text-base flex-shrink-0">{slot.available}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Send Tech */}
+              {availableSlots.sendTech.length > 0 && (
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded">
+                  <div className="font-bold text-sm mb-2 text-purple-900">🔬 Send Tech ({availableSlots.sendTech.reduce((sum, s) => sum + s.available, 0)} total)</div>
+                  <div className="space-y-1">
+                    {availableSlots.sendTech.map((slot) => (
+                      <div key={slot.nation.id} className="text-sm flex items-center justify-between gap-3">
+                        <span className="text-slate-900">
+                          <a 
+                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 font-medium no-underline hover:underline"
+                          >
+                            {slot.nation.nationName}
+                          </a>
+                          {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                        </span>
+                        <span className="font-bold text-purple-900 text-base flex-shrink-0">{slot.available}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Receive Types */}
+          <div className="mb-4">
+            <h4 className="text-sm font-bold mb-2 text-slate-900">Receive Types</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Get Cash */}
+              {availableSlots.getCash.length > 0 && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded">
+                  <div className="font-bold text-sm mb-2 text-green-900">💰 Get Cash ({availableSlots.getCash.reduce((sum, s) => sum + s.available, 0)} total)</div>
+                  <div className="space-y-1">
+                    {availableSlots.getCash.map((slot) => (
+                      <div key={slot.nation.id} className="text-sm flex items-center justify-between gap-3">
+                        <span className="text-slate-900">
+                          <a 
+                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 font-medium no-underline hover:underline"
+                          >
+                            {slot.nation.nationName}
+                          </a>
+                          {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                        </span>
+                        <span className="font-bold text-green-900 text-base flex-shrink-0">{slot.available}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Get Tech */}
+              {availableSlots.getTech.length > 0 && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+                  <div className="font-bold text-sm mb-2 text-blue-900">🔬 Get Tech ({availableSlots.getTech.reduce((sum, s) => sum + s.available, 0)} total)</div>
+                  <div className="space-y-1">
+                    {availableSlots.getTech.map((slot) => (
+                      <div key={slot.nation.id} className="text-sm flex items-center justify-between gap-3">
+                        <span className="text-slate-900">
+                          <a 
+                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 font-medium no-underline hover:underline"
+                          >
+                            {slot.nation.nationName}
+                          </a>
+                          {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                        </span>
+                        <span className="font-bold text-blue-900 text-base flex-shrink-0">{slot.available}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* External */}
+          {availableSlots.external.length > 0 && (
+            <div>
+              <h4 className="text-sm font-bold mb-2 text-slate-900">External</h4>
+              <div className="p-3 bg-orange-50 border border-orange-200 rounded">
+                <div className="font-bold text-sm mb-2 text-orange-900">🌐 External ({availableSlots.external.reduce((sum, s) => sum + s.available, 0)} total)</div>
+                <div className="space-y-1 max-h-96 overflow-y-auto">
+                  {availableSlots.external.map((slot) => (
+                    <div key={slot.nation.id} className="text-sm flex items-center justify-between gap-3">
+                      <span className="text-slate-900">
+                        <a 
+                          href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-700 font-medium no-underline hover:underline"
+                        >
+                          {slot.nation.nationName}
+                        </a>
+                        {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                      </span>
+                      <span className="font-bold text-orange-900 text-base flex-shrink-0">{slot.available}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Show message if no available slots */}
+          {availableSlots.sendCash.length === 0 && 
+           availableSlots.sendTech.length === 0 && 
+           availableSlots.getCash.length === 0 && 
+           availableSlots.getTech.length === 0 && 
+           availableSlots.external.length === 0 && (
+            <div className="text-center p-3 text-slate-700 text-sm">
+              No unassigned available slots found.
+            </div>
+          )}
         </div>
       )}
     </div>

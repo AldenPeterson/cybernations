@@ -179,41 +179,49 @@ export class AidService {
     // Count active aid offers per nation (both incoming and outgoing)
     const nationAidCounts = new Map<number, number>();
     existingOffers.forEach(offer => {
-      // Count outgoing aid
-      if (offer.declaringAllianceId === allianceId) {
-        const count = nationAidCounts.get(offer.declaringId) || 0;
-        nationAidCounts.set(offer.declaringId, count + 1);
-      }
-      // Count incoming aid
-      if (offer.receivingAllianceId === allianceId) {
-        const count = nationAidCounts.get(offer.receivingId) || 0;
-        nationAidCounts.set(offer.receivingId, count + 1);
+      // Only count tracked offers (both sender and receiver in same alliance)
+      // Exclude external offers (where sender and receiver are in different alliances)
+      const isTrackedOffer = offer.declaringAllianceId === allianceId && offer.receivingAllianceId === allianceId;
+      
+      if (isTrackedOffer) {
+        // Count outgoing aid (sender)
+        const senderCount = nationAidCounts.get(offer.declaringId) || 0;
+        nationAidCounts.set(offer.declaringId, senderCount + 1);
+        // Count incoming aid (receiver)
+        const receiverCount = nationAidCounts.get(offer.receivingId) || 0;
+        nationAidCounts.set(offer.receivingId, receiverCount + 1);
       }
     });
 
-    // Per-type existing counts
+    // Per-type existing counts (only tracked offers, excluding external)
     const outgoingCashExisting = new Map<number, number>();
     const incomingCashExisting = new Map<number, number>();
     const outgoingTechExisting = new Map<number, number>();
     const incomingTechExisting = new Map<number, number>();
     existingOffers.forEach(offer => {
-      const isCash = offer.money > 0;
-      const isTech = offer.technology > 0;
-      if (offer.declaringAllianceId === allianceId) {
-        if (isCash) outgoingCashExisting.set(offer.declaringId, (outgoingCashExisting.get(offer.declaringId) || 0) + 1);
-        if (isTech) outgoingTechExisting.set(offer.declaringId, (outgoingTechExisting.get(offer.declaringId) || 0) + 1);
-      }
-      if (offer.receivingAllianceId === allianceId) {
-        if (isCash) incomingCashExisting.set(offer.receivingId, (incomingCashExisting.get(offer.receivingId) || 0) + 1);
-        if (isTech) incomingTechExisting.set(offer.receivingId, (incomingTechExisting.get(offer.receivingId) || 0) + 1);
+      // Only count tracked offers (both sender and receiver in same alliance)
+      const isTrackedOffer = offer.declaringAllianceId === allianceId && offer.receivingAllianceId === allianceId;
+      
+      if (isTrackedOffer) {
+        const isCash = offer.money > 0;
+        const isTech = offer.technology > 0;
+        if (isCash) {
+          outgoingCashExisting.set(offer.declaringId, (outgoingCashExisting.get(offer.declaringId) || 0) + 1);
+          incomingCashExisting.set(offer.receivingId, (incomingCashExisting.get(offer.receivingId) || 0) + 1);
+        }
+        if (isTech) {
+          outgoingTechExisting.set(offer.declaringId, (outgoingTechExisting.get(offer.declaringId) || 0) + 1);
+          incomingTechExisting.set(offer.receivingId, (incomingTechExisting.get(offer.receivingId) || 0) + 1);
+        }
       }
     });
 
-    // Total slot capacity by nation
-    const totalSlotsByNation = new Map<number, number>();
+    // Total tracked slot capacity by nation (excluding external slots, which are reserved for external offers)
+    const totalTrackedSlotsByNation = new Map<number, number>();
     activeNations.forEach(n => {
-      const total = n.slots.getCash + n.slots.getTech + n.slots.sendCash + n.slots.sendTech + n.slots.external;
-      totalSlotsByNation.set(n.id, total);
+      // Only count tracked slots (external slots are reserved for external offers)
+      const total = n.slots.getCash + n.slots.getTech + n.slots.sendCash + n.slots.sendTech;
+      totalTrackedSlotsByNation.set(n.id, total);
     });
 
     // Recommended counts (total and per-type) to avoid exceeding capacity when adding recs
@@ -224,7 +232,8 @@ export class AidService {
     const recIncomingTech = new Map<number, number>();
 
     const hasTotalCapacity = (nationId: number): boolean => {
-      const totalCap = totalSlotsByNation.get(nationId) || 0;
+      // Only check against tracked slots (external slots are reserved for external offers)
+      const totalCap = totalTrackedSlotsByNation.get(nationId) || 0;
       const existing = nationAidCounts.get(nationId) || 0;
       const planned = recommendationCounts.get(nationId) || 0;
       return existing + planned < totalCap;
@@ -608,9 +617,114 @@ export class AidService {
       ).length
     };
 
+    // Calculate available slots by category for each nation
+    // Only show nations from the current alliance (not cross-alliance nations)
+    // Show nations that have slots assigned but no slots currently in use for that category
+    const availableSlots = {
+      sendCash: [] as Array<{ nation: any; available: number }>,
+      sendTech: [] as Array<{ nation: any; available: number }>,
+      getCash: [] as Array<{ nation: any; available: number }>,
+      getTech: [] as Array<{ nation: any; available: number }>,
+      external: [] as Array<{ nation: any; available: number }>
+    };
+
+    // Get only nations from the current alliance (exclude cross-alliance nations)
+    // Use the original nations list to ensure we only include alliance nations
+    const originalAllianceNationIds = new Set(nations.map(n => n.id));
+    const allianceNationsOnly = categorizedNations.filter(nation => originalAllianceNationIds.has(nation.id));
+
+    allianceNationsOnly.forEach(nation => {
+      // Send Cash
+      const sendCashAssigned = nation.slots.sendCash || 0;
+      const sendCashUsed = outgoingCashExisting.get(nation.id) || 0;
+      const sendCashPlanned = recOutgoingCash.get(nation.id) || 0;
+      const sendCashAvailable = sendCashAssigned - sendCashUsed - sendCashPlanned;
+      // Show if has assigned slots, none are in use, and none are planned
+      if (sendCashAssigned > 0 && sendCashUsed === 0 && sendCashPlanned === 0) {
+        availableSlots.sendCash.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          available: sendCashAvailable
+        });
+      }
+
+      // Send Tech
+      const sendTechAssigned = nation.slots.sendTech || 0;
+      const sendTechUsed = outgoingTechExisting.get(nation.id) || 0;
+      const sendTechPlanned = recOutgoingTech.get(nation.id) || 0;
+      const sendTechAvailable = sendTechAssigned - sendTechUsed - sendTechPlanned;
+      // Show if has assigned slots, none are in use, and none are planned
+      if (sendTechAssigned > 0 && sendTechUsed === 0 && sendTechPlanned === 0) {
+        availableSlots.sendTech.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          available: sendTechAvailable
+        });
+      }
+
+      // Get Cash
+      const getCashAssigned = nation.slots.getCash || 0;
+      const getCashUsed = incomingCashExisting.get(nation.id) || 0;
+      const getCashPlanned = recIncomingCash.get(nation.id) || 0;
+      const getCashAvailable = getCashAssigned - getCashUsed - getCashPlanned;
+      // Show if has assigned slots, none are in use, and none are planned
+      if (getCashAssigned > 0 && getCashUsed === 0 && getCashPlanned === 0) {
+        availableSlots.getCash.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          available: getCashAvailable
+        });
+      }
+
+      // Get Tech
+      const getTechAssigned = nation.slots.getTech || 0;
+      const getTechUsed = incomingTechExisting.get(nation.id) || 0;
+      const getTechPlanned = recIncomingTech.get(nation.id) || 0;
+      const getTechAvailable = getTechAssigned - getTechUsed - getTechPlanned;
+      // Show if has assigned slots, none are in use, and none are planned
+      if (getTechAssigned > 0 && getTechUsed === 0 && getTechPlanned === 0) {
+        availableSlots.getTech.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          available: getTechAvailable
+        });
+      }
+
+      // External (no usage tracking needed, just show if assigned > 0)
+      const externalAssigned = nation.slots.external || 0;
+      if (externalAssigned > 0) {
+        availableSlots.external.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          available: externalAssigned
+        });
+      }
+    });
+
     return {
       recommendations,
-      slotCounts
+      slotCounts,
+      availableSlots
     };
   }
 
