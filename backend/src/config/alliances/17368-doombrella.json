@@ -917,7 +917,7 @@
         "getCash": 6,
         "external": 0,
         "send_priority": 2,
-        "receive_priority": 2
+        "receive_priority": 3
       },
       "current_stats": {
         "technology": "100.22",

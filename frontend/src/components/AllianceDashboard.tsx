@@ -822,7 +822,7 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
           {/* Available Slots Section */}
           {availableSlots && (
             <div className="mb-5 p-4 bg-transparent rounded-lg border border-slate-300">
-              <h3 className="m-0 mb-4 text-lg font-bold text-slate-900">Available Unassigned Slots</h3>
+              <h3 className="m-0 mb-4 text-lg font-bold text-white">Available Unassigned Slots</h3>
               
               {/* Send Types */}
               <div className="mb-4">
