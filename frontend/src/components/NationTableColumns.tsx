@@ -213,7 +213,7 @@ export const createNationTableColumns = ({
       // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash + 
-                        row.original.slots.untracked;
+                        row.original.slots.external;
       const expectedTotal = row.original.has_dra ? 6 : 5;
       
       // Calculate validation directly
@@ -253,7 +253,7 @@ export const createNationTableColumns = ({
       // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash + 
-                        row.original.slots.untracked;
+                        row.original.slots.external;
       const expectedTotal = row.original.has_dra ? 6 : 5;
       
       // Calculate validation directly
@@ -292,7 +292,7 @@ export const createNationTableColumns = ({
       // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash + 
-                        row.original.slots.untracked;
+                        row.original.slots.external;
       const expectedTotal = row.original.has_dra ? 6 : 5;
       
       // Calculate validation directly
@@ -331,7 +331,7 @@ export const createNationTableColumns = ({
       // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash + 
-                        row.original.slots.untracked;
+                        row.original.slots.external;
       const expectedTotal = row.original.has_dra ? 6 : 5;
       
       // Calculate validation directly
@@ -358,18 +358,18 @@ export const createNationTableColumns = ({
     enableSorting: true,
   }),
 
-  // Untracked column (editable)
-  columnHelper.accessor('slots.untracked', {
+  // External column (editable)
+  columnHelper.accessor('slots.external', {
     header: () => (
       <div className="leading-tight text-center">
-        <div>Untracked</div>
+        <div>External</div>
       </div>
     ),
     cell: ({ getValue, row }) => {
       // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                         row.original.slots.getTech + row.original.slots.getCash + 
-                        row.original.slots.untracked;
+                        row.original.slots.external;
       const expectedTotal = row.original.has_dra ? 6 : 5;
       
       // Calculate validation directly
@@ -380,7 +380,7 @@ export const createNationTableColumns = ({
         <div className="text-center">
           <EditableNumberInput
             value={getValue()}
-            onChange={(value) => handleSlotChange(row.original.nation_id, 'untracked', value)}
+            onChange={(value) => handleSlotChange(row.original.nation_id, 'external', value)}
             min={0}
             max={6}
           />
@@ -409,7 +409,7 @@ export const createNationTableColumns = ({
           hasValidationErrors={(() => {
             const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
                               row.original.slots.getTech + row.original.slots.getCash + 
-                              row.original.slots.untracked;
+                              row.original.slots.external;
             const expectedTotal = row.original.has_dra ? 6 : 5;
             return totalSlots > expectedTotal;
           })()}

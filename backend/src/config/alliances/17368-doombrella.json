@@ -13,7 +13,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -34,7 +34,7 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -55,7 +55,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 6,
+        "external": 6,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -76,7 +76,7 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -97,7 +97,7 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 2
       },
@@ -117,7 +117,7 @@
         "sendCash": 2,
         "getTech": 4,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -138,7 +138,7 @@
         "sendCash": 1,
         "getTech": 5,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 1,
         "receive_priority": 2
       },
@@ -160,7 +160,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -180,7 +180,7 @@
         "sendCash": 2,
         "getTech": 4,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -201,7 +201,7 @@
         "sendCash": 1,
         "getTech": 5,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 2,
         "receive_priority": 1
       },
@@ -222,7 +222,7 @@
         "sendCash": 3,
         "getTech": 3,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 1,
         "receive_priority": 2
       },
@@ -244,7 +244,7 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -264,7 +264,7 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -286,7 +286,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 6,
+        "external": 6,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -306,7 +306,7 @@
         "sendCash": 2,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 4,
+        "external": 4,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -328,7 +328,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 2,
         "receive_priority": 3
       },
@@ -349,7 +349,7 @@
         "sendCash": 1,
         "getTech": 5,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -370,7 +370,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -390,7 +390,7 @@
         "sendCash": 2,
         "getTech": 4,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 1,
         "receive_priority": 2
       },
@@ -412,7 +412,7 @@
         "sendCash": 0,
         "getTech": 2,
         "getCash": 0,
-        "untracked": 4,
+        "external": 4,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -433,7 +433,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -454,7 +454,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 1,
         "receive_priority": 2
       },
@@ -475,7 +475,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 2,
         "receive_priority": 3
       },
@@ -496,7 +496,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 2,
         "receive_priority": 3
       },
@@ -517,7 +517,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 6,
+        "external": 6,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -538,7 +538,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -558,7 +558,7 @@
         "sendCash": 1,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 5,
+        "external": 5,
         "send_priority": 1,
         "receive_priority": 2
       },
@@ -580,7 +580,7 @@
         "sendCash": 2,
         "getTech": 4,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -600,7 +600,7 @@
         "sendCash": 1,
         "getTech": 1,
         "getCash": 0,
-        "untracked": 4,
+        "external": 4,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -621,7 +621,7 @@
         "sendCash": 2,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 4,
+        "external": 4,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -643,7 +643,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 3,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 2,
         "receive_priority": 1
       },
@@ -664,7 +664,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -684,7 +684,7 @@
         "sendCash": 2,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 4,
+        "external": 4,
         "send_priority": 1,
         "receive_priority": 2
       },
@@ -706,7 +706,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -727,7 +727,7 @@
         "sendCash": 0,
         "getTech": 3,
         "getCash": 0,
-        "untracked": 3,
+        "external": 3,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -748,7 +748,7 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -769,7 +769,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -790,7 +790,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -811,7 +811,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -832,7 +832,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -853,7 +853,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -874,7 +874,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -895,7 +895,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 1,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -915,7 +915,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 5,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -937,7 +937,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -958,7 +958,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -979,7 +979,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 2,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -1000,7 +1000,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 3,
-        "untracked": 0,
+        "external": 0,
         "send_priority": 3,
         "receive_priority": 3
       },

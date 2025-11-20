@@ -5,6 +5,7 @@ interface SlotCounts {
   totalGetTech: number;
   totalSendCash: number;
   totalSendTech: number;
+  totalExternal?: number;
   totalSendCashPeaceMode?: number;
   totalSendTechPeaceMode?: number;
   activeGetCash?: number;
@@ -61,6 +62,12 @@ const slotTypes: SlotType[] = [
     textColor: '#7b1fa2'
   },
   {
+    key: 'totalExternal',
+    label: 'External',
+    backgroundColor: '#ffe0b2',
+    textColor: '#e65100'
+  },
+  {
     key: 'totalUnassigned',
     label: 'Unassigned',
     backgroundColor: '#f5f5f5',
@@ -81,10 +88,15 @@ const SlotCountsSummary: React.FC<SlotCountsSummaryProps> = ({
   onCrossAllianceToggle
 }) => {
   // Filter out unassigned if it's not provided or is 0
-  const displaySlotTypes = slotTypes.filter(slotType => 
-    slotType.key !== 'totalUnassigned' || 
-    (slotCounts.totalUnassigned !== undefined && slotCounts.totalUnassigned > 0)
-  );
+  const displaySlotTypes = slotTypes.filter(slotType => {
+    if (slotType.key === 'totalUnassigned') {
+      return slotCounts.totalUnassigned !== undefined && slotCounts.totalUnassigned > 0;
+    }
+    if (slotType.key === 'totalExternal') {
+      return slotCounts.totalExternal !== undefined && slotCounts.totalExternal > 0;
+    }
+    return true;
+  });
 
   // Check if we have cross-alliance data
   const hasCrossAllianceData = (slotCounts.crossAllianceGetCash || 0) > 0 || (slotCounts.crossAllianceGetTech || 0) > 0;

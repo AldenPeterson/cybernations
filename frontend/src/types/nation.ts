@@ -3,7 +3,7 @@ export interface NationSlots {
   sendCash: number;
   getTech: number;
   getCash: number;
-  untracked: number;
+  external: number;
   send_priority: number;
   receive_priority: number;
 }

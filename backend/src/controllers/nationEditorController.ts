@@ -77,10 +77,10 @@ export class NationEditorController {
             error: 'Invalid getCash value. Must be a number'
           });
         }
-        if (slots.untracked !== undefined && typeof slots.untracked !== 'number') {
+        if (slots.external !== undefined && typeof slots.external !== 'number') {
           return res.status(400).json({
             success: false,
-            error: 'Invalid untracked value. Must be a number'
+            error: 'Invalid external value. Must be a number'
           });
         }
       }

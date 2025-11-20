@@ -90,6 +90,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       acc.totalGetTech += nation.slots.getTech;
       acc.totalSendCash += nation.slots.sendCash;
       acc.totalSendTech += nation.slots.sendTech;
+      acc.totalExternal += nation.slots.external;
       
       // Track peace mode send slots
       if (!nation.inWarMode) {
@@ -101,7 +102,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       const totalPossibleSlots = nation.has_dra ? 6 : 5;
       const assignedSlots = nation.slots.getCash + nation.slots.getTech + 
                            nation.slots.sendCash + nation.slots.sendTech + 
-                           nation.slots.untracked;
+                           nation.slots.external;
       acc.totalUnassigned += totalPossibleSlots - assignedSlots;
       
       return acc;
@@ -110,6 +111,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       totalGetTech: 0,
       totalSendCash: 0,
       totalSendTech: 0,
+      totalExternal: 0,
       totalSendCashPeaceMode: 0,
       totalSendTechPeaceMode: 0,
       totalUnassigned: 0,
@@ -265,7 +267,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     if (!nation) return false;
     
     // Calculate total slots
-    const totalSlots = nation.slots.sendTech + nation.slots.sendCash + nation.slots.getTech + nation.slots.getCash + nation.slots.untracked;
+    const totalSlots = nation.slots.sendTech + nation.slots.sendCash + nation.slots.getTech + nation.slots.getCash + nation.slots.external;
     
     // Expected total: 5 if no DRA, 6 if DRA
     const expectedTotal = nation.has_dra ? 6 : 5;
@@ -281,7 +283,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     if (!nation) return false;
     
     // Calculate total slots
-    const totalSlots = nation.slots.sendTech + nation.slots.sendCash + nation.slots.getTech + nation.slots.getCash + nation.slots.untracked;
+    const totalSlots = nation.slots.sendTech + nation.slots.sendCash + nation.slots.getTech + nation.slots.getCash + nation.slots.external;
     
     // Expected total: 5 if no DRA, 6 if DRA
     const expectedTotal = nation.has_dra ? 6 : 5;
