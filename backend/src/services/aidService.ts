@@ -212,7 +212,7 @@ export class AidService {
     // Total slot capacity by nation
     const totalSlotsByNation = new Map<number, number>();
     activeNations.forEach(n => {
-      const total = n.slots.getCash + n.slots.getTech + n.slots.sendCash + n.slots.sendTech;
+      const total = n.slots.getCash + n.slots.getTech + n.slots.sendCash + n.slots.sendTech + n.slots.untracked;
       totalSlotsByNation.set(n.id, total);
     });
 
@@ -578,7 +578,8 @@ export class AidService {
       totalUnassigned: categorizedNations.reduce((sum, nation) => {
         const totalPossibleSlots = nation.has_dra ? 6 : 5;
         const assignedSlots = nation.slots.getCash + nation.slots.getTech + 
-                             nation.slots.sendCash + nation.slots.sendTech;
+                             nation.slots.sendCash + nation.slots.sendTech + 
+                             nation.slots.untracked;
         return sum + (totalPossibleSlots - assignedSlots);
       }, 0),
       // Internal alliance slot counts

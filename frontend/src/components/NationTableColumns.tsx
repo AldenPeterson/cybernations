@@ -212,7 +212,8 @@ export const createNationTableColumns = ({
     cell: ({ getValue, row }) => {
       // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
-                        row.original.slots.getTech + row.original.slots.getCash;
+                        row.original.slots.getTech + row.original.slots.getCash + 
+                        row.original.slots.untracked;
       const expectedTotal = row.original.has_dra ? 6 : 5;
       
       // Calculate validation directly
@@ -251,7 +252,8 @@ export const createNationTableColumns = ({
     cell: ({ getValue, row }) => {
       // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
-                        row.original.slots.getTech + row.original.slots.getCash;
+                        row.original.slots.getTech + row.original.slots.getCash + 
+                        row.original.slots.untracked;
       const expectedTotal = row.original.has_dra ? 6 : 5;
       
       // Calculate validation directly
@@ -289,7 +291,8 @@ export const createNationTableColumns = ({
     cell: ({ getValue, row }) => {
       // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
-                        row.original.slots.getTech + row.original.slots.getCash;
+                        row.original.slots.getTech + row.original.slots.getCash + 
+                        row.original.slots.untracked;
       const expectedTotal = row.original.has_dra ? 6 : 5;
       
       // Calculate validation directly
@@ -327,7 +330,8 @@ export const createNationTableColumns = ({
     cell: ({ getValue, row }) => {
       // Calculate validation directly in the column cell instead of relying on passed functions
       const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
-                        row.original.slots.getTech + row.original.slots.getCash;
+                        row.original.slots.getTech + row.original.slots.getCash + 
+                        row.original.slots.untracked;
       const expectedTotal = row.original.has_dra ? 6 : 5;
       
       // Calculate validation directly
@@ -339,6 +343,44 @@ export const createNationTableColumns = ({
           <EditableNumberInput
             value={getValue()}
             onChange={(value) => handleSlotChange(row.original.nation_id, 'getCash', value)}
+            min={0}
+            max={6}
+          />
+          {(hasErrors || hasWarnings) && (
+            <div className={`text-[10px] mt-0.5 font-semibold ${hasErrors ? 'text-red-500' : 'text-amber-500'}`}>
+              {totalSlots}/{expectedTotal}
+            </div>
+          )}
+        </div>
+      );
+    },
+    size: SLOT_COLUMN_SIZE,
+    enableSorting: true,
+  }),
+
+  // Untracked column (editable)
+  columnHelper.accessor('slots.untracked', {
+    header: () => (
+      <div className="leading-tight text-center">
+        <div>Untracked</div>
+      </div>
+    ),
+    cell: ({ getValue, row }) => {
+      // Calculate validation directly in the column cell instead of relying on passed functions
+      const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
+                        row.original.slots.getTech + row.original.slots.getCash + 
+                        row.original.slots.untracked;
+      const expectedTotal = row.original.has_dra ? 6 : 5;
+      
+      // Calculate validation directly
+      const hasErrors = totalSlots > expectedTotal; // Over-assignment blocks saving
+      const hasWarnings = totalSlots < expectedTotal; // Under-assignment shows warning
+      
+      return (
+        <div className="text-center">
+          <EditableNumberInput
+            value={getValue()}
+            onChange={(value) => handleSlotChange(row.original.nation_id, 'untracked', value)}
             min={0}
             max={6}
           />
@@ -366,7 +408,8 @@ export const createNationTableColumns = ({
           hasChanges={hasUnsavedChanges(row.original.nation_id)}
           hasValidationErrors={(() => {
             const totalSlots = row.original.slots.sendTech + row.original.slots.sendCash + 
-                              row.original.slots.getTech + row.original.slots.getCash;
+                              row.original.slots.getTech + row.original.slots.getCash + 
+                              row.original.slots.untracked;
             const expectedTotal = row.original.has_dra ? 6 : 5;
             return totalSlots > expectedTotal;
           })()}

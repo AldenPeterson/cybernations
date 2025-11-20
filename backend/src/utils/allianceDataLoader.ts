@@ -21,6 +21,7 @@ export interface AllianceData {
         sendCash: number;
         getTech: number;
         getCash: number;
+        untracked: number;
         send_priority?: number;
         receive_priority?: number;
       };
@@ -45,6 +46,7 @@ export interface NationData {
     sendCash: number;
     getTech: number;
     getCash: number;
+    untracked: number;
     send_priority?: number;
     receive_priority?: number;
   };
@@ -209,6 +211,7 @@ export function updateNationData(
       sendCash: 0,
       getTech: 0,
       getCash: 0,
+      untracked: 0,
       send_priority: 3,
       receive_priority: 3
     };
@@ -277,6 +280,7 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
         sendCash: 0,
         getTech: 0,
         getCash: 0,
+        untracked: 0,
         send_priority: 3,
         receive_priority: 3
       };

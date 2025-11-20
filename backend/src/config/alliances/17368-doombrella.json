@@ -13,6 +13,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -33,6 +34,7 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -53,6 +55,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
+        "untracked": 6,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -73,6 +76,7 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -93,6 +97,7 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 2
       },
@@ -112,6 +117,7 @@
         "sendCash": 2,
         "getTech": 4,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -129,9 +135,10 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 2,
-        "getTech": 4,
+        "sendCash": 1,
+        "getTech": 5,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 1,
         "receive_priority": 2
       },
@@ -147,12 +154,13 @@
       "nation_name": "New Budsland",
       "discord_handle": "",
       "has_dra": true,
-      "notes": "",
+      "notes": "AFK",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -172,6 +180,7 @@
         "sendCash": 2,
         "getTech": 4,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -192,6 +201,7 @@
         "sendCash": 1,
         "getTech": 5,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 2,
         "receive_priority": 1
       },
@@ -212,6 +222,7 @@
         "sendCash": 3,
         "getTech": 3,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 1,
         "receive_priority": 2
       },
@@ -233,6 +244,7 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -252,6 +264,7 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -273,6 +286,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
+        "untracked": 6,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -292,7 +306,8 @@
         "sendCash": 2,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 1,
+        "untracked": 4,
+        "send_priority": 3,
         "receive_priority": 3
       },
       "current_stats": {
@@ -313,7 +328,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
+        "untracked": 0,
+        "send_priority": 2,
         "receive_priority": 3
       },
       "current_stats": {
@@ -333,6 +349,7 @@
         "sendCash": 1,
         "getTech": 5,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -353,6 +370,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -372,6 +390,7 @@
         "sendCash": 2,
         "getTech": 4,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 1,
         "receive_priority": 2
       },
@@ -387,12 +406,13 @@
       "nation_name": "Wiggles",
       "discord_handle": "",
       "has_dra": true,
-      "notes": "",
+      "notes": "4x DoD",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 6,
+        "getTech": 2,
         "getCash": 0,
+        "untracked": 4,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -413,6 +433,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -433,7 +454,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 2,
+        "untracked": 0,
+        "send_priority": 1,
         "receive_priority": 2
       },
       "current_stats": {
@@ -453,7 +475,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
+        "untracked": 0,
+        "send_priority": 2,
         "receive_priority": 3
       },
       "current_stats": {
@@ -473,7 +496,8 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "send_priority": 3,
+        "untracked": 0,
+        "send_priority": 2,
         "receive_priority": 3
       },
       "current_stats": {
@@ -487,12 +511,13 @@
       "nation_name": "infinite desire",
       "discord_handle": "",
       "has_dra": true,
-      "notes": "",
+      "notes": "DS tech",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
+        "untracked": 6,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -513,6 +538,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -530,8 +556,9 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 1,
-        "getTech": 5,
+        "getTech": 0,
         "getCash": 0,
+        "untracked": 5,
         "send_priority": 1,
         "receive_priority": 2
       },
@@ -540,7 +567,7 @@
         "infrastructure": "12,000.00",
         "strength": "181369.884"
       },
-      "notes": ""
+      "notes": "DS tech 5x"
     },
     "502087": {
       "ruler_name": "Astryl",
@@ -553,6 +580,7 @@
         "sendCash": 2,
         "getTech": 4,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -569,9 +597,10 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 2,
-        "getTech": 0,
+        "sendCash": 1,
+        "getTech": 1,
         "getCash": 0,
+        "untracked": 4,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -590,8 +619,9 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 1,
-        "getTech": 0,
+        "getTech": 1,
         "getCash": 0,
+        "untracked": 4,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -609,10 +639,11 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 2,
+        "sendTech": 3,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 4,
+        "getCash": 3,
+        "untracked": 0,
         "send_priority": 2,
         "receive_priority": 1
       },
@@ -633,6 +664,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -649,9 +681,10 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 2,
-        "getTech": 0,
+        "sendCash": 1,
+        "getTech": 1,
         "getCash": 0,
+        "untracked": 4,
         "send_priority": 1,
         "receive_priority": 2
       },
@@ -673,6 +706,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -687,12 +721,13 @@
       "nation_name": "GreaterGoonSyndicate",
       "discord_handle": "",
       "has_dra": true,
-      "notes": "",
+      "notes": "3x DS",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 6,
+        "getTech": 3,
         "getCash": 0,
+        "untracked": 3,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -713,6 +748,7 @@
         "sendCash": 0,
         "getTech": 6,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -733,6 +769,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -753,6 +790,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -769,10 +807,11 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 2,
+        "sendTech": 6,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 4,
+        "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -793,6 +832,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -813,6 +853,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -833,6 +874,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -853,6 +895,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -872,6 +915,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
+        "untracked": 0,
         "send_priority": 2,
         "receive_priority": 2
       },
@@ -893,6 +937,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -913,6 +958,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -933,6 +979,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 4,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -953,6 +1000,7 @@
         "sendCash": 0,
         "getTech": 0,
         "getCash": 3,
+        "untracked": 0,
         "send_priority": 3,
         "receive_priority": 3
       },

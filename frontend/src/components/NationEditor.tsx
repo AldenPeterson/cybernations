@@ -100,7 +100,8 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       // Calculate total possible slots for this nation
       const totalPossibleSlots = nation.has_dra ? 6 : 5;
       const assignedSlots = nation.slots.getCash + nation.slots.getTech + 
-                           nation.slots.sendCash + nation.slots.sendTech;
+                           nation.slots.sendCash + nation.slots.sendTech + 
+                           nation.slots.untracked;
       acc.totalUnassigned += totalPossibleSlots - assignedSlots;
       
       return acc;
@@ -264,7 +265,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     if (!nation) return false;
     
     // Calculate total slots
-    const totalSlots = nation.slots.sendTech + nation.slots.sendCash + nation.slots.getTech + nation.slots.getCash;
+    const totalSlots = nation.slots.sendTech + nation.slots.sendCash + nation.slots.getTech + nation.slots.getCash + nation.slots.untracked;
     
     // Expected total: 5 if no DRA, 6 if DRA
     const expectedTotal = nation.has_dra ? 6 : 5;
@@ -280,7 +281,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
     if (!nation) return false;
     
     // Calculate total slots
-    const totalSlots = nation.slots.sendTech + nation.slots.sendCash + nation.slots.getTech + nation.slots.getCash;
+    const totalSlots = nation.slots.sendTech + nation.slots.sendCash + nation.slots.getTech + nation.slots.getCash + nation.slots.untracked;
     
     // Expected total: 5 if no DRA, 6 if DRA
     const expectedTotal = nation.has_dra ? 6 : 5;

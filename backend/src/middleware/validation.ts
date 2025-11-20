@@ -64,6 +64,12 @@ export const validateSlots = (req: Request, res: Response, next: NextFunction) =
         error: 'Invalid getCash value. Must be a number'
       });
     }
+    if (slots.untracked !== undefined && typeof slots.untracked !== 'number') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid untracked value. Must be a number'
+      });
+    }
     
     // Validate priority fields if they exist
     if (slots.send_priority !== undefined) {

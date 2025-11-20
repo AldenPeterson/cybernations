@@ -99,6 +99,7 @@ export class AllianceService {
         sendCash: 0,
         getTech: 0,
         getCash: 0,
+        untracked: 0,
         send_priority: 3,
         receive_priority: 3
       };
@@ -141,6 +142,7 @@ export class AllianceService {
         sendCash: 0,
         getTech: 0,
         getCash: 0,
+        untracked: 0,
         send_priority: 3,
         receive_priority: 3
       };
