@@ -42,7 +42,7 @@ describe('AidService', () => {
           activity: 'Active',
           nuclearWeapons: 10,
           governmentType: 'Democracy',
-          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
+          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, external: 0, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
         {
@@ -58,7 +58,7 @@ describe('AidService', () => {
           activity: 'Active',
           nuclearWeapons: 5,
           governmentType: 'Federal Government',
-          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
+          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, external: 0, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
         {
@@ -74,7 +74,7 @@ describe('AidService', () => {
           activity: 'Active',
           nuclearWeapons: 0,
           governmentType: 'Totalitarian State',
-          slots: { sendCash: 0, sendTech: 0, getCash: 6, getTech: 0, send_priority: 3, receive_priority: 3 },
+          slots: { sendCash: 0, sendTech: 0, getCash: 6, getTech: 0, external: 0, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
       ];
@@ -141,7 +141,7 @@ describe('AidService', () => {
           infrastructure: '1500',
           strength: '2000',
           activity: 'Active',
-          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
+          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, external: 0, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
         {
@@ -155,7 +155,7 @@ describe('AidService', () => {
           infrastructure: '1200',
           strength: '2500',
           activity: 'Active',
-          slots: { sendCash: 0, sendTech: 0, getCash: 6, getTech: 0, send_priority: 3, receive_priority: 3 },
+          slots: { sendCash: 0, sendTech: 0, getCash: 6, getTech: 0, external: 0, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
       ];
@@ -207,7 +207,7 @@ describe('AidService', () => {
           alliance: 'Test Alliance',
           allianceId: 123,
           inWarMode: true,
-          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
+          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, external: 0, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
         {
@@ -217,7 +217,7 @@ describe('AidService', () => {
           alliance: 'Test Alliance',
           allianceId: 123,
           inWarMode: false,
-          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
+          slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, external: 0, send_priority: 3, receive_priority: 3 },
           has_dra: false,
         },
       ];
@@ -240,7 +240,7 @@ describe('AidService', () => {
         technology: undefined,
         infrastructure: undefined,
         inWarMode: true,
-        slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
+        slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, external: 0, send_priority: 3, receive_priority: 3 },
       });
 
       expect(result[1]).toEqual({
@@ -250,7 +250,7 @@ describe('AidService', () => {
         technology: undefined,
         infrastructure: undefined,
         inWarMode: false,
-        slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, send_priority: 3, receive_priority: 3 },
+        slots: { sendCash: 2, sendTech: 0, getCash: 0, getTech: 4, external: 0, send_priority: 3, receive_priority: 3 },
       });
 
       // Both nations should be included for UI display

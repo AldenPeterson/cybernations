@@ -114,8 +114,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 2,
-        "getTech": 4,
+        "sendCash": 1,
+        "getTech": 5,
         "getCash": 0,
         "external": 0,
         "send_priority": 2,
@@ -177,8 +177,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 2,
-        "getTech": 4,
+        "sendCash": 0,
+        "getTech": 6,
         "getCash": 0,
         "external": 0,
         "send_priority": 2,
@@ -198,8 +198,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 1,
-        "getTech": 5,
+        "sendCash": 0,
+        "getTech": 6,
         "getCash": 0,
         "external": 0,
         "send_priority": 2,
@@ -219,8 +219,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 3,
-        "getTech": 3,
+        "sendCash": 2,
+        "getTech": 4,
         "getCash": 0,
         "external": 0,
         "send_priority": 1,
@@ -315,7 +315,7 @@
         "infrastructure": "19,999.99",
         "strength": "544202.102"
       },
-      "notes": "3x from DoD"
+      "notes": ""
     },
     "340559": {
       "ruler_name": "paperwings2007",
@@ -346,12 +346,12 @@
       "notes": "",
       "slots": {
         "sendTech": 0,
-        "sendCash": 1,
-        "getTech": 5,
+        "sendCash": 0,
+        "getTech": 6,
         "getCash": 0,
         "external": 0,
         "send_priority": 3,
-        "receive_priority": 3
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "20,743.97",
@@ -387,8 +387,8 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 2,
-        "getTech": 4,
+        "sendCash": 3,
+        "getTech": 3,
         "getCash": 0,
         "external": 0,
         "send_priority": 1,
@@ -414,7 +414,7 @@
         "getCash": 0,
         "external": 4,
         "send_priority": 3,
-        "receive_priority": 3
+        "receive_priority": 1
       },
       "current_stats": {
         "technology": "12,433.74",
@@ -434,7 +434,7 @@
         "getTech": 0,
         "getCash": 0,
         "external": 0,
-        "send_priority": 3,
+        "send_priority": 1,
         "receive_priority": 3
       },
       "current_stats": {
@@ -539,7 +539,7 @@
         "getTech": 0,
         "getCash": 0,
         "external": 0,
-        "send_priority": 3,
+        "send_priority": 1,
         "receive_priority": 3
       },
       "current_stats": {
@@ -555,10 +555,10 @@
       "has_dra": true,
       "slots": {
         "sendTech": 0,
-        "sendCash": 1,
+        "sendCash": 0,
         "getTech": 0,
         "getCash": 0,
-        "external": 5,
+        "external": 6,
         "send_priority": 1,
         "receive_priority": 2
       },
@@ -577,8 +577,8 @@
       "notes": "",
       "slots": {
         "sendTech": 0,
-        "sendCash": 2,
-        "getTech": 4,
+        "sendCash": 1,
+        "getTech": 5,
         "getCash": 0,
         "external": 0,
         "send_priority": 3,
@@ -721,13 +721,13 @@
       "nation_name": "GreaterGoonSyndicate",
       "discord_handle": "",
       "has_dra": true,
-      "notes": "3x DS",
+      "notes": "DS",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 3,
+        "getTech": 0,
         "getCash": 0,
-        "external": 3,
+        "external": 6,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -750,7 +750,7 @@
         "getCash": 0,
         "external": 0,
         "send_priority": 3,
-        "receive_priority": 3
+        "receive_priority": 2
       },
       "current_stats": {
         "technology": "13,657.89",
@@ -766,7 +766,7 @@
       "notes": "",
       "slots": {
         "sendTech": 0,
-        "sendCash": 0,
+        "sendCash": 6,
         "getTech": 0,
         "getCash": 0,
         "external": 0,
@@ -812,7 +812,7 @@
         "getTech": 0,
         "getCash": 0,
         "external": 0,
-        "send_priority": 3,
+        "send_priority": 2,
         "receive_priority": 3
       },
       "current_stats": {
@@ -973,13 +973,13 @@
       "nation_name": "TheLostNation",
       "discord_handle": "",
       "has_dra": true,
-      "notes": "",
+      "notes": "DS cash list",
       "slots": {
-        "sendTech": 4,
+        "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 2,
-        "external": 0,
+        "getCash": 0,
+        "external": 6,
         "send_priority": 3,
         "receive_priority": 3
       },
@@ -994,13 +994,13 @@
       "nation_name": "Twitch",
       "discord_handle": "",
       "has_dra": false,
-      "notes": "",
+      "notes": "DS cash",
       "slots": {
-        "sendTech": 2,
+        "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 3,
-        "external": 0,
+        "getCash": 2,
+        "external": 3,
         "send_priority": 3,
         "receive_priority": 3
       },
