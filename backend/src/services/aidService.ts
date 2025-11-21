@@ -1101,11 +1101,178 @@ export class AidService {
       }
     });
 
+    // Calculate unfilled/used aid slots by comparing assignment slots vs existing aid slots
+    // Use the existing maps that track internal offers and external offers separately
+    const unfilledSlots = {
+      sendCash: [] as Array<{ nation: any; assigned: number; used: number; unfilled: number }>,
+      sendTech: [] as Array<{ nation: any; assigned: number; used: number; unfilled: number }>,
+      getCash: [] as Array<{ nation: any; assigned: number; used: number; unfilled: number }>,
+      getTech: [] as Array<{ nation: any; assigned: number; used: number; unfilled: number }>,
+      external: [] as Array<{ nation: any; assigned: number; used: number; unfilled: number }>
+    };
+
+    // Also get actual aid slots to compare against assignment slots
+    const nationAidSlots = await getAidSlotsForAlliance(allianceId, nations, aidOffers);
+    
+    // Create a map of nation ID to aid slots for quick lookup
+    const aidSlotsByNation = new Map<number, typeof nationAidSlots[0]>();
+    nationAidSlots.forEach(nationAidSlots => {
+      aidSlotsByNation.set(nationAidSlots.nation.id, nationAidSlots);
+    });
+
+    // Process each alliance nation
+    allianceNationsOnly.forEach(nation => {
+      const slots = nation.slots || {};
+      
+      // Get used slots from existing maps (for internal tracked offers)
+      const sendCashUsed = outgoingCashExisting.get(nation.id) || 0;
+      const sendTechUsed = outgoingTechExisting.get(nation.id) || 0;
+      const getCashUsed = incomingCashExisting.get(nation.id) || 0;
+      const getTechUsed = incomingTechExisting.get(nation.id) || 0;
+      const externalUsed = externalOffersUsed.get(nation.id) || 0;
+      
+      // Also count from actual aid slots (to capture all offers, including those that might not be in the maps)
+      const nationAidSlotsData = aidSlotsByNation.get(nation.id);
+      let actualUsedSlots = {
+        sendCash: 0,
+        sendTech: 0,
+        getCash: 0,
+        getTech: 0,
+        external: 0
+      };
+
+      if (nationAidSlotsData) {
+        nationAidSlotsData.aidSlots.forEach(slot => {
+          if (slot.aidOffer && slot.aidOffer.status !== 'Expired') {
+            const isCash = slot.aidOffer.money > 0 && slot.aidOffer.technology === 0;
+            const isTech = slot.aidOffer.technology > 0;
+            
+            // Check if this is an internal alliance offer or external
+            const isInternal = slot.aidOffer.declaringAllianceId === allianceId && 
+                              slot.aidOffer.receivingAllianceId === allianceId;
+            
+            if (slot.isOutgoing) {
+              // Outgoing aid
+              if (isCash) {
+                actualUsedSlots.sendCash++;
+              } else if (isTech) {
+                actualUsedSlots.sendTech++;
+              }
+            } else {
+              // Incoming aid
+              if (isCash) {
+                actualUsedSlots.getCash++;
+              } else if (isTech) {
+                actualUsedSlots.getTech++;
+              }
+            }
+            
+            // Check for external offers (offers where sender or receiver is in different alliance)
+            if (!isInternal) {
+              actualUsedSlots.external++;
+            }
+          }
+        });
+      }
+
+      // Use the maximum of the two counts to ensure we capture all used slots
+      const finalUsedSlots = {
+        sendCash: Math.max(sendCashUsed, actualUsedSlots.sendCash),
+        sendTech: Math.max(sendTechUsed, actualUsedSlots.sendTech),
+        getCash: Math.max(getCashUsed, actualUsedSlots.getCash),
+        getTech: Math.max(getTechUsed, actualUsedSlots.getTech),
+        external: Math.max(externalUsed, actualUsedSlots.external)
+      };
+
+      // Calculate assigned and unfilled slots for each type
+      // Only include nations that are below their assigned usage (used < assigned)
+      const sendCashAssigned = Number(slots.sendCash) || 0;
+      const sendCashUnfilled = Math.max(0, sendCashAssigned - finalUsedSlots.sendCash);
+      if (sendCashAssigned > 0 && finalUsedSlots.sendCash < sendCashAssigned) {
+        unfilledSlots.sendCash.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          assigned: sendCashAssigned,
+          used: finalUsedSlots.sendCash,
+          unfilled: sendCashUnfilled
+        });
+      }
+
+      const sendTechAssigned = Number(slots.sendTech) || 0;
+      const sendTechUnfilled = Math.max(0, sendTechAssigned - finalUsedSlots.sendTech);
+      if (sendTechAssigned > 0 && finalUsedSlots.sendTech < sendTechAssigned) {
+        unfilledSlots.sendTech.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          assigned: sendTechAssigned,
+          used: finalUsedSlots.sendTech,
+          unfilled: sendTechUnfilled
+        });
+      }
+
+      const getCashAssigned = Number(slots.getCash) || 0;
+      const getCashUnfilled = Math.max(0, getCashAssigned - finalUsedSlots.getCash);
+      if (getCashAssigned > 0 && finalUsedSlots.getCash < getCashAssigned) {
+        unfilledSlots.getCash.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          assigned: getCashAssigned,
+          used: finalUsedSlots.getCash,
+          unfilled: getCashUnfilled
+        });
+      }
+
+      const getTechAssigned = Number(slots.getTech) || 0;
+      const getTechUnfilled = Math.max(0, getTechAssigned - finalUsedSlots.getTech);
+      if (getTechAssigned > 0 && finalUsedSlots.getTech < getTechAssigned) {
+        unfilledSlots.getTech.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          assigned: getTechAssigned,
+          used: finalUsedSlots.getTech,
+          unfilled: getTechUnfilled
+        });
+      }
+
+      const externalAssigned = Number(slots.external) || 0;
+      const externalUnfilled = Math.max(0, externalAssigned - finalUsedSlots.external);
+      if (externalAssigned > 0 && finalUsedSlots.external < externalAssigned) {
+        unfilledSlots.external.push({
+          nation: {
+            id: nation.id,
+            nationName: nation.nationName,
+            rulerName: nation.rulerName,
+            inWarMode: nation.inWarMode
+          },
+          assigned: externalAssigned,
+          used: finalUsedSlots.external,
+          unfilled: externalUnfilled
+        });
+      }
+    });
+
     return {
       recommendations,
       slotCounts,
       availableSlots,
-      mismatchedOffers
+      mismatchedOffers,
+      unfilledSlots
     };
   }
 

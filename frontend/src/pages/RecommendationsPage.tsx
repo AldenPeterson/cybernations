@@ -89,6 +89,26 @@ interface MismatchedOffers {
   externalMismatches: Array<{ nation: any; offers: MismatchedOffer[] }>;
 }
 
+interface UnfilledSlot {
+  nation: {
+    id: number;
+    nationName: string;
+    rulerName: string;
+    inWarMode: boolean;
+  };
+  assigned: number;
+  used: number;
+  unfilled: number;
+}
+
+interface UnfilledSlots {
+  sendCash: UnfilledSlot[];
+  sendTech: UnfilledSlot[];
+  getCash: UnfilledSlot[];
+  getTech: UnfilledSlot[];
+  external: UnfilledSlot[];
+}
+
 const RecommendationsPage: React.FC = () => {
   const { allianceId } = useParams<{ allianceId: string }>();
   const [alliance, setAlliance] = useState<Alliance | null>(null);
@@ -96,6 +116,7 @@ const RecommendationsPage: React.FC = () => {
   const [slotCounts, setSlotCounts] = useState<SlotCounts | null>(null);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlots | null>(null);
   const [mismatchedOffers, setMismatchedOffers] = useState<MismatchedOffers | null>(null);
+  const [unfilledSlots, setUnfilledSlots] = useState<UnfilledSlots | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [crossAllianceEnabled, setCrossAllianceEnabled] = useState<boolean>(true);
@@ -130,6 +151,7 @@ const RecommendationsPage: React.FC = () => {
           setSlotCounts(recommendationsData.slotCounts);
           setAvailableSlots(recommendationsData.availableSlots || null);
           setMismatchedOffers(recommendationsData.mismatchedOffers || null);
+          setUnfilledSlots(recommendationsData.unfilledSlots || null);
         }
       } catch (err) {
         console.error('Failed to fetch recommendations:', err);
@@ -743,6 +765,205 @@ const RecommendationsPage: React.FC = () => {
            mismatchedOffers.externalMismatches.length === 0 && (
             <div className="text-center p-3 text-slate-700 text-sm">
               No mismatched offers found. All offers map correctly to configured slots.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Unfilled/Used Aid Slots Section */}
+      {unfilledSlots && (
+        <div className="mb-5 p-4 bg-transparent rounded-lg border border-blue-300">
+          <h3 className="m-0 mb-4 text-lg font-bold text-blue-900">📊 Unfilled/Used Aid Slots</h3>
+          <p className="text-sm text-slate-700 mb-4">
+            Comparison of assigned slots (from configuration) vs used slots (from existing aid offers)
+          </p>
+          
+          {/* Send Types */}
+          <div className="mb-4">
+            <h4 className="text-sm font-bold mb-2 text-slate-900">Send Types</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Send Cash */}
+              {unfilledSlots.sendCash.length > 0 && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                  <div className="font-bold text-sm mb-2 text-yellow-900">
+                    💰 Send Cash
+                  </div>
+                  <div className="space-y-2">
+                    {unfilledSlots.sendCash.map((slot) => (
+                      <div key={slot.nation.id} className="text-sm">
+                        <div className="flex items-center justify-between gap-3 mb-1">
+                          <span className="text-slate-900">
+                            <a 
+                              href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-700 font-medium no-underline hover:underline"
+                            >
+                              {slot.nation.nationName}
+                            </a>
+                            {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                          </span>
+                        </div>
+                        <div className="ml-4 text-xs text-slate-600">
+                          Assigned: <span className="font-semibold">{slot.assigned}</span> | 
+                          Used: <span className="font-semibold">{slot.used}</span> | 
+                          Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-700' : 'text-slate-700'}`}>{slot.unfilled}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Send Tech */}
+              {unfilledSlots.sendTech.length > 0 && (
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded">
+                  <div className="font-bold text-sm mb-2 text-purple-900">
+                    🔬 Send Tech
+                  </div>
+                  <div className="space-y-2">
+                    {unfilledSlots.sendTech.map((slot) => (
+                      <div key={slot.nation.id} className="text-sm">
+                        <div className="flex items-center justify-between gap-3 mb-1">
+                          <span className="text-slate-900">
+                            <a 
+                              href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-700 font-medium no-underline hover:underline"
+                            >
+                              {slot.nation.nationName}
+                            </a>
+                            {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                          </span>
+                        </div>
+                        <div className="ml-4 text-xs text-slate-600">
+                          Assigned: <span className="font-semibold">{slot.assigned}</span> | 
+                          Used: <span className="font-semibold">{slot.used}</span> | 
+                          Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-700' : 'text-slate-700'}`}>{slot.unfilled}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Receive Types */}
+          <div className="mb-4">
+            <h4 className="text-sm font-bold mb-2 text-slate-900">Receive Types</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Get Cash */}
+              {unfilledSlots.getCash.length > 0 && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded">
+                  <div className="font-bold text-sm mb-2 text-green-900">
+                    💰 Get Cash
+                  </div>
+                  <div className="space-y-2">
+                    {unfilledSlots.getCash.map((slot) => (
+                      <div key={slot.nation.id} className="text-sm">
+                        <div className="flex items-center justify-between gap-3 mb-1">
+                          <span className="text-slate-900">
+                            <a 
+                              href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-700 font-medium no-underline hover:underline"
+                            >
+                              {slot.nation.nationName}
+                            </a>
+                            {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                          </span>
+                        </div>
+                        <div className="ml-4 text-xs text-slate-600">
+                          Assigned: <span className="font-semibold">{slot.assigned}</span> | 
+                          Used: <span className="font-semibold">{slot.used}</span> | 
+                          Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-700' : 'text-slate-700'}`}>{slot.unfilled}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Get Tech */}
+              {unfilledSlots.getTech.length > 0 && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+                  <div className="font-bold text-sm mb-2 text-blue-900">
+                    🔬 Get Tech
+                  </div>
+                  <div className="space-y-2">
+                    {unfilledSlots.getTech.map((slot) => (
+                      <div key={slot.nation.id} className="text-sm">
+                        <div className="flex items-center justify-between gap-3 mb-1">
+                          <span className="text-slate-900">
+                            <a 
+                              href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-700 font-medium no-underline hover:underline"
+                            >
+                              {slot.nation.nationName}
+                            </a>
+                            {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                          </span>
+                        </div>
+                        <div className="ml-4 text-xs text-slate-600">
+                          Assigned: <span className="font-semibold">{slot.assigned}</span> | 
+                          Used: <span className="font-semibold">{slot.used}</span> | 
+                          Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-700' : 'text-slate-700'}`}>{slot.unfilled}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* External */}
+          {unfilledSlots.external.length > 0 && (
+            <div>
+              <h4 className="text-sm font-bold mb-2 text-slate-900">External</h4>
+              <div className="p-3 bg-orange-50 border border-orange-200 rounded">
+                <div className="font-bold text-sm mb-2 text-orange-900">🌐 External</div>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {unfilledSlots.external.map((slot) => (
+                    <div key={slot.nation.id} className="text-sm">
+                      <div className="flex items-center justify-between gap-3 mb-1">
+                        <span className="text-slate-900">
+                          <a 
+                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 font-medium no-underline hover:underline"
+                          >
+                            {slot.nation.nationName}
+                          </a>
+                          {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                        </span>
+                      </div>
+                      <div className="ml-4 text-xs text-slate-600">
+                        Assigned: <span className="font-semibold">{slot.assigned}</span> | 
+                        Used: <span className="font-semibold">{slot.used}</span> | 
+                        Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-700' : 'text-slate-700'}`}>{slot.unfilled}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Show message if no unfilled slots data */}
+          {unfilledSlots.sendCash.length === 0 && 
+           unfilledSlots.sendTech.length === 0 && 
+           unfilledSlots.getCash.length === 0 && 
+           unfilledSlots.getTech.length === 0 && 
+           unfilledSlots.external.length === 0 && (
+            <div className="text-center p-3 text-slate-700 text-sm">
+              No slot data available.
             </div>
           )}
         </div>
