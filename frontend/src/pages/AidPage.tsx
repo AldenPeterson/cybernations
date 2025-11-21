@@ -276,11 +276,11 @@ const AidPage: React.FC = () => {
         technology = rec.previousOffer.technology;
         soldiers = rec.previousOffer.soldiers;
       } else {
-        // For new recommendations, use typical amounts based on type
+        // For new recommendations, use standard amounts based on type
         if (rec.type === 'new_cash' || rec.type === 'reestablish_cash') {
-          money = 3000000; // Typical cash aid amount
+          money = 9000000; // 9M cash aid amount
         } else if (rec.type === 'new_tech' || rec.type === 'reestablish_tech') {
-          technology = 50; // Typical tech aid amount
+          technology = 100; // 100 tech aid amount
         }
       }
 
