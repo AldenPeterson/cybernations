@@ -749,7 +749,7 @@
         "getTech": 6,
         "getCash": 0,
         "external": 0,
-        "send_priority": 3,
+        "send_priority": 2,
         "receive_priority": 2
       },
       "current_stats": {
