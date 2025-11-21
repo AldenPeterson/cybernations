@@ -69,6 +69,28 @@ interface AllianceAidStats {
   incomingSoldiers: number;
 }
 
+interface AidRecommendation {
+  sender: {
+    id: number;
+    nationName: string;
+    rulerName: string;
+  };
+  recipient: {
+    id: number;
+    nationName: string;
+    rulerName: string;
+  };
+  type: string;
+  priority: number;
+  reason: string;
+  previousOffer?: {
+    money: number;
+    technology: number;
+    soldiers: number;
+    reason: string;
+  };
+}
+
 const AidPage: React.FC = () => {
   const { allianceId } = useParams<{ allianceId: string }>();
   const [alliance, setAlliance] = useState<Alliance | null>(null);
@@ -78,6 +100,8 @@ const AidPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expirationFilter, setExpirationFilter] = useState<string[]>(['empty', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days']);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [recommendations, setRecommendations] = useState<AidRecommendation[]>([]);
 
   useEffect(() => {
     if (allianceId) {
@@ -137,6 +161,27 @@ const AidPage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (showRecommendations && allianceId) {
+      fetchRecommendations(parseInt(allianceId));
+    } else {
+      setRecommendations([]);
+    }
+  }, [showRecommendations, allianceId]);
+
+  const fetchRecommendations = async (id: number) => {
+    try {
+      const recommendationsData = await apiCallWithErrorHandling(API_ENDPOINTS.allianceRecommendations(id));
+      
+      if (recommendationsData.success) {
+        setRecommendations(recommendationsData.recommendations || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch recommendations:', err);
+      setRecommendations([]);
+    }
+  };
+
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
       return (num / 1000000).toFixed(1) + 'M';
@@ -181,13 +226,120 @@ const AidPage: React.FC = () => {
     return 'expired';
   };
 
+  const mergeRecommendationsIntoSlots = (nationAidSlots: NationAidSlots[]): NationAidSlots[] => {
+    if (!showRecommendations || recommendations.length === 0) {
+      return nationAidSlots;
+    }
+
+    // Helper function to create a recommendation offer
+    const createRecommendationOffer = (rec: AidRecommendation, nationId: number): AidOffer => {
+      const isOutgoingRec = rec.sender.id === nationId;
+      
+      // Determine aid amounts from recommendation type or previousOffer
+      let money = 0;
+      let technology = 0;
+      let soldiers = 0;
+
+      if (rec.previousOffer) {
+        money = rec.previousOffer.money;
+        technology = rec.previousOffer.technology;
+        soldiers = rec.previousOffer.soldiers;
+      } else {
+        // For new recommendations, use typical amounts based on type
+        if (rec.type === 'new_cash' || rec.type === 'reestablish_cash') {
+          money = 3000000; // Typical cash aid amount
+        } else if (rec.type === 'new_tech' || rec.type === 'reestablish_tech') {
+          technology = 50; // Typical tech aid amount
+        }
+      }
+
+      return {
+        aidId: -1, // Negative ID to indicate it's a recommendation
+        targetNation: isOutgoingRec ? rec.recipient.nationName : rec.sender.nationName,
+        targetRuler: isOutgoingRec ? rec.recipient.rulerName : rec.sender.rulerName,
+        targetId: isOutgoingRec ? rec.recipient.id : rec.sender.id,
+        declaringId: rec.sender.id,
+        receivingId: rec.recipient.id,
+        money,
+        technology,
+        soldiers,
+        reason: rec.reason,
+        date: '', // Recommendations don't have dates yet
+        isExpired: false,
+      };
+    };
+
+    // Process each nation's slots and add recommendations to empty slots
+    // Note: Recommendations can appear in both sender and recipient rows (like real offers)
+    return nationAidSlots.map(nationAidSlots => {
+      const nationId = nationAidSlots.nation.id;
+      const updatedSlots = [...nationAidSlots.aidSlots];
+
+      // Find all recommendations where this nation is involved
+      // For outgoing: this nation is the sender
+      // For incoming: this nation is the recipient
+      const outgoingRecs = recommendations
+        .filter(rec => rec.sender.id === nationId)
+        .sort((a, b) => a.priority - b.priority);
+
+      const incomingRecs = recommendations
+        .filter(rec => rec.recipient.id === nationId)
+        .sort((a, b) => a.priority - b.priority);
+
+      // Track indices for each direction (per nation)
+      let outgoingIndex = 0;
+      let incomingIndex = 0;
+
+      // Fill empty slots with recommendations (prioritize outgoing, then incoming)
+      updatedSlots.forEach(slot => {
+        if (!slot.aidOffer) {
+          let recToAssign: AidRecommendation | null = null;
+
+          // Try outgoing recommendations first
+          if (outgoingIndex < outgoingRecs.length) {
+            recToAssign = outgoingRecs[outgoingIndex];
+            outgoingIndex++;
+          }
+          // If no outgoing available, try incoming
+          else if (incomingIndex < incomingRecs.length) {
+            recToAssign = incomingRecs[incomingIndex];
+            incomingIndex++;
+          }
+
+          if (recToAssign) {
+            const isOutgoingRec = recToAssign.sender.id === nationId;
+            slot.aidOffer = createRecommendationOffer(recToAssign, nationId);
+            slot.isOutgoing = isOutgoingRec;
+          }
+        }
+      });
+
+      return {
+        ...nationAidSlots,
+        aidSlots: updatedSlots
+      };
+    });
+  };
+
   const getFilteredAidSlots = (): NationAidSlots[] => {
     if (expirationFilter.length === 0) return [];
 
-    return aidSlots.filter(nationAidSlots => {
+    let slots = aidSlots;
+
+    // Merge recommendations if enabled
+    if (showRecommendations) {
+      slots = mergeRecommendationsIntoSlots(slots);
+    }
+
+    return slots.filter(nationAidSlots => {
       return nationAidSlots.aidSlots.some(slot => {
         if (!slot.aidOffer) {
           return expirationFilter.includes('empty');
+        }
+        
+        // Recommendations are always shown (they don't have expiration dates yet)
+        if (slot.aidOffer.aidId < 0) {
+          return true;
         }
         
         const days = slot.aidOffer.daysUntilExpiration || 0;
@@ -316,6 +468,24 @@ const AidPage: React.FC = () => {
         </div>
       )}
 
+      {/* Show Recommendations Checkbox */}
+      <div className="mb-5">
+        <label className="flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showRecommendations}
+            onChange={(e) => setShowRecommendations(e.target.checked)}
+            className="mr-2 w-4 h-4 cursor-pointer"
+          />
+          <span className="font-bold">Show aid recommendations</span>
+        </label>
+        {showRecommendations && (
+          <p className="text-sm text-gray-600 mt-1">
+            Recommendations are displayed with a dashed border and "RECOMMENDED" label.
+          </p>
+        )}
+      </div>
+
       {/* Expiration Filter */}
       <div className="mb-5">
         <div className="flex items-center mb-2">
@@ -432,17 +602,30 @@ const AidPage: React.FC = () => {
                       const isExpired = slot.aidOffer ? slot.aidOffer.isExpired : false;
                       const hasDRA = nationAidSlots.aidSlots.length === 6;
                       const isBlackCell = !hasDRA && slot.slotNumber > 5;
+                      const isRecommendation = slot.aidOffer && slot.aidOffer.aidId < 0;
                       
                       return (
                       <td 
                         key={slot.slotNumber}
                         className={columnClasses.aidSlot}
-                        style={{ backgroundColor: isBlackCell ? '#000000' : (slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff') }}
+                        style={{ 
+                          backgroundColor: isBlackCell ? '#000000' : (slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff'),
+                          borderStyle: isRecommendation ? 'dashed' : 'solid',
+                          borderWidth: isRecommendation ? '2px' : '1px',
+                          borderColor: isRecommendation ? '#f59e0b' : 'inherit'
+                        }}
                       >
                         {isBlackCell ? (
                           <span className="text-white">N/A</span>
                         ) : slot.aidOffer ? (
                           <div className="text-xs">
+                            {isRecommendation && (
+                              <div className="mb-1">
+                                <span className="text-xs font-bold bg-amber-100 text-amber-800 px-1 py-0.5 rounded-sm border border-amber-300">
+                                  RECOMMENDED
+                                </span>
+                              </div>
+                            )}
                             <div 
                               className="font-bold mb-1"
                               style={{ color: isExpired ? '#d32f2f' : (slot.isOutgoing ? '#1976d2' : '#7b1fa2') }}
@@ -468,11 +651,18 @@ const AidPage: React.FC = () => {
                                 <span className="text-gray-600 ml-1"> - {slot.aidOffer.reason}</span>
                               )}
                             </div>
-                            <div 
-                              className={`text-[10px] ${isExpired ? 'text-red-600 font-bold' : 'text-gray-600 font-normal'}`}
-                            >
-                              Expires: {slot.aidOffer.expirationDate} ({slot.aidOffer.daysUntilExpiration} days)
-                            </div>
+                            {!isRecommendation && (
+                              <div 
+                                className={`text-[10px] ${isExpired ? 'text-red-600 font-bold' : 'text-gray-600 font-normal'}`}
+                              >
+                                Expires: {slot.aidOffer.expirationDate} ({slot.aidOffer.daysUntilExpiration} days)
+                              </div>
+                            )}
+                            {isRecommendation && (
+                              <div className="text-[10px] text-amber-700 font-semibold italic">
+                                Pending recommendation
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <span className="text-gray-400">Empty</span>
