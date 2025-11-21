@@ -336,14 +336,18 @@ const AidPage: React.FC = () => {
       const nationId = nationAidSlots.nation.id;
       const updatedSlots = [...nationAidSlots.aidSlots];
 
+      // Track which recommendations have been assigned to THIS nation's slots to prevent duplicates
+      // Key format: "senderId-recipientId" to uniquely identify each recommendation pair
+      const assignedForThisNation = new Set<string>();
+
       // Find all recommendations where this nation is involved
       // For outgoing: this nation is the sender
       // For incoming: this nation is the recipient
-      const outgoingRecs = (recommendations || [])
+      const allOutgoingRecs = (recommendations || [])
         .filter(rec => rec.sender.id === nationId)
         .sort((a, b) => a.priority - b.priority);
 
-      const incomingRecs = (recommendations || [])
+      const allIncomingRecs = (recommendations || [])
         .filter(rec => rec.recipient.id === nationId)
         .sort((a, b) => a.priority - b.priority);
 
@@ -357,18 +361,36 @@ const AidPage: React.FC = () => {
         if (!slot.aidOffer) {
           let recToAssign: AidRecommendation | null = null;
 
-          // Try outgoing recommendations first
-          if (outgoingIndex < outgoingRecs.length) {
-            recToAssign = outgoingRecs[outgoingIndex];
+          // Try outgoing recommendations first, skipping ones already assigned
+          while (outgoingIndex < allOutgoingRecs.length) {
+            const candidate = allOutgoingRecs[outgoingIndex];
+            const recKey = `${candidate.sender.id}-${candidate.recipient.id}`;
+            if (!assignedForThisNation.has(recKey)) {
+              recToAssign = candidate;
+              assignedForThisNation.add(recKey);
+              outgoingIndex++;
+              break;
+            }
             outgoingIndex++;
           }
-          // If no outgoing available, try incoming
-          else if (incomingIndex < incomingRecs.length) {
-            recToAssign = incomingRecs[incomingIndex];
-            incomingIndex++;
+
+          // If no outgoing available, try incoming, skipping ones already assigned
+          if (!recToAssign) {
+            while (incomingIndex < allIncomingRecs.length) {
+              const candidate = allIncomingRecs[incomingIndex];
+              const recKey = `${candidate.sender.id}-${candidate.recipient.id}`;
+              if (!assignedForThisNation.has(recKey)) {
+                recToAssign = candidate;
+                assignedForThisNation.add(recKey);
+                incomingIndex++;
+                break;
+              }
+              incomingIndex++;
+            }
           }
+
           // If no regular recommendations, try external slots
-          else if (externalSlotsRemaining > 0) {
+          if (!recToAssign && externalSlotsRemaining > 0) {
             slot.aidOffer = createExternalSlotOffer(nationId);
             slot.isOutgoing = true; // External slots are typically outgoing
             externalSlotsRemaining--;
