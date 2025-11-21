@@ -76,6 +76,7 @@ interface MismatchedOffer {
   type: 'cash' | 'tech';
   date: string;
   reason: string;
+  mismatchReason?: string;
 }
 
 interface MismatchedOffers {
@@ -554,6 +555,9 @@ const RecommendationsPage: React.FC = () => {
                             {offer.receivingNation}
                           </a>
                           {' '}({offer.receivingRuler}): ${(offer.money / 1000000).toFixed(2)}M
+                          {offer.mismatchReason && (
+                            <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -592,6 +596,9 @@ const RecommendationsPage: React.FC = () => {
                             {offer.receivingNation}
                           </a>
                           {' '}({offer.receivingRuler}): {offer.technology} tech
+                          {offer.mismatchReason && (
+                            <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -630,6 +637,9 @@ const RecommendationsPage: React.FC = () => {
                             {offer.declaringNation}
                           </a>
                           {' '}({offer.declaringRuler}): ${(offer.money / 1000000).toFixed(2)}M
+                          {offer.mismatchReason && (
+                            <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -668,6 +678,9 @@ const RecommendationsPage: React.FC = () => {
                             {offer.declaringNation}
                           </a>
                           {' '}({offer.declaringRuler}): {offer.technology} tech
+                          {offer.mismatchReason && (
+                            <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                          )}
                         </div>
                       ))}
                     </div>

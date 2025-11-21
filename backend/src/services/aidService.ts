@@ -778,26 +778,50 @@ export class AidService {
         const isCash = offer.money > 0 && offer.technology === 0; // Only cash if no tech
         const offerType = isTech ? 'tech' : 'cash'; // Prioritize tech
 
-        // Track outgoing offers
-        if (senderNation) {
+        // Track outgoing offers - track all offers for mismatch detection
+        if (senderNation && receiverNation) {
+          const receiverSlots = receiverNation.slots || {};
+          const receiverGetCash = Number(receiverSlots.getCash) || 0;
+          const receiverGetTech = Number(receiverSlots.getTech) || 0;
+          
           if (isCash) {
             if (!sendCashOffersByNation.has(offer.declaringId)) {
               sendCashOffersByNation.set(offer.declaringId, []);
             }
+            const receiverExternal = Number(receiverSlots.external) || 0;
+            const receiverGetTech = Number(receiverSlots.getTech) || 0;
+            const receiverSendCash = Number(receiverSlots.sendCash) || 0;
+            const receiverSendTech = Number(receiverSlots.sendTech) || 0;
             sendCashOffersByNation.get(offer.declaringId)!.push({
               ...offer,
               direction: 'sent',
-              type: 'cash'
+              type: 'cash',
+              receiverHasMatchingSlot: receiverGetCash > 0,
+              receiverGetCash,
+              receiverGetTech,
+              receiverSendCash,
+              receiverSendTech,
+              receiverExternal
             });
           }
           if (isTech) {
             if (!sendTechOffersByNation.has(offer.declaringId)) {
               sendTechOffersByNation.set(offer.declaringId, []);
             }
+            const receiverExternal = Number(receiverSlots.external) || 0;
+            const receiverGetCash = Number(receiverSlots.getCash) || 0;
+            const receiverSendCash = Number(receiverSlots.sendCash) || 0;
+            const receiverSendTech = Number(receiverSlots.sendTech) || 0;
             sendTechOffersByNation.get(offer.declaringId)!.push({
               ...offer,
               direction: 'sent',
-              type: 'tech'
+              type: 'tech',
+              receiverHasMatchingSlot: receiverGetTech > 0,
+              receiverGetTech,
+              receiverGetCash,
+              receiverSendCash,
+              receiverSendTech,
+              receiverExternal
             });
           }
           
@@ -812,26 +836,48 @@ export class AidService {
           });
         }
 
-        // Track incoming offers
-        if (receiverNation) {
+        // Track incoming offers - track all offers for mismatch detection
+        if (senderNation && receiverNation) {
+          const senderSlots = senderNation.slots || {};
+          const senderSendCash = Number(senderSlots.sendCash) || 0;
+          const senderSendTech = Number(senderSlots.sendTech) || 0;
+          
           if (isCash) {
             if (!getCashOffersByNation.has(offer.receivingId)) {
               getCashOffersByNation.set(offer.receivingId, []);
             }
+            const senderExternal = Number(senderSlots.external) || 0;
+            const senderGetCash = Number(senderSlots.getCash) || 0;
+            const senderGetTech = Number(senderSlots.getTech) || 0;
             getCashOffersByNation.get(offer.receivingId)!.push({
               ...offer,
               direction: 'received',
-              type: 'cash'
+              type: 'cash',
+              senderHasMatchingSlot: senderSendCash > 0,
+              senderSendCash,
+              senderSendTech,
+              senderGetCash,
+              senderGetTech,
+              senderExternal
             });
           }
           if (isTech) {
             if (!getTechOffersByNation.has(offer.receivingId)) {
               getTechOffersByNation.set(offer.receivingId, []);
             }
+            const senderExternal = Number(senderSlots.external) || 0;
+            const senderGetCash = Number(senderSlots.getCash) || 0;
+            const senderGetTech = Number(senderSlots.getTech) || 0;
             getTechOffersByNation.get(offer.receivingId)!.push({
               ...offer,
               direction: 'received',
-              type: 'tech'
+              type: 'tech',
+              senderHasMatchingSlot: senderSendTech > 0,
+              senderSendTech,
+              senderSendCash,
+              senderGetCash,
+              senderGetTech,
+              senderExternal
             });
           }
           
@@ -850,11 +896,43 @@ export class AidService {
 
     // Find offers that exceed configured slots for each slot type
     allianceNationsOnly.forEach(nation => {
+      // Ensure slots exist and are numbers
+      const slots = nation.slots || {};
+      
       // Send Cash mismatches
-      const sendCashAssigned = nation.slots.sendCash || 0;
+      const sendCashAssigned = Number(slots.sendCash) || 0;
       const sendCashOffers = sendCashOffersByNation.get(nation.id) || [];
-      if (sendCashOffers.length > sendCashAssigned) {
-        const excessOffers = sendCashOffers.slice(sendCashAssigned);
+      // Flag offers that exceed configured slots OR where receiver doesn't have matching receive slots
+      const sendCashMismatches = sendCashOffers
+        .map((offer, index) => {
+          const exceedsSlots = index >= sendCashAssigned;
+          const receiverMismatch = !offer.receiverHasMatchingSlot;
+          
+          let mismatchReason = '';
+          if (exceedsSlots && receiverMismatch) {
+            // Both issues: exceeds slots AND receiver doesn't have getCash
+            mismatchReason = `sender has ${index + 1}/${sendCashAssigned} send cash, receiver has no getCash slots`;
+          } else if (exceedsSlots) {
+            // Only exceeds slots - receiver has getCash but sender sent too many
+            mismatchReason = `sender has ${index + 1}/${sendCashAssigned} send cash`;
+          } else if (receiverMismatch) {
+            // Receiver doesn't have getCash slots - show what they have instead
+            const receiverSlotParts: string[] = [];
+            if (offer.receiverSendCash > 0) receiverSlotParts.push(`${offer.receiverSendCash}x sendCash`);
+            if (offer.receiverSendTech > 0) receiverSlotParts.push(`${offer.receiverSendTech}x sendTech`);
+            if (offer.receiverGetTech > 0) receiverSlotParts.push(`${offer.receiverGetTech}x getTech`);
+            if (offer.receiverExternal > 0) receiverSlotParts.push(`${offer.receiverExternal}x external`);
+            if (receiverSlotParts.length > 0) {
+              mismatchReason = `receiver has no getCash slots (has ${receiverSlotParts.join(', ')})`;
+            } else {
+              mismatchReason = 'receiver has no getCash slots';
+            }
+          }
+          
+          return { ...offer, mismatchReason };
+        })
+        .filter((offer, index) => index >= sendCashAssigned || !offer.receiverHasMatchingSlot);
+      if (sendCashMismatches.length > 0) {
         mismatchedOffers.allianceOffers.sendCash.push({
           nation: {
             id: nation.id,
@@ -862,15 +940,44 @@ export class AidService {
             rulerName: nation.rulerName,
             inWarMode: nation.inWarMode
           },
-          offers: excessOffers
+          offers: sendCashMismatches
         });
       }
 
       // Send Tech mismatches
-      const sendTechAssigned = nation.slots.sendTech || 0;
+      const sendTechAssigned = Number(slots.sendTech) || 0;
       const sendTechOffers = sendTechOffersByNation.get(nation.id) || [];
-      if (sendTechOffers.length > sendTechAssigned) {
-        const excessOffers = sendTechOffers.slice(sendTechAssigned);
+      // Flag offers that exceed configured slots OR where receiver doesn't have matching receive slots
+      const sendTechMismatches = sendTechOffers
+        .map((offer, index) => {
+          const exceedsSlots = index >= sendTechAssigned;
+          const receiverMismatch = !offer.receiverHasMatchingSlot;
+          
+          let mismatchReason = '';
+          if (exceedsSlots && receiverMismatch) {
+            // Both issues: exceeds slots AND receiver doesn't have getTech
+            mismatchReason = `sender has ${index + 1}/${sendTechAssigned} send tech, receiver has no getTech slots`;
+          } else if (exceedsSlots) {
+            // Only exceeds slots - receiver has getTech but sender sent too many
+            mismatchReason = `sender has ${index + 1}/${sendTechAssigned} send tech`;
+          } else if (receiverMismatch) {
+            // Receiver doesn't have getTech slots - show what they have instead
+            const receiverSlotParts: string[] = [];
+            if (offer.receiverSendCash > 0) receiverSlotParts.push(`${offer.receiverSendCash}x sendCash`);
+            if (offer.receiverSendTech > 0) receiverSlotParts.push(`${offer.receiverSendTech}x sendTech`);
+            if (offer.receiverGetCash > 0) receiverSlotParts.push(`${offer.receiverGetCash}x getCash`);
+            if (offer.receiverExternal > 0) receiverSlotParts.push(`${offer.receiverExternal}x external`);
+            if (receiverSlotParts.length > 0) {
+              mismatchReason = `receiver has no getTech slots (has ${receiverSlotParts.join(', ')})`;
+            } else {
+              mismatchReason = 'receiver has no getTech slots';
+            }
+          }
+          
+          return { ...offer, mismatchReason };
+        })
+        .filter((offer, index) => index >= sendTechAssigned || !offer.receiverHasMatchingSlot);
+      if (sendTechMismatches.length > 0) {
         mismatchedOffers.allianceOffers.sendTech.push({
           nation: {
             id: nation.id,
@@ -878,15 +985,44 @@ export class AidService {
             rulerName: nation.rulerName,
             inWarMode: nation.inWarMode
           },
-          offers: excessOffers
+          offers: sendTechMismatches
         });
       }
 
       // Get Cash mismatches
-      const getCashAssigned = nation.slots.getCash || 0;
+      const getCashAssigned = Number(slots.getCash) || 0;
       const getCashOffers = getCashOffersByNation.get(nation.id) || [];
-      if (getCashOffers.length > getCashAssigned) {
-        const excessOffers = getCashOffers.slice(getCashAssigned);
+      // Flag offers that exceed configured slots OR where sender doesn't have matching send slots
+      const getCashMismatches = getCashOffers
+        .map((offer, index) => {
+          const exceedsSlots = index >= getCashAssigned;
+          const senderMismatch = !offer.senderHasMatchingSlot;
+          
+          let mismatchReason = '';
+          if (exceedsSlots && senderMismatch) {
+            // Both issues: exceeds slots AND sender doesn't have sendCash
+            mismatchReason = `receiver has ${index + 1}/${getCashAssigned} get cash, sender has no sendCash slots`;
+          } else if (exceedsSlots) {
+            // Only exceeds slots - sender has sendCash but receiver received too many
+            mismatchReason = `receiver has ${index + 1}/${getCashAssigned} get cash`;
+          } else if (senderMismatch) {
+            // Sender doesn't have sendCash slots - show what they have instead
+            const senderSlotParts: string[] = [];
+            if (offer.senderSendTech > 0) senderSlotParts.push(`${offer.senderSendTech}x sendTech`);
+            if (offer.senderGetCash > 0) senderSlotParts.push(`${offer.senderGetCash}x getCash`);
+            if (offer.senderGetTech > 0) senderSlotParts.push(`${offer.senderGetTech}x getTech`);
+            if (offer.senderExternal > 0) senderSlotParts.push(`${offer.senderExternal}x external`);
+            if (senderSlotParts.length > 0) {
+              mismatchReason = `sender has no sendCash slots (has ${senderSlotParts.join(', ')})`;
+            } else {
+              mismatchReason = 'sender has no sendCash slots';
+            }
+          }
+          
+          return { ...offer, mismatchReason };
+        })
+        .filter((offer, index) => index >= getCashAssigned || !offer.senderHasMatchingSlot);
+      if (getCashMismatches.length > 0) {
         mismatchedOffers.allianceOffers.getCash.push({
           nation: {
             id: nation.id,
@@ -894,15 +1030,44 @@ export class AidService {
             rulerName: nation.rulerName,
             inWarMode: nation.inWarMode
           },
-          offers: excessOffers
+          offers: getCashMismatches
         });
       }
 
       // Get Tech mismatches
-      const getTechAssigned = nation.slots.getTech || 0;
+      const getTechAssigned = Number(slots.getTech) || 0;
       const getTechOffers = getTechOffersByNation.get(nation.id) || [];
-      if (getTechOffers.length > getTechAssigned) {
-        const excessOffers = getTechOffers.slice(getTechAssigned);
+      // Flag offers that exceed configured slots OR where sender doesn't have matching send slots
+      const getTechMismatches = getTechOffers
+        .map((offer, index) => {
+          const exceedsSlots = index >= getTechAssigned;
+          const senderMismatch = !offer.senderHasMatchingSlot;
+          
+          let mismatchReason = '';
+          if (exceedsSlots && senderMismatch) {
+            // Both issues: exceeds slots AND sender doesn't have sendTech
+            mismatchReason = `receiver has ${index + 1}/${getTechAssigned} get tech, sender has no sendTech slots`;
+          } else if (exceedsSlots) {
+            // Only exceeds slots - sender has sendTech but receiver received too many
+            mismatchReason = `receiver has ${index + 1}/${getTechAssigned} get tech`;
+          } else if (senderMismatch) {
+            // Sender doesn't have sendTech slots - show what they have instead
+            const senderSlotParts: string[] = [];
+            if (offer.senderSendCash > 0) senderSlotParts.push(`${offer.senderSendCash}x sendCash`);
+            if (offer.senderGetCash > 0) senderSlotParts.push(`${offer.senderGetCash}x getCash`);
+            if (offer.senderGetTech > 0) senderSlotParts.push(`${offer.senderGetTech}x getTech`);
+            if (offer.senderExternal > 0) senderSlotParts.push(`${offer.senderExternal}x external`);
+            if (senderSlotParts.length > 0) {
+              mismatchReason = `sender has no sendTech slots (has ${senderSlotParts.join(', ')})`;
+            } else {
+              mismatchReason = 'sender has no sendTech slots';
+            }
+          }
+          
+          return { ...offer, mismatchReason };
+        })
+        .filter((offer, index) => index >= getTechAssigned || !offer.senderHasMatchingSlot);
+      if (getTechMismatches.length > 0) {
         mismatchedOffers.allianceOffers.getTech.push({
           nation: {
             id: nation.id,
@@ -910,16 +1075,16 @@ export class AidService {
             rulerName: nation.rulerName,
             inWarMode: nation.inWarMode
           },
-          offers: excessOffers
+          offers: getTechMismatches
         });
       }
 
       // External mismatches: nations with external slots configured but internal offers that exceed tracked slots
-      const externalAssigned = nation.slots.external || 0;
+      const externalAssigned = Number(slots.external) || 0;
       const internalOffers = internalOffersByNation.get(nation.id) || [];
       // Calculate total tracked slots (excluding external)
-      const totalTrackedSlots = (nation.slots.sendCash || 0) + (nation.slots.sendTech || 0) + 
-                                (nation.slots.getCash || 0) + (nation.slots.getTech || 0);
+      const totalTrackedSlots = (Number(slots.sendCash) || 0) + (Number(slots.sendTech) || 0) + 
+                                (Number(slots.getCash) || 0) + (Number(slots.getTech) || 0);
       // Only flag if external slots are configured AND internal offers exceed tracked slots
       if (externalAssigned > 0 && internalOffers.length > totalTrackedSlots) {
         // Only show the offers that exceed the tracked slots

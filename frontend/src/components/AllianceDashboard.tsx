@@ -138,6 +138,7 @@ interface MismatchedOffer {
   type: 'cash' | 'tech';
   date: string;
   reason: string;
+  mismatchReason?: string;
 }
 
 interface MismatchedOffers {
@@ -1016,6 +1017,9 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
                                 {offer.receivingNation}
                               </a>
                               {' '}({offer.receivingRuler}): ${(offer.money / 1000000).toFixed(2)}M
+                              {offer.mismatchReason && (
+                                <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1054,6 +1058,9 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
                                 {offer.receivingNation}
                               </a>
                               {' '}({offer.receivingRuler}): {offer.technology} tech
+                              {offer.mismatchReason && (
+                                <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1092,6 +1099,9 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
                                 {offer.declaringNation}
                               </a>
                               {' '}({offer.declaringRuler}): ${(offer.money / 1000000).toFixed(2)}M
+                              {offer.mismatchReason && (
+                                <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1130,6 +1140,9 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
                                 {offer.declaringNation}
                               </a>
                               {' '}({offer.declaringRuler}): {offer.technology} tech
+                              {offer.mismatchReason && (
+                                <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1175,6 +1188,9 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
                               </a>
                               {' '}({offer.direction === 'sent' ? offer.receivingRuler : offer.declaringRuler}):{' '}
                               {offer.type === 'cash' ? `$${(offer.money / 1000000).toFixed(2)}M` : `${offer.technology} tech`}
+                              {offer.mismatchReason && (
+                                <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                              )}
                             </div>
                           ))}
                         </div>
