@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 
 interface Alliance {
@@ -93,6 +93,7 @@ interface AidRecommendation {
 
 const AidPage: React.FC = () => {
   const { allianceId } = useParams<{ allianceId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [alliance, setAlliance] = useState<Alliance | null>(null);
   const [aidSlots, setAidSlots] = useState<NationAidSlots[]>([]);
   const [allianceStats, setAllianceStats] = useState<AllianceStats | null>(null);
@@ -102,6 +103,32 @@ const AidPage: React.FC = () => {
   const [expirationFilter, setExpirationFilter] = useState<string[]>(['empty', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days']);
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [recommendations, setRecommendations] = useState<AidRecommendation[]>([]);
+
+  // Helper function to parse boolean from URL parameter
+  const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
+    if (value === null) return defaultValue;
+    return value.toLowerCase() === 'true';
+  };
+
+  // Helper function to update URL parameters
+  const updateUrlParams = useCallback((updates: Record<string, string | null>) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === '') {
+        newSearchParams.delete(key);
+      } else {
+        newSearchParams.set(key, value);
+      }
+    });
+    
+    setSearchParams(newSearchParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  // Initialize showRecommendations from URL parameter (only once on mount)
+  useEffect(() => {
+    setShowRecommendations(parseBooleanParam(searchParams.get('showRecommendations')));
+  }, []); // Empty dependency array - only run on mount
 
   useEffect(() => {
     if (allianceId) {
@@ -474,7 +501,11 @@ const AidPage: React.FC = () => {
           <input
             type="checkbox"
             checked={showRecommendations}
-            onChange={(e) => setShowRecommendations(e.target.checked)}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setShowRecommendations(checked);
+              updateUrlParams({ showRecommendations: checked ? 'true' : null });
+            }}
             className="mr-2 w-4 h-4 cursor-pointer"
           />
           <span className="font-bold">Show aid recommendations</span>
