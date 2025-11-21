@@ -237,6 +237,10 @@ const AidPage: React.FC = () => {
     aidSlot: 'p-3 border border-slate-300 text-center text-white font-bold'
   };
 
+  // Calculate equal width for each of the 6 aid slot columns
+  // Nation column is 120px, so each slot gets: (100% - 120px) / 6
+  const slotWidth = 'calc((100% - 120px) / 6)';
+
   const getExpirationCategory = (days: number): string => {
     if (days < 0) return 'expired';
     if (days === 0) return 'today';
@@ -581,14 +585,14 @@ const AidPage: React.FC = () => {
         <div>
           <h2>Aid Slots by Nation</h2>
           <div className="overflow-x-auto w-full max-w-none">
-            <table className="border-collapse border border-slate-300 text-sm w-full">
+            <table className="border-collapse border border-slate-300 text-sm w-full" style={{ tableLayout: 'fixed' }}>
               <thead>
                 <tr className="bg-gray-800">
                   <th className={headerClasses.nation}>
                     Nation
                   </th>
                   {[1, 2, 3, 4, 5, 6].map(slotNum => (
-                    <th key={slotNum} className={headerClasses.aidSlot}>
+                    <th key={slotNum} className={headerClasses.aidSlot} style={{ width: slotWidth }}>
                       Slot {slotNum}
                       <br />
                       <small className="text-gray-300">
@@ -640,6 +644,7 @@ const AidPage: React.FC = () => {
                         key={slot.slotNumber}
                         className={columnClasses.aidSlot}
                         style={{ 
+                          width: slotWidth,
                           backgroundColor: isBlackCell ? '#000000' : (slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff'),
                           borderStyle: isRecommendation ? 'dashed' : 'solid',
                           borderWidth: isRecommendation ? '2px' : '1px',
