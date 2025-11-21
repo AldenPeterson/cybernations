@@ -59,26 +59,36 @@ export interface NationData {
 
 /**
  * Get the path to the alliances directory
+ * Tries multiple possible paths to work in both development and production (Vercel) environments
  */
-function getAlliancesDirectory(): string {
-  return path.join(process.cwd(), 'src', 'config', 'alliances');
+function getAlliancesDirectory(): string | null {
+  // Try multiple possible paths for different environments
+  const possiblePaths = [
+    path.join(process.cwd(), 'src', 'config', 'alliances'),
+    path.join(process.cwd(), 'dist', 'config', 'alliances'),
+    path.join(__dirname, '..', 'config', 'alliances'),
+    path.join(__dirname, '..', '..', 'config', 'alliances'),
+    path.join(process.cwd(), 'config', 'alliances')
+  ];
+  
+  for (const possiblePath of possiblePaths) {
+    if (fs.existsSync(possiblePath)) {
+      return possiblePath;
+    }
+  }
+  
+  return null;
 }
 
 /**
  * Load all alliance files
  */
 export function loadAllAlliances(): Map<number, AllianceData> {
-  // Skip file operations in serverless environments like Vercel
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    console.log('Skipping alliance data load in serverless environment');
-    return new Map<number, AllianceData>();
-  }
-
   const alliancesDir = getAlliancesDirectory();
   const alliances = new Map<number, AllianceData>();
   
-  if (!fs.existsSync(alliancesDir)) {
-    console.warn('Alliances directory does not exist:', alliancesDir);
+  if (!alliancesDir) {
+    console.warn('Alliances directory not found in any expected location');
     return alliances;
   }
   
@@ -103,7 +113,7 @@ export function loadAllAlliances(): Map<number, AllianceData> {
 export function loadAllianceById(allianceId: number): AllianceData | null {
   const alliancesDir = getAlliancesDirectory();
   
-  if (!fs.existsSync(alliancesDir)) {
+  if (!alliancesDir) {
     return null;
   }
   
@@ -135,6 +145,11 @@ export function saveAllianceData(allianceData: AllianceData): boolean {
   }
 
   const alliancesDir = getAlliancesDirectory();
+  
+  if (!alliancesDir) {
+    console.error('Alliances directory not found, cannot save alliance data');
+    return false;
+  }
   
   try {
     if (!fs.existsSync(alliancesDir)) {
