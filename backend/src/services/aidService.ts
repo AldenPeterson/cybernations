@@ -68,9 +68,10 @@ export class AidService {
     // If using raw data, need to categorize them
     const categorizedNations = useJsonData ? nations : categorizeNations(nations);
     
-    // Get existing aid offers (exclude expired)
+    // Get existing aid offers (exclude expired and cancelled)
     const existingOffers = aidOffers.filter(offer => 
       offer.status !== 'Expired' && 
+      offer.status !== 'Cancelled' &&
       (offer.declaringAllianceId === allianceId || offer.receivingAllianceId === allianceId)
     );
 
@@ -105,7 +106,7 @@ export class AidService {
   /**
    * Get aid recommendations for an alliance
    */
-  static async getAidRecommendations(allianceId: number, crossAllianceEnabled: boolean = true) {
+  static async getAidRecommendations(allianceId: number, crossAllianceEnabled: boolean = false) {
     const { nations, aidOffers, useJsonData } = await AllianceService.getAllianceDataWithJsonPriority(allianceId);
     
     if (nations.length === 0) {
@@ -176,7 +177,25 @@ export class AidService {
     // Create a set to track recommendation pairs to prevent duplicates within the same generation cycle
     const recommendationPairs = new Set();
 
-    // Count active aid offers per nation (both incoming and outgoing)
+    // Get actual aid slots to count ALL offers (regardless of type) against total capacity
+    const actualNationAidSlots = await getAidSlotsForAlliance(allianceId, nations, aidOffers);
+    
+    // Count actual filled slots per nation (all offers, regardless of type or configuration)
+    const actualFilledSlotsByNation = new Map<number, number>();
+    // Track total available slots per nation (5 or 6 based on DRA)
+    const totalAvailableSlotsByNation = new Map<number, number>();
+    
+    actualNationAidSlots.forEach(nationAidSlots => {
+      const nationId = nationAidSlots.nation.id;
+      // Count how many slots are actually filled (have an aid offer)
+      const filledSlots = nationAidSlots.aidSlots.filter(slot => slot.aidOffer !== null).length;
+      actualFilledSlotsByNation.set(nationId, filledSlots);
+      // Total slots = 5 or 6 based on DRA
+      const totalSlots = nationAidSlots.aidSlots.length;
+      totalAvailableSlotsByNation.set(nationId, totalSlots);
+    });
+    
+    // Also maintain nationAidCounts for backward compatibility (tracked offers only)
     const nationAidCounts = new Map<number, number>();
     existingOffers.forEach(offer => {
       // Only count tracked offers (both sender and receiver in same alliance)
@@ -260,7 +279,18 @@ export class AidService {
     const hasOutgoingCashCapacity = (senderId: number, senderSlots: any): boolean => {
       const existing = outgoingCashExisting.get(senderId) || 0;
       const planned = recOutgoingCash.get(senderId) || 0;
-      return existing + planned < senderSlots.sendCash;
+      const typeCapacity = existing + planned < senderSlots.sendCash;
+      
+      // Check total capacity using actual filled slots (all offers, regardless of type or configuration)
+      // This accounts for offers that don't match the configured slot type
+      // Total slots = 5 or 6 based on DRA, and ALL offers (incoming + outgoing, any type) count against it
+      const actualFilled = actualFilledSlotsByNation.get(senderId) || 0;
+      const totalPlanned = recommendationCounts.get(senderId) || 0;
+      const totalAvailable = totalAvailableSlotsByNation.get(senderId) || 0;
+      const totalCapacity = actualFilled + totalPlanned < totalAvailable;
+      
+      // Must pass both checks: type-specific capacity AND total capacity
+      return typeCapacity && totalCapacity;
     };
 
     const hasIncomingCashCapacity = (recipientId: number, recipientSlots: any): boolean => {
@@ -272,7 +302,20 @@ export class AidService {
     const hasOutgoingTechCapacity = (senderId: number, senderSlots: any): boolean => {
       const existing = outgoingTechExisting.get(senderId) || 0;
       const planned = recOutgoingTech.get(senderId) || 0;
-      return existing + planned < senderSlots.sendTech;
+      // Strict check: existing + planned must be strictly less than assigned slots
+      // This ensures we never exceed capacity (e.g., if 3 existing + 3 planned = 6, and slots = 6, we stop)
+      const typeCapacity = existing + planned < senderSlots.sendTech;
+      
+      // Check total capacity using actual filled slots (all offers, regardless of type or configuration)
+      // This accounts for offers that don't match the configured slot type
+      // Total slots = 5 or 6 based on DRA, and ALL offers (incoming + outgoing, any type) count against it
+      const actualFilled = actualFilledSlotsByNation.get(senderId) || 0;
+      const totalPlanned = recommendationCounts.get(senderId) || 0;
+      const totalAvailable = totalAvailableSlotsByNation.get(senderId) || 0;
+      const totalCapacity = actualFilled + totalPlanned < totalAvailable;
+      
+      // Must pass both checks: type-specific capacity AND total capacity
+      return typeCapacity && totalCapacity;
     };
 
     const hasIncomingTechCapacity = (recipientId: number, recipientSlots: any): boolean => {
@@ -513,10 +556,20 @@ export class AidService {
     const sortedInternalTechRecipients = internalNationsThatShouldGetTechnology.sort((a, b) => a.slots.receive_priority - b.slots.receive_priority);
     
     sortedInternalTechSenders.forEach(sender => {
+      // Check sender capacity before entering recipient loop
+      if (!hasOutgoingTechCapacity(sender.id, sender.slots)) {
+        return; // Skip this sender entirely if they're at capacity
+      }
+      
       sortedInternalTechRecipients.forEach(recipient => {
+        // Check capacity before processing to avoid unnecessary iterations
+        if (!canRecommendTech(sender, recipient)) {
+          return; // Skip if sender or recipient is at capacity
+        }
+        
         const pair = `${Math.min(sender.id, recipient.id)}-${Math.max(sender.id, recipient.id)}`;
         
-        if (!existingPairs.has(pair) && !expiredPairs.has(pair) && !recommendationPairs.has(pair) && canRecommendTech(sender, recipient)) {
+        if (!existingPairs.has(pair) && !expiredPairs.has(pair) && !recommendationPairs.has(pair)) {
           recommendations.push({
             priority: 3,
             type: 'new_tech',
@@ -541,6 +594,11 @@ export class AidService {
           });
           incrementCounts(sender.id, recipient.id, 'tech');
           recommendationPairs.add(pair);
+          
+          // After adding a recommendation, check if sender is now at capacity and break
+          if (!hasOutgoingTechCapacity(sender.id, sender.slots)) {
+            return; // Break out of recipient loop if sender is now at capacity
+          }
         }
       });
     });
@@ -603,7 +661,7 @@ export class AidService {
         !nation.inWarMode ? sum + nation.slots.sendCash : sum, 0),
       totalSendTechPeaceMode: categorizedNations.reduce((sum, nation) => 
         !nation.inWarMode ? sum + nation.slots.sendTech : sum, 0),
-      totalUnassigned: categorizedNations.reduce((sum, nation) => {
+      totalUnassigned: internalNations.reduce((sum, nation) => {
         const totalPossibleSlots = nation.has_dra ? 6 : 5;
         const assignedSlots = nation.slots.getCash + nation.slots.getTech + 
                              nation.slots.sendCash + nation.slots.sendTech + 

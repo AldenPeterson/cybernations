@@ -84,7 +84,7 @@ const labelClass = 'text-gray-600 text-sm';
 const SlotCountsSummary: React.FC<SlotCountsSummaryProps> = ({ 
   slotCounts, 
   title = "Total Slot Types",
-  crossAllianceEnabled = true,
+  crossAllianceEnabled = false,
   onCrossAllianceToggle
 }) => {
   // Filter out unassigned if it's not provided or is 0

@@ -119,7 +119,7 @@ const RecommendationsPage: React.FC = () => {
   const [unfilledSlots, setUnfilledSlots] = useState<UnfilledSlots | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [crossAllianceEnabled, setCrossAllianceEnabled] = useState<boolean>(true);
+  const [crossAllianceEnabled, setCrossAllianceEnabled] = useState<boolean>(false);
 
   useEffect(() => {
     if (allianceId) {

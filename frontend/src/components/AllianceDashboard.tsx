@@ -174,7 +174,7 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expirationFilter, setExpirationFilter] = useState<string[]>(['empty', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days']);
-  const [crossAllianceEnabled, setCrossAllianceEnabled] = useState<boolean>(true);
+  const [crossAllianceEnabled, setCrossAllianceEnabled] = useState<boolean>(false);
 
   useEffect(() => {
     fetchAlliances();
