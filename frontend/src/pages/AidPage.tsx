@@ -103,6 +103,7 @@ const AidPage: React.FC = () => {
   const [expirationFilter, setExpirationFilter] = useState<string[]>(['empty', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days']);
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [recommendations, setRecommendations] = useState<AidRecommendation[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<{ external?: Array<{ nation: { id: number; nationName: string; rulerName: string; inWarMode: boolean }; available: number }> } | null>(null);
 
   // Helper function to parse boolean from URL parameter
   const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
@@ -193,6 +194,7 @@ const AidPage: React.FC = () => {
       fetchRecommendations(parseInt(allianceId));
     } else {
       setRecommendations([]);
+      setAvailableSlots(null);
     }
   }, [showRecommendations, allianceId]);
 
@@ -202,10 +204,12 @@ const AidPage: React.FC = () => {
       
       if (recommendationsData.success) {
         setRecommendations(recommendationsData.recommendations || []);
+        setAvailableSlots(recommendationsData.availableSlots || null);
       }
     } catch (err) {
       console.error('Failed to fetch recommendations:', err);
       setRecommendations([]);
+      setAvailableSlots(null);
     }
   };
 
@@ -258,7 +262,7 @@ const AidPage: React.FC = () => {
   };
 
   const mergeRecommendationsIntoSlots = (nationAidSlots: NationAidSlots[]): NationAidSlots[] => {
-    if (!showRecommendations || recommendations.length === 0) {
+    if (!showRecommendations) {
       return nationAidSlots;
     }
 
@@ -300,6 +304,32 @@ const AidPage: React.FC = () => {
       };
     };
 
+    // Helper function to create an external slot recommendation offer
+    const createExternalSlotOffer = (nationId: number): AidOffer => {
+      return {
+        aidId: -2, // -2 to indicate it's an external slot recommendation
+        targetNation: 'External Aid',
+        targetRuler: 'Available',
+        targetId: 0,
+        declaringId: nationId,
+        receivingId: 0,
+        money: 0,
+        technology: 0,
+        soldiers: 0,
+        reason: 'External aid slot available',
+        date: '',
+        isExpired: false,
+      };
+    };
+
+    // Create a map of nations with external slots available
+    const externalSlotsMap = new Map<number, number>();
+    if (availableSlots?.external) {
+      availableSlots.external.forEach(extSlot => {
+        externalSlotsMap.set(extSlot.nation.id, extSlot.available);
+      });
+    }
+
     // Process each nation's slots and add recommendations to empty slots
     // Note: Recommendations can appear in both sender and recipient rows (like real offers)
     return nationAidSlots.map(nationAidSlots => {
@@ -309,19 +339,20 @@ const AidPage: React.FC = () => {
       // Find all recommendations where this nation is involved
       // For outgoing: this nation is the sender
       // For incoming: this nation is the recipient
-      const outgoingRecs = recommendations
+      const outgoingRecs = (recommendations || [])
         .filter(rec => rec.sender.id === nationId)
         .sort((a, b) => a.priority - b.priority);
 
-      const incomingRecs = recommendations
+      const incomingRecs = (recommendations || [])
         .filter(rec => rec.recipient.id === nationId)
         .sort((a, b) => a.priority - b.priority);
 
       // Track indices for each direction (per nation)
       let outgoingIndex = 0;
       let incomingIndex = 0;
+      let externalSlotsRemaining = externalSlotsMap.get(nationId) || 0;
 
-      // Fill empty slots with recommendations (prioritize outgoing, then incoming)
+      // Fill empty slots with recommendations (prioritize outgoing, then incoming, then external)
       updatedSlots.forEach(slot => {
         if (!slot.aidOffer) {
           let recToAssign: AidRecommendation | null = null;
@@ -335,6 +366,12 @@ const AidPage: React.FC = () => {
           else if (incomingIndex < incomingRecs.length) {
             recToAssign = incomingRecs[incomingIndex];
             incomingIndex++;
+          }
+          // If no regular recommendations, try external slots
+          else if (externalSlotsRemaining > 0) {
+            slot.aidOffer = createExternalSlotOffer(nationId);
+            slot.isOutgoing = true; // External slots are typically outgoing
+            externalSlotsRemaining--;
           }
 
           if (recToAssign) {
@@ -638,6 +675,7 @@ const AidPage: React.FC = () => {
                       const hasDRA = nationAidSlots.aidSlots.length === 6;
                       const isBlackCell = !hasDRA && slot.slotNumber > 5;
                       const isRecommendation = slot.aidOffer && slot.aidOffer.aidId < 0;
+                      const isExternalSlot = slot.aidOffer && slot.aidOffer.aidId === -2;
                       
                       return (
                       <td 
@@ -657,8 +695,12 @@ const AidPage: React.FC = () => {
                           <div className="text-xs">
                             {isRecommendation && (
                               <div className="mb-1">
-                                <span className="text-xs font-bold bg-amber-100 text-amber-800 px-1 py-0.5 rounded-sm border border-amber-300">
-                                  RECOMMENDED
+                                <span className={`text-xs font-bold px-1 py-0.5 rounded-sm border ${
+                                  isExternalSlot 
+                                    ? 'bg-purple-100 text-purple-800 border-purple-300' 
+                                    : 'bg-amber-100 text-amber-800 border-amber-300'
+                                }`}>
+                                  {isExternalSlot ? 'EXTERNAL SLOT' : 'RECOMMENDED'}
                                 </span>
                               </div>
                             )}
@@ -666,27 +708,40 @@ const AidPage: React.FC = () => {
                               className="font-bold mb-1"
                               style={{ color: isExpired ? '#d32f2f' : (slot.isOutgoing ? '#1976d2' : '#7b1fa2') }}
                             >
-                              {slot.isOutgoing ? '→ ' : '← '}
-                              <a 
-                                href={`https://www.cybernations.net/search_aid.asp?search=${slot.aidOffer.targetId || 'undefined'}&Extended=1`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="no-underline hover:underline"
-                                style={{ color: 'inherit' }}
-                              >
-                                {slot.aidOffer.targetNation}
-                              </a>
-                              <span className="text-gray-600 font-normal"> / {slot.aidOffer.targetRuler}</span>
+                              {!isExternalSlot && (slot.isOutgoing ? '→ ' : '← ')}
+                              {isExternalSlot ? (
+                                <span>{slot.aidOffer.targetNation}</span>
+                              ) : (
+                                <>
+                                  <a 
+                                    href={`https://www.cybernations.net/search_aid.asp?search=${slot.aidOffer.targetId || 'undefined'}&Extended=1`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="no-underline hover:underline"
+                                    style={{ color: 'inherit' }}
+                                  >
+                                    {slot.aidOffer.targetNation}
+                                  </a>
+                                  <span className="text-gray-600 font-normal"> / {slot.aidOffer.targetRuler}</span>
+                                </>
+                              )}
                               {isExpired && <span className="text-red-600 text-[10px]"> (EXPIRED)</span>}
                             </div>
-                            <div className="mb-1 text-[11px]">
-                              <span className="text-green-900 font-bold bg-green-50 px-1 py-0.5 rounded-sm">
-                                {formatAidValue(slot.aidOffer.money, slot.aidOffer.technology, slot.aidOffer.soldiers)}
-                              </span>
-                              {slot.aidOffer.reason && (
-                                <span className="text-gray-600 ml-1"> - {slot.aidOffer.reason}</span>
-                              )}
-                            </div>
+                            {!isExternalSlot && (
+                              <div className="mb-1 text-[11px]">
+                                <span className="text-green-900 font-bold bg-green-50 px-1 py-0.5 rounded-sm">
+                                  {formatAidValue(slot.aidOffer.money, slot.aidOffer.technology, slot.aidOffer.soldiers)}
+                                </span>
+                                {slot.aidOffer.reason && (
+                                  <span className="text-gray-600 ml-1"> - {slot.aidOffer.reason}</span>
+                                )}
+                              </div>
+                            )}
+                            {isExternalSlot && (
+                              <div className="mb-1 text-[11px] text-purple-700 font-semibold">
+                                {slot.aidOffer.reason}
+                              </div>
+                            )}
                             {!isRecommendation && (
                               <div 
                                 className={`text-[10px] ${isExpired ? 'text-red-600 font-bold' : 'text-gray-600 font-normal'}`}
@@ -694,9 +749,14 @@ const AidPage: React.FC = () => {
                                 Expires: {slot.aidOffer.expirationDate} ({slot.aidOffer.daysUntilExpiration} days)
                               </div>
                             )}
-                            {isRecommendation && (
+                            {isRecommendation && !isExternalSlot && (
                               <div className="text-[10px] text-amber-700 font-semibold italic">
                                 Pending recommendation
+                              </div>
+                            )}
+                            {isExternalSlot && (
+                              <div className="text-[10px] text-purple-700 font-semibold italic">
+                                Available for external aid
                               </div>
                             )}
                           </div>
