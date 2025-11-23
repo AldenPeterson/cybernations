@@ -296,7 +296,18 @@ export class AidService {
     const hasIncomingCashCapacity = (recipientId: number, recipientSlots: any): boolean => {
       const existing = incomingCashExisting.get(recipientId) || 0;
       const planned = recIncomingCash.get(recipientId) || 0;
-      return existing + planned < recipientSlots.getCash;
+      const typeCapacity = existing + planned < recipientSlots.getCash;
+      
+      // Check total capacity using actual filled slots (all offers, regardless of type or configuration)
+      // This accounts for offers that don't match the configured slot type
+      // Total slots = 5 or 6 based on DRA, and ALL offers (incoming + outgoing, any type) count against it
+      const actualFilled = actualFilledSlotsByNation.get(recipientId) || 0;
+      const totalPlanned = recommendationCounts.get(recipientId) || 0;
+      const totalAvailable = totalAvailableSlotsByNation.get(recipientId) || 0;
+      const totalCapacity = actualFilled + totalPlanned < totalAvailable;
+      
+      // Must pass both checks: type-specific capacity AND total capacity
+      return typeCapacity && totalCapacity;
     };
 
     const hasOutgoingTechCapacity = (senderId: number, senderSlots: any): boolean => {
@@ -321,7 +332,18 @@ export class AidService {
     const hasIncomingTechCapacity = (recipientId: number, recipientSlots: any): boolean => {
       const existing = incomingTechExisting.get(recipientId) || 0;
       const planned = recIncomingTech.get(recipientId) || 0;
-      return existing + planned < recipientSlots.getTech;
+      const typeCapacity = existing + planned < recipientSlots.getTech;
+      
+      // Check total capacity using actual filled slots (all offers, regardless of type or configuration)
+      // This accounts for offers that don't match the configured slot type
+      // Total slots = 5 or 6 based on DRA, and ALL offers (incoming + outgoing, any type) count against it
+      const actualFilled = actualFilledSlotsByNation.get(recipientId) || 0;
+      const totalPlanned = recommendationCounts.get(recipientId) || 0;
+      const totalAvailable = totalAvailableSlotsByNation.get(recipientId) || 0;
+      const totalCapacity = actualFilled + totalPlanned < totalAvailable;
+      
+      // Must pass both checks: type-specific capacity AND total capacity
+      return typeCapacity && totalCapacity;
     };
 
     const incrementCounts = (senderId: number, recipientId: number, type: 'cash' | 'tech') => {

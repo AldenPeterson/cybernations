@@ -9,12 +9,12 @@
       "has_dra": true,
       "notes": "",
       "slots": {
-        "sendTech": 6,
-        "sendCash": 0,
+        "sendTech": 4,
+        "sendCash": 2,
         "getTech": 0,
         "getCash": 0,
         "external": 0,
-        "send_priority": 3,
+        "send_priority": 2,
         "receive_priority": 3
       },
       "current_stats": {
@@ -39,9 +39,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "19,237.26",
+        "technology": "19,437.26",
         "infrastructure": "10,052.42",
-        "strength": "142578.075"
+        "strength": "144068.075"
       }
     },
     "127226": {
@@ -95,9 +95,9 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 6,
+        "getTech": 4,
         "getCash": 0,
-        "external": 0,
+        "external": 2,
         "send_priority": 3,
         "receive_priority": 2
       },
@@ -122,9 +122,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "26,695.59",
+        "technology": "26,795.59",
         "infrastructure": "14,999.99",
-        "strength": "191618.452"
+        "strength": "193658.452"
       },
       "notes": ""
     },
@@ -185,9 +185,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "28,501.01",
-        "infrastructure": "9,999.99",
-        "strength": "189460.959"
+        "technology": "28,901.01",
+        "infrastructure": "11,999.99",
+        "strength": "202620.479"
       },
       "notes": ""
     },
@@ -208,7 +208,7 @@
       "current_stats": {
         "technology": "20,714.66",
         "infrastructure": "11,999.99",
-        "strength": "155173.499"
+        "strength": "155993.499"
       },
       "notes": ""
     },
@@ -227,9 +227,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "30,562.75",
+        "technology": "30,762.75",
         "infrastructure": "9,499.99",
-        "strength": "199830.471"
+        "strength": "201320.471"
       },
       "notes": ""
     },
@@ -269,9 +269,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "41,541.73",
+        "technology": "41,941.73",
         "infrastructure": "7,999.99",
-        "strength": "241899.606"
+        "strength": "243899.606"
       },
       "notes": "broke"
     },
@@ -291,9 +291,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "121,587.43",
+        "technology": "121,787.43",
         "infrastructure": "32,299.99",
-        "strength": "752145.317"
+        "strength": "753145.317"
       }
     },
     "334182": {
@@ -329,13 +329,13 @@
         "getTech": 0,
         "getCash": 0,
         "external": 0,
-        "send_priority": 3,
+        "send_priority": 2,
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "1,920.56",
+        "technology": "1,820.56",
         "infrastructure": "4,299.99",
-        "strength": "37542.128"
+        "strength": "38642.128"
       }
     },
     "342957": {
@@ -371,13 +371,13 @@
         "getTech": 0,
         "getCash": 0,
         "external": 0,
-        "send_priority": 2,
+        "send_priority": 1,
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "0.77",
+        "technology": "100.77",
         "infrastructure": "2,999.99",
-        "strength": "13363.556"
+        "strength": "13643.556"
       }
     },
     "374321": {
@@ -438,9 +438,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "28.58",
+        "technology": "110.08",
         "infrastructure": "13,999.99",
-        "strength": "50154.041"
+        "strength": "52081.541"
       }
     },
     "433854": {
@@ -461,7 +461,7 @@
       "current_stats": {
         "technology": "100.02",
         "infrastructure": "9,999.99",
-        "strength": "39049.5"
+        "strength": "38749.5"
       }
     },
     "445021": {
@@ -497,13 +497,13 @@
         "getTech": 0,
         "getCash": 0,
         "external": 0,
-        "send_priority": 2,
+        "send_priority": 1,
         "receive_priority": 3
       },
       "current_stats": {
         "technology": "110.89",
         "infrastructure": "1,599.99",
-        "strength": "8522.033"
+        "strength": "9322.033"
       }
     },
     "470323": {
@@ -543,9 +543,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "93.04",
+        "technology": "100.04",
         "infrastructure": "5,262.76",
-        "strength": "20495.207"
+        "strength": "19530.207"
       }
     },
     "484851": {
@@ -556,18 +556,18 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 0,
+        "getTech": 2,
         "getCash": 0,
-        "external": 6,
+        "external": 4,
         "send_priority": 1,
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "24,667.20",
+        "technology": "24,867.20",
         "infrastructure": "12,000.00",
-        "strength": "181369.884"
+        "strength": "182369.884"
       },
-      "notes": "DS tech 5x"
+      "notes": "DS tech too"
     },
     "502087": {
       "ruler_name": "Astryl",
@@ -605,9 +605,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "29,954.24",
+        "technology": "30,054.24",
         "infrastructure": "19,999.99",
-        "strength": "232477.791"
+        "strength": "234297.791"
       },
       "notes": ""
     },
@@ -623,12 +623,12 @@
         "getCash": 0,
         "external": 4,
         "send_priority": 2,
-        "receive_priority": 2
+        "receive_priority": 3
       },
       "current_stats": {
-        "technology": "60,026.21",
+        "technology": "60,126.21",
         "infrastructure": "19,999.99",
-        "strength": "404311.076"
+        "strength": "405291.076"
       },
       "notes": ""
     },
@@ -648,9 +648,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "9.28",
+        "technology": "100.28",
         "infrastructure": "1,717.80",
-        "strength": "5759.611"
+        "strength": "6224.611"
       }
     },
     "582974": {
@@ -671,7 +671,7 @@
       "current_stats": {
         "technology": "0.00",
         "infrastructure": "4,068.06",
-        "strength": "16844.281"
+        "strength": "19567.101"
       }
     },
     "585631": {
@@ -725,16 +725,16 @@
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
-        "getTech": 0,
+        "getTech": 2,
         "getCash": 0,
-        "external": 6,
+        "external": 4,
         "send_priority": 3,
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "17,800.12",
+        "technology": "18,100.12",
         "infrastructure": "13,999.99",
-        "strength": "160199.653"
+        "strength": "161699.653"
       }
     },
     "626860": {
@@ -753,9 +753,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "13,657.89",
-        "infrastructure": "3,999.99",
-        "strength": "94139.423"
+        "technology": "13,857.89",
+        "infrastructure": "7,999.99",
+        "strength": "107339.423"
       }
     },
     "634284": {
@@ -776,7 +776,7 @@
       "current_stats": {
         "technology": "3,659.96",
         "infrastructure": "6,642.61",
-        "strength": "52350.359"
+        "strength": "52630.359"
       }
     },
     "635159": {
@@ -812,7 +812,7 @@
         "getTech": 0,
         "getCash": 0,
         "external": 0,
-        "send_priority": 2,
+        "send_priority": 1,
         "receive_priority": 3
       },
       "current_stats": {
@@ -833,7 +833,7 @@
         "getTech": 0,
         "getCash": 0,
         "external": 0,
-        "send_priority": 2,
+        "send_priority": 1,
         "receive_priority": 2
       },
       "current_stats": {
@@ -879,9 +879,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "200.61",
+        "technology": "0.61",
         "infrastructure": "5,000.09",
-        "strength": "21479.377"
+        "strength": "20479.377"
       }
     },
     "646307": {
@@ -900,7 +900,7 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "200.00",
+        "technology": "0.00",
         "infrastructure": "4,999.99",
         "strength": "19365.17"
       }
@@ -920,9 +920,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "100.22",
+        "technology": "110.22",
         "infrastructure": "2,999.99",
-        "strength": "14522.334"
+        "strength": "14942.334"
       },
       "notes": ""
     },
@@ -942,9 +942,9 @@
         "receive_priority": 2
       },
       "current_stats": {
-        "technology": "199.55",
+        "technology": "99.55",
         "infrastructure": "5,499.99",
-        "strength": "19882.64"
+        "strength": "19382.64"
       }
     },
     "646975": {
@@ -993,13 +993,13 @@
       "ruler_name": "twitchanswers",
       "nation_name": "Twitch",
       "discord_handle": "",
-      "has_dra": false,
+      "has_dra": true,
       "notes": "DS cash",
       "slots": {
         "sendTech": 0,
         "sendCash": 0,
         "getTech": 0,
-        "getCash": 2,
+        "getCash": 3,
         "external": 3,
         "send_priority": 2,
         "receive_priority": 2
