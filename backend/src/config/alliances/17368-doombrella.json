@@ -40,8 +40,8 @@
       },
       "current_stats": {
         "technology": "19,537.26",
-        "infrastructure": "10,052.42",
-        "strength": "144568.075"
+        "infrastructure": "15,052.42",
+        "strength": "163018.075"
       }
     },
     "139809": {
@@ -228,9 +228,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "17,346.83",
+        "technology": "17,446.83",
         "infrastructure": "12,693.81",
-        "strength": "147004.569"
+        "strength": "147504.569"
       }
     },
     "202255": {
@@ -795,9 +795,9 @@
         "receive_priority": 3
       },
       "current_stats": {
-        "technology": "100.32",
+        "technology": "0.32",
         "infrastructure": "4,999.99",
-        "strength": "19145.196"
+        "strength": "18645.196"
       }
     },
     "645427": {

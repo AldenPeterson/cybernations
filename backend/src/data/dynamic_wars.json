@@ -1043,5 +1043,43 @@
     "reason": "Weapons of Mass Destruction",
     "addedAt": "2025-11-24T19:09:23.165Z",
     "source": "api"
+  },
+  {
+    "warId": 875208,
+    "declaringId": 644690,
+    "declaringRuler": "kylelandia",
+    "declaringNation": "Kylelandia",
+    "declaringAlliance": "Nuclear Proliferation League",
+    "declaringAllianceId": 17228,
+    "receivingId": 617046,
+    "receivingRuler": "ResurrectionSon",
+    "receivingNation": "Genox",
+    "receivingAlliance": "",
+    "receivingAllianceId": 0,
+    "status": "Active",
+    "date": "11/24/2025 7:03:51 PM",
+    "endDate": "12/2/2025",
+    "reason": "die now",
+    "addedAt": "2025-11-25T01:37:04.486Z",
+    "source": "api"
+  },
+  {
+    "warId": 875207,
+    "declaringId": 641537,
+    "declaringRuler": "Probably Mochi",
+    "declaringNation": "Kap Land",
+    "declaringAlliance": "Doom Squad",
+    "declaringAllianceId": 16454,
+    "receivingId": 348556,
+    "receivingRuler": "Overlord Wes",
+    "receivingNation": "wussys",
+    "receivingAlliance": "Global Alliance And Treaty Organization",
+    "receivingAllianceId": 10003,
+    "status": "Active",
+    "date": "11/24/2025 5:01:17 PM",
+    "endDate": "12/2/2025",
+    "reason": "Finally, 5 million. Yay. uwu",
+    "addedAt": "2025-11-25T01:37:04.489Z",
+    "source": "api"
   }
 ]
