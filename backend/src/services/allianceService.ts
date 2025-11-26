@@ -43,6 +43,72 @@ export class AllianceService {
   }
 
   /**
+   * Create and persist an alliance config file based on raw data if it doesn't exist.
+   * Returns the created AllianceData or null if it could not be created.
+   */
+  static async createAllianceConfigFromRaw(allianceId: number): Promise<AllianceData | null> {
+    // Load existing config first in case it was just created by another process
+    const existing = loadAllianceById(allianceId);
+    if (existing) {
+      return existing;
+    }
+
+    const { nations: rawNations } = await loadDataFromFilesWithUpdate();
+    const discordHandles = loadNationDiscordHandles();
+
+    const defaultSlots = {
+      sendTech: 0,
+      sendCash: 0,
+      getTech: 0,
+      getCash: 0,
+      external: 0,
+      send_priority: 3,
+      receive_priority: 3
+    };
+
+    const allianceNations = rawNations.filter(
+      n => n.allianceId === allianceId && n.alliance && n.alliance.trim() !== ''
+    );
+
+    if (allianceNations.length === 0) {
+      return null;
+    }
+
+    const allianceName = allianceNations[0].alliance || 'Unknown Alliance';
+
+    const nationsMap: AllianceData['nations'] = {};
+    for (const n of allianceNations) {
+      const discordHandle = discordHandles[n.id.toString()]?.discord_handle || '';
+
+      nationsMap[n.id] = {
+        ruler_name: n.rulerName,
+        nation_name: n.nationName,
+        discord_handle: discordHandle,
+        has_dra: false,
+        slots: { ...defaultSlots },
+        current_stats: {
+          technology: n.technology,
+          infrastructure: n.infrastructure,
+          strength: n.strength.toLocaleString()
+        }
+      };
+    }
+
+    const allianceData: AllianceData = {
+      alliance_id: allianceId,
+      alliance_name: allianceName,
+      nations: nationsMap
+    };
+
+    const saved = saveAllianceDataUtil(allianceData);
+    if (!saved) {
+      return null;
+    }
+
+    return allianceData;
+  }
+
+  /**
    * Sync alliance files with new data
    */
   static async syncAllianceFilesWithNewData(nations: Nation[]): Promise<void> {

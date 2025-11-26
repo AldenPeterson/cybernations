@@ -1081,5 +1081,43 @@
     "reason": "Finally, 5 million. Yay. uwu",
     "addedAt": "2025-11-25T01:37:04.489Z",
     "source": "api"
+  },
+  {
+    "warId": 875210,
+    "declaringId": 647990,
+    "declaringRuler": "Twitch43",
+    "declaringNation": "2nd BN Golf Co",
+    "declaringAlliance": "United States Marine Corps",
+    "declaringAllianceId": 17476,
+    "receivingId": 645617,
+    "receivingRuler": "niner",
+    "receivingNation": "Federal States of Ni",
+    "receivingAlliance": "",
+    "receivingAllianceId": 0,
+    "status": "Active",
+    "date": "11/25/2025 5:47:39 AM",
+    "endDate": "12/3/2025",
+    "reason": "A general dispute",
+    "addedAt": "2025-11-25T22:53:43.436Z",
+    "source": "api"
+  },
+  {
+    "warId": 875209,
+    "declaringId": 631406,
+    "declaringRuler": "The Black Kaiser",
+    "declaringNation": "Medieval Reich",
+    "declaringAlliance": "The Gothic Order",
+    "declaringAllianceId": 17468,
+    "receivingId": 634256,
+    "receivingRuler": "I Win You Lose",
+    "receivingNation": "I Win You Loose",
+    "receivingAlliance": "The Phoenix Federation",
+    "receivingAllianceId": 17385,
+    "status": "Active",
+    "date": "11/25/2025 12:29:14 AM",
+    "endDate": "12/3/2025",
+    "reason": "A general dispute",
+    "addedAt": "2025-11-25T22:53:43.439Z",
+    "source": "api"
   }
 ]

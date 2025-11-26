@@ -110,12 +110,17 @@ export class NationEditorController {
         slots.receive_priority = receivePriority;
       }
 
-      const allianceData = AllianceService.getAllianceById(allianceId);
+      let allianceData = AllianceService.getAllianceById(allianceId);
+      
+      // If the alliance does not yet have a config file, attempt to create one from raw data
+      if (!allianceData) {
+        allianceData = await AllianceService.createAllianceConfigFromRaw(allianceId);
+      }
       
       if (!allianceData) {
         return res.status(404).json({
           success: false,
-          error: 'Alliance not found in config'
+          error: 'Alliance not found in config or raw data'
         });
       }
 
