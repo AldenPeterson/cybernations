@@ -18,6 +18,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as https from 'https';
 import { extractZipFile } from './src/utils/zipExtractor.js';
+import { upsertFileDownload } from './src/services/fileDownloadService.js';
+import { FileType } from './src/utils/dataDownloader.js';
 
 const BASE_URL = 'https://www.cybernations.net/assets/';
 
@@ -26,10 +28,10 @@ interface DownloadConfig {
   outputFile: string;
 }
 
-const FILE_TYPE_MAP: Record<string, DownloadConfig> = {
-  nation: { type: 'Nation_Stats', outputFile: 'nations.csv' },
-  aid: { type: 'Aid_Stats', outputFile: 'aid_offers.csv' },
-  war: { type: 'War_Stats', outputFile: 'wars.csv' }
+const FILE_TYPE_MAP: Record<string, DownloadConfig & { fileType: FileType }> = {
+  nation: { type: 'Nation_Stats', outputFile: 'nations.csv', fileType: FileType.NATION_STATS },
+  aid: { type: 'Aid_Stats', outputFile: 'aid_offers.csv', fileType: FileType.AID_STATS },
+  war: { type: 'War_Stats', outputFile: 'wars.csv', fileType: FileType.WAR_STATS }
 };
 
 function downloadFile(url: string, filePath: string): Promise<void> {
@@ -131,22 +133,9 @@ async function manualDownload(dataType: string, filename: string): Promise<void>
     // Extract the CSV
     await extractCsvFromZip(tempZipPath, outputPath);
     
-    // Update the tracker
-    const trackerPath = path.join(dataPath, 'latest_downloads.json');
-    let tracker: any = {};
-    
-    if (fs.existsSync(trackerPath)) {
-      tracker = JSON.parse(fs.readFileSync(trackerPath, 'utf8'));
-    }
-    
-    tracker[config.type] = {
-      timestamp: Date.now(),
-      originalFile: filename,
-      downloadTime: new Date().toISOString()
-    };
-    
-    fs.writeFileSync(trackerPath, JSON.stringify(tracker, null, 2));
-    console.log('✓ Updated tracker');
+    // Update the database tracker
+    await upsertFileDownload(config.fileType, filename);
+    console.log('✓ Updated database tracker');
     
     console.log('\n✅ Manual download complete!\n');
     

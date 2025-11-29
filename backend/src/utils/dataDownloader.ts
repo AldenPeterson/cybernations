@@ -310,10 +310,10 @@ async function cleanupOldFiles(fileType: FileType, extractedPath: string): Promi
  */
 async function checkForRecentFiles(): Promise<boolean> {
   try {
-    // Check recency against 6am/6pm Central schedule using latest_downloads.json
-    const stale = getStaleFileTypesFromLatestDownloads();
+    // Check recency against 6am/6pm Central schedule using database
+    const stale = await getStaleFileTypesFromLatestDownloads();
     if (stale.length === 0) {
-      console.log('Found recent standardized data files via latest_downloads.json');
+      console.log('Found recent standardized data files via database');
       return true;
     }
     
