@@ -463,13 +463,31 @@ export async function extractCsvToStandardFile(zipPath: string, outputPath: stri
     }
     
     // Extract zip to temp directory
-    await extractZipFile(zipPath, tempExtractDir);
+    console.log(`Extracting ${fileType} zip to ${tempExtractDir}...`);
+    const extractionResult = await extractZipFile(zipPath, tempExtractDir);
+    
+    if (!extractionResult.success) {
+      throw new Error(`Failed to extract zip file: ${extractionResult.error || 'Unknown error'}`);
+    }
+    
+    console.log(`Extraction successful, extracted ${extractionResult.extractedFiles.length} file(s)`);
+    
+    // Verify extraction directory still exists after extraction
+    if (!fs.existsSync(tempExtractDir)) {
+      throw new Error(`Extraction directory was removed or never created: ${tempExtractDir}`);
+    }
     
     // Find the extracted CSV file that matches the expected file type
     // Use a recursive function to find files since readdirSync recursive might not be available
     const findFilesRecursively = (dir: string): string[] => {
       const files: string[] = [];
       try {
+        // Double-check directory exists before reading
+        if (!fs.existsSync(dir)) {
+          console.warn(`Directory does not exist: ${dir}`);
+          return files;
+        }
+        
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const entry of entries) {
           const fullPath = path.join(dir, entry.name);
@@ -479,19 +497,25 @@ export async function extractCsvToStandardFile(zipPath: string, outputPath: stri
             files.push(path.relative(tempExtractDir, fullPath));
           }
         }
-      } catch (error) {
-        console.warn(`Error reading directory ${dir}:`, error);
+      } catch (error: any) {
+        console.warn(`Error reading directory ${dir}:`, error?.message || error);
       }
       return files;
     };
     
     const extractedFiles = findFilesRecursively(tempExtractDir);
+    
+    if (extractedFiles.length === 0) {
+      throw new Error(`No files extracted from ${fileType} zip (extraction reported success but directory is empty)`);
+    }
+    
     const csvFile = extractedFiles.find((file: string) => 
       file.endsWith('.txt') && file.includes('CyberNations_SE') && file.includes(fileType)
     );
     
     if (!csvFile) {
-      throw new Error(`No CSV file found in ${fileType} zip`);
+      console.error(`Available extracted files: ${extractedFiles.join(', ')}`);
+      throw new Error(`No CSV file found in ${fileType} zip. Expected file containing 'CyberNations_SE' and '${fileType}' with .txt extension`);
     }
     
     const sourcePath = path.join(tempExtractDir, csvFile);
