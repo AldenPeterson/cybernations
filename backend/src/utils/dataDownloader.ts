@@ -341,14 +341,14 @@ async function checkForRecentFiles(): Promise<boolean> {
 /**
  * Download files with timeout protection for serverless environments
  */
-async function downloadWithTimeout(): Promise<void> {
-  const timeoutPromise = new Promise((_, reject) => {
+async function downloadWithTimeout(): Promise<DownloadResult[]> {
+  const timeoutPromise = new Promise<DownloadResult[]>((_, reject) => {
     setTimeout(() => reject(new Error('Download timeout')), 25000); // 25 second timeout
   });
   
   const downloadPromise = performDownload();
   
-  await Promise.race([downloadPromise, timeoutPromise]);
+  return await Promise.race([downloadPromise, timeoutPromise]);
 }
 
 /**
@@ -372,7 +372,14 @@ function getDataPath(): string {
 /**
  * Perform the actual download with standardized file naming
  */
-async function performDownload(): Promise<void> {
+interface DownloadResult {
+  fileType: FileType;
+  success: boolean;
+  error?: string;
+  filename?: string;
+}
+
+async function performDownload(): Promise<DownloadResult[]> {
   const baseUrl = 'https://www.cybernations.net/assets/';
   
   // Get appropriate data path for environment
@@ -419,21 +426,49 @@ async function performDownload(): Promise<void> {
         fs.unlinkSync(tempZipPath);
       }
       
-      return { success: true, fileType: file.type };
+      return { 
+        success: true, 
+        fileType: file.type,
+        filename: result.filename
+      };
     } catch (error: any) {
       const errorMsg = error?.message || String(error);
       console.error(`Failed to download/process ${file.type}: ${errorMsg}`);
-      return { success: false, fileType: file.type, error: errorMsg };
+      return { 
+        success: false, 
+        fileType: file.type, 
+        error: errorMsg 
+      };
     }
   });
   
   const results = await Promise.allSettled(downloadPromises);
   
+  // Extract results from Promise.allSettled
+  const downloadResults: DownloadResult[] = results.map((result) => {
+    if (result.status === 'fulfilled') {
+      return result.value;
+    } else {
+      return {
+        fileType: FileType.NATION_STATS, // fallback, shouldn't happen
+        success: false,
+        error: result.reason?.message || 'Unknown error'
+      };
+    }
+  });
+  
   // Log summary of download results
-  const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
-  const failed = results.length - successful;
+  const successful = downloadResults.filter(r => r.success).length;
+  const failed = downloadResults.length - successful;
   if (failed > 0) {
     console.warn(`Download summary: ${successful} succeeded, ${failed} failed`);
+    downloadResults.forEach(result => {
+      if (result.success) {
+        console.log(`  ✓ ${result.fileType}: ${result.filename}`);
+      } else {
+        console.log(`  ✗ ${result.fileType}: ${result.error}`);
+      }
+    });
   } else {
     console.log(`Download summary: All ${successful} files downloaded successfully`);
   }
@@ -444,6 +479,8 @@ async function performDownload(): Promise<void> {
     await upsertFileDownload(fileType as FileType, record.originalFile, record.timestamp);
   }
   console.log('Updated latest downloads tracker in database');
+  
+  return downloadResults;
 }
 
 /**
@@ -532,11 +569,11 @@ export async function extractCsvToStandardFile(zipPath: string, outputPath: stri
   }
 }
 
-export async function ensureRecentFiles(): Promise<void> {
+export async function ensureRecentFiles(): Promise<DownloadResult[]> {
   // Check if we're in the blackout window before doing anything
   if (isInBlackoutWindow()) {
     // Don't spam logs - only check staleness if we would actually try to download
-    return;
+    return [];
   }
 
   const isProd = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
@@ -546,31 +583,33 @@ export async function ensureRecentFiles(): Promise<void> {
 
     if (staleTypes.length === 0) {
       console.log('All standardized files are fresh according to database');
-      return;
+      return [];
     }
+
+  let downloadResults: DownloadResult[] = [];
 
   if (isProd) {
     console.log('Production environment detected, attempting download with timeout protection for stale files:', staleTypes.join(', '));
     try {
       // Fallback to full download in prod for simplicity/timeouts
-      await downloadWithTimeout();
+      downloadResults = await downloadWithTimeout();
       console.log('Download completed (some files may have failed, but process continued)');
     } catch (error: any) {
       const errorMsg = error?.message || String(error);
       console.warn(`Download failed in production, gracefully falling back to existing data: ${errorMsg}`);
-      // Don't throw - allow the process to continue with existing data
-      return;
+      // Return empty results to indicate no downloads succeeded
+      return [];
     }
   } else {
     try {
       console.log('Development environment detected, downloading stale standardized files:', staleTypes.join(', '));
-      await performSelectiveDownload(staleTypes);
+      downloadResults = await performSelectiveDownload(staleTypes);
       console.log('Download completed (some files may have failed, but process continued)');
     } catch (error: any) {
       const errorMsg = error?.message || String(error);
       console.warn(`Selective standardized download failed in development, gracefully falling back to existing data: ${errorMsg}`);
-      // Don't throw - allow the process to continue with existing data
-      return;
+      // Return empty results to indicate no downloads succeeded
+      return [];
     }
   }
 
@@ -597,6 +636,8 @@ export async function ensureRecentFiles(): Promise<void> {
   } catch (error) {
     console.warn('Error syncing alliance files after download, continuing with existing data:', error);
   }
+
+  return downloadResults;
 }
 
 /**
@@ -721,7 +762,7 @@ export async function downloadFileWithFallback(
 /**
  * Download only the specified file types and update the tracker
  */
-async function performSelectiveDownload(staleTypes: FileType[]): Promise<void> {
+async function performSelectiveDownload(staleTypes: FileType[]): Promise<DownloadResult[]> {
   const baseUrl = 'https://www.cybernations.net/assets/';
 
   // Setup data path
@@ -745,6 +786,7 @@ async function performSelectiveDownload(staleTypes: FileType[]): Promise<void> {
   };
 
   const { upsertFileDownload } = await import('../services/fileDownloadService.js');
+  const results: DownloadResult[] = [];
 
   for (const type of staleTypes) {
     const tempZipPath = path.join(dataPath, `temp_${type}.zip`);
@@ -755,6 +797,19 @@ async function performSelectiveDownload(staleTypes: FileType[]): Promise<void> {
       await extractCsvToStandardFile(tempZipPath, outputPath, type);
       // Update database tracker
       await upsertFileDownload(type, result.filename);
+      results.push({
+        fileType: type,
+        success: true,
+        filename: result.filename
+      });
+    } catch (error: any) {
+      const errorMsg = error?.message || String(error);
+      console.error(`Failed to download/process ${type}: ${errorMsg}`);
+      results.push({
+        fileType: type,
+        success: false,
+        error: errorMsg
+      });
     } finally {
       if (fs.existsSync(tempZipPath)) {
         fs.unlinkSync(tempZipPath);
@@ -763,4 +818,5 @@ async function performSelectiveDownload(staleTypes: FileType[]): Promise<void> {
   }
 
   console.log('Updated latest downloads tracker in database (selective)');
+  return results;
 }

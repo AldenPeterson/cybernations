@@ -53,13 +53,32 @@ export class CronController {
       // 3. Imports CSV data into database
       // 4. Syncs alliance files
       try {
-        await ensureRecentFiles();
+        const downloadResults = await ensureRecentFiles();
         console.log('[Cron] Sync-all job completed successfully');
+        
+        // Format results for response
+        const results = downloadResults.map(result => ({
+          fileType: result.fileType,
+          success: result.success,
+          filename: result.filename,
+          error: result.error
+        }));
+        
+        const successful = results.filter(r => r.success).length;
+        const failed = results.filter(r => !r.success).length;
         
         res.json({
           success: true,
-          message: 'Sync job completed (some downloads may have failed, but process continued)',
-          timestamp: new Date().toISOString()
+          message: failed > 0 
+            ? `Sync job completed: ${successful} succeeded, ${failed} failed`
+            : `Sync job completed: All ${successful} files downloaded successfully`,
+          timestamp: new Date().toISOString(),
+          downloads: results,
+          summary: {
+            total: results.length,
+            successful,
+            failed
+          }
         });
       } catch (error: any) {
         // Log the error but don't fail the entire request
@@ -70,7 +89,13 @@ export class CronController {
         res.json({
           success: true,
           message: `Sync job completed with warnings: ${errorMsg}`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          downloads: [],
+          summary: {
+            total: 0,
+            successful: 0,
+            failed: 0
+          }
         });
       }
     } catch (error: any) {
