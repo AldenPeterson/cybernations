@@ -13,6 +13,22 @@ import { prisma } from '../utils/prisma.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Cache for loaded data to avoid repeated database queries
+interface DataCache {
+  data: { nations: Nation[]; aidOffers: AidOffer[]; wars: any[] };
+  timestamp: number;
+}
+
+let dataCache: DataCache | null = null;
+const CACHE_TTL_MS = 30000; // 30 seconds cache TTL
+
+/**
+ * Invalidate the data cache to force a fresh load on next request
+ */
+export function invalidateDataCache(): void {
+  dataCache = null;
+}
+
 /**
  * Parse nations from standardized CSV file
  */
@@ -361,6 +377,13 @@ export function parseWarStats(filePath: string): Promise<any[]> {
 }
 
 export async function loadDataFromFiles(checkForUpdates: boolean = true): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {
+  // Check cache first
+  const now = Date.now();
+  if (dataCache && (now - dataCache.timestamp) < CACHE_TTL_MS) {
+    // Cache is still valid, return cached data
+    return dataCache.data;
+  }
+
   // Load from database
   try {
     console.log('Loading data from database...');
@@ -464,13 +487,25 @@ export async function loadDataFromFiles(checkForUpdates: boolean = true): Promis
       isExpired: w.isExpired ?? undefined,
     }));
 
+    const result = { nations, aidOffers, wars };
+    
+    // Update cache
+    dataCache = {
+      data: result,
+      timestamp: now
+    };
+
     console.log(`Successfully loaded ${nations.length} nations, ${aidOffers.length} aid offers, ${wars.length} wars from database`);
-    return { nations, aidOffers, wars };
+    return result;
   } catch (error) {
     console.error('Error loading data from database:', error);
-    // Fallback to empty data
-      return { nations: [], aidOffers: [], wars: [] };
+    // Fallback to cached data if available, otherwise empty data
+    if (dataCache) {
+      console.log('Using cached data due to error');
+      return dataCache.data;
     }
+    return { nations: [], aidOffers: [], wars: [] };
+  }
 }
 
 export async function loadDataFromFilesWithUpdate(): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {

@@ -142,43 +142,57 @@ const AidPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch alliance info
-      const allianceData = await apiCallWithErrorHandling(API_ENDPOINTS.alliances);
-      
+      // Fetch all data in parallel for better performance
+      const [allianceData, aidSlotsData, statsData, aidStatsData] = await Promise.all([
+        apiCallWithErrorHandling(API_ENDPOINTS.alliances).catch(err => {
+          console.error('Failed to fetch alliances:', err);
+          return { success: false, alliances: [] };
+        }),
+        apiCallWithErrorHandling(API_ENDPOINTS.allianceAidSlots(id)).catch(err => {
+          console.error('Failed to fetch aid slots:', err);
+          return { success: false, aidSlots: [] };
+        }),
+        apiCallWithErrorHandling(API_ENDPOINTS.allianceStats(id)).catch(err => {
+          console.error('Failed to fetch alliance stats:', err);
+          return { success: false, stats: null };
+        }),
+        apiCallWithErrorHandling(API_ENDPOINTS.allianceAidStats(id)).catch(err => {
+          console.error('Failed to fetch alliance aid stats:', err);
+          return { success: false, allianceAidStats: [] };
+        }),
+      ]);
+
+      // Process alliance info
       if (allianceData.success) {
         const foundAlliance = allianceData.alliances.find((a: Alliance) => a.id === id);
         setAlliance(foundAlliance || null);
       }
 
-      // Fetch aid slots
-      const aidSlotsData = await apiCallWithErrorHandling(API_ENDPOINTS.allianceAidSlots(id));
-      
+      // Process aid slots
       if (aidSlotsData.success) {
         setAidSlots(aidSlotsData.aidSlots);
       } else {
-        setError(aidSlotsData.error);
+        setError(aidSlotsData.error || 'Failed to fetch aid slots');
       }
 
-      // Fetch alliance stats
-      try {
-        const statsData = await apiCallWithErrorHandling(API_ENDPOINTS.allianceStats(id));
-        
-        if (statsData.success) {
-          setAllianceStats(statsData.stats);
-        }
-      } catch (err) {
-        console.error('Failed to fetch alliance stats:', err);
+      // Process alliance stats
+      if (statsData.success) {
+        setAllianceStats(statsData.stats);
       }
 
-      // Fetch alliance aid stats
-      try {
-        const aidStatsData = await apiCallWithErrorHandling(API_ENDPOINTS.allianceAidStats(id));
-        
-        if (aidStatsData.success) {
-          setAllianceAidStats(aidStatsData.allianceAidStats || []);
+      // Process alliance aid stats
+      // Backend returns 'stats' but frontend expects 'allianceAidStats' array
+      // For now, handle both formats
+      if (aidStatsData.success) {
+        if (Array.isArray(aidStatsData.allianceAidStats)) {
+          setAllianceAidStats(aidStatsData.allianceAidStats);
+        } else if (aidStatsData.stats) {
+          // Backend returns single stats object, convert to array format if needed
+          // This is a temporary fix - the endpoint should return per-alliance breakdown
+          setAllianceAidStats([]);
+        } else {
+          setAllianceAidStats([]);
         }
-      } catch (err) {
-        console.error('Failed to fetch alliance aid stats:', err);
       }
 
     } catch (err) {

@@ -4,6 +4,7 @@ import { createReadStream } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { prisma } from '../utils/prisma.js';
+import { invalidateDataCache } from './dataProcessingService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -218,6 +219,7 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
         }
 
         console.log(`Successfully imported ${imported} new nations and updated ${updated} existing nations`);
+        invalidateDataCache(); // Invalidate cache after data update
         resolve({ imported, updated });
       })
       .on('error', reject);
@@ -383,6 +385,7 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
         }
 
         console.log(`Successfully imported ${imported} new aid offers and updated ${updated} existing aid offers`);
+        invalidateDataCache(); // Invalidate cache after data update
         resolve({ imported, updated });
       })
       .on('error', reject);
@@ -549,6 +552,7 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
         }
 
         console.log(`Successfully imported ${imported} new wars and updated ${updated} existing wars`);
+        invalidateDataCache(); // Invalidate cache after data update
         resolve({ imported, updated });
       })
       .on('error', reject);
