@@ -173,7 +173,7 @@ export async function getAllNationsWithDiscordHandles(): Promise<{ nationId: num
       },
     });
 
-    return configs.map(config => ({
+    return configs.map((config: any) => ({
       nationId: config.nationId,
       discordHandle: config.discordHandle!,
       lastUpdated: config.updatedAt.toISOString(),

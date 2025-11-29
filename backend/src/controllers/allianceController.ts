@@ -24,7 +24,7 @@ export class AllianceController {
         id: alliance.id,
         name: alliance.name,
         nationCount: alliance.nations.filter(n => n.nationConfig !== null).length
-      })).sort((a, b) => b.nationCount - a.nationCount);
+      })).sort((a: { id: number; name: string; nationCount: number }, b: { id: number; name: string; nationCount: number }) => b.nationCount - a.nationCount);
     } catch (error) {
       console.error('Error loading alliances from database:', error);
       return [];

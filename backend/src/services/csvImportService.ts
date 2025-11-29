@@ -128,7 +128,7 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
           (await prisma.nation.findMany({
             where: { id: { in: Array.from(nationIds) } },
             select: { id: true }
-          })).map(n => n.id)
+          })).map((n: { id: number }) => n.id)
         );
         
         // Split into new and existing nations
@@ -285,7 +285,7 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
           (await prisma.nation.findMany({
             where: { id: { in: Array.from(nationIds) } },
             select: { id: true }
-          })).map(n => n.id)
+          })).map((n: { id: number }) => n.id)
         );
         
         // Filter valid aid offers (both nations must exist)
@@ -303,7 +303,7 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
           select: { aidId: true, version: true }
         });
         const existingAidOfferMap = new Map(
-          existingAidOffers.map(a => [a.aidId, a.version])
+          existingAidOffers.map((a: { aidId: number; version: number }) => [a.aidId, a.version])
         );
         
         // Split into new and existing
@@ -352,7 +352,7 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
               
               // Process each update in parallel (each update is atomic)
               const batchPromises = batch.map(offer => {
-                const currentVersion = existingAidOfferMap.get(offer.aidId) || 1;
+                const currentVersion: number = existingAidOfferMap.get(offer.aidId) ?? 1;
                 return prisma.aidOffer.update({
                   where: { aidId: offer.aidId },
                   data: {
@@ -452,7 +452,7 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
           (await prisma.nation.findMany({
             where: { id: { in: Array.from(nationIds) } },
             select: { id: true }
-          })).map(n => n.id)
+          })).map((n: { id: number }) => n.id)
         );
         
         // Filter valid wars (both nations must exist)
@@ -470,7 +470,7 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
           select: { warId: true, version: true }
         });
         const existingWarMap = new Map(
-          existingWarsData.map(w => [w.warId, w.version])
+          existingWarsData.map((w: { warId: number; version: number }) => [w.warId, w.version])
         );
         
         // Split into new and existing
@@ -519,7 +519,7 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
               
               // Process each update in parallel (each update is atomic)
               const batchPromises = batch.map(war => {
-                const currentVersion = existingWarMap.get(war.warId) || 1;
+                const currentVersion: number = existingWarMap.get(war.warId) ?? 1;
                 return prisma.war.update({
                   where: { warId: war.warId },
                   data: {

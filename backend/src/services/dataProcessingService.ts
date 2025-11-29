@@ -395,7 +395,7 @@ export async function loadDataFromFiles(checkForUpdates: boolean = true): Promis
       },
     });
     
-    const nations: Nation[] = nationRecords.map(n => ({
+    const nations: Nation[] = nationRecords.map((n: any) => ({
       id: n.id,
       rulerName: n.rulerName,
       nationName: n.nationName,
@@ -429,7 +429,7 @@ export async function loadDataFromFiles(checkForUpdates: boolean = true): Promis
       },
     });
     
-    const aidOffers: AidOffer[] = aidOfferRecords.map(a => ({
+    const aidOffers: AidOffer[] = aidOfferRecords.map((a: any) => ({
       aidId: a.aidId,
       declaringId: a.declaringNationId,
       declaringRuler: a.declaringNation.rulerName,
@@ -462,7 +462,7 @@ export async function loadDataFromFiles(checkForUpdates: boolean = true): Promis
       },
     });
     
-    const wars: any[] = warRecords.map(w => ({
+    const wars: any[] = warRecords.map((w: any) => ({
       warId: w.warId,
       declaringId: w.declaringNationId,
       declaringRuler: w.declaringNation.rulerName,

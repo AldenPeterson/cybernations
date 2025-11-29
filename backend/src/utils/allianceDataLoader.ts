@@ -402,7 +402,7 @@ export async function getAllNationsFlat(): Promise<NationData[]> {
       },
     });
 
-    return configs.map(config => {
+    return configs.map((config: any) => {
       const nation = config.nation;
       return {
         nation_id: nation.id,
