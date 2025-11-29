@@ -33,7 +33,15 @@ const FILE_TYPE_MAP: Record<string, { type: FileType; outputFile: string }> = {
 };
 
 function getDataPath(): string {
-  return path.join(process.cwd(), 'src', 'data');
+  const isVercel = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
+  
+  if (isVercel) {
+    // Vercel serverless functions can only write to /tmp
+    return '/tmp/cybernations_data';
+  } else {
+    // Local development: use project directory
+    return path.join(process.cwd(), 'src', 'data');
+  }
 }
 
 export class CsvController {

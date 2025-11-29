@@ -352,21 +352,31 @@ async function downloadWithTimeout(): Promise<void> {
 }
 
 /**
+ * Get the appropriate data path for the current environment
+ * On Vercel/serverless, use /tmp directory (only writable location)
+ * Otherwise, use the project's src/data directory
+ */
+function getDataPath(): string {
+  const isVercel = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
+  
+  if (isVercel) {
+    // Vercel serverless functions can only write to /tmp
+    return '/tmp/cybernations_data';
+  } else {
+    // Local development: use project directory
+    const projectRoot = process.cwd();
+    return path.join(projectRoot, 'src', 'data');
+  }
+}
+
+/**
  * Perform the actual download with standardized file naming
  */
 async function performDownload(): Promise<void> {
   const baseUrl = 'https://www.cybernations.net/assets/';
   
-  // Use standardized paths for bundled data
-  let dataPath: string;
-  
-  try {
-    const projectRoot = process.cwd();
-    dataPath = path.join(projectRoot, 'src', 'data');
-  } catch (error) {
-    console.error('Error setting up paths:', error);
-    throw error;
-  }
+  // Get appropriate data path for environment
+  const dataPath = getDataPath();
   
   // Ensure data directory exists
   if (!fs.existsSync(dataPath)) {
@@ -428,7 +438,11 @@ async function performDownload(): Promise<void> {
  * Extract CSV content from zip file to standardized filename
  */
 export async function extractCsvToStandardFile(zipPath: string, outputPath: string, fileType: FileType): Promise<void> {
-  const tempExtractDir = path.join(path.dirname(zipPath), 'temp_extract');
+  // Use /tmp for extraction on Vercel, otherwise use same directory as zip
+  const isVercel = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
+  const tempExtractDir = isVercel 
+    ? path.join('/tmp', `cybernations_extract_${Date.now()}`)
+    : path.join(path.dirname(zipPath), 'temp_extract');
   
   try {
     // Ensure temp extraction directory exists

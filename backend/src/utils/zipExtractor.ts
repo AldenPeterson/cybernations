@@ -9,13 +9,10 @@ export interface ExtractionResult {
 }
 
 export async function extractZipFile(zipPath: string, extractTo: string): Promise<ExtractionResult> {
-  // Skip file operations in serverless environments like Vercel
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    return {
-      success: false,
-      extractedFiles: [],
-      error: 'File operations not supported in serverless environment'
-    };
+  // On Vercel, ensure we're using /tmp directory
+  const isVercel = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
+  if (isVercel && !extractTo.startsWith('/tmp')) {
+    console.warn('Warning: extractTo should be in /tmp on Vercel, but got:', extractTo);
   }
 
   return new Promise((resolve) => {

@@ -560,10 +560,26 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
 }
 
 /**
+ * Get the data path for CSV files
+ * On Vercel, uses /tmp directory; otherwise uses project's src/data directory
+ */
+function getCsvDataPath(): string {
+  const isVercel = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
+  
+  if (isVercel) {
+    // Vercel serverless functions can only write to /tmp
+    return '/tmp/cybernations_data';
+  } else {
+    // Local development: use project directory
+    return path.join(__dirname, '..', 'data');
+  }
+}
+
+/**
  * Import all CSV files from the data directory
  */
 export async function importAllCsvFiles(): Promise<void> {
-  const dataPath = path.join(__dirname, '..', 'data');
+  const dataPath = getCsvDataPath();
   
   const nationsFile = path.join(dataPath, 'nations.csv');
   const aidOffersFile = path.join(dataPath, 'aid_offers.csv');

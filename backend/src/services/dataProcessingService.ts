@@ -20,7 +20,7 @@ interface DataCache {
 }
 
 let dataCache: DataCache | null = null;
-const CACHE_TTL_MS = 30000; // 30 seconds cache TTL
+const CACHE_TTL_MS = 60000; // 60 seconds cache TTL
 
 /**
  * Invalidate the data cache to force a fresh load on next request
