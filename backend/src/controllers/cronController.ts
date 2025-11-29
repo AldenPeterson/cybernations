@@ -52,20 +52,32 @@ export class CronController {
       // 2. Downloads new files if needed
       // 3. Imports CSV data into database
       // 4. Syncs alliance files
-      await ensureRecentFiles();
-
-      console.log('[Cron] Sync-all job completed successfully');
-
-      res.json({
-        success: true,
-        message: 'All data types synced successfully',
-        timestamp: new Date().toISOString()
-      });
+      try {
+        await ensureRecentFiles();
+        console.log('[Cron] Sync-all job completed successfully');
+        
+        res.json({
+          success: true,
+          message: 'Sync job completed (some downloads may have failed, but process continued)',
+          timestamp: new Date().toISOString()
+        });
+      } catch (error: any) {
+        // Log the error but don't fail the entire request
+        // ensureRecentFiles already handles errors gracefully
+        const errorMsg = error?.message || String(error);
+        console.error('[Cron] Error in sync-all job (non-fatal):', errorMsg);
+        
+        res.json({
+          success: true,
+          message: `Sync job completed with warnings: ${errorMsg}`,
+          timestamp: new Date().toISOString()
+        });
+      }
     } catch (error: any) {
-      console.error('[Cron] Error in sync-all job:', error);
+      console.error('[Cron] Fatal error in sync-all job:', error);
       res.status(500).json({
         success: false,
-        error: error.message || 'Failed to sync all data types',
+        error: error?.message || 'Failed to sync all data types',
         timestamp: new Date().toISOString()
       });
     }

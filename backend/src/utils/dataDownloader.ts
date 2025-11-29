@@ -419,12 +419,24 @@ async function performDownload(): Promise<void> {
         fs.unlinkSync(tempZipPath);
       }
       
-    } catch (error) {
-      console.warn(`Failed to download/process ${file.type}:`, error);
+      return { success: true, fileType: file.type };
+    } catch (error: any) {
+      const errorMsg = error?.message || String(error);
+      console.error(`Failed to download/process ${file.type}: ${errorMsg}`);
+      return { success: false, fileType: file.type, error: errorMsg };
     }
   });
   
-  await Promise.allSettled(downloadPromises);
+  const results = await Promise.allSettled(downloadPromises);
+  
+  // Log summary of download results
+  const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+  const failed = results.length - successful;
+  if (failed > 0) {
+    console.warn(`Download summary: ${successful} succeeded, ${failed} failed`);
+  } else {
+    console.log(`Download summary: All ${successful} files downloaded successfully`);
+  }
   
   // Update the database tracker
   const { upsertFileDownload } = await import('../services/fileDownloadService.js');
@@ -518,16 +530,22 @@ export async function ensureRecentFiles(): Promise<void> {
     try {
       // Fallback to full download in prod for simplicity/timeouts
       await downloadWithTimeout();
-    } catch (error) {
-      console.warn('Download failed in production, gracefully falling back to existing data:', error);
+      console.log('Download completed (some files may have failed, but process continued)');
+    } catch (error: any) {
+      const errorMsg = error?.message || String(error);
+      console.warn(`Download failed in production, gracefully falling back to existing data: ${errorMsg}`);
+      // Don't throw - allow the process to continue with existing data
       return;
     }
   } else {
     try {
       console.log('Development environment detected, downloading stale standardized files:', staleTypes.join(', '));
       await performSelectiveDownload(staleTypes);
-    } catch (error) {
-      console.warn('Selective standardized download failed in development, gracefully falling back to existing data:', error);
+      console.log('Download completed (some files may have failed, but process continued)');
+    } catch (error: any) {
+      const errorMsg = error?.message || String(error);
+      console.warn(`Selective standardized download failed in development, gracefully falling back to existing data: ${errorMsg}`);
+      // Don't throw - allow the process to continue with existing data
       return;
     }
   }
@@ -633,27 +651,42 @@ export async function downloadFileWithFallback(
   // Try current timestamp first, then fall back to recent timestamps
   // Files are updated at 6am and 6pm Central, so we try offsets that align with those boundaries
   // This ensures we get the newest available file based on current time
+  // Also try both time suffixes (1 and 2) in case files are released early/late
   const offsetsToTry = [0, 6, 12, 18, 24]; // Try current, then 6h, 12h, 18h, 24h back
   
   for (const hoursOffset of offsetsToTry) {
-    const timestamp = getDownloadNumberSlug(flag, hoursOffset);
-    const filename = `CyberNations_SE_${fileType}_${timestamp}.zip`;
-    const url = `${baseUrl}${filename}`;
+    // Get the base timestamp (without the time suffix)
+    const baseTimestamp = getDownloadNumberSlug(flag, hoursOffset);
+    // Remove the last digit (time suffix) to get the base
+    const baseWithoutSuffix = baseTimestamp.slice(0, -1);
+    
+    // Try both time suffixes (1 and 2) in case file was released early/late
+    const suffixesToTry = ['1', '2'];
+    
+    for (const suffix of suffixesToTry) {
+      const timestamp = `${baseWithoutSuffix}${suffix}`;
+      const filename = `CyberNations_SE_${fileType}_${timestamp}.zip`;
+      const url = `${baseUrl}${filename}`;
 
-    try {
-      if (hoursOffset === 0) {
-        console.log(`Attempting download for current file: ${filename}`);
-      } else {
-        console.log(`Trying recent file (${hoursOffset}h back): ${filename}`);
+      try {
+        if (hoursOffset === 0 && suffix === baseTimestamp.slice(-1)) {
+          console.log(`Attempting download for current file: ${filename}`);
+        } else if (hoursOffset === 0) {
+          console.log(`Trying alternate time suffix for current timestamp: ${filename}`);
+        } else {
+          console.log(`Trying recent file (${hoursOffset}h back, suffix ${suffix}): ${filename}`);
+        }
+        await downloadFile(url, tempZipPath);
+        console.log(`✓ Successfully downloaded ${filename}`);
+        return { success: true, filename };
+      } catch (error: any) {
+        const errorMsg = error.message || 'Unknown error';
+        const statusCode = errorMsg.includes('404') ? ' (404 Not Found)' : errorMsg.includes('403') ? ' (403 Forbidden)' : '';
+        if (hoursOffset === 0 && suffix === baseTimestamp.slice(-1)) {
+          console.log(`Current file not available${statusCode}, trying alternatives...`);
+        }
+        // Continue to next attempt
       }
-      await downloadFile(url, tempZipPath);
-      console.log(`✓ Successfully downloaded ${filename}`);
-      return { success: true, filename };
-    } catch (error: any) {
-      if (hoursOffset === 0) {
-        console.log(`Current file not available, trying recent files...`);
-      }
-      // Continue to next attempt
     }
   }
   
