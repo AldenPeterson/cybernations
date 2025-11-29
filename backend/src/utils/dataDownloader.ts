@@ -140,16 +140,30 @@ async function extractZip(zipPath: string, extractDir: string): Promise<void> {
 }
 
 /**
- * Read the latest downloads tracker if present
+ * Read the latest downloads tracker from database
  */
-function readLatestDownloadsTracker(): Record<string, { timestamp: number; originalFile: string; downloadTime: string }> | null {
+async function readLatestDownloadsTracker(): Promise<Record<string, { timestamp: number; originalFile: string; downloadTime: string }> | null> {
   try {
-    const dataPath = path.join(process.cwd(), 'src', 'data');
-    const trackerPath = path.join(dataPath, 'latest_downloads.json');
-    if (!fs.existsSync(trackerPath)) return null;
-    const raw = fs.readFileSync(trackerPath, 'utf8');
-    return JSON.parse(raw);
-  } catch {
+    const { getAllFileDownloads } = await import('../services/fileDownloadService.js');
+    const downloads = await getAllFileDownloads();
+    
+    if (Object.keys(downloads).length === 0) {
+      return null;
+    }
+    
+    // Convert to the expected format
+    const result: Record<string, { timestamp: number; originalFile: string; downloadTime: string }> = {};
+    for (const [fileType, record] of Object.entries(downloads)) {
+      result[fileType] = {
+        timestamp: Number(record.timestamp),
+        originalFile: record.originalFile,
+        downloadTime: record.downloadTime.toISOString()
+      };
+    }
+    
+    return result;
+  } catch (error) {
+    console.warn('Error reading downloads tracker from database:', error);
     return null;
   }
 }
@@ -200,11 +214,11 @@ function getLastScheduledUpdateUtcMs(now: Date): number {
 }
 
 /**
- * Determine which file types are stale based on latest_downloads.json
+ * Determine which file types are stale based on database
  * using the twice-daily schedule at 6am/6pm Central.
  */
-function getStaleFileTypesFromLatestDownloads(): FileType[] {
-  const tracker = readLatestDownloadsTracker();
+async function getStaleFileTypesFromLatestDownloads(): Promise<FileType[]> {
+  const tracker = await readLatestDownloadsTracker();
   const requiredKeys: { key: string; type: FileType; csv: string }[] = [
     { key: FileType.NATION_STATS, type: FileType.NATION_STATS, csv: 'nations.csv' },
     { key: FileType.AID_STATS, type: FileType.AID_STATS, csv: 'aid_offers.csv' },
@@ -365,8 +379,8 @@ async function performDownload(): Promise<void> {
     { type: FileType.WAR_STATS, outputFile: 'wars.csv' }
   ];
   
-  // Merge with existing tracker to preserve fresh entries
-  const existingTracker = readLatestDownloadsTracker() || {};
+  // Get existing tracker from database
+  const existingTracker = await readLatestDownloadsTracker() || {};
   const latestDownloads: { [key: string]: { timestamp: number; originalFile: string; downloadTime: string } } = { ...existingTracker };
   
   // Download and process files
@@ -383,7 +397,7 @@ async function performDownload(): Promise<void> {
       await extractCsvToStandardFile(tempZipPath, outputPath, file.type);
       console.log(`Extracted ${file.type} to ${file.outputFile}`);
       
-      // Track this download
+      // Track this download in memory (will be saved to database later)
       latestDownloads[file.type] = {
         timestamp: Date.now(),
         originalFile: result.filename,
@@ -402,10 +416,12 @@ async function performDownload(): Promise<void> {
   
   await Promise.allSettled(downloadPromises);
   
-  // Write the latest downloads tracker
-  const trackerPath = path.join(dataPath, 'latest_downloads.json');
-  fs.writeFileSync(trackerPath, JSON.stringify(latestDownloads, null, 2));
-  console.log('Updated latest downloads tracker');
+  // Update the database tracker
+  const { upsertFileDownload } = await import('../services/fileDownloadService.js');
+  for (const [fileType, record] of Object.entries(latestDownloads)) {
+    await upsertFileDownload(fileType as FileType, record.originalFile, record.timestamp);
+  }
+  console.log('Updated latest downloads tracker in database');
 }
 
 /**
@@ -475,13 +491,13 @@ export async function ensureRecentFiles(): Promise<void> {
 
   const isProd = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
 
-  // Determine staleness using latest_downloads.json
-  const staleTypes = getStaleFileTypesFromLatestDownloads();
+  // Determine staleness using database
+  const staleTypes = await getStaleFileTypesFromLatestDownloads();
 
-  if (staleTypes.length === 0) {
-    console.log('All standardized files are fresh according to latest_downloads.json');
-    return;
-  }
+    if (staleTypes.length === 0) {
+      console.log('All standardized files are fresh according to database');
+      return;
+    }
 
   if (isProd) {
     console.log('Production environment detected, attempting download with timeout protection for stale files:', staleTypes.join(', '));
@@ -570,7 +586,7 @@ function getCustomFilename(fileType: FileType): string | undefined {
 /**
  * Try to download a file based on current timestamp
  * Supports custom filename override via environment variables
- * If the file doesn't exist, throws an error (caller will use existing data)
+ * Tries current timestamp first, then falls back to recent timestamps to get newest available file
  */
 export async function downloadFileWithFallback(
   baseUrl: string,
@@ -600,15 +616,35 @@ export async function downloadFileWithFallback(
 
   const flag = flag_map[fileType];
   
-  // Only try current timestamp - no fallback to older files
-  const timestamp = getDownloadNumberSlug(flag, 0);
-  const filename = `CyberNations_SE_${fileType}_${timestamp}.zip`;
-  const url = `${baseUrl}${filename}`;
+  // Try current timestamp first, then fall back to recent timestamps
+  // Files are updated at 6am and 6pm Central, so we try offsets that align with those boundaries
+  // This ensures we get the newest available file based on current time
+  const offsetsToTry = [0, 6, 12, 18, 24]; // Try current, then 6h, 12h, 18h, 24h back
+  
+  for (const hoursOffset of offsetsToTry) {
+    const timestamp = getDownloadNumberSlug(flag, hoursOffset);
+    const filename = `CyberNations_SE_${fileType}_${timestamp}.zip`;
+    const url = `${baseUrl}${filename}`;
 
-  console.log(`Attempting download for current file: ${filename}`);
-  await downloadFile(url, tempZipPath);
-  console.log(`✓ Successfully downloaded ${filename}`);
-  return { success: true, filename };
+    try {
+      if (hoursOffset === 0) {
+        console.log(`Attempting download for current file: ${filename}`);
+      } else {
+        console.log(`Trying recent file (${hoursOffset}h back): ${filename}`);
+      }
+      await downloadFile(url, tempZipPath);
+      console.log(`✓ Successfully downloaded ${filename}`);
+      return { success: true, filename };
+    } catch (error: any) {
+      if (hoursOffset === 0) {
+        console.log(`Current file not available, trying recent files...`);
+      }
+      // Continue to next attempt
+    }
+  }
+  
+  // If all attempts failed, throw an error
+  throw new Error(`Failed to download ${fileType} file after trying ${offsetsToTry.length} recent timestamps`);
 }
 
 /**
@@ -637,8 +673,7 @@ async function performSelectiveDownload(staleTypes: FileType[]): Promise<void> {
     [FileType.WAR_STATS]: { outputFile: 'wars.csv' }
   };
 
-  const existingTracker = readLatestDownloadsTracker() || {};
-  const latestDownloads: { [key: string]: { timestamp: number; originalFile: string; downloadTime: string } } = { ...existingTracker };
+  const { upsertFileDownload } = await import('../services/fileDownloadService.js');
 
   for (const type of staleTypes) {
     const tempZipPath = path.join(dataPath, `temp_${type}.zip`);
@@ -647,11 +682,8 @@ async function performSelectiveDownload(staleTypes: FileType[]): Promise<void> {
     try {
       const result = await downloadFileWithFallback(baseUrl, type, tempZipPath);
       await extractCsvToStandardFile(tempZipPath, outputPath, type);
-      latestDownloads[type] = {
-        timestamp: Date.now(),
-        originalFile: result.filename,
-        downloadTime: new Date().toISOString()
-      };
+      // Update database tracker
+      await upsertFileDownload(type, result.filename);
     } finally {
       if (fs.existsSync(tempZipPath)) {
         fs.unlinkSync(tempZipPath);
@@ -659,7 +691,5 @@ async function performSelectiveDownload(staleTypes: FileType[]): Promise<void> {
     }
   }
 
-  const trackerPath = path.join(dataPath, 'latest_downloads.json');
-  fs.writeFileSync(trackerPath, JSON.stringify(latestDownloads, null, 2));
-  console.log('Updated latest downloads tracker (selective)');
+  console.log('Updated latest downloads tracker in database (selective)');
 }

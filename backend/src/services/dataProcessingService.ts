@@ -425,8 +425,6 @@ export async function loadDataFromFiles(checkForUpdates: boolean = true): Promis
       soldiers: a.soldiers,
       date: a.date,
       reason: a.reason,
-      expirationDate: a.expirationDate ?? undefined,
-      daysUntilExpiration: a.daysUntilExpiration ?? undefined,
       isExpired: a.isExpired ?? undefined,
     }));
 

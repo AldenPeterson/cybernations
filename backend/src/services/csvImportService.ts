@@ -264,7 +264,15 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
         console.log(`Parsed ${aidOffers.length} aid offers from CSV`);
         console.log('Preparing aid offers for batch upsert...');
         
-        // Batch verify nations exist
+        const now = new Date();
+        
+        // Step 1: Mark all existing aid offers as inactive BEFORE processing new data
+        console.log('Marking existing aid offers as inactive...');
+        await prisma.aidOffer.updateMany({
+          data: { isActive: false }
+        });
+        
+        // Step 2: Batch verify nations exist
         const nationIds = new Set<number>();
         for (const offer of aidOffers) {
           nationIds.add(offer.declaringNationId);
@@ -286,18 +294,19 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
         
         console.log(`Processing ${validOffers.length} valid aid offers (skipped ${aidOffers.length - validOffers.length} with invalid nations)...`);
         
-        // Fetch existing aid offer IDs in one batch query
+        // Step 3: Fetch existing aid offer IDs and versions in one batch query
         const aidOfferIds = validOffers.map(o => o.aidId);
-        const existingAidOfferIds = new Set(
-          (await prisma.aidOffer.findMany({
-            where: { aidId: { in: aidOfferIds } },
-            select: { aidId: true }
-          })).map(a => a.aidId)
+        const existingAidOffers = await prisma.aidOffer.findMany({
+          where: { aidId: { in: aidOfferIds } },
+          select: { aidId: true, version: true }
+        });
+        const existingAidOfferMap = new Map(
+          existingAidOffers.map(a => [a.aidId, a.version])
         );
         
         // Split into new and existing
-        const newOffers = validOffers.filter(o => !existingAidOfferIds.has(o.aidId));
-        const existingOffers = validOffers.filter(o => existingAidOfferIds.has(o.aidId));
+        const newOffers = validOffers.filter(o => !existingAidOfferMap.has(o.aidId));
+        const existingOffers = validOffers.filter(o => existingAidOfferMap.has(o.aidId));
         
         console.log(`Found ${newOffers.length} new aid offers and ${existingOffers.length} existing aid offers`);
         
@@ -305,12 +314,18 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
         let updated = 0;
         let skipped = 0;
         
-        // Batch create new aid offers
+        // Step 4: Batch create new aid offers
         if (newOffers.length > 0) {
           try {
             const batchSize = 1000;
             for (let i = 0; i < newOffers.length; i += batchSize) {
-              const batch = newOffers.slice(i, i + batchSize);
+              const batch = newOffers.slice(i, i + batchSize).map(offer => ({
+                ...offer,
+                firstSeenAt: now,
+                lastSeenAt: now,
+                isActive: true,
+                version: 1
+              }));
               await prisma.aidOffer.createMany({
                 data: batch,
                 skipDuplicates: true
@@ -324,7 +339,7 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
           }
         }
         
-        // Batch update existing aid offers using parallel updates
+        // Step 5: Batch update existing aid offers using parallel updates
         if (existingOffers.length > 0) {
           try {
             const batchSize = 100;
@@ -334,15 +349,21 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
               const batch = existingOffers.slice(i, i + batchSize);
               
               // Process each update in parallel (each update is atomic)
-              const batchPromises = batch.map(offer =>
-                prisma.aidOffer.update({
+              const batchPromises = batch.map(offer => {
+                const currentVersion = existingAidOfferMap.get(offer.aidId) || 1;
+                return prisma.aidOffer.update({
                   where: { aidId: offer.aidId },
-                  data: offer
+                  data: {
+                    ...offer,
+                    lastSeenAt: now,
+                    isActive: true,
+                    version: currentVersion + 1
+                  }
                 }).catch((error: any) => {
                   console.warn(`Error updating aid offer ${offer.aidId}: ${error.message}`);
                   return null;
-                })
-              );
+                });
+              });
               
               updatePromises.push(...batchPromises);
             }
@@ -409,7 +430,15 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
         console.log(`Parsed ${wars.length} wars from CSV`);
         console.log('Preparing wars for batch upsert...');
         
-        // Batch verify nations exist
+        const now = new Date();
+        
+        // Step 1: Mark all existing wars as inactive BEFORE processing new data
+        console.log('Marking existing wars as inactive...');
+        await prisma.war.updateMany({
+          data: { isActive: false }
+        });
+        
+        // Step 2: Batch verify nations exist
         const nationIds = new Set<number>();
         for (const war of wars) {
           nationIds.add(war.declaringNationId);
@@ -431,18 +460,19 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
         
         console.log(`Processing ${validWars.length} valid wars (skipped ${wars.length - validWars.length} with invalid nations)...`);
         
-        // Fetch existing war IDs in one batch query
+        // Step 3: Fetch existing war IDs and versions in one batch query
         const warIds = validWars.map(w => w.warId);
-        const existingWarIds = new Set(
-          (await prisma.war.findMany({
-            where: { warId: { in: warIds } },
-            select: { warId: true }
-          })).map(w => w.warId)
+        const existingWarsData = await prisma.war.findMany({
+          where: { warId: { in: warIds } },
+          select: { warId: true, version: true }
+        });
+        const existingWarMap = new Map(
+          existingWarsData.map(w => [w.warId, w.version])
         );
         
         // Split into new and existing
-        const newWars = validWars.filter(w => !existingWarIds.has(w.warId));
-        const existingWars = validWars.filter(w => existingWarIds.has(w.warId));
+        const newWars = validWars.filter(w => !existingWarMap.has(w.warId));
+        const existingWars = validWars.filter(w => existingWarMap.has(w.warId));
         
         console.log(`Found ${newWars.length} new wars and ${existingWars.length} existing wars`);
         
@@ -450,12 +480,18 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
         let updated = 0;
         let skipped = 0;
         
-        // Batch create new wars
+        // Step 4: Batch create new wars
         if (newWars.length > 0) {
           try {
             const batchSize = 1000;
             for (let i = 0; i < newWars.length; i += batchSize) {
-              const batch = newWars.slice(i, i + batchSize);
+              const batch = newWars.slice(i, i + batchSize).map(war => ({
+                ...war,
+                firstSeenAt: now,
+                lastSeenAt: now,
+                isActive: true,
+                version: 1
+              }));
               await prisma.war.createMany({
                 data: batch,
                 skipDuplicates: true
@@ -469,7 +505,7 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
           }
         }
         
-        // Batch update existing wars using parallel updates
+        // Step 5: Batch update existing wars using parallel updates
         if (existingWars.length > 0) {
           try {
             const batchSize = 100;
@@ -479,15 +515,21 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
               const batch = existingWars.slice(i, i + batchSize);
               
               // Process each update in parallel (each update is atomic)
-              const batchPromises = batch.map(war =>
-                prisma.war.update({
+              const batchPromises = batch.map(war => {
+                const currentVersion = existingWarMap.get(war.warId) || 1;
+                return prisma.war.update({
                   where: { warId: war.warId },
-                  data: war
+                  data: {
+                    ...war,
+                    lastSeenAt: now,
+                    isActive: true,
+                    version: currentVersion + 1
+                  }
                 }).catch((error: any) => {
                   console.warn(`Error updating war ${war.warId}: ${error.message}`);
                   return null;
-                })
-              );
+                });
+              });
               
               updatePromises.push(...batchPromises);
             }

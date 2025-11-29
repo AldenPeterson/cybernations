@@ -90,9 +90,12 @@ model AidOffer {
   soldiers            Int      @default(0)
   date                String
   reason              String
-  expirationDate      String?  @map("expiration_date")
-  daysUntilExpiration Int?     @map("days_until_expiration")
   isExpired           Boolean? @default(false) @map("is_expired")
+  // Historical tracking fields
+  firstSeenAt         DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt          DateTime @default(now()) @map("last_seen_at")
+  isActive            Boolean  @default(true) @map("is_active")
+  version             Int      @default(1)
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
@@ -102,6 +105,8 @@ model AidOffer {
   @@index([declaringNationId])
   @@index([receivingNationId])
   @@index([status])
+  @@index([isActive])
+  @@index([lastSeenAt])
   @@map("aid_offers")
 }
 
@@ -120,6 +125,11 @@ model War {
   daysUntilExpiration Int?     @map("days_until_expiration")
   expirationColor     String?  @map("expiration_color")
   isExpired           Boolean? @default(false) @map("is_expired")
+  // Historical tracking fields
+  firstSeenAt         DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt          DateTime @default(now()) @map("last_seen_at")
+  isActive            Boolean  @default(true) @map("is_active")
+  version             Int      @default(1)
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
@@ -129,6 +139,8 @@ model War {
   @@index([declaringNationId])
   @@index([receivingNationId])
   @@index([status])
+  @@index([isActive])
+  @@index([lastSeenAt])
   @@map("wars")
 }
 
@@ -186,4 +198,15 @@ model CrossAllianceAid {
   @@index([sourceAllianceId])
   @@index([targetAllianceId])
   @@map("cross_alliance_aid")
+}
+
+model FileDownload {
+  fileType     String   @id @map("file_type") // Nation_Stats, Aid_Stats, War_Stats
+  originalFile String   @map("original_file")
+  timestamp    BigInt   // Unix timestamp in milliseconds
+  downloadTime DateTime @map("download_time")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("file_downloads")
 }

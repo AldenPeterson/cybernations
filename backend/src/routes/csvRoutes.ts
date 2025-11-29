@@ -11,5 +11,5 @@ export const csvRoutes = Router();
 csvRoutes.post('/csv/:type/download', CsvController.downloadCsv);
 csvRoutes.get('/csv/:type/parse', CsvController.parseCsv);
 csvRoutes.post('/csv/:type/update', CsvController.updateFromCsv);
-csvRoutes.post('/csv/:type/sync', CsvController.syncCsv);
+csvRoutes.post('/:type/sync', CsvController.syncCsv);
 

@@ -7,7 +7,12 @@ import {
   importWarsFromCsv 
 } from '../services/csvImportService.js';
 import { 
+  getFileDownload,
+  upsertFileDownload
+} from '../services/fileDownloadService.js';
+import { 
   FileType, 
+  getFileInfo,
   downloadFileWithFallback,
   extractCsvToStandardFile 
 } from '../utils/dataDownloader.js';
@@ -231,8 +236,11 @@ export class CsvController {
 
   /**
    * Download, parse, and update database in one operation
-   * POST /api/csv/:type/sync
+   * POST /api/:type/sync
    * Types: nations, aid-offers, wars
+   * 
+   * Checks if expected file is newer than what's in database.
+   * If newer, downloads and updates. Otherwise returns that data is fresh.
    */
   static async syncCsv(req: Request, res: Response) {
     try {
@@ -246,6 +254,36 @@ export class CsvController {
         });
       }
 
+      // Get expected file info based on current time
+      const expectedFileInfo = getFileInfo(config.type);
+      const expectedFilename = expectedFileInfo.name;
+      
+      console.log(`[Sync] Starting sync for ${config.type}...`);
+      console.log(`[Sync] Expected filename: ${expectedFilename}`);
+      
+      // Check database for last downloaded file
+      const lastDownload = await getFileDownload(config.type);
+      
+      if (lastDownload && lastDownload.originalFile === expectedFilename) {
+        // Data is fresh - same filename as expected
+        console.log(`[Sync] Data is fresh. Last downloaded: ${lastDownload.originalFile}`);
+        return res.json({
+          success: true,
+          message: `Data is fresh for ${config.type}`,
+          isFresh: true,
+          expectedFilename,
+          lastDownloaded: lastDownload.originalFile,
+          lastDownloadTime: lastDownload.downloadTime.toISOString()
+        });
+      }
+      
+      // Need to download - either no record or different filename
+      if (lastDownload) {
+        console.log(`[Sync] New file available. Last: ${lastDownload.originalFile}, Expected: ${expectedFilename}`);
+      } else {
+        console.log(`[Sync] No previous download record found. Downloading ${expectedFilename}...`);
+      }
+
       // Step 1: Download
       const dataPath = getDataPath();
       if (!fs.existsSync(dataPath)) {
@@ -256,15 +294,31 @@ export class CsvController {
       const outputPath = path.join(dataPath, config.outputFile);
 
       const baseUrl = 'https://www.cybernations.net/assets/';
-      console.log(`Downloading ${config.type}...`);
       
       // Step 1: Download
       const downloadResult = await downloadFileWithFallback(baseUrl, config.type, tempZipPath);
-      console.log(`Downloaded ${config.type}: ${downloadResult.filename}`);
+      console.log(`[Sync] Downloaded ${config.type}: ${downloadResult.filename}`);
       
       // Step 2: Extract
       await extractCsvToStandardFile(tempZipPath, outputPath, config.type);
-      console.log(`Extracted ${config.type} to ${config.outputFile}`);
+      console.log(`[Sync] Extracted ${config.type} to ${config.outputFile}`);
+      
+      // Verify the file exists and has content
+      if (!fs.existsSync(outputPath)) {
+        throw new Error(`Extracted file not found at ${outputPath}`);
+      }
+      const fileStats = fs.statSync(outputPath);
+      const fileModifiedTime = fileStats.mtime.toISOString();
+      console.log(`[Sync] File size: ${fileStats.size} bytes`);
+      console.log(`[Sync] File modified time: ${fileModifiedTime}`);
+      
+      if (fileStats.size === 0) {
+        throw new Error(`Extracted file is empty at ${outputPath}`);
+      }
+      
+      // Update the database tracker
+      await upsertFileDownload(config.type, downloadResult.filename);
+      console.log(`[Sync] Updated database tracker with new download info`);
       
       // Clean up temp zip
       if (fs.existsSync(tempZipPath)) {
@@ -272,6 +326,7 @@ export class CsvController {
       }
 
       // Step 3: Update database
+      console.log(`[Sync] Starting database import from ${outputPath}...`);
       let importResult: { imported: number; updated: number };
       if (type === 'nations') {
         importResult = await importNationsFromCsv(outputPath);
@@ -286,9 +341,12 @@ export class CsvController {
         });
       }
 
+      console.log(`[Sync] Database import complete: ${importResult.imported} imported, ${importResult.updated} updated`);
+
       res.json({
         success: true,
         message: `Successfully synced ${config.type}`,
+        isFresh: false,
         steps: {
           downloaded: true,
           extracted: true,
@@ -296,10 +354,12 @@ export class CsvController {
         },
         imported: importResult.imported,
         updated: importResult.updated,
-        file: config.outputFile
+        file: config.outputFile,
+        filename: downloadResult.filename,
+        fileSize: fileStats.size
       });
     } catch (error: any) {
-      console.error('Error syncing CSV:', error);
+      console.error('[Sync] Error syncing CSV:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to sync CSV file'
