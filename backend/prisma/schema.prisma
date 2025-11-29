@@ -50,8 +50,6 @@ model Nation {
   receivingAidOffers   AidOffer[]    @relation("ReceivingNation")
   declaringWars        War[]         @relation("DeclaringNation")
   receivingWars        War[]         @relation("ReceivingNation")
-  declaringDynamicWars DynamicWar[]  @relation("DeclaringNation")
-  receivingDynamicWars DynamicWar[]  @relation("ReceivingNation")
 
   @@index([allianceId])
   @@index([id])
@@ -144,32 +142,6 @@ model War {
   @@map("wars")
 }
 
-model DynamicWar {
-  id                Int      @id @default(autoincrement())
-  warId             Int      @map("war_id")
-  declaringNationId Int      @map("declaring_nation_id")
-  receivingNationId Int      @map("receiving_nation_id")
-  status            String
-  date              String
-  endDate           String   @map("end_date")
-  reason            String?
-  destruction       String?
-  attackPercent     Float?   @map("attack_percent")
-  defendPercent     Float?   @map("defend_percent")
-  addedAt           DateTime @map("added_at")
-  source            String // 'chrome_extension' | 'manual' | 'api'
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-
-  declaringNation Nation @relation("DeclaringNation", fields: [declaringNationId], references: [id])
-  receivingNation Nation @relation("ReceivingNation", fields: [receivingNationId], references: [id])
-
-  @@unique([warId])
-  @@index([declaringNationId])
-  @@index([receivingNationId])
-  @@index([status])
-  @@map("dynamic_wars")
-}
 
 model NuclearHit {
   id              Int      @id @default(autoincrement())

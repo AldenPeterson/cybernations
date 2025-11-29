@@ -8,7 +8,6 @@ import { Nation } from '../models/Nation.js';
 import { AidOffer } from '../models/AidOffer.js';
 import { Alliance } from '../models/Alliance.js';
 import { AidSlot, NationAidSlots } from '../models/AidSlot.js';
-import { DynamicWarService } from './dynamicWarService.js';
 import { prisma } from '../utils/prisma.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -475,12 +474,8 @@ export async function loadDataFromFiles(checkForUpdates: boolean = true): Promis
 }
 
 export async function loadDataFromFilesWithUpdate(): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {
-  const { nations, aidOffers, wars } = await loadDataFromFiles();
-  
-  // Merge database wars with dynamic wars
-  const mergedWars = await DynamicWarService.mergeWithCSVWars(wars);
-  
-  return { nations, aidOffers, wars: mergedWars };
+  // Wars are now all in the same table, no merging needed
+  return await loadDataFromFiles();
 }
 
 export function groupNationsByAlliance(nations: Nation[]): Alliance[] {
