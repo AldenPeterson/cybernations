@@ -1,10 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { loadNationDiscordHandles } from './nationDiscordHandles.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { prisma } from './prisma.js';
 
 export interface AllianceData {
   alliance_id: number;
@@ -58,50 +52,58 @@ export interface NationData {
 }
 
 /**
- * Get the path to the alliances directory
- * Tries multiple possible paths to work in both development and production (Vercel) environments
+ * Load all alliances from database
  */
-function getAlliancesDirectory(): string | null {
-  // Try multiple possible paths for different environments
-  const possiblePaths = [
-    path.join(process.cwd(), 'src', 'config', 'alliances'),
-    path.join(process.cwd(), 'dist', 'config', 'alliances'),
-    path.join(__dirname, '..', 'config', 'alliances'),
-    path.join(__dirname, '..', '..', 'config', 'alliances'),
-    path.join(process.cwd(), 'config', 'alliances')
-  ];
-  
-  for (const possiblePath of possiblePaths) {
-    if (fs.existsSync(possiblePath)) {
-      return possiblePath;
-    }
-  }
-  
-  return null;
-}
-
-/**
- * Load all alliance files
- */
-export function loadAllAlliances(): Map<number, AllianceData> {
-  const alliancesDir = getAlliancesDirectory();
+export async function loadAllAlliances(): Promise<Map<number, AllianceData>> {
   const alliances = new Map<number, AllianceData>();
   
-  if (!alliancesDir) {
-    console.warn('Alliances directory not found in any expected location');
-    return alliances;
-  }
-  
-  const files = fs.readdirSync(alliancesDir).filter(file => file.endsWith('.json'));
-  
-  for (const file of files) {
-    try {
-      const filePath = path.join(alliancesDir, file);
-      const data = JSON.parse(fs.readFileSync(filePath, 'utf8')) as AllianceData;
-      alliances.set(data.alliance_id, data);
-    } catch (error) {
-      console.error(`Error loading alliance file ${file}:`, error);
+  try {
+    const allianceRecords = await prisma.alliance.findMany({
+      include: {
+        nationConfigs: {
+          include: {
+            nation: true,
+          },
+        },
+      },
+    });
+
+    for (const alliance of allianceRecords) {
+      const nations: { [nationId: number]: any } = {};
+      
+      for (const config of alliance.nationConfigs) {
+        const nation = config.nation;
+        nations[nation.id] = {
+          ruler_name: nation.rulerName,
+          nation_name: nation.nationName,
+          discord_handle: config.discordHandle || '',
+          has_dra: config.hasDra,
+          notes: config.notes || undefined,
+          slots: {
+            sendTech: config.sendTechSlots,
+            sendCash: config.sendCashSlots,
+            getTech: config.getTechSlots,
+            getCash: config.getCashSlots,
+            external: config.externalSlots,
+            send_priority: config.sendPriority,
+            receive_priority: config.receivePriority,
+          },
+          current_stats: config.currentTech || config.currentInfra || config.currentStrength ? {
+            technology: config.currentTech || '0',
+            infrastructure: config.currentInfra || '0',
+            strength: config.currentStrength || '0',
+          } : undefined,
+        };
+      }
+
+      alliances.set(alliance.id, {
+        alliance_id: alliance.id,
+        alliance_name: alliance.name,
+        nations,
+      });
     }
+  } catch (error) {
+    console.error('Error loading alliances from database:', error);
   }
   
   return alliances;
@@ -110,71 +112,128 @@ export function loadAllAlliances(): Map<number, AllianceData> {
 /**
  * Load a specific alliance by ID
  */
-export function loadAllianceById(allianceId: number): AllianceData | null {
-  const alliancesDir = getAlliancesDirectory();
-  
-  if (!alliancesDir) {
-    return null;
-  }
-  
-  // Look for a file that starts with the alliance ID
-  const files = fs.readdirSync(alliancesDir);
-  const allianceFile = files.find(file => file.startsWith(`${allianceId}-`) && file.endsWith('.json'));
-  
-  if (!allianceFile) {
-    return null;
-  }
-  
+export async function loadAllianceById(allianceId: number): Promise<AllianceData | null> {
   try {
-    const filePath = path.join(alliancesDir, allianceFile);
-    return JSON.parse(fs.readFileSync(filePath, 'utf8')) as AllianceData;
+    const alliance = await prisma.alliance.findUnique({
+      where: { id: allianceId },
+      include: {
+        nationConfigs: {
+          include: {
+            nation: true,
+          },
+        },
+      },
+    });
+
+    if (!alliance) {
+    return null;
+  }
+  
+    const nations: { [nationId: number]: any } = {};
+    
+    for (const config of alliance.nationConfigs) {
+      const nation = config.nation;
+      nations[nation.id] = {
+        ruler_name: nation.rulerName,
+        nation_name: nation.nationName,
+        discord_handle: config.discordHandle || '',
+        has_dra: config.hasDra,
+        notes: config.notes || undefined,
+        slots: {
+          sendTech: config.sendTechSlots,
+          sendCash: config.sendCashSlots,
+          getTech: config.getTechSlots,
+          getCash: config.getCashSlots,
+          external: config.externalSlots,
+          send_priority: config.sendPriority,
+          receive_priority: config.receivePriority,
+        },
+        current_stats: config.currentTech || config.currentInfra || config.currentStrength ? {
+          technology: config.currentTech || '0',
+          infrastructure: config.currentInfra || '0',
+          strength: config.currentStrength || '0',
+        } : undefined,
+      };
+    }
+
+    return {
+      alliance_id: alliance.id,
+      alliance_name: alliance.name,
+      nations,
+    };
   } catch (error) {
-    console.error(`Error loading alliance ${allianceId}:`, error);
+    console.error(`Error loading alliance ${allianceId} from database:`, error);
     return null;
   }
 }
 
 /**
- * Save alliance data to file
+ * Save alliance data to database
  */
-export function saveAllianceData(allianceData: AllianceData): boolean {
-  // Skip file operations in serverless environments like Vercel
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    console.log('Skipping alliance data save in serverless environment');
-    return false;
-  }
+export async function saveAllianceData(allianceData: AllianceData): Promise<boolean> {
+  try {
+    // Upsert alliance
+    await prisma.alliance.upsert({
+      where: { id: allianceData.alliance_id },
+      update: { name: allianceData.alliance_name },
+      create: { id: allianceData.alliance_id, name: allianceData.alliance_name },
+    });
 
-  const alliancesDir = getAlliancesDirectory();
-  
-  if (!alliancesDir) {
-    console.error('Alliances directory not found, cannot save alliance data');
-    return false;
-  }
-  
-  try {
-    if (!fs.existsSync(alliancesDir)) {
-      fs.mkdirSync(alliancesDir, { recursive: true });
+    // Upsert nation configs
+    for (const [nationIdStr, nationData] of Object.entries(allianceData.nations)) {
+      const nationId = parseInt(nationIdStr);
+      
+      // Ensure nation exists
+      const nation = await prisma.nation.findUnique({
+        where: { id: nationId },
+      });
+
+      if (!nation) {
+        console.warn(`Nation ${nationId} not found, skipping config update`);
+        continue;
+      }
+
+      await prisma.nationConfig.upsert({
+        where: { nationId },
+        update: {
+          allianceId: allianceData.alliance_id,
+          hasDra: nationData.has_dra,
+          discordHandle: nationData.discord_handle || null,
+          notes: nationData.notes || null,
+          sendTechSlots: nationData.slots.sendTech || 0,
+          sendCashSlots: nationData.slots.sendCash || 0,
+          getTechSlots: nationData.slots.getTech || 0,
+          getCashSlots: nationData.slots.getCash || 0,
+          externalSlots: nationData.slots.external || 0,
+          sendPriority: nationData.slots.send_priority ?? 3,
+          receivePriority: nationData.slots.receive_priority ?? 3,
+          currentTech: nationData.current_stats?.technology || null,
+          currentInfra: nationData.current_stats?.infrastructure || null,
+          currentStrength: nationData.current_stats?.strength || null,
+        },
+        create: {
+          nationId,
+          allianceId: allianceData.alliance_id,
+          hasDra: nationData.has_dra,
+          discordHandle: nationData.discord_handle || null,
+          notes: nationData.notes || null,
+          sendTechSlots: nationData.slots.sendTech || 0,
+          sendCashSlots: nationData.slots.sendCash || 0,
+          getTechSlots: nationData.slots.getTech || 0,
+          getCashSlots: nationData.slots.getCash || 0,
+          externalSlots: nationData.slots.external || 0,
+          sendPriority: nationData.slots.send_priority ?? 3,
+          receivePriority: nationData.slots.receive_priority ?? 3,
+          currentTech: nationData.current_stats?.technology || null,
+          currentInfra: nationData.current_stats?.infrastructure || null,
+          currentStrength: nationData.current_stats?.strength || null,
+        },
+      });
     }
-  } catch (error) {
-    console.error('Could not create alliances directory:', error);
-    return false;
-  }
-  
-  // Create filename
-  const sanitizedName = allianceData.alliance_name.toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/--+/g, '-')
-    .trim();
-  
-  const filename = `${allianceData.alliance_id}-${sanitizedName}.json`;
-  const filePath = path.join(alliancesDir, filename);
-  
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(allianceData, null, 2));
+
     return true;
   } catch (error) {
-    console.error(`Error saving alliance ${allianceData.alliance_id}:`, error);
+    console.error(`Error saving alliance ${allianceData.alliance_id} to database:`, error);
     return false;
   }
 }
@@ -182,45 +241,103 @@ export function saveAllianceData(allianceData: AllianceData): boolean {
 /**
  * Find a nation across all alliances
  */
-export function findNationById(nationId: number): { alliance: AllianceData; nation: NationData } | null {
-  const alliances = loadAllAlliances();
-  
-  for (const alliance of alliances.values()) {
-    const nation = alliance.nations[nationId];
-    if (nation) {
-      return {
-        alliance,
-        nation: {
-          nation_id: nationId,
-          ...nation
-        }
-      };
+export async function findNationById(nationId: number): Promise<{ alliance: AllianceData; nation: NationData } | null> {
+  try {
+    const nation = await prisma.nation.findUnique({
+      where: { id: nationId },
+      include: {
+        alliance: true,
+        nationConfig: true,
+      },
+    });
+
+    if (!nation || !nation.nationConfig) {
+      return null;
     }
+
+    const config = nation.nationConfig;
+    const allianceData: AllianceData = {
+      alliance_id: nation.alliance.id,
+      alliance_name: nation.alliance.name,
+      nations: {},
+    };
+
+    const nationData: NationData = {
+      nation_id: nation.id,
+      ruler_name: nation.rulerName,
+      nation_name: nation.nationName,
+      discord_handle: config.discordHandle || '',
+      has_dra: config.hasDra,
+      notes: config.notes || undefined,
+      slots: {
+        sendTech: config.sendTechSlots,
+        sendCash: config.sendCashSlots,
+        getTech: config.getTechSlots,
+        getCash: config.getCashSlots,
+        external: config.externalSlots,
+        send_priority: config.sendPriority,
+        receive_priority: config.receivePriority,
+      },
+      current_stats: config.currentTech || config.currentInfra || config.currentStrength ? {
+        technology: config.currentTech || '0',
+        infrastructure: config.currentInfra || '0',
+        strength: config.currentStrength || '0',
+      } : undefined,
+    };
+
+    allianceData.nations[nation.id] = {
+      ruler_name: nation.rulerName,
+      nation_name: nation.nationName,
+      discord_handle: config.discordHandle || '',
+      has_dra: config.hasDra,
+      notes: config.notes || undefined,
+      slots: {
+        sendTech: config.sendTechSlots,
+        sendCash: config.sendCashSlots,
+        getTech: config.getTechSlots,
+        getCash: config.getCashSlots,
+        external: config.externalSlots,
+        send_priority: config.sendPriority,
+        receive_priority: config.receivePriority,
+      },
+      current_stats: config.currentTech || config.currentInfra || config.currentStrength ? {
+        technology: config.currentTech || '0',
+        infrastructure: config.currentInfra || '0',
+        strength: config.currentStrength || '0',
+      } : undefined,
+    };
+
+    return { alliance: allianceData, nation: nationData };
+  } catch (error) {
+    console.error(`Error finding nation ${nationId} in database:`, error);
+    return null;
   }
-  
-  return null;
 }
 
 /**
  * Update a specific nation's data
  */
-export function updateNationData(
+export async function updateNationData(
   allianceId: number, 
   nationId: number, 
   updates: Partial<Omit<NationData, 'nation_id'>>
-): boolean {
-  const alliance = loadAllianceById(allianceId);
-  
-  if (!alliance || !alliance.nations[nationId]) {
+): Promise<boolean> {
+  try {
+    // Get existing config
+    const existingConfig = await prisma.nationConfig.findUnique({
+      where: { nationId },
+    });
+
+    if (!existingConfig) {
+      // Create new config if it doesn't exist
+      const nation = await prisma.nation.findUnique({
+        where: { id: nationId },
+      });
+
+      if (!nation) {
     return false;
   }
   
-  // Update the nation data
-  const nation = alliance.nations[nationId];
-  
-  // Handle slots updates specially to merge instead of overwrite
-  if (updates.slots) {
-    // Ensure the nation has all required slot fields with defaults
     const defaultSlots = {
       sendTech: 0,
       sendCash: 0,
@@ -228,55 +345,119 @@ export function updateNationData(
       getCash: 0,
       external: 0,
       send_priority: 3,
-      receive_priority: 3
-    };
-    
-    // Start with defaults, then apply existing values, then apply updates
-    nation.slots = { ...defaultSlots, ...nation.slots, ...updates.slots };
-    delete updates.slots;
+        receive_priority: 3,
+      };
+
+      await prisma.nationConfig.create({
+        data: {
+          nationId,
+          allianceId: nation.allianceId,
+          hasDra: updates.has_dra ?? false,
+          discordHandle: updates.discord_handle || null,
+          notes: updates.notes || null,
+          sendTechSlots: updates.slots?.sendTech ?? defaultSlots.sendTech,
+          sendCashSlots: updates.slots?.sendCash ?? defaultSlots.sendCash,
+          getTechSlots: updates.slots?.getTech ?? defaultSlots.getTech,
+          getCashSlots: updates.slots?.getCash ?? defaultSlots.getCash,
+          externalSlots: updates.slots?.external ?? defaultSlots.external,
+          sendPriority: updates.slots?.send_priority ?? defaultSlots.send_priority,
+          receivePriority: updates.slots?.receive_priority ?? defaultSlots.receive_priority,
+          currentTech: updates.current_stats?.technology || null,
+          currentInfra: updates.current_stats?.infrastructure || null,
+          currentStrength: updates.current_stats?.strength || null,
+        },
+      });
+
+      return true;
+    }
+
+    // Merge slots updates
+    const slotsUpdate: any = {};
+    if (updates.slots) {
+      slotsUpdate.sendTechSlots = updates.slots.sendTech ?? existingConfig.sendTechSlots;
+      slotsUpdate.sendCashSlots = updates.slots.sendCash ?? existingConfig.sendCashSlots;
+      slotsUpdate.getTechSlots = updates.slots.getTech ?? existingConfig.getTechSlots;
+      slotsUpdate.getCashSlots = updates.slots.getCash ?? existingConfig.getCashSlots;
+      slotsUpdate.externalSlots = updates.slots.external ?? existingConfig.externalSlots;
+      slotsUpdate.sendPriority = updates.slots.send_priority ?? existingConfig.sendPriority;
+      slotsUpdate.receivePriority = updates.slots.receive_priority ?? existingConfig.receivePriority;
+    }
+
+    // Update config
+    await prisma.nationConfig.update({
+      where: { nationId },
+      data: {
+        hasDra: updates.has_dra ?? existingConfig.hasDra,
+        discordHandle: updates.discord_handle !== undefined ? (updates.discord_handle || null) : existingConfig.discordHandle,
+        notes: updates.notes !== undefined ? (updates.notes || null) : existingConfig.notes,
+        currentTech: updates.current_stats?.technology || existingConfig.currentTech,
+        currentInfra: updates.current_stats?.infrastructure || existingConfig.currentInfra,
+        currentStrength: updates.current_stats?.strength || existingConfig.currentStrength,
+        ...slotsUpdate,
+      },
+    });
+
+    return true;
+  } catch (error) {
+    console.error(`Error updating nation ${nationId} data:`, error);
+    return false;
   }
-  
-  // Update other fields normally
-  Object.assign(nation, updates);
-  
-  // Save the updated alliance data
-  return saveAllianceData(alliance);
 }
 
 /**
  * Get all nations from all alliances in a flat array
  */
-export function getAllNationsFlat(): NationData[] {
-  const alliances = loadAllAlliances();
-  const nations: NationData[] = [];
-  
-  for (const alliance of alliances.values()) {
-    for (const [nationId, nationData] of Object.entries(alliance.nations)) {
-      nations.push({
-        nation_id: parseInt(nationId),
-        ...nationData
-      });
-    }
+export async function getAllNationsFlat(): Promise<NationData[]> {
+  try {
+    const configs = await prisma.nationConfig.findMany({
+      include: {
+        nation: true,
+      },
+    });
+
+    return configs.map(config => {
+      const nation = config.nation;
+      return {
+        nation_id: nation.id,
+        ruler_name: nation.rulerName,
+        nation_name: nation.nationName,
+        discord_handle: config.discordHandle || '',
+        has_dra: config.hasDra,
+        notes: config.notes || undefined,
+        slots: {
+          sendTech: config.sendTechSlots,
+          sendCash: config.sendCashSlots,
+          getTech: config.getTechSlots,
+          getCash: config.getCashSlots,
+          external: config.externalSlots,
+          send_priority: config.sendPriority,
+          receive_priority: config.receivePriority,
+        },
+        current_stats: config.currentTech || config.currentInfra || config.currentStrength ? {
+          technology: config.currentTech || '0',
+          infrastructure: config.currentInfra || '0',
+          strength: config.currentStrength || '0',
+        } : undefined,
+      };
+    });
+  } catch (error) {
+    console.error('Error loading all nations from database:', error);
+    return [];
   }
-  
-  return nations;
 }
 
 /**
- * Load alliance data with JSON priority - uses JSON config if available, falls back to raw data
+ * Load alliance data with JSON priority - uses database config if available, falls back to raw data
  */
 export async function loadAllianceDataWithJsonPriority(allianceId: number): Promise<{
   nations: any[];
   aidOffers: any[];
   useJsonData: boolean;
 }> {
-  // Load discord handles from separate file
-  const discordHandles = loadNationDiscordHandles();
+  // First try to load from database configuration
+  const allianceData = await loadAllianceById(allianceId);
   
-  // First try to load from JSON configuration
-  const allianceData = loadAllianceById(allianceId);
-  
-  if (allianceData) {
+  if (allianceData && Object.keys(allianceData.nations).length > 0) {
     // Get raw data to extract warStatus for peace mode filtering
     const { 
       loadDataFromFilesWithUpdate, 
@@ -287,7 +468,7 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
     // Create a dictionary of raw nations keyed by nation ID for efficient lookups
     const rawNationsDict = createNationsDictionary(rawNations);
 
-    // Convert JSON data to the format expected by the frontend and enrich with war mode status
+    // Convert database data to the format expected by the frontend and enrich with war mode status
     const nationsArray = Object.entries(allianceData.nations).map(([nationId, nationData]) => {
       // Ensure all slots have default values including priorities
       const defaultSlots = {
@@ -300,20 +481,17 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
         receive_priority: 3
       };
       
-      // Get discord handle from separate file, falling back to alliance data if not found
-      const discordHandle = discordHandles[nationId]?.discord_handle || nationData.discord_handle || '';
-      
       return {
         id: parseInt(nationId),
         nation_id: parseInt(nationId),
         rulerName: nationData.ruler_name,
         nationName: nationData.nation_name,
-        discord_handle: discordHandle,
+        discord_handle: nationData.discord_handle || '',
         alliance: allianceData.alliance_name,
         allianceId: allianceId,
-        team: '', // Not available in JSON
+        team: '', // Not available in config
         strength: parseFloat(nationData.current_stats?.strength?.replace(/,/g, '') || '0'),
-        activity: '', // Not available in JSON
+        activity: '', // Not available in config
         technology: nationData.current_stats?.technology || '0',
         infrastructure: nationData.current_stats?.infrastructure || '0',
         inWarMode: rawNationsDict[parseInt(nationId)]?.inWarMode ?? false,
@@ -329,7 +507,7 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
     };
   }
   
-  // Fall back to raw data if no JSON config exists
+  // Fall back to raw data if no database config exists
   const { loadDataFromFilesWithUpdate } = await import('../services/dataProcessingService.js');
   const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
   const allianceNations = nations.filter(nation => nation.allianceId === allianceId);

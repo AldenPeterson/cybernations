@@ -20,7 +20,7 @@ export class NuclearHitsController {
   };
 
   static stats = async (_req: Request, res: Response) => {
-    const stats = computeNuclearAttemptDistribution();
+    const stats = await computeNuclearAttemptDistribution();
     try {
       const { nations } = await loadDataFromFilesWithUpdate();
       const dict = createNationsDictionary(nations);

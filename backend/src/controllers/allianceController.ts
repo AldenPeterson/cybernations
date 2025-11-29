@@ -2,64 +2,27 @@ import { Request, Response } from 'express';
 import { loadDataFromFilesWithUpdate, groupNationsByAlliance } from '../services/dataProcessingService.js';
 import { AllianceService } from '../services/allianceService.js';
 import { syncAllianceFiles } from '../utils/dataDownloader.js';
-import * as fs from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export class AllianceController {
   /**
-   * Load alliances from static configuration files (for production environments)
+   * Load alliances from database
    */
-  private static loadAlliancesFromConfig(): any[] {
+  private static async loadAlliancesFromConfig(): Promise<any[]> {
     try {
-      // Try different possible paths for the alliances directory
-      const possiblePaths = [
-        path.join(process.cwd(), 'src', 'config', 'alliances'),
-        path.join(__dirname, '..', 'config', 'alliances'),
-        path.join(process.cwd(), 'dist', 'src', 'config', 'alliances'),
-        path.join(__dirname, '..', '..', 'config', 'alliances')
-      ];
-      
-      let alliancesDir = '';
-      for (const possiblePath of possiblePaths) {
-        if (fs.existsSync(possiblePath)) {
-          alliancesDir = possiblePath;
-          break;
-        }
-      }
-      
-      if (!alliancesDir) {
-        console.warn('Alliances directory not found in any expected location:', possiblePaths);
-        return [];
-      }
-      
-      console.log('Using alliances directory:', alliancesDir);
-      
-      const files = fs.readdirSync(alliancesDir).filter(file => file.endsWith('.json'));
-      const alliances: any[] = [];
-      
-      for (const file of files) {
-        try {
-          const filePath = path.join(alliancesDir, file);
-          const allianceData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-          
-          alliances.push({
-            id: allianceData.alliance_id,
-            name: allianceData.alliance_name,
-            nationCount: Object.keys(allianceData.nations).length
-          });
-        } catch (error) {
-          console.error(`Error loading alliance file ${file}:`, error);
-        }
-      }
-      
-      // Sort by nation count (descending - most nations first)
-      return alliances.sort((a, b) => b.nationCount - a.nationCount);
+      const { prisma } = await import('../utils/prisma.js');
+      const alliances = await prisma.alliance.findMany({
+        include: {
+          nationConfigs: true,
+        },
+      });
+
+      return alliances.map(alliance => ({
+        id: alliance.id,
+        name: alliance.name,
+        nationCount: alliance.nationConfigs.length
+      })).sort((a, b) => b.nationCount - a.nationCount);
     } catch (error) {
-      console.error('Error loading alliances from config:', error);
+      console.error('Error loading alliances from database:', error);
       return [];
     }
   }
@@ -102,9 +65,9 @@ export class AllianceController {
         return;
       }
       
-      // If no nations data available, try loading from config files as fallback
-      console.log('No nations data available, trying config files as fallback');
-      const alliances = AllianceController.loadAlliancesFromConfig();
+      // If no nations data available, try loading from database as fallback
+      console.log('No nations data available, trying database as fallback');
+      const alliances = await AllianceController.loadAlliancesFromConfig();
       
       // Log what we found for debugging
       console.log(`Fallback loaded ${alliances.length} alliances from config files`);

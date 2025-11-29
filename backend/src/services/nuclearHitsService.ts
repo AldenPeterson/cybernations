@@ -1,7 +1,5 @@
-import fs from 'fs';
-import path from 'path';
 import { parseCentralTimeDate } from '../utils/dateUtils.js';
-import { fileURLToPath } from 'url';
+import { prisma } from '../utils/prisma.js';
 
 export interface NuclearReportInput {
   AttackingNation: string | number;
@@ -18,83 +16,6 @@ export interface NuclearHitRecord {
 }
 
 type NuclearHitStore = Record<string, NuclearHitRecord>;
-
-function getDataFilePath(): string {
-  const candidates: string[] = [];
-  // 1) dist relative (when running compiled code)
-  try {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    candidates.push(path.join(__dirname, '..', 'data', 'nuclear_hits.json')); // dist/services -> dist/data
-    candidates.push(path.join(__dirname, '..', '..', 'src', 'data', 'nuclear_hits.json')); // fallback to src from dist
-  } catch {}
-  // 2) process cwd variants
-  candidates.push(path.join(process.cwd(), 'dist', 'data', 'nuclear_hits.json'));
-  candidates.push(path.join(process.cwd(), 'src', 'data', 'nuclear_hits.json'));
-  candidates.push(path.join(process.cwd(), 'data', 'nuclear_hits.json'));
-
-  for (const p of candidates) {
-    try {
-      if (fs.existsSync(p)) return p;
-    } catch {}
-  }
-  // Default to src path; writes are skipped in prod anyway
-  return candidates[candidates.length - 1];
-}
-
-export function readNuclearHits(): NuclearHitStore {
-  const filePath = getDataFilePath();
-  try {
-    if (!fs.existsSync(filePath)) {
-      return {};
-    }
-    const raw = fs.readFileSync(filePath, 'utf8');
-    if (!raw.trim()) {
-      return {};
-    }
-    const parsed = JSON.parse(raw) as Record<string, any>;
-    if (!parsed || typeof parsed !== 'object') return {};
-    // Strip any legacy "key" fields from values
-    const cleaned: NuclearHitStore = {};
-    for (const [k, v] of Object.entries(parsed)) {
-      if (v && typeof v === 'object') {
-        const { attackingNation, defendingNation, result, sentAt } = v as NuclearHitRecord & { key?: string };
-        cleaned[k] = { attackingNation, defendingNation, result, sentAt };
-      }
-    }
-    return cleaned;
-  } catch (error) {
-    console.error('Failed to read nuclear hits file:', error);
-    return {};
-  }
-}
-
-export function writeNuclearHits(store: NuclearHitStore): boolean {
-  // Skip file operations in serverless environments like Vercel
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    console.log('Skipping nuclear hits save in serverless environment');
-    return false;
-  }
-
-  const filePath = getDataFilePath();
-  const dir = path.dirname(filePath);
-  try {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    // Ensure we never persist a "key" property inside values
-    const output: NuclearHitStore = {};
-    for (const [k, v] of Object.entries(store)) {
-      const { attackingNation, defendingNation, result, sentAt } = v;
-      output[k] = { attackingNation, defendingNation, result, sentAt };
-    }
-    fs.writeFileSync(filePath, JSON.stringify(output, null, 2), 'utf8');
-    return true;
-  } catch (error) {
-    console.error('Failed to write nuclear hits file:', error);
-    return false;
-  }
-}
 
 function toKey(attackingNation: string | number, defendingNation: string | number, timestampMs: number): string {
   const a = String(attackingNation).trim();
@@ -120,12 +41,61 @@ export function normalizeReport(input: NuclearReportInput): { key: string; recor
   return { key, record };
 }
 
-export function upsertNuclearReports(inputs: NuclearReportInput[]): { added: number; skipped: number; addedKeys: string[] } {
+export async function readNuclearHits(): Promise<NuclearHitStore> {
+  try {
+    const hits = await prisma.nuclearHit.findMany();
+    const store: NuclearHitStore = {};
+    
+    for (const hit of hits) {
+      store[hit.key] = {
+        attackingNation: hit.attackingNation,
+        defendingNation: hit.defendingNation,
+        result: hit.result || undefined,
+        sentAt: hit.sentAt,
+      };
+    }
+    
+    return store;
+  } catch (error) {
+    console.error('Failed to read nuclear hits from database:', error);
+    return {};
+  }
+}
+
+export async function writeNuclearHits(store: NuclearHitStore): Promise<boolean> {
+  try {
+    // Upsert all records
+    for (const [key, record] of Object.entries(store)) {
+      await prisma.nuclearHit.upsert({
+        where: { key },
+        update: {
+          attackingNation: record.attackingNation,
+          defendingNation: record.defendingNation,
+          result: record.result || null,
+          sentAt: record.sentAt,
+        },
+        create: {
+          key,
+          attackingNation: record.attackingNation,
+          defendingNation: record.defendingNation,
+          result: record.result || null,
+          sentAt: record.sentAt,
+        },
+      });
+    }
+    return true;
+  } catch (error) {
+    console.error('Failed to write nuclear hits to database:', error);
+    return false;
+  }
+}
+
+export async function upsertNuclearReports(inputs: NuclearReportInput[]): Promise<{ added: number; skipped: number; addedKeys: string[] }> {
   if (!Array.isArray(inputs)) {
     return { added: 0, skipped: 0, addedKeys: [] };
   }
 
-  const store = readNuclearHits();
+  const store = await readNuclearHits();
   let added = 0;
   let skipped = 0;
   const addedKeys: string[] = [];
@@ -146,11 +116,9 @@ export function upsertNuclearReports(inputs: NuclearReportInput[]): { added: num
     }
   }
 
-  writeNuclearHits(store);
+  await writeNuclearHits(store);
   return { added, skipped, addedKeys };
 }
-
-
 
 // Classify a result string into thwarted/hit/unknown
 function classifyResult(result?: string): 'thwarted' | 'hit' | 'unknown' {
@@ -199,8 +167,8 @@ export interface NuclearTimelineResponse {
  * Compute, for each attacker→defender pair, how many thwarted attempts occurred before the first hit,
  * and whether a hit was ever achieved. Also returns an aggregated distribution across all pairs that achieved a hit.
  */
-export function computeNuclearAttemptDistribution(): NuclearAttemptDistribution {
-  const store = readNuclearHits();
+export async function computeNuclearAttemptDistribution(): Promise<NuclearAttemptDistribution> {
+  const store = await readNuclearHits();
 
   // Group attempts by attacker->defender pair
   const grouped: Record<string, { a: string; d: string; events: { t: number; sentAt: string; result?: string }[] }> = {};
@@ -313,8 +281,8 @@ export function computeNuclearAttemptDistribution(): NuclearAttemptDistribution 
  * Groups all events that occur in the same time interval across all days (default 5 minutes).
  * All parsing respects Central Time via parseCentralTimeDate.
  */
-export function computeNuclearTimeline(intervalMinutes: number = 5): NuclearTimelineResponse {
-  const store = readNuclearHits();
+export async function computeNuclearTimeline(intervalMinutes: number = 5): Promise<NuclearTimelineResponse> {
+  const store = await readNuclearHits();
   const intervalMinutesActual = Math.max(1, Math.floor(intervalMinutes));
   const intervalsPerDay = Math.floor((24 * 60) / intervalMinutesActual); // e.g., 288 for 5-minute intervals
 
@@ -414,4 +382,3 @@ export function computeNuclearTimeline(intervalMinutes: number = 5): NuclearTime
     lastEvent: undefined
   };
 }
-

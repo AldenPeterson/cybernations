@@ -11,27 +11,30 @@ import {
 } from './nationCategorizationService.js';
 import { AllianceService } from './allianceService.js';
 import { AidOffer } from '../models/index.js';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { CategorizedNation } from '../models/Nation.js';
+import { prisma } from '../utils/prisma.js';
 
 export class AidService {
   /**
-   * Load cross-alliance aid coordination configuration
+   * Load cross-alliance aid coordination configuration from database
    */
-  private static loadCrossAllianceConfig(): Record<string, string> {
-    // Skip file operations in serverless environments like Vercel
-    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-      console.log('Skipping cross-alliance config load in serverless environment');
-      return {};
-    }
-
+  private static async loadCrossAllianceConfig(): Promise<Record<string, string>> {
     try {
-      const configPath = join(process.cwd(), 'src', 'config', 'crossAllianceAid.json');
-      const configData = readFileSync(configPath, 'utf-8');
-      const config = JSON.parse(configData);
-      return config.cross_alliance_aid_coordination || {};
+      const configs = await prisma.crossAllianceAid.findMany({
+        include: {
+          sourceAlliance: true,
+          targetAlliance: true,
+        },
+      });
+
+      const result: Record<string, string> = {};
+      for (const config of configs) {
+        result[config.sourceAllianceId.toString()] = config.targetAllianceId.toString();
+      }
+
+      return result;
     } catch (error) {
-      console.warn('Could not load cross-alliance aid config:', error);
+      console.warn('Could not load cross-alliance aid config from database:', error);
       return {};
     }
   }
@@ -66,7 +69,7 @@ export class AidService {
 
     // If using JSON data, nations already have slots assigned
     // If using raw data, need to categorize them
-    const categorizedNations = useJsonData ? nations : categorizeNations(nations);
+    const categorizedNations: CategorizedNation[] = useJsonData ? (nations as CategorizedNation[]) : await categorizeNations(nations);
     
     // Get existing aid offers (exclude expired and cancelled)
     const existingOffers = aidOffers.filter(offer => 
@@ -118,14 +121,14 @@ export class AidService {
 
     // If using JSON data, nations already have slots assigned
     // If using raw data, need to categorize them
-    let categorizedNations = useJsonData ? nations : categorizeNations(nations);
+    let categorizedNations: CategorizedNation[] = useJsonData ? (nations as CategorizedNation[]) : await categorizeNations(nations);
     
     // Load cross-alliance configuration only if enabled
     let crossAllianceConfig: Record<string, string> = {};
     let receivingAllianceId: string | undefined;
     
     if (crossAllianceEnabled) {
-      crossAllianceConfig = this.loadCrossAllianceConfig();
+      crossAllianceConfig = await this.loadCrossAllianceConfig();
       receivingAllianceId = crossAllianceConfig[allianceId.toString()];
       
       // If this alliance has a linked receiving alliance, include those nations
@@ -135,7 +138,7 @@ export class AidService {
             await AllianceService.getAllianceDataWithJsonPriority(parseInt(receivingAllianceId));
           
           if (receivingNations.length > 0) {
-            const categorizedReceivingNations = receivingUseJsonData ? receivingNations : categorizeNations(receivingNations);
+            const categorizedReceivingNations: CategorizedNation[] = receivingUseJsonData ? receivingNations as CategorizedNation[] : await categorizeNations(receivingNations);
             // Add receiving nations to the pool for cross-alliance coordination
             categorizedNations = [...categorizedNations, ...categorizedReceivingNations];
           }
@@ -1382,7 +1385,7 @@ export class AidService {
 
     // If using JSON data, nations already have slots assigned
     // If using raw data, need to categorize them
-    const categorizedNations = useJsonData ? nations : categorizeNations(nations);
+    const categorizedNations: CategorizedNation[] = useJsonData ? (nations as CategorizedNation[]) : await categorizeNations(nations);
     
     // Don't filter out peace mode nations - let the UI show them with indicators
     return categorizedNations.map(nation => ({

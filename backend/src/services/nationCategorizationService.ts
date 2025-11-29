@@ -3,13 +3,13 @@ import { CategorizedNation, AidSlots, AidType } from '../models/Nation.js';
 import { getDiscordHandle } from '../utils/nationDiscordHandles.js';
 
 /**
- * Checks if a nation exists in the nations.json data and returns its has_dra flag
+ * Checks if a nation exists in the database and returns its has_dra flag
  * @param nationId - The nation ID to check
  * @returns Object with exists flag and has_dra flag
  */
-export function getNationFromJson(nationId: number): { exists: boolean; has_dra: boolean } {
-  const result = findNationById(nationId);
-  if (result) {
+export async function getNationFromJson(nationId: number): Promise<{ exists: boolean; has_dra: boolean }> {
+  const result = await findNationById(nationId);
+  if (result && result.nation) {
     return { exists: true, has_dra: result.nation.has_dra };
   }
   return { exists: false, has_dra: true };
@@ -20,14 +20,14 @@ export function getNationFromJson(nationId: number): { exists: boolean; has_dra:
  * @param nation - The nation to categorize
  * @returns The categorized nation with category and aid direction fields added
  */
-export function categorizeNation(nation: any): CategorizedNation {
+export async function categorizeNation(nation: any): Promise<CategorizedNation> {
   const tech = parseFloat(nation.technology.replace(/,/g, '')) || 0;
-  const infra = parseFloat(nation.infrastructure.replace(/,/g, '')) || 0;
+  const infra = parseFloat(nation.infrastructure.replace(/,/g, '') || '0') || 0;
   
-  // Get nation data from JSON config
-  const jsonData = getNationFromJson(nation.id);
+  // Get nation data from database
+  const jsonData = await getNationFromJson(nation.id);
   
-  // Default slots if not found in JSON
+  // Default slots if not found in database
   let defaultSlots: AidSlots = {
     sendTech: 0,
     sendCash: 0,
@@ -38,23 +38,24 @@ export function categorizeNation(nation: any): CategorizedNation {
     receive_priority: 3
   };
   
-  // If nation exists in JSON config, use those slots
+  // If nation exists in database config, use those slots
   if (jsonData.exists) {
-    const result = findNationById(nation.id);
-    if (result && result.nation.slots) {
+    const result = await findNationById(nation.id);
+    if (result && result.nation && result.nation.slots) {
       // Merge with defaults to ensure priority fields are always present
       const mergedSlots: AidSlots = {
         ...defaultSlots,
         ...result.nation.slots
       };
       
-      // Get discord handle from separate file, falling back to alliance data
-      const discordHandle = getDiscordHandle(nation.id) || result.nation.discord_handle || '';
+      // Get discord handle from database, falling back to alliance data
+      const discordHandle = await getDiscordHandle(nation.id);
+      const finalDiscordHandle = discordHandle || result.nation.discord_handle || '';
       
       return {
         ...nation,
         has_dra: result.nation.has_dra,
-        discord_handle: discordHandle,
+        discord_handle: finalDiscordHandle,
         slots: mergedSlots,
         inWarMode: nation.inWarMode || false
       };
@@ -87,8 +88,8 @@ export function categorizeNation(nation: any): CategorizedNation {
  * @param nations - Array of nations to categorize
  * @returns Array of categorized nations
  */
-export function categorizeNations(nations: any[]): CategorizedNation[] {
-  return nations.map(nation => categorizeNation(nation));
+export async function categorizeNations(nations: any[]): Promise<CategorizedNation[]> {
+  return Promise.all(nations.map(nation => categorizeNation(nation)));
 }
 
 

@@ -9,6 +9,7 @@ import { AidOffer } from '../models/AidOffer.js';
 import { Alliance } from '../models/Alliance.js';
 import { AidSlot, NationAidSlots } from '../models/AidSlot.js';
 import { DynamicWarService } from './dynamicWarService.js';
+import { prisma } from '../utils/prisma.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -361,139 +362,124 @@ export function parseWarStats(filePath: string): Promise<any[]> {
 }
 
 export async function loadDataFromFiles(checkForUpdates: boolean = true): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {
-  // Ensure we have recent files before attempting to read standardized CSVs
-  if (checkForUpdates) {
-    try {
-      await ensureRecentFiles();
-    } catch (e) {
-      console.warn('ensureRecentFiles failed, proceeding with available files:', e);
-    }
-  }
+  // Load from database
+  try {
+    console.log('Loading data from database...');
+    
+    // Load nations
+    const nationRecords = await prisma.nation.findMany({
+      include: {
+        alliance: true,
+      },
+    });
+    
+    const nations: Nation[] = nationRecords.map(n => ({
+      id: n.id,
+      rulerName: n.rulerName,
+      nationName: n.nationName,
+      alliance: n.alliance.name,
+      allianceId: n.allianceId,
+      team: n.team,
+      strength: n.strength,
+      activity: n.activity,
+      technology: n.technology,
+      infrastructure: n.infrastructure,
+      land: n.land,
+      nuclearWeapons: n.nuclearWeapons,
+      governmentType: n.governmentType,
+      inWarMode: n.inWarMode,
+      attackingCasualties: n.attackingCasualties ?? undefined,
+      defensiveCasualties: n.defensiveCasualties ?? undefined,
+      warchest: n.warchest ?? undefined,
+      spyglassLastUpdated: n.spyglassLastUpdated ?? undefined,
+      rank: n.rank ?? undefined,
+    }));
 
-  // Always try standardized data files first, especially in production
-  const standardizedDataPath = path.join(process.cwd(), 'src', 'data');
-  
-  // Try multiple possible paths for standardized files in different environments
-  const possibleStandardizedPaths = [
-    path.join(process.cwd(), 'src', 'data'),
-    path.join(__dirname, '..', 'data'),
-    path.join(process.cwd(), 'dist', 'src', 'data'),
-    path.join(__dirname, '..', '..', 'data')
-  ];
-  
-  for (const dataPath of possibleStandardizedPaths) {
-    if (fs.existsSync(dataPath)) {
-      const nationsFile = path.join(dataPath, 'nations.csv');
-      const aidOffersFile = path.join(dataPath, 'aid_offers.csv');
-      const warsFile = path.join(dataPath, 'wars.csv');
-      
-      if (fs.existsSync(nationsFile) && fs.existsSync(aidOffersFile) && fs.existsSync(warsFile)) {
-        console.log(`Loading from standardized data files at: ${dataPath}`);
-        
-        try {
-          console.log('Parsing nations file...');
-          const nations = await parseNationsFromFile(nationsFile);
-          console.log('Parsing aid offers file...');
-          const aidOffers = await parseAidOffersFromFile(aidOffersFile);
-          console.log('Parsing wars file...');
-          const wars = await parseWarsFromFile(warsFile);
-          
-          console.log(`Successfully loaded ${nations.length} nations, ${aidOffers.length} aid offers, ${wars.length} wars`);
-          return { nations, aidOffers, wars };
-        } catch (error) {
-          console.warn(`Error loading standardized files from ${dataPath}:`, error);
-          // Continue to try other paths
-        }
-      }
-    }
-  }
-  
-  console.warn('Standardized data files not found in any expected location');
-  
-  // Fallback to old system
-  let rawDataPath = '';
-  
-  // In production, try to load from available files without downloading
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    console.log('Production environment detected, attempting to load from available files');
+    // Load aid offers
+    const aidOfferRecords = await prisma.aidOffer.findMany({
+      include: {
+        declaringNation: {
+          include: { alliance: true },
+        },
+        receivingNation: {
+          include: { alliance: true },
+        },
+      },
+    });
     
-    // Try different possible paths for the raw data
-    const possiblePaths = [
-      path.join(process.cwd(), 'src', 'raw_data', 'extracted'),
-      path.join(__dirname, '..', 'raw_data', 'extracted'),
-      path.join(process.cwd(), 'dist', 'src', 'raw_data', 'extracted'),
-      path.join(__dirname, '..', '..', 'raw_data', 'extracted')
-    ];
+    const aidOffers: AidOffer[] = aidOfferRecords.map(a => ({
+      aidId: a.aidId,
+      declaringId: a.declaringNationId,
+      declaringRuler: a.declaringNation.rulerName,
+      declaringNation: a.declaringNation.nationName,
+      declaringAlliance: a.declaringNation.alliance.name,
+      declaringAllianceId: a.declaringNation.allianceId,
+      receivingId: a.receivingNationId,
+      receivingRuler: a.receivingNation.rulerName,
+      receivingNation: a.receivingNation.nationName,
+      receivingAlliance: a.receivingNation.alliance.name,
+      receivingAllianceId: a.receivingNation.allianceId,
+      status: a.status,
+      money: a.money,
+      technology: a.technology,
+      soldiers: a.soldiers,
+      date: a.date,
+      reason: a.reason,
+      expirationDate: a.expirationDate ?? undefined,
+      daysUntilExpiration: a.daysUntilExpiration ?? undefined,
+      isExpired: a.isExpired ?? undefined,
+    }));
+
+    // Load wars
+    const warRecords = await prisma.war.findMany({
+      include: {
+        declaringNation: {
+          include: { alliance: true },
+        },
+        receivingNation: {
+          include: { alliance: true },
+        },
+      },
+    });
     
-    for (const possiblePath of possiblePaths) {
-      if (fs.existsSync(possiblePath)) {
-        rawDataPath = possiblePath;
-        break;
-      }
-    }
-    
-    if (!rawDataPath) {
-      console.warn('Raw data directory not found in production, returning empty data');
+    const wars: any[] = warRecords.map(w => ({
+      warId: w.warId,
+      declaringId: w.declaringNationId,
+      declaringRuler: w.declaringNation.rulerName,
+      declaringNation: w.declaringNation.nationName,
+      declaringAlliance: w.declaringNation.alliance.name,
+      declaringAllianceId: w.declaringNation.allianceId,
+      receivingId: w.receivingNationId,
+      receivingRuler: w.receivingNation.rulerName,
+      receivingNation: w.receivingNation.nationName,
+      receivingAlliance: w.receivingNation.alliance.name,
+      receivingAllianceId: w.receivingNation.allianceId,
+      status: w.status,
+      date: w.date,
+      endDate: w.endDate,
+      reason: w.reason ?? undefined,
+      destruction: w.destruction ?? undefined,
+      attackPercent: w.attackPercent ?? undefined,
+      defendPercent: w.defendPercent ?? undefined,
+      formattedEndDate: w.formattedEndDate ?? undefined,
+      daysUntilExpiration: w.daysUntilExpiration ?? undefined,
+      expirationColor: w.expirationColor ?? undefined,
+      isExpired: w.isExpired ?? undefined,
+    }));
+
+    console.log(`Successfully loaded ${nations.length} nations, ${aidOffers.length} aid offers, ${wars.length} wars from database`);
+    return { nations, aidOffers, wars };
+  } catch (error) {
+    console.error('Error loading data from database:', error);
+    // Fallback to empty data
       return { nations: [], aidOffers: [], wars: [] };
     }
-    
-    console.log('Using raw data path in production:', rawDataPath);
-  } else {
-    // In development, use the normal flow with file downloads
-    rawDataPath = path.join(process.cwd(), 'src', 'raw_data', 'extracted');
-    
-    // Ensure we have recent files (only if checkForUpdates is true)
-    if (checkForUpdates) {
-      try {
-        await ensureRecentFiles();
-      } catch (e) {
-        console.warn('ensureRecentFiles failed, proceeding with available files:', e);
-      }
-    }
-    
-    // Ensure the extracted directory exists
-    if (!fs.existsSync(rawDataPath)) {
-      console.warn('Extracted data directory does not exist:', rawDataPath);
-      return { nations: [], aidOffers: [], wars: [] };
-    }
-  }
-  
-  const nations: Nation[] = [];
-  const aidOffers: AidOffer[] = [];
-  const wars: any[] = [];
-
-  // Find all extracted directories
-  const extractedDirs = fs.readdirSync(rawDataPath, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => dirent.name);
-
-  for (const dir of extractedDirs) {
-    const dirPath = path.join(rawDataPath, dir);
-    const files = fs.readdirSync(dirPath);
-    
-    for (const file of files) {
-      const filePath = path.join(dirPath, file);
-      
-      if (file.includes('Nation_Stats')) {
-        const nationData = await parseNationStats(filePath);
-        nations.push(...nationData);
-      } else if (file.includes('Aid_Stats')) {
-        const aidData = await parseAidStats(filePath);
-        aidOffers.push(...aidData);
-      } else if (file.includes('War_Stats')) {
-        const warData = await parseWarStats(filePath);
-        wars.push(...warData);
-      }
-    }
-  }
-
-  return { nations, aidOffers, wars };
 }
 
 export async function loadDataFromFilesWithUpdate(): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {
   const { nations, aidOffers, wars } = await loadDataFromFiles();
   
-  // Merge CSV wars with dynamic wars
+  // Merge database wars with dynamic wars
   const mergedWars = await DynamicWarService.mergeWithCSVWars(wars);
   
   return { nations, aidOffers, wars: mergedWars };
@@ -544,7 +530,7 @@ export async function getAidSlotsForAlliance(allianceId: number, nations: Nation
 
     // Check if nation has DRA to determine number of slots
     const { getNationFromJson } = await import('./nationCategorizationService.js');
-    const { has_dra } = getNationFromJson(nation.id);
+    const { has_dra } = await getNationFromJson(nation.id);
     const totalSlots = has_dra ? 6 : 5;
 
     // Get all active aid offers for this nation (both outgoing and incoming)

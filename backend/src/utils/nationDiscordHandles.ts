@@ -1,9 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { prisma } from './prisma.js';
 
 export interface NationDiscordData {
   discord_handle: string;
@@ -15,61 +10,77 @@ export interface NationDiscordHandles {
 }
 
 /**
- * Get the path to the nation discord handles file
+ * Load all nation discord handles from database
  */
-function getDiscordHandlesFilePath(): string {
-  return path.join(process.cwd(), 'src', 'data', 'nation_discord_handles.json');
-}
-
-/**
- * Load all nation discord handles from file
- */
-export function loadNationDiscordHandles(): NationDiscordHandles {
-  // Skip file operations in serverless environments like Vercel
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    console.log('Skipping discord handles load in serverless environment');
-    return {};
-  }
-
-  const filePath = getDiscordHandlesFilePath();
-  
-  if (!fs.existsSync(filePath)) {
-    console.log('Nation discord handles file does not exist, returning empty object');
-    return {};
-  }
-  
+export async function loadNationDiscordHandles(): Promise<NationDiscordHandles> {
   try {
-    const data = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(data) as NationDiscordHandles;
-  } catch (error) {
-    console.error('Error loading nation discord handles:', error);
-    return {};
-  }
-}
+    const configs = await prisma.nationConfig.findMany({
+      where: {
+        discordHandle: {
+          not: null,
+        },
+      },
+      include: {
+        nation: true,
+      },
+    });
 
-/**
- * Save nation discord handles to file
- */
-export function saveNationDiscordHandles(handles: NationDiscordHandles): boolean {
-  // Skip file operations in serverless environments like Vercel
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    console.log('Skipping discord handles save in serverless environment');
-    return false;
-  }
-
-  const filePath = getDiscordHandlesFilePath();
-  
-  try {
-    // Ensure directory exists
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    const handles: NationDiscordHandles = {};
+    for (const config of configs) {
+      if (config.discordHandle) {
+        handles[config.nationId.toString()] = {
+          discord_handle: config.discordHandle,
+          last_updated: config.updatedAt.toISOString(),
+        };
+      }
     }
-    
-    fs.writeFileSync(filePath, JSON.stringify(handles, null, 2));
+
+    return handles;
+  } catch (error) {
+    console.error('Error loading nation discord handles from database:', error);
+    return {};
+  }
+}
+
+/**
+ * Save nation discord handles to database
+ */
+export async function saveNationDiscordHandles(handles: NationDiscordHandles): Promise<boolean> {
+  try {
+    for (const [nationIdStr, handleData] of Object.entries(handles)) {
+      const nationId = parseInt(nationIdStr);
+      
+      // Get or create nation config
+      const existingConfig = await prisma.nationConfig.findUnique({
+        where: { nationId },
+      });
+
+      if (existingConfig) {
+        await prisma.nationConfig.update({
+          where: { nationId },
+          data: { discordHandle: handleData.discord_handle },
+        });
+      } else {
+        // Get nation to find allianceId
+        const nation = await prisma.nation.findUnique({
+          where: { id: nationId },
+        });
+
+        if (nation) {
+          await prisma.nationConfig.create({
+            data: {
+              nationId,
+              allianceId: nation.allianceId,
+              discordHandle: handleData.discord_handle,
+            },
+          });
+        }
+      }
+    }
+
     return true;
   } catch (error) {
-    console.error('Error saving nation discord handles:', error);
+    console.error('Error saving nation discord handles to database:', error);
     return false;
   }
 }
@@ -77,56 +88,113 @@ export function saveNationDiscordHandles(handles: NationDiscordHandles): boolean
 /**
  * Get discord handle for a specific nation
  */
-export function getDiscordHandle(nationId: number): string | null {
-  const handles = loadNationDiscordHandles();
-  const data = handles[nationId.toString()];
-  return data ? data.discord_handle : null;
+export async function getDiscordHandle(nationId: number): Promise<string | null> {
+  try {
+    const config = await prisma.nationConfig.findUnique({
+      where: { nationId },
+      select: { discordHandle: true },
+    });
+    return config?.discordHandle || null;
+  } catch (error) {
+    console.error(`Error getting discord handle for nation ${nationId}:`, error);
+    return null;
+  }
 }
 
 /**
  * Update discord handle for a specific nation
  */
-export function updateDiscordHandle(nationId: number, discordHandle: string): boolean {
-  const handles = loadNationDiscordHandles();
-  
-  handles[nationId.toString()] = {
-    discord_handle: discordHandle,
-    last_updated: new Date().toISOString()
-  };
-  
-  return saveNationDiscordHandles(handles);
+export async function updateDiscordHandle(nationId: number, discordHandle: string): Promise<boolean> {
+  try {
+    const existingConfig = await prisma.nationConfig.findUnique({
+      where: { nationId },
+    });
+
+    if (existingConfig) {
+      await prisma.nationConfig.update({
+        where: { nationId },
+        data: { discordHandle },
+      });
+    } else {
+      // Get nation to find allianceId
+      const nation = await prisma.nation.findUnique({
+        where: { id: nationId },
+      });
+
+      if (nation) {
+        await prisma.nationConfig.create({
+          data: {
+            nationId,
+            allianceId: nation.allianceId,
+            discordHandle,
+          },
+        });
+      } else {
+        return false;
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error(`Error updating discord handle for nation ${nationId}:`, error);
+    return false;
+  }
 }
 
 /**
  * Delete discord handle for a specific nation
  */
-export function deleteDiscordHandle(nationId: number): boolean {
-  const handles = loadNationDiscordHandles();
-  delete handles[nationId.toString()];
-  return saveNationDiscordHandles(handles);
+export async function deleteDiscordHandle(nationId: number): Promise<boolean> {
+  try {
+    await prisma.nationConfig.update({
+      where: { nationId },
+      data: { discordHandle: null },
+    });
+    return true;
+  } catch (error) {
+    console.error(`Error deleting discord handle for nation ${nationId}:`, error);
+    return false;
+  }
 }
 
 /**
  * Get all nations with discord handles
  */
-export function getAllNationsWithDiscordHandles(): { nationId: number; discordHandle: string; lastUpdated: string }[] {
-  const handles = loadNationDiscordHandles();
-  return Object.entries(handles).map(([nationId, data]) => ({
-    nationId: parseInt(nationId),
-    discordHandle: data.discord_handle,
-    lastUpdated: data.last_updated
-  }));
+export async function getAllNationsWithDiscordHandles(): Promise<{ nationId: number; discordHandle: string; lastUpdated: string }[]> {
+  try {
+    const configs = await prisma.nationConfig.findMany({
+      where: {
+        discordHandle: {
+          not: null,
+        },
+      },
+      select: {
+        nationId: true,
+        discordHandle: true,
+        updatedAt: true,
+      },
+    });
+
+    return configs.map(config => ({
+      nationId: config.nationId,
+      discordHandle: config.discordHandle!,
+      lastUpdated: config.updatedAt.toISOString(),
+    }));
+  } catch (error) {
+    console.error('Error getting all nations with discord handles:', error);
+    return [];
+  }
 }
 
 /**
  * Merge discord handles into nation data
  * This is a utility function to join discord handle data with nation data
  */
-export function mergeDiscordHandles<T extends { nation_id?: number; id?: number }>(
+export async function mergeDiscordHandles<T extends { nation_id?: number; id?: number }>(
   nations: T[],
   handleField: string = 'discord_handle'
-): T[] {
-  const handles = loadNationDiscordHandles();
+): Promise<T[]> {
+  const handles = await loadNationDiscordHandles();
   
   return nations.map(nation => {
     const nationId = nation.nation_id || nation.id;
@@ -140,4 +208,3 @@ export function mergeDiscordHandles<T extends { nation_id?: number; id?: number 
     return nation;
   });
 }
-

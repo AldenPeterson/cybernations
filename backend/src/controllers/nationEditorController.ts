@@ -110,7 +110,7 @@ export class NationEditorController {
         slots.receive_priority = receivePriority;
       }
 
-      let allianceData = AllianceService.getAllianceById(allianceId);
+      let allianceData = await AllianceService.getAllianceById(allianceId);
       
       // If the alliance does not yet have a config file, attempt to create one from raw data
       if (!allianceData) {
@@ -148,16 +148,16 @@ export class NationEditorController {
         updates.slots = slots;
       }
 
-      // Handle discord_handle separately - save to separate file
+      // Handle discord_handle separately - save to database
       if (discord_handle !== undefined) {
-        const discordSuccess = updateDiscordHandle(nationId, discord_handle);
+        const discordSuccess = await updateDiscordHandle(nationId, discord_handle);
         if (!discordSuccess) {
           console.warn('Failed to update discord handle for nation', nationId);
         }
       }
 
       // Update using the service (only alliance-specific data)
-      const success = AllianceService.updateNationData(allianceId, nationId, updates);
+      const success = await AllianceService.updateNationData(allianceId, nationId, updates);
       
       if (!success) {
         return res.status(500).json({
@@ -167,9 +167,9 @@ export class NationEditorController {
       }
 
       // Get the updated nation data and merge with discord handle
-      const updatedAlliance = AllianceService.getAllianceById(allianceId);
+      const updatedAlliance = await AllianceService.getAllianceById(allianceId);
       const updatedNation = updatedAlliance?.nations[nationId];
-      const discordHandleValue = getDiscordHandle(nationId);
+      const discordHandleValue = await getDiscordHandle(nationId);
 
       res.json({
         success: true,

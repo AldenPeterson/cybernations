@@ -5,19 +5,28 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc && npm run copy:data && npm run copy:config",
-    "copy:data": "mkdir -p dist/data && cp -r src/data/*.csv src/data/*.json src/data/*.txt dist/data/ 2>/dev/null || true",
-    "copy:config": "mkdir -p dist/config/alliances && cp -r src/config/alliances/*.json dist/config/alliances/ 2>/dev/null || true",
+    "build": "tsc && npm run prisma:generate",
     "start": "node dist/index.js",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "migrate:json": "tsx scripts/migrate-json.ts"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "@prisma/adapter-pg": "^7.0.1",
+    "@prisma/client": "^7.0.1",
+    "@types/pg": "^8.15.6",
     "cors": "^2.8.5",
     "csv-parser": "^3.2.0",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "helmet": "^7.1.0",
+    "pg": "^8.16.3",
+    "prisma": "^7.0.1",
+    "ws": "^8.18.3",
     "yauzl": "^3.0.0"
   },
   "devDependencies": {

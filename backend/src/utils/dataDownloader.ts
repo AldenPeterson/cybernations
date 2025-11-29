@@ -411,7 +411,7 @@ async function performDownload(): Promise<void> {
 /**
  * Extract CSV content from zip file to standardized filename
  */
-async function extractCsvToStandardFile(zipPath: string, outputPath: string, fileType: FileType): Promise<void> {
+export async function extractCsvToStandardFile(zipPath: string, outputPath: string, fileType: FileType): Promise<void> {
   const tempExtractDir = path.join(path.dirname(zipPath), 'temp_extract');
   
   try {
@@ -502,6 +502,16 @@ export async function ensureRecentFiles(): Promise<void> {
     }
   }
 
+  // After refreshing standardized files, import CSV data into database
+  try {
+    console.log('Importing CSV data into database...');
+    const { importAllCsvFiles } = await import('../services/csvImportService.js');
+    await importAllCsvFiles();
+    console.log('CSV data imported into database successfully');
+  } catch (error) {
+    console.warn('Error importing CSV data into database:', error);
+  }
+
   // After refreshing standardized files, sync alliance files using the new data
   try {
     console.log('Syncing alliance files with refreshed data...');
@@ -562,7 +572,7 @@ function getCustomFilename(fileType: FileType): string | undefined {
  * Supports custom filename override via environment variables
  * If the file doesn't exist, throws an error (caller will use existing data)
  */
-async function downloadFileWithFallback(
+export async function downloadFileWithFallback(
   baseUrl: string,
   fileType: FileType,
   tempZipPath: string

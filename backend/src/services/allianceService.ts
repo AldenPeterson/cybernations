@@ -17,8 +17,8 @@ export class AllianceService {
   /**
    * Get alliance data by ID
    */
-  static getAllianceById(allianceId: number): AllianceData | null {
-    return loadAllianceById(allianceId);
+  static async getAllianceById(allianceId: number): Promise<AllianceData | null> {
+    return await loadAllianceById(allianceId);
   }
 
   /**
@@ -31,15 +31,15 @@ export class AllianceService {
   /**
    * Update nation data in alliance files
    */
-  static updateNationData(allianceId: number, nationId: number, updates: any): boolean {
-    return updateNationData(allianceId, nationId, updates);
+  static async updateNationData(allianceId: number, nationId: number, updates: any): Promise<boolean> {
+    return await updateNationData(allianceId, nationId, updates);
   }
 
   /**
    * Save alliance data
    */
-  static saveAllianceData(allianceId: number, allianceData: AllianceData): boolean {
-    return saveAllianceDataUtil(allianceData);
+  static async saveAllianceData(allianceId: number, allianceData: AllianceData): Promise<boolean> {
+    return await saveAllianceDataUtil(allianceData);
   }
 
   /**
@@ -48,13 +48,13 @@ export class AllianceService {
    */
   static async createAllianceConfigFromRaw(allianceId: number): Promise<AllianceData | null> {
     // Load existing config first in case it was just created by another process
-    const existing = loadAllianceById(allianceId);
+    const existing = await loadAllianceById(allianceId);
     if (existing) {
       return existing;
     }
 
     const { nations: rawNations } = await loadDataFromFilesWithUpdate();
-    const discordHandles = loadNationDiscordHandles();
+    const discordHandles = await loadNationDiscordHandles();
 
     const defaultSlots = {
       sendTech: 0,
@@ -100,7 +100,7 @@ export class AllianceService {
       nations: nationsMap
     };
 
-    const saved = saveAllianceDataUtil(allianceData);
+    const saved = await saveAllianceDataUtil(allianceData);
     if (!saved) {
       return null;
     }
@@ -149,10 +149,10 @@ export class AllianceService {
    * Get alliance nations configuration
    */
   static async getNationsConfig(allianceId: number) {
-    const allianceData = loadAllianceById(allianceId);
+    const allianceData = await loadAllianceById(allianceId);
     
-    // Load discord handles from separate file
-    const discordHandles = loadNationDiscordHandles();
+    // Load discord handles from database
+    const discordHandles = await loadNationDiscordHandles();
 
     // Get raw nations data and convert to dictionary for efficient lookups
     const { nations: rawNations } = await loadDataFromFilesWithUpdate();
