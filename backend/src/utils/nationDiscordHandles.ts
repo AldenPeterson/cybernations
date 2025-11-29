@@ -70,7 +70,6 @@ export async function saveNationDiscordHandles(handles: NationDiscordHandles): P
           await prisma.nationConfig.create({
             data: {
               nationId,
-              allianceId: nation.allianceId,
               discordHandle: handleData.discord_handle,
             },
           });
@@ -125,7 +124,6 @@ export async function updateDiscordHandle(nationId: number, discordHandle: strin
         await prisma.nationConfig.create({
           data: {
             nationId,
-            allianceId: nation.allianceId,
             discordHandle,
           },
         });

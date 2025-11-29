@@ -60,9 +60,9 @@ export async function loadAllAlliances(): Promise<Map<number, AllianceData>> {
   try {
     const allianceRecords = await prisma.alliance.findMany({
       include: {
-        nationConfigs: {
+        nations: {
           include: {
-            nation: true,
+            nationConfig: true,
           },
         },
       },
@@ -71,8 +71,9 @@ export async function loadAllAlliances(): Promise<Map<number, AllianceData>> {
     for (const alliance of allianceRecords) {
       const nations: { [nationId: number]: any } = {};
       
-      for (const config of alliance.nationConfigs) {
-        const nation = config.nation;
+      for (const nation of alliance.nations) {
+        const config = nation.nationConfig;
+        if (!config) continue;
         nations[nation.id] = {
           ruler_name: nation.rulerName,
           nation_name: nation.nationName,
@@ -88,11 +89,11 @@ export async function loadAllAlliances(): Promise<Map<number, AllianceData>> {
             send_priority: config.sendPriority,
             receive_priority: config.receivePriority,
           },
-          current_stats: config.currentTech || config.currentInfra || config.currentStrength ? {
-            technology: config.currentTech || '0',
-            infrastructure: config.currentInfra || '0',
-            strength: config.currentStrength || '0',
-          } : undefined,
+          current_stats: {
+            technology: nation.technology || '0',
+            infrastructure: nation.infrastructure || '0',
+            strength: nation.strength.toString() || '0',
+          },
         };
       }
 
@@ -117,9 +118,9 @@ export async function loadAllianceById(allianceId: number): Promise<AllianceData
     const alliance = await prisma.alliance.findUnique({
       where: { id: allianceId },
       include: {
-        nationConfigs: {
+        nations: {
           include: {
-            nation: true,
+            nationConfig: true,
           },
         },
       },
@@ -131,8 +132,9 @@ export async function loadAllianceById(allianceId: number): Promise<AllianceData
   
     const nations: { [nationId: number]: any } = {};
     
-    for (const config of alliance.nationConfigs) {
-      const nation = config.nation;
+    for (const nation of alliance.nations) {
+      const config = nation.nationConfig;
+      if (!config) continue;
       nations[nation.id] = {
         ruler_name: nation.rulerName,
         nation_name: nation.nationName,
@@ -196,7 +198,6 @@ export async function saveAllianceData(allianceData: AllianceData): Promise<bool
       await prisma.nationConfig.upsert({
         where: { nationId },
         update: {
-          allianceId: allianceData.alliance_id,
           hasDra: nationData.has_dra,
           discordHandle: nationData.discord_handle || null,
           notes: nationData.notes || null,
@@ -207,13 +208,9 @@ export async function saveAllianceData(allianceData: AllianceData): Promise<bool
           externalSlots: nationData.slots.external || 0,
           sendPriority: nationData.slots.send_priority ?? 3,
           receivePriority: nationData.slots.receive_priority ?? 3,
-          currentTech: nationData.current_stats?.technology || null,
-          currentInfra: nationData.current_stats?.infrastructure || null,
-          currentStrength: nationData.current_stats?.strength || null,
         },
         create: {
           nationId,
-          allianceId: allianceData.alliance_id,
           hasDra: nationData.has_dra,
           discordHandle: nationData.discord_handle || null,
           notes: nationData.notes || null,
@@ -224,9 +221,6 @@ export async function saveAllianceData(allianceData: AllianceData): Promise<bool
           externalSlots: nationData.slots.external || 0,
           sendPriority: nationData.slots.send_priority ?? 3,
           receivePriority: nationData.slots.receive_priority ?? 3,
-          currentTech: nationData.current_stats?.technology || null,
-          currentInfra: nationData.current_stats?.infrastructure || null,
-          currentStrength: nationData.current_stats?.strength || null,
         },
       });
     }
@@ -278,11 +272,11 @@ export async function findNationById(nationId: number): Promise<{ alliance: Alli
         send_priority: config.sendPriority,
         receive_priority: config.receivePriority,
       },
-      current_stats: config.currentTech || config.currentInfra || config.currentStrength ? {
-        technology: config.currentTech || '0',
-        infrastructure: config.currentInfra || '0',
-        strength: config.currentStrength || '0',
-      } : undefined,
+      current_stats: {
+        technology: nation.technology || '0',
+        infrastructure: nation.infrastructure || '0',
+        strength: nation.strength.toString() || '0',
+      },
     };
 
     allianceData.nations[nation.id] = {
@@ -300,11 +294,11 @@ export async function findNationById(nationId: number): Promise<{ alliance: Alli
         send_priority: config.sendPriority,
         receive_priority: config.receivePriority,
       },
-      current_stats: config.currentTech || config.currentInfra || config.currentStrength ? {
-        technology: config.currentTech || '0',
-        infrastructure: config.currentInfra || '0',
-        strength: config.currentStrength || '0',
-      } : undefined,
+      current_stats: {
+        technology: nation.technology || '0',
+        infrastructure: nation.infrastructure || '0',
+        strength: nation.strength.toString() || '0',
+      },
     };
 
     return { alliance: allianceData, nation: nationData };
@@ -351,7 +345,6 @@ export async function updateNationData(
       await prisma.nationConfig.create({
         data: {
           nationId,
-          allianceId: nation.allianceId,
           hasDra: updates.has_dra ?? false,
           discordHandle: updates.discord_handle || null,
           notes: updates.notes || null,
@@ -362,9 +355,6 @@ export async function updateNationData(
           externalSlots: updates.slots?.external ?? defaultSlots.external,
           sendPriority: updates.slots?.send_priority ?? defaultSlots.send_priority,
           receivePriority: updates.slots?.receive_priority ?? defaultSlots.receive_priority,
-          currentTech: updates.current_stats?.technology || null,
-          currentInfra: updates.current_stats?.infrastructure || null,
-          currentStrength: updates.current_stats?.strength || null,
         },
       });
 
@@ -390,9 +380,6 @@ export async function updateNationData(
         hasDra: updates.has_dra ?? existingConfig.hasDra,
         discordHandle: updates.discord_handle !== undefined ? (updates.discord_handle || null) : existingConfig.discordHandle,
         notes: updates.notes !== undefined ? (updates.notes || null) : existingConfig.notes,
-        currentTech: updates.current_stats?.technology || existingConfig.currentTech,
-        currentInfra: updates.current_stats?.infrastructure || existingConfig.currentInfra,
-        currentStrength: updates.current_stats?.strength || existingConfig.currentStrength,
         ...slotsUpdate,
       },
     });

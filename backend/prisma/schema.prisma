@@ -15,8 +15,7 @@ model Alliance {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  nations       Nation[]
-  nationConfigs NationConfig[]
+  nations                 Nation[]
   crossAllianceAidSources CrossAllianceAid[] @relation("SourceAlliance")
   crossAllianceAidTargets CrossAllianceAid[] @relation("TargetAlliance")
 
@@ -24,35 +23,35 @@ model Alliance {
 }
 
 model Nation {
-  id                Int      @id
-  rulerName         String   @map("ruler_name")
-  nationName        String   @map("nation_name")
-  allianceId        Int      @map("alliance_id")
-  team              String
-  strength          Float
-  activity          String
-  technology        String
-  infrastructure    String
-  land              String
-  nuclearWeapons    Int      @default(0) @map("nuclear_weapons")
-  governmentType    String   @map("government_type")
-  inWarMode         Boolean  @default(false) @map("in_war_mode")
-  attackingCasualties Int?   @map("attacking_casualties")
-  defensiveCasualties Int?   @map("defensive_casualties")
-  warchest          Float?
-  spyglassLastUpdated Int?   @map("spyglass_last_updated")
-  rank              Int?
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id                  Int      @id
+  rulerName           String   @map("ruler_name")
+  nationName          String   @map("nation_name")
+  allianceId          Int      @map("alliance_id")
+  team                String
+  strength            Float
+  activity            String
+  technology          String
+  infrastructure      String
+  land                String
+  nuclearWeapons      Int      @default(0) @map("nuclear_weapons")
+  governmentType      String   @map("government_type")
+  inWarMode           Boolean  @default(false) @map("in_war_mode")
+  attackingCasualties Int?     @map("attacking_casualties")
+  defensiveCasualties Int?     @map("defensive_casualties")
+  warchest            Float?
+  spyglassLastUpdated Int?     @map("spyglass_last_updated")
+  rank                Int?
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
-  alliance          Alliance @relation(fields: [allianceId], references: [id])
-  nationConfig      NationConfig?
-  declaringAidOffers AidOffer[] @relation("DeclaringNation")
-  receivingAidOffers AidOffer[] @relation("ReceivingNation")
-  declaringWars     War[] @relation("DeclaringNation")
-  receivingWars     War[] @relation("ReceivingNation")
-  declaringDynamicWars DynamicWar[] @relation("DeclaringNation")
-  receivingDynamicWars DynamicWar[] @relation("ReceivingNation")
+  alliance             Alliance      @relation(fields: [allianceId], references: [id])
+  nationConfig         NationConfig?
+  declaringAidOffers   AidOffer[]    @relation("DeclaringNation")
+  receivingAidOffers   AidOffer[]    @relation("ReceivingNation")
+  declaringWars        War[]         @relation("DeclaringNation")
+  receivingWars        War[]         @relation("ReceivingNation")
+  declaringDynamicWars DynamicWar[]  @relation("DeclaringNation")
+  receivingDynamicWars DynamicWar[]  @relation("ReceivingNation")
 
   @@index([allianceId])
   @@index([id])
@@ -62,7 +61,6 @@ model Nation {
 model NationConfig {
   id              Int      @id @default(autoincrement())
   nationId        Int      @unique @map("nation_id")
-  allianceId      Int      @map("alliance_id")
   hasDra          Boolean  @default(false) @map("has_dra")
   discordHandle   String?  @map("discord_handle")
   notes           String?
@@ -73,35 +71,30 @@ model NationConfig {
   externalSlots   Int      @default(0) @map("external_slots")
   sendPriority    Int      @default(3) @map("send_priority")
   receivePriority Int      @default(3) @map("receive_priority")
-  currentTech     String?  @map("current_tech")
-  currentInfra    String?  @map("current_infra")
-  currentStrength String?  @map("current_strength")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  nation    Nation    @relation(fields: [nationId], references: [id], onDelete: Cascade)
-  alliance  Alliance  @relation(fields: [allianceId], references: [id])
+  nation Nation @relation(fields: [nationId], references: [id], onDelete: Cascade)
 
   @@index([nationId])
-  @@index([allianceId])
   @@map("nation_configs")
 }
 
 model AidOffer {
-  aidId              Int      @id @map("aid_id")
-  declaringNationId  Int      @map("declaring_nation_id")
-  receivingNationId  Int      @map("receiving_nation_id")
-  status             String
-  money              Float    @default(0)
-  technology         Float    @default(0)
-  soldiers           Int      @default(0)
-  date               String
-  reason             String
-  expirationDate     String?  @map("expiration_date")
-  daysUntilExpiration Int?    @map("days_until_expiration")
-  isExpired          Boolean? @default(false) @map("is_expired")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  aidId               Int      @id @map("aid_id")
+  declaringNationId   Int      @map("declaring_nation_id")
+  receivingNationId   Int      @map("receiving_nation_id")
+  status              String
+  money               Float    @default(0)
+  technology          Float    @default(0)
+  soldiers            Int      @default(0)
+  date                String
+  reason              String
+  expirationDate      String?  @map("expiration_date")
+  daysUntilExpiration Int?     @map("days_until_expiration")
+  isExpired           Boolean? @default(false) @map("is_expired")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
   declaringNation Nation @relation("DeclaringNation", fields: [declaringNationId], references: [id])
   receivingNation Nation @relation("ReceivingNation", fields: [receivingNationId], references: [id])
@@ -113,22 +106,22 @@ model AidOffer {
 }
 
 model War {
-  warId              Int      @id @map("war_id")
-  declaringNationId  Int      @map("declaring_nation_id")
-  receivingNationId  Int      @map("receiving_nation_id")
-  status             String
-  date               String
-  endDate            String   @map("end_date")
-  reason             String?
-  destruction        String?
-  attackPercent      Float?   @map("attack_percent")
-  defendPercent      Float?   @map("defend_percent")
-  formattedEndDate   String?  @map("formatted_end_date")
-  daysUntilExpiration Int?    @map("days_until_expiration")
-  expirationColor    String?  @map("expiration_color")
-  isExpired          Boolean? @default(false) @map("is_expired")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  warId               Int      @id @map("war_id")
+  declaringNationId   Int      @map("declaring_nation_id")
+  receivingNationId   Int      @map("receiving_nation_id")
+  status              String
+  date                String
+  endDate             String   @map("end_date")
+  reason              String?
+  destruction         String?
+  attackPercent       Float?   @map("attack_percent")
+  defendPercent       Float?   @map("defend_percent")
+  formattedEndDate    String?  @map("formatted_end_date")
+  daysUntilExpiration Int?     @map("days_until_expiration")
+  expirationColor     String?  @map("expiration_color")
+  isExpired           Boolean? @default(false) @map("is_expired")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
   declaringNation Nation @relation("DeclaringNation", fields: [declaringNationId], references: [id])
   receivingNation Nation @relation("ReceivingNation", fields: [receivingNationId], references: [id])
@@ -143,7 +136,7 @@ model DynamicWar {
   id                Int      @id @default(autoincrement())
   warId             Int      @map("war_id")
   declaringNationId Int      @map("declaring_nation_id")
-  receivingNationId  Int      @map("receiving_nation_id")
+  receivingNationId Int      @map("receiving_nation_id")
   status            String
   date              String
   endDate           String   @map("end_date")
@@ -152,7 +145,7 @@ model DynamicWar {
   attackPercent     Float?   @map("attack_percent")
   defendPercent     Float?   @map("defend_percent")
   addedAt           DateTime @map("added_at")
-  source            String   // 'chrome_extension' | 'manual' | 'api'
+  source            String // 'chrome_extension' | 'manual' | 'api'
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
@@ -180,11 +173,11 @@ model NuclearHit {
 }
 
 model CrossAllianceAid {
-  id                Int      @id @default(autoincrement())
-  sourceAllianceId  Int      @map("source_alliance_id")
-  targetAllianceId  Int      @map("target_alliance_id")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id               Int      @id @default(autoincrement())
+  sourceAllianceId Int      @map("source_alliance_id")
+  targetAllianceId Int      @map("target_alliance_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   sourceAlliance Alliance @relation("SourceAlliance", fields: [sourceAllianceId], references: [id])
   targetAlliance Alliance @relation("TargetAlliance", fields: [targetAllianceId], references: [id])
