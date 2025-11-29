@@ -667,8 +667,22 @@ export class AidService {
       });
     }
 
-    // Sort recommendations by priority
+    // Sort recommendations by priority (lower number = higher priority)
     recommendations.sort((a, b) => a.priority - b.priority);
+
+    // Final deduplication step: remove any duplicate recommendations by sender-recipient pair
+    // This catches any edge cases where duplicates might have slipped through
+    // Keep the first occurrence (highest priority since we sorted by priority)
+    const finalRecommendations: any[] = [];
+    const seenPairs = new Set<string>();
+    
+    for (const rec of recommendations) {
+      const pair = `${Math.min(rec.sender.id, rec.recipient.id)}-${Math.max(rec.sender.id, rec.recipient.id)}`;
+      if (!seenPairs.has(pair)) {
+        seenPairs.add(pair);
+        finalRecommendations.push(rec);
+      }
+    }
 
     // Calculate total slot counts (include all nations since recipients can receive in peace mode)
     const slotCounts = {
@@ -1348,7 +1362,7 @@ export class AidService {
     });
 
     return {
-      recommendations,
+      recommendations: finalRecommendations,
       slotCounts,
       availableSlots,
       mismatchedOffers,

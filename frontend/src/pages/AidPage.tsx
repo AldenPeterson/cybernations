@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 
@@ -330,62 +330,91 @@ const AidPage: React.FC = () => {
       });
     }
 
+    // Deduplicate recommendations array to ensure no duplicates exist
+    // Use a Map with key "senderId-recipientId" to keep only the first occurrence
+    const deduplicatedRecs = new Map<string, AidRecommendation>();
+    (recommendations || []).forEach(rec => {
+      if (!rec || !rec.sender || !rec.recipient || !rec.sender.id || !rec.recipient.id) {
+        console.warn('Invalid recommendation found:', rec);
+        return;
+      }
+      const recKey = `${rec.sender.id}-${rec.recipient.id}`;
+      if (!deduplicatedRecs.has(recKey)) {
+        deduplicatedRecs.set(recKey, rec);
+      } else {
+        console.warn(`Duplicate recommendation detected in API response: ${recKey}`);
+      }
+    });
+    const uniqueRecommendations = Array.from(deduplicatedRecs.values());
+    
+    // Debug: log if we found duplicates
+    if (recommendations && recommendations.length > uniqueRecommendations.length) {
+      console.log(`Deduplicated ${recommendations.length} recommendations down to ${uniqueRecommendations.length}`);
+    }
+
     // Process each nation's slots and add recommendations to empty slots
-    // Note: Recommendations can appear in both sender and recipient rows (like real offers)
+    // Recommendations can appear in both sender and recipient rows (like real offers)
+    // Create deep copy to avoid mutating the original
     return nationAidSlots.map(nationAidSlots => {
       const nationId = nationAidSlots.nation.id;
-      const updatedSlots = [...nationAidSlots.aidSlots];
+      // Deep copy slots array to avoid mutating the original
+      const updatedSlots = nationAidSlots.aidSlots.map(slot => ({
+        ...slot,
+        aidOffer: slot.aidOffer ? { ...slot.aidOffer } : null
+      }));
 
-      // Track which recommendations have been assigned to THIS nation's slots to prevent duplicates
+      // Track which recommendations have been assigned to THIS nation's slots to prevent duplicates within the row
       // Key format: "senderId-recipientId" to uniquely identify each recommendation pair
-      const assignedForThisNation = new Set<string>();
+      const assignedRecKeys = new Set<string>();
 
       // Find all recommendations where this nation is involved
       // For outgoing: this nation is the sender
       // For incoming: this nation is the recipient
-      const allOutgoingRecs = (recommendations || [])
+      const allOutgoingRecs = uniqueRecommendations
         .filter(rec => rec.sender.id === nationId)
         .sort((a, b) => a.priority - b.priority);
 
-      const allIncomingRecs = (recommendations || [])
+      const allIncomingRecs = uniqueRecommendations
         .filter(rec => rec.recipient.id === nationId)
         .sort((a, b) => a.priority - b.priority);
 
-      // Track indices for each direction (per nation)
+      // Track which recommendations have been assigned using indices
+      // This ensures we process each recommendation exactly once
       let outgoingIndex = 0;
       let incomingIndex = 0;
       let externalSlotsRemaining = externalSlotsMap.get(nationId) || 0;
 
       // Fill empty slots with recommendations (prioritize outgoing, then incoming, then external)
-      updatedSlots.forEach(slot => {
+      // Each recommendation can only be assigned once per nation
+      updatedSlots.forEach((slot) => {
         if (!slot.aidOffer) {
           let recToAssign: AidRecommendation | null = null;
 
-          // Try outgoing recommendations first, skipping ones already assigned
+          // Try outgoing recommendations first
           while (outgoingIndex < allOutgoingRecs.length) {
             const candidate = allOutgoingRecs[outgoingIndex];
             const recKey = `${candidate.sender.id}-${candidate.recipient.id}`;
-            if (!assignedForThisNation.has(recKey)) {
+            if (!assignedRecKeys.has(recKey)) {
               recToAssign = candidate;
-              assignedForThisNation.add(recKey);
+              assignedRecKeys.add(recKey);
               outgoingIndex++;
-              break;
+              break; // Found one, stop looking
             }
-            outgoingIndex++;
+            outgoingIndex++; // Already assigned, skip to next
           }
 
-          // If no outgoing available, try incoming, skipping ones already assigned
+          // If no outgoing available, try incoming
           if (!recToAssign) {
             while (incomingIndex < allIncomingRecs.length) {
               const candidate = allIncomingRecs[incomingIndex];
               const recKey = `${candidate.sender.id}-${candidate.recipient.id}`;
-              if (!assignedForThisNation.has(recKey)) {
+              if (!assignedRecKeys.has(recKey)) {
                 recToAssign = candidate;
-                assignedForThisNation.add(recKey);
+                assignedRecKeys.add(recKey);
                 incomingIndex++;
-                break;
+                break; // Found one, stop looking
               }
-              incomingIndex++;
+              incomingIndex++; // Already assigned, skip to next
             }
           }
 
@@ -411,17 +440,18 @@ const AidPage: React.FC = () => {
     });
   };
 
+  // Memoize merged slots to prevent re-merging on every render
+  const mergedSlots = useMemo(() => {
+    if (!showRecommendations) {
+      return aidSlots;
+    }
+    return mergeRecommendationsIntoSlots(aidSlots);
+  }, [aidSlots, showRecommendations, recommendations, availableSlots]);
+
   const getFilteredAidSlots = (): NationAidSlots[] => {
     if (expirationFilter.length === 0) return [];
 
-    let slots = aidSlots;
-
-    // Merge recommendations if enabled
-    if (showRecommendations) {
-      slots = mergeRecommendationsIntoSlots(slots);
-    }
-
-    return slots.filter(nationAidSlots => {
+    return mergedSlots.filter(nationAidSlots => {
       return nationAidSlots.aidSlots.some(slot => {
         if (!slot.aidOffer) {
           return expirationFilter.includes('empty');
