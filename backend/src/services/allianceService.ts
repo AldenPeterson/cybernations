@@ -5,7 +5,7 @@ import {
   AllianceData,
   loadAllianceDataWithJsonPriority
 } from '../utils/allianceDataLoader.js';
-import { syncAllianceFilesWithNewData as syncAllianceFilesUtil } from '../utils/allianceSync.js';
+// Alliance sync is now handled via database - no file sync needed
 import { 
   loadDataFromFilesWithUpdate,
   createNationsDictionary
@@ -110,9 +110,13 @@ export class AllianceService {
 
   /**
    * Sync alliance files with new data
+   * @deprecated Alliance data is now stored in the database via CSV imports
+   * This method is kept for backwards compatibility but does nothing
    */
   static async syncAllianceFilesWithNewData(nations: Nation[]): Promise<void> {
-    return await syncAllianceFilesUtil(nations);
+    console.log('Alliance sync is no longer needed - data is stored in database via CSV imports');
+    // Alliance data is automatically updated when CSV files are imported
+    // No file-based sync is needed anymore
   }
 
   /**

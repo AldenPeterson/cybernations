@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as https from 'https';
 import { extractZipFile } from './zipExtractor.js';
-import { syncAllianceFilesWithNewData } from './allianceSync.js';
+// Alliance sync is now handled via database - no file sync needed
 import { isInBlackoutWindow } from './dateUtils.js';
 
 export enum FileType {
@@ -623,41 +623,21 @@ export async function ensureRecentFiles(): Promise<DownloadResult[]> {
     console.warn('Error importing CSV data into database:', error);
   }
 
-  // After refreshing standardized files, sync alliance files using the new data
-  try {
-    console.log('Syncing alliance files with refreshed data...');
-    const { loadDataFromFiles } = await import('../services/dataProcessingService.js');
-    const { nations } = await loadDataFromFiles(false); // Pass false to prevent circular dependency
-    if (nations.length > 0) {
-      await syncAllianceFilesWithNewData(nations);
-    } else {
-      console.log('No nation data found after download, skipping alliance sync');
-    }
-  } catch (error) {
-    console.warn('Error syncing alliance files after download, continuing with existing data:', error);
-  }
+  // Alliance data is now stored in the database via CSV imports
+  // No need to sync JSON files - the database is the source of truth
 
   return downloadResults;
 }
 
 /**
  * Manually sync alliance files with current data files
- * This can be called to refresh alliance configurations after data updates
+ * @deprecated Alliance data is now stored in the database via CSV imports
+ * This function is kept for backwards compatibility but does nothing
  */
 export async function syncAllianceFiles(): Promise<void> {
-  try {
-    console.log('Manually syncing alliance files...');
-    const { loadDataFromFiles } = await import('../services/dataProcessingService.js');
-    const { nations } = await loadDataFromFiles(false);
-    if (nations.length > 0) {
-      await syncAllianceFilesWithNewData(nations);
-    } else {
-      console.log('No nation data found, skipping alliance sync');
-    }
-  } catch (error) {
-    console.error('Error syncing alliance files:', error);
-    throw error;
-  }
+  console.log('Alliance sync is no longer needed - data is stored in database via CSV imports');
+  // Alliance data is automatically updated when CSV files are imported
+  // No file-based sync is needed anymore
 }
 
 /**
