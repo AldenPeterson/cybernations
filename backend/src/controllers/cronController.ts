@@ -125,7 +125,7 @@ export class CronController {
           const mockReq = {
             params: { type },
             headers: req.headers
-          } as Request;
+          } as unknown as Request;
           
           // Create a mock response object that captures the result
           let syncResult: any = null;

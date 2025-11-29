@@ -12,14 +12,18 @@ export class AllianceController {
       const { prisma } = await import('../utils/prisma.js');
       const alliances = await prisma.alliance.findMany({
         include: {
-          nationConfigs: true,
+          nations: {
+            include: {
+              nationConfig: true,
+            },
+          },
         },
       });
 
       return alliances.map(alliance => ({
         id: alliance.id,
         name: alliance.name,
-        nationCount: alliance.nationConfigs.length
+        nationCount: alliance.nations.filter(n => n.nationConfig !== null).length
       })).sort((a, b) => b.nationCount - a.nationCount);
     } catch (error) {
       console.error('Error loading alliances from database:', error);

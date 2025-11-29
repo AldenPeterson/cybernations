@@ -150,11 +150,11 @@ export async function loadAllianceById(allianceId: number): Promise<AllianceData
           send_priority: config.sendPriority,
           receive_priority: config.receivePriority,
         },
-        current_stats: config.currentTech || config.currentInfra || config.currentStrength ? {
-          technology: config.currentTech || '0',
-          infrastructure: config.currentInfra || '0',
-          strength: config.currentStrength || '0',
-        } : undefined,
+        current_stats: {
+          technology: nation.technology || '0',
+          infrastructure: nation.infrastructure || '0',
+          strength: nation.strength.toString() || '0',
+        },
       };
     }
 
@@ -420,11 +420,11 @@ export async function getAllNationsFlat(): Promise<NationData[]> {
           send_priority: config.sendPriority,
           receive_priority: config.receivePriority,
         },
-        current_stats: config.currentTech || config.currentInfra || config.currentStrength ? {
-          technology: config.currentTech || '0',
-          infrastructure: config.currentInfra || '0',
-          strength: config.currentStrength || '0',
-        } : undefined,
+        current_stats: {
+          technology: nation.technology || '0',
+          infrastructure: nation.infrastructure || '0',
+          strength: nation.strength.toString() || '0',
+        },
       };
     });
   } catch (error) {
