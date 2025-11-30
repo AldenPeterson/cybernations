@@ -371,7 +371,7 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
   const getFilteredAidSlots = (): NationAidSlots[] => {
     if (expirationFilter.length === 0) return []; // Show no nations when no filters selected
 
-    return aidSlots.filter(nationAidSlots => {
+    const filtered = aidSlots.filter(nationAidSlots => {
       // Check if any aid slot matches the filter criteria
       return nationAidSlots.aidSlots.some(slot => {
         if (!slot.aidOffer) {
@@ -383,6 +383,9 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
         return expirationFilter.includes(category);
       });
     });
+
+    // Sort by nation strength (descending - highest first)
+    return filtered.sort((a, b) => (b.nation.strength || 0) - (a.nation.strength || 0));
   };
 
   const getActivityColor = (activity: string): string => {

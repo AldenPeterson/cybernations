@@ -465,7 +465,7 @@ const AidPage: React.FC = () => {
   const getFilteredAidSlots = (): NationAidSlots[] => {
     if (expirationFilter.length === 0) return [];
 
-    return mergedSlots.filter(nationAidSlots => {
+    const filtered = mergedSlots.filter(nationAidSlots => {
       return nationAidSlots.aidSlots.some(slot => {
         if (!slot.aidOffer) {
           return expirationFilter.includes('empty');
@@ -481,6 +481,9 @@ const AidPage: React.FC = () => {
         return expirationFilter.includes(category);
       });
     });
+
+    // Sort by nation strength (descending - highest first)
+    return filtered.sort((a, b) => (b.nation.strength || 0) - (a.nation.strength || 0));
   };
 
   const getActivityColor = (activity: string): string => {
