@@ -556,10 +556,9 @@ export async function getAidSlotsForAlliance(allianceId: number, nations: Nation
       aidSlots: []
     };
 
-    // Check if nation has DRA to determine number of slots
-    const { getNationFromJson } = await import('./nationCategorizationService.js');
-    const { has_dra } = await getNationFromJson(nation.id);
-    const totalSlots = has_dra ? 6 : 5;
+    // Always create 6 slots for display purposes
+    // DRA is only used for aid assignment logic, not for slot display
+    const totalSlots = 6;
 
     // Get all active aid offers for this nation (both outgoing and incoming)
     // regardless of their alliance membership when the aid was sent/received
@@ -567,7 +566,7 @@ export async function getAidSlotsForAlliance(allianceId: number, nations: Nation
       offer.declaringId === nation.id || offer.receivingId === nation.id
     );
 
-    // Create slots for each nation (total slots based on DRA status)
+    // Create slots for each nation (always 6 slots for display)
     for (let i = 1; i <= totalSlots; i++) {
       const slot: AidSlot = {
         slotNumber: i,

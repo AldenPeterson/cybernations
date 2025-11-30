@@ -620,18 +620,14 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
                         </td>
                         {nationAidSlots.aidSlots.map((slot) => {
                           const isExpired = slot.aidOffer ? slot.aidOffer.isExpired : false;
-                          const hasDRA = nationAidSlots.aidSlots.length === 6;
-                          const isBlackCell = !hasDRA && slot.slotNumber > 5;
                           
                           return (
                           <td 
                             key={slot.slotNumber}
                             className="p-2 border border-slate-300 text-center"
-                            style={{ backgroundColor: isBlackCell ? '#000000' : (slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff') }}
+                            style={{ backgroundColor: slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff' }}
                           >
-                            {isBlackCell ? (
-                              <span className="text-white">N/A</span>
-                            ) : slot.aidOffer ? (
+                            {slot.aidOffer ? (
                               <div className="text-xs">
                                 <div 
                                   className="font-bold mb-1"

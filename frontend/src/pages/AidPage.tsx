@@ -738,8 +738,6 @@ const AidPage: React.FC = () => {
                     </td>
                     {nationAidSlots.aidSlots.map((slot) => {
                       const isExpired = slot.aidOffer ? slot.aidOffer.isExpired : false;
-                      const hasDRA = nationAidSlots.aidSlots.length === 6;
-                      const isBlackCell = !hasDRA && slot.slotNumber > 5;
                       const isRecommendation = slot.aidOffer && slot.aidOffer.aidId < 0;
                       const isExternalSlot = slot.aidOffer && slot.aidOffer.aidId === -2;
                       
@@ -749,15 +747,13 @@ const AidPage: React.FC = () => {
                         className={columnClasses.aidSlot}
                         style={{ 
                           width: slotWidth,
-                          backgroundColor: isBlackCell ? '#000000' : (slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff'),
+                          backgroundColor: slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff',
                           borderStyle: isRecommendation ? 'dashed' : 'solid',
                           borderWidth: isRecommendation ? '2px' : '1px',
                           borderColor: isRecommendation ? '#f59e0b' : 'inherit'
                         }}
                       >
-                        {isBlackCell ? (
-                          <span className="text-white">N/A</span>
-                        ) : slot.aidOffer ? (
+                        {slot.aidOffer ? (
                           <div className="text-xs">
                             {isRecommendation && (
                               <div className="mb-1">

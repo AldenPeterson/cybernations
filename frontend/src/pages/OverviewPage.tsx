@@ -529,19 +529,15 @@ const AidPage: React.FC = () => {
                     </td>
                     {nationAidSlots.aidSlots.map((slot) => {
                       const isExpired = slot.aidOffer ? slot.aidOffer.isExpired : false;
-                      const hasDRA = nationAidSlots.aidSlots.length === 6;
-                      const isBlackCell = !hasDRA && slot.slotNumber > 5;
                       
                       return (
                       <td key={slot.slotNumber} style={{ 
                         padding: '8px', 
                         border: '1px solid #ddd', 
                         textAlign: 'center',
-                        backgroundColor: isBlackCell ? '#000000' : (slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff')
+                        backgroundColor: slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff'
                       }}>
-                        {isBlackCell ? (
-                          <span style={{ color: '#ffffff' }}>N/A</span>
-                        ) : slot.aidOffer ? (
+                        {slot.aidOffer ? (
                           <div style={{ fontSize: '12px' }}>
                             <div style={{ 
                               fontWeight: 'bold', 
