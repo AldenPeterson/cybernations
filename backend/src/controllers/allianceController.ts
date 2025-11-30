@@ -124,6 +124,8 @@ export class AllianceController {
 
       const stats = await AllianceService.getAllianceStats(allianceId);
 
+      console.log(`[API] getAllianceStats (allianceId: ${allianceId}): ${stats.totalNations} nations, ${stats.totalOutgoingAid} outgoing aid, ${stats.totalIncomingAid} incoming aid`);
+
       res.json({
         success: true,
         allianceId,

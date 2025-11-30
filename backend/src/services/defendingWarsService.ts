@@ -12,7 +12,131 @@ export class DefendingWarsService {
    * Get wars organized by nation for a specific alliance
    */
   static async getNationWars(allianceId: number, includePeaceMode: boolean = false, needsStagger: boolean = false) {
-    const { nations, wars } = await loadDataFromFilesWithUpdate();
+    const { prisma } = await import('../utils/prisma.js');
+    
+    // Query only nations in this alliance
+    const allianceNationRecords = await prisma.nation.findMany({
+      where: { 
+        allianceId,
+        ...(includePeaceMode ? {} : { inWarMode: true })
+      },
+      include: { alliance: true }
+    });
+    
+    const allianceNations = allianceNationRecords.map((n: any) => ({
+      id: n.id,
+      rulerName: n.rulerName,
+      nationName: n.nationName,
+      alliance: n.alliance.name,
+      allianceId: n.allianceId,
+      team: n.team,
+      strength: n.strength,
+      activity: n.activity,
+      technology: n.technology,
+      infrastructure: n.infrastructure,
+      land: n.land,
+      nuclearWeapons: n.nuclearWeapons,
+      governmentType: n.governmentType,
+      inWarMode: n.inWarMode,
+      attackingCasualties: n.attackingCasualties ?? undefined,
+      defensiveCasualties: n.defensiveCasualties ?? undefined,
+      warchest: n.warchest ?? undefined,
+      spyglassLastUpdated: n.spyglassLastUpdated ?? undefined,
+      rank: n.rank ?? undefined,
+    }));
+    
+    const allianceNationIdList = allianceNations.map(n => n.id);
+    
+    if (allianceNationIdList.length === 0) {
+      return [];
+    }
+    
+    // Query only wars involving nations in this alliance
+    const warRecords = await prisma.war.findMany({
+      where: {
+        OR: [
+          { declaringNationId: { in: allianceNationIdList } },
+          { receivingNationId: { in: allianceNationIdList } }
+        ],
+        status: {
+          notIn: ['Ended', 'Expired', 'Peace']
+        }
+      },
+      include: {
+        declaringNation: { include: { alliance: true } },
+        receivingNation: { include: { alliance: true } }
+      }
+    });
+    
+    // Filter out expired wars by date
+    const activeWars = warRecords.filter((war: any) => {
+      try {
+        return !isWarExpired(war.endDate);
+      } catch (error) {
+        console.warn(`Failed to parse end date for war ${war.warId}: ${error}`);
+        return false;
+      }
+    }).map((war: any) => ({
+      warId: war.warId,
+      declaringId: war.declaringNationId,
+      declaringRuler: war.declaringNation.rulerName,
+      declaringNation: war.declaringNation.nationName,
+      declaringAlliance: war.declaringNation.alliance.name,
+      declaringAllianceId: war.declaringNation.allianceId,
+      receivingId: war.receivingNationId,
+      receivingRuler: war.receivingNation.rulerName,
+      receivingNation: war.receivingNation.nationName,
+      receivingAlliance: war.receivingNation.alliance.name,
+      receivingAllianceId: war.receivingNation.allianceId,
+      status: war.status,
+      date: war.date,
+      endDate: war.endDate,
+    }));
+    
+    // Get all nation IDs involved in wars (for looking up opposing nations)
+    const allWarNationIds = new Set<number>();
+    activeWars.forEach((war: any) => {
+      allWarNationIds.add(war.declaringId);
+      allWarNationIds.add(war.receivingId);
+    });
+    
+    // Query opposing nations that aren't in the alliance
+    const opposingNationRecords = await prisma.nation.findMany({
+      where: {
+        id: { in: Array.from(allWarNationIds) },
+        allianceId: { not: allianceId }
+      },
+      include: { alliance: true }
+    });
+    
+    const opposingNations = opposingNationRecords.map((n: any) => ({
+      id: n.id,
+      rulerName: n.rulerName,
+      nationName: n.nationName,
+      alliance: n.alliance.name,
+      allianceId: n.allianceId,
+      team: n.team,
+      strength: n.strength,
+      activity: n.activity,
+      technology: n.technology,
+      infrastructure: n.infrastructure,
+      land: n.land,
+      nuclearWeapons: n.nuclearWeapons,
+      governmentType: n.governmentType,
+      inWarMode: n.inWarMode,
+      attackingCasualties: n.attackingCasualties ?? undefined,
+      defensiveCasualties: n.defensiveCasualties ?? undefined,
+      warchest: n.warchest ?? undefined,
+      spyglassLastUpdated: n.spyglassLastUpdated ?? undefined,
+      rank: n.rank ?? undefined,
+    }));
+    
+    // Create a combined nations map for lookups
+    const nationsMap = new Map<number, any>();
+    allianceNations.forEach(n => nationsMap.set(n.id, n));
+    opposingNations.forEach(n => nationsMap.set(n.id, n));
+    const nations = Array.from(nationsMap.values());
+    const relevantWars = activeWars;
 
     // Load spyglass data
     const spyglassMap = loadSpyglassData();
@@ -44,36 +168,7 @@ export class DefendingWarsService {
       }
     }
     
-    // Get alliance nations, optionally filtering out peace mode nations
-    let allianceNations = nations.filter(nation => nation.allianceId === allianceId);
-    
-    if (!includePeaceMode) {
-      allianceNations = allianceNations.filter(nation => nation.inWarMode);
-    }
-    
-    // Get all active wars (exclude ended/expired/peace wars by status or date)
-    const activeWars = wars.filter(war => {
-      // Filter by status first
-      const statusLower = war.status.toLowerCase();
-      if (statusLower === 'ended' || statusLower === 'expired' || statusLower === 'peace') {
-        return false;
-      }
-      
-      // Also filter by date - check if the war has expired based on its end date
-      try {
-        return !isWarExpired(war.endDate);
-      } catch (error) {
-        // If we can't parse the date, exclude the war to be safe
-        console.warn(`Failed to parse end date for war ${war.warId}: ${error}`);
-        return false;
-      }
-    });
-    
-    // Find all wars involving current alliance members
     const allianceNationIds = new Set(allianceNations.map(nation => nation.id));
-    const relevantWars = activeWars.filter(war => 
-      allianceNationIds.has(war.declaringId) || allianceNationIds.has(war.receivingId)
-    );
 
     // Organize wars by nation
     const nationWars = allianceNations.map(nation => {
@@ -211,54 +306,75 @@ export class DefendingWarsService {
    * Get defending wars for a specific alliance (legacy method for backward compatibility)
    */
   static async getDefendingWars(allianceId: number) {
-    const { nations, wars } = await loadDataFromFilesWithUpdate();
+    const { prisma } = await import('../utils/prisma.js');
     
-    // Get current alliance members
-    const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
-    const allianceNationIds = new Set(allianceNations.map(nation => nation.id));
+    // Query only nations in this alliance
+    const allianceNationRecords = await prisma.nation.findMany({
+      where: { allianceId },
+      select: { id: true }
+    });
     
-    // Filter wars where current alliance members are defending (receiving attacks)
-    const defendingWars = wars.filter(war => {
-      const statusLower = war.status.toLowerCase();
-      return allianceNationIds.has(war.receivingId) && 
-             statusLower !== 'ended' &&
-             statusLower !== 'expired' &&
-             statusLower !== 'peace';
+    const allianceNationIds = allianceNationRecords.map(n => n.id);
+    
+    if (allianceNationIds.length === 0) {
+      return [];
+    }
+    
+    // Query only wars where alliance members are defending (receiving attacks)
+    const warRecords = await prisma.war.findMany({
+      where: {
+        receivingNationId: { in: allianceNationIds },
+        status: {
+          notIn: ['Ended', 'Expired', 'Peace']
+        }
+      },
+      include: {
+        declaringNation: { include: { alliance: true } },
+        receivingNation: { include: { alliance: true } }
+      }
+    });
+    
+    // Filter out expired wars by date
+    const defendingWars = warRecords.filter((war: any) => {
+      try {
+        return !isWarExpired(war.endDate);
+      } catch (error) {
+        console.warn(`Failed to parse end date for war ${war.warId}: ${error}`);
+        return false;
+      }
     });
 
     // Add nation information to each war
-    const warsWithNationInfo = defendingWars.map(war => {
-      const defendingNation = nations.find(n => n.id === war.receivingId);
-      const attackingNation = nations.find(n => n.id === war.declaringId);
+    const warsWithNationInfo = defendingWars.map((war: any) => {
       const warDateInfo = calculateWarDateInfo(war.endDate);
       
       return {
         warId: war.warId,
         defendingNation: {
-          id: war.receivingId,
-          name: war.receivingNation,
-          ruler: war.receivingRuler,
-          alliance: war.receivingAlliance,
-          allianceId: war.receivingAllianceId,
-          strength: defendingNation?.strength || 0,
-          technology: defendingNation?.technology || '0',
-          activity: defendingNation?.activity || '',
-          inWarMode: defendingNation?.inWarMode || false,
-          nuclearWeapons: defendingNation?.nuclearWeapons || 0,
-          governmentType: defendingNation?.governmentType || ''
+          id: war.receivingNationId,
+          name: war.receivingNation.nationName,
+          ruler: war.receivingNation.rulerName,
+          alliance: war.receivingNation.alliance.name,
+          allianceId: war.receivingNation.allianceId,
+          strength: war.receivingNation.strength || 0,
+          technology: war.receivingNation.technology || '0',
+          activity: war.receivingNation.activity || '',
+          inWarMode: war.receivingNation.inWarMode || false,
+          nuclearWeapons: war.receivingNation.nuclearWeapons || 0,
+          governmentType: war.receivingNation.governmentType || ''
         },
         attackingNation: {
-          id: war.declaringId,
-          name: war.declaringNation,
-          ruler: war.declaringRuler,
-          alliance: war.declaringAlliance,
-          allianceId: war.declaringAllianceId,
-          strength: attackingNation?.strength || 0,
-          technology: attackingNation?.technology || '0',
-          activity: attackingNation?.activity || '',
-          inWarMode: attackingNation?.inWarMode || false,
-          nuclearWeapons: attackingNation?.nuclearWeapons || 0,
-          governmentType: attackingNation?.governmentType || ''
+          id: war.declaringNationId,
+          name: war.declaringNation.nationName,
+          ruler: war.declaringNation.rulerName,
+          alliance: war.declaringNation.alliance.name,
+          allianceId: war.declaringNation.allianceId,
+          strength: war.declaringNation.strength || 0,
+          technology: war.declaringNation.technology || '0',
+          activity: war.declaringNation.activity || '',
+          inWarMode: war.declaringNation.inWarMode || false,
+          nuclearWeapons: war.declaringNation.nuclearWeapons || 0,
+          governmentType: war.declaringNation.governmentType || ''
         },
         status: war.status,
         date: war.date,
@@ -277,47 +393,83 @@ export class DefendingWarsService {
    * Get defending wars statistics for an alliance
    */
   static async getDefendingWarsStats(allianceId: number, includeExpired: boolean = false) {
-    const { nations, wars } = await loadDataFromFilesWithUpdate();
+    const { prisma } = await import('../utils/prisma.js');
     
-    // Get current alliance members
-    const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
-    const allianceNationIds = new Set(allianceNations.map(nation => nation.id));
-    
-    // Get all wars involving current alliance members (both attacking and defending)
-    const allianceWars = wars.filter(war => {
-      const involves = allianceNationIds.has(war.declaringId) || allianceNationIds.has(war.receivingId);
-      if (!involves) return false;
-      if (includeExpired) return true;
-      const status = war.status.toLowerCase();
-      return status !== 'ended' && status !== 'expired' && status !== 'peace';
+    // Query only nations in this alliance
+    const allianceNationRecords = await prisma.nation.findMany({
+      where: { allianceId },
+      select: { id: true }
     });
+    
+    const allianceNationIds = allianceNationRecords.map(n => n.id);
+    
+    if (allianceNationIds.length === 0) {
+      return {
+        totalDefendingWars: 0,
+        totalAttackingWars: 0,
+        totalActiveWars: 0,
+        defendingByAlliance: [],
+        attackingByAlliance: []
+      };
+    }
+    
+    // Query all wars involving alliance members
+    const warRecords = await prisma.war.findMany({
+      where: {
+        OR: [
+          { declaringNationId: { in: allianceNationIds } },
+          { receivingNationId: { in: allianceNationIds } }
+        ],
+        ...(includeExpired ? {} : {
+          status: {
+            notIn: ['Ended', 'Expired', 'Peace']
+          }
+        })
+      },
+      include: {
+        declaringNation: { include: { alliance: true } },
+        receivingNation: { include: { alliance: true } }
+      }
+    });
+    
+    // Filter out expired wars by date if not including expired
+    const allianceWars = includeExpired 
+      ? warRecords 
+      : warRecords.filter((war: any) => {
+          try {
+            return !isWarExpired(war.endDate);
+          } catch (error) {
+            console.warn(`Failed to parse end date for war ${war.warId}: ${error}`);
+            return false;
+          }
+        });
 
-    const defendingWars = allianceWars.filter(war => allianceNationIds.has(war.receivingId));
-    const attackingWars = allianceWars.filter(war => allianceNationIds.has(war.declaringId));
+    const defendingWars = allianceWars.filter((war: any) => allianceNationIds.includes(war.receivingNationId));
+    const attackingWars = allianceWars.filter((war: any) => allianceNationIds.includes(war.declaringNationId));
 
     // Count wars by alliance - use current alliance data for nations
     const defendingByAlliance = new Map<number, { allianceId: number; allianceName: string; count: number }>();
     const attackingByAlliance = new Map<number, { allianceId: number; allianceName: string; count: number }>();
 
-    defendingWars.forEach(war => {
+    defendingWars.forEach((war: any) => {
       // Get the current alliance of the attacking nation
-      const attackingNation = nations.find(n => n.id === war.declaringId);
+      const attackingNation = war.declaringNation;
       if (attackingNation) {
-        const allianceId = attackingNation.allianceId;
-        const allianceName = attackingNation.alliance;
-        const current = defendingByAlliance.get(allianceId) || { allianceId, allianceName, count: 0 };
-        defendingByAlliance.set(allianceId, { allianceId, allianceName, count: current.count + 1 });
+        const attackingAllianceId = attackingNation.allianceId;
+        const attackingAllianceName = attackingNation.alliance.name;
+        const current = defendingByAlliance.get(attackingAllianceId) || { allianceId: attackingAllianceId, allianceName: attackingAllianceName, count: 0 };
+        defendingByAlliance.set(attackingAllianceId, { allianceId: attackingAllianceId, allianceName: attackingAllianceName, count: current.count + 1 });
       }
     });
 
-    attackingWars.forEach(war => {
+    attackingWars.forEach((war: any) => {
       // Get the current alliance of the defending nation
-      const defendingNation = nations.find(n => n.id === war.receivingId);
+      const defendingNation = war.receivingNation;
       if (defendingNation) {
-        const allianceId = defendingNation.allianceId;
-        const allianceName = defendingNation.alliance;
-        const current = attackingByAlliance.get(allianceId) || { allianceId, allianceName, count: 0 };
-        attackingByAlliance.set(allianceId, { allianceId, allianceName, count: current.count + 1 });
+        const defendingAllianceId = defendingNation.allianceId;
+        const defendingAllianceName = defendingNation.alliance.name;
+        const current = attackingByAlliance.get(defendingAllianceId) || { allianceId: defendingAllianceId, allianceName: defendingAllianceName, count: 0 };
+        attackingByAlliance.set(defendingAllianceId, { allianceId: defendingAllianceId, allianceName: defendingAllianceName, count: current.count + 1 });
       }
     });
 

@@ -6,6 +6,7 @@ import NSPercentageBadge from './NSPercentageBadge';
 import AllianceMultiSelect from './AllianceMultiSelect';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
 import { tableClasses } from '../styles/tableClasses';
+import { useAlliances } from '../contexts/AlliancesContext';
 
 interface StaggerRecommendationsCellProps {
   rawRecommendations: any[]; // Pre-fetched recommendations passed from parent
@@ -230,7 +231,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [showForFullTargets, setShowForFullTargets] = useState<boolean>(true);
   const [allWarsEndingInDays, setAllWarsEndingInDays] = useState<boolean>(false);
   const [warsEndingInDays, setWarsEndingInDays] = useState<number>(7);
-  const [alliances, setAlliances] = useState<Alliance[]>([]);
+  const { alliances } = useAlliances();
   const [assignAllianceIds, setAssignAllianceIds] = useState<number[]>([]);
   const [staggerRecommendationsMap, setStaggerRecommendationsMap] = useState<Map<number, any[]>>(new Map());
   const [sellDownEnabled, setSellDownEnabled] = useState<boolean>(false);
@@ -341,10 +342,6 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     }
   }, [allianceId]);
 
-  useEffect(() => {
-    fetchAlliances();
-  }, []);
-
   // Fetch all stagger recommendations once when assign alliances change
   useEffect(() => {
     const fetchAllStaggerRecommendations = async () => {
@@ -404,18 +401,6 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   }, [assignAllianceIds, allianceId, sellDownEnabled, militaryNS]);
 
 
-  const fetchAlliances = async () => {
-    try {
-      const response = await apiCall(API_ENDPOINTS.alliances);
-      const data = await response.json();
-      
-      if (data.success) {
-        setAlliances(data.alliances);
-      }
-    } catch (err) {
-      console.error('Failed to fetch alliances:', err);
-    }
-  };
 
   const fetchNationWars = async () => {
     try {

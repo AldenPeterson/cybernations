@@ -19,6 +19,9 @@ export class NationEditorController {
 
       const config = await AllianceService.getNationsConfig(allianceId);
 
+      const nationCount = config.nations?.length || 0;
+      console.log(`[API] getNationsConfig (allianceId: ${allianceId}): Returning ${nationCount} nations`);
+
       res.json({
         success: true,
         allianceId,

@@ -20,6 +20,15 @@ export class DefendingWarsController {
 
       const nationWars = await DefendingWarsService.getNationWars(allianceId, includePeaceMode, needsStagger);
       
+      // Count nations and wars
+      const nationCount = nationWars.length;
+      const totalWars = nationWars.reduce((count, nw) => {
+        return count + nw.attackingWars.length + nw.defendingWars.length;
+      }, 0);
+      const defendingWarsCount = nationWars.reduce((count, nw) => count + nw.defendingWars.length, 0);
+      const attackingWarsCount = nationWars.reduce((count, nw) => count + nw.attackingWars.length, 0);
+      console.log(`[API] getNationWars (allianceId: ${allianceId}, includePeaceMode: ${includePeaceMode}, needsStagger: ${needsStagger}): Returning ${nationCount} nations with ${totalWars} total wars (${defendingWarsCount} defending, ${attackingWarsCount} attacking)`);
+      
       res.json({
         success: true,
         allianceId,
@@ -49,6 +58,8 @@ export class DefendingWarsController {
       }
 
       const defendingWars = await DefendingWarsService.getDefendingWars(allianceId);
+      
+      console.log(`[API] getDefendingWars (allianceId: ${allianceId}): Returning ${defendingWars.length} defending wars`);
       
       res.json({
         success: true,
@@ -80,6 +91,8 @@ export class DefendingWarsController {
       }
 
       const stats = await DefendingWarsService.getDefendingWarsStats(allianceId, includeExpired);
+
+      console.log(`[API] getDefendingWarsStats (allianceId: ${allianceId}, includeExpired: ${includeExpired}): ${stats.totalDefendingWars} defending wars, ${stats.totalAttackingWars} attacking wars, ${stats.totalActiveWars} total active wars`);
 
       res.json({
         success: true,
@@ -131,6 +144,8 @@ export class DefendingWarsController {
       }
 
       const byAlliance = Array.from(byAllianceMap.values()).sort((a, b) => b.total - a.total);
+
+      console.log(`[API] getAllianceWarCounts (allianceId: ${allianceId}, includeExpired: ${includeExpired}): ${stats.totalDefendingWars} defending wars, ${stats.totalAttackingWars} attacking wars, ${stats.totalActiveWars} total active wars, ${byAlliance.length} opposing alliances`);
 
       res.json({
         success: true,

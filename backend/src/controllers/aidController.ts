@@ -19,6 +19,13 @@ export class AidController {
 
       const aidSlots = await AidService.getAidSlots(allianceId);
       
+      // Count nations and aid offers
+      const nationCount = aidSlots.length;
+      const aidOfferCount = aidSlots.reduce((count, nationAidSlots) => {
+        return count + nationAidSlots.aidSlots.filter(slot => slot.aidOffer !== null).length;
+      }, 0);
+      console.log(`[API] getAidSlots (allianceId: ${allianceId}): Returning ${nationCount} nations with ${aidOfferCount} aid offers`);
+      
       res.json({
         success: true,
         allianceId,
@@ -88,6 +95,8 @@ export class AidController {
 
       const stats = await AidService.getAllianceAidStats(allianceId);
 
+      console.log(`[API] getAllianceAidStats (allianceId: ${allianceId}): ${stats.totalOutgoingAid} outgoing aid, ${stats.totalIncomingAid} incoming aid`);
+
       res.json({
         success: true,
         allianceId,
@@ -119,6 +128,9 @@ export class AidController {
 
       const result = await AidService.getAidRecommendations(allianceId, crossAllianceEnabled);
 
+      const recommendationCount = result.recommendations?.length || 0;
+      console.log(`[API] getAidRecommendations (allianceId: ${allianceId}, crossAlliance: ${crossAllianceEnabled}): Returning ${recommendationCount} recommendations`);
+
       res.json({
         success: true,
         allianceId,
@@ -149,6 +161,9 @@ export class AidController {
 
       const categorizedNations = await AidService.getCategorizedNations(allianceId);
 
+      const nationCount = Array.isArray(categorizedNations) ? categorizedNations.length : 0;
+      console.log(`[API] getCategorizedNations (allianceId: ${allianceId}): Returning ${nationCount} nations`);
+
       res.json({
         success: true,
         allianceId,
@@ -169,6 +184,9 @@ export class AidController {
   static async getSmallAidOffers(req: Request, res: Response) {
     try {
       const result = await AidService.getSmallAidOffers();
+
+      const offerCount = result.smallAidOffers?.length || result.totalCount || 0;
+      console.log(`[API] getSmallAidOffers: Returning ${offerCount} aid offers`);
 
       res.json({
         success: true,
