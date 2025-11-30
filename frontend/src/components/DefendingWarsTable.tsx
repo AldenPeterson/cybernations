@@ -202,13 +202,6 @@ interface NationWars {
   };
 }
 
-
-interface Alliance {
-  id: number;
-  name: string;
-  nationCount: number;
-}
-
 interface DefendingWarsTableProps {
   allianceId: number;
 }

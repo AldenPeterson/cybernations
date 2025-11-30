@@ -259,7 +259,6 @@ const NSComparisonsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-        {error && <div className="text-error mt-2">{error}</div>}
         <div className="mt-2 text-gray-600 text-xs">
           Showing alliances with at least 10 nations.
         </div>

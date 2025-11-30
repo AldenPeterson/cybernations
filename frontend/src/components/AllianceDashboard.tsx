@@ -4,12 +4,6 @@ import WarStatusBadge from './WarStatusBadge';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
 import { useAlliances } from '../contexts/AlliancesContext';
 
-interface Alliance {
-  id: number;
-  name: string;
-  nationCount: number;
-}
-
 interface AidOffer {
   aidId: number;
   targetNation: string;
