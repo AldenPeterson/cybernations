@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
+import { useAlliances } from '../contexts/AlliancesContext';
 
 // Shared labels and colors for coalitions
 const BLUE_LABEL = 'Blue';
@@ -75,31 +76,16 @@ function formatTechBucketLabel(lower: number, upper: number): string {
 }
 
 const NSComparisonsPage: React.FC = () => {
-  const [alliances, setAlliances] = useState<Alliance[]>([]);
+  const { alliances: allAlliances } = useAlliances();
   const [selectedAlliances, setSelectedAlliances] = useState<{ [key in GroupKey]: number[] }>({ A: [], B: [] });
   const [nationsByAlliance, setNationsByAlliance] = useState<Record<number, NationConfig[]>>({});
-  // Loading removed (not used in UI)
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadAlliances = async () => {
-      try {
-        const res = await apiCall(API_ENDPOINTS.alliances);
-        const data = await res.json();
-        if (data.success) {
-          const filtered = (data.alliances as Alliance[])
-            .filter(a => a.name && a.name.trim() !== '' && a.nationCount >= 10)
-            .sort((a, b) => b.nationCount - a.nationCount);
-          setAlliances(filtered);
-        } else {
-          setError(data.error || 'Failed to load alliances');
-        }
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load alliances');
-      }
-    };
-    loadAlliances();
-  }, []);
+  // Filter and sort alliances
+  const alliances = React.useMemo(() => {
+    return allAlliances
+      .filter((a: Alliance) => a.name && a.name.trim() !== '' && a.nationCount >= 10)
+      .sort((a: Alliance, b: Alliance) => b.nationCount - a.nationCount);
+  }, [allAlliances]);
 
   useEffect(() => {
     const allIds = [...selectedAlliances.A, ...selectedAlliances.B];

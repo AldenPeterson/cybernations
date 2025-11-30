@@ -11,7 +11,7 @@ import {
 } from './nationCategorizationService.js';
 import { AllianceService } from './allianceService.js';
 import { AidOffer } from '../models/index.js';
-import { CategorizedNation } from '../models/Nation.js';
+import { CategorizedNation, Nation } from '../models/Nation.js';
 import { prisma } from '../utils/prisma.js';
 
 export class AidService {
@@ -41,9 +41,82 @@ export class AidService {
 
   /**
    * Get aid slots for a specific alliance
+   * Optimized to query database directly instead of loading all data
    */
   static async getAidSlots(allianceId: number) {
-    const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
+    const { prisma } = await import('../utils/prisma.js');
+    
+    // Query only nations in this alliance
+    const nationRecords = await prisma.nation.findMany({
+      where: { allianceId },
+      include: { alliance: true },
+    });
+    
+    const nations: Nation[] = nationRecords.map((n: any) => ({
+      id: n.id,
+      rulerName: n.rulerName,
+      nationName: n.nationName,
+      alliance: n.alliance.name,
+      allianceId: n.allianceId,
+      team: n.team,
+      strength: n.strength,
+      activity: n.activity,
+      technology: n.technology,
+      infrastructure: n.infrastructure,
+      land: n.land,
+      nuclearWeapons: n.nuclearWeapons,
+      governmentType: n.governmentType,
+      inWarMode: n.inWarMode,
+      attackingCasualties: n.attackingCasualties ?? undefined,
+      defensiveCasualties: n.defensiveCasualties ?? undefined,
+      warchest: n.warchest ?? undefined,
+      spyglassLastUpdated: n.spyglassLastUpdated ?? undefined,
+      rank: n.rank ?? undefined,
+    }));
+    
+    // Get alliance nation IDs for filtering aid offers
+    const allianceNationIds = new Set(nations.map(n => n.id));
+    
+    // Query only aid offers involving nations in this alliance
+    const aidOfferRecords = await prisma.aidOffer.findMany({
+      where: {
+        status: { not: 'Expired' },
+        OR: [
+          { declaringNationId: { in: Array.from(allianceNationIds) } },
+          { receivingNationId: { in: Array.from(allianceNationIds) } }
+        ]
+      },
+      include: {
+        declaringNation: {
+          include: { alliance: true },
+        },
+        receivingNation: {
+          include: { alliance: true },
+        },
+      },
+    });
+    
+    const aidOffers: AidOffer[] = aidOfferRecords.map((a: any) => ({
+      aidId: a.aidId,
+      declaringId: a.declaringNationId,
+      declaringRuler: a.declaringNation.rulerName,
+      declaringNation: a.declaringNation.nationName,
+      declaringAlliance: a.declaringNation.alliance.name,
+      declaringAllianceId: a.declaringNation.allianceId,
+      receivingId: a.receivingNationId,
+      receivingRuler: a.receivingNation.rulerName,
+      receivingNation: a.receivingNation.nationName,
+      receivingAlliance: a.receivingNation.alliance.name,
+      receivingAllianceId: a.receivingNation.allianceId,
+      status: a.status,
+      money: a.money,
+      technology: a.technology,
+      soldiers: a.soldiers,
+      date: a.date,
+      reason: a.reason,
+      isExpired: a.isExpired ?? undefined,
+    }));
+    
     return await getAidSlotsForAlliance(allianceId, nations, aidOffers);
   }
 
@@ -51,7 +124,7 @@ export class AidService {
    * Get alliance aid statistics
    */
   static async getAllianceAidStats(allianceId: number) {
-    const { nations, aidOffers, useJsonData } = await AllianceService.getAllianceDataWithJsonPriority(allianceId);
+    const { nations, aidOffers, useJsonData } = await AllianceService.getAllianceData(allianceId);
     
     if (nations.length === 0) {
       return {
@@ -110,7 +183,7 @@ export class AidService {
    * Get aid recommendations for an alliance
    */
   static async getAidRecommendations(allianceId: number, crossAllianceEnabled: boolean = false) {
-    const { nations, aidOffers, useJsonData } = await AllianceService.getAllianceDataWithJsonPriority(allianceId);
+    const { nations, aidOffers, useJsonData } = await AllianceService.getAllianceData(allianceId);
     
     if (nations.length === 0) {
       return {
@@ -135,7 +208,7 @@ export class AidService {
       if (receivingAllianceId) {
         try {
           const { nations: receivingNations, useJsonData: receivingUseJsonData } = 
-            await AllianceService.getAllianceDataWithJsonPriority(parseInt(receivingAllianceId));
+            await AllianceService.getAllianceData(parseInt(receivingAllianceId));
           
           if (receivingNations.length > 0) {
             const categorizedReceivingNations: CategorizedNation[] = receivingUseJsonData ? receivingNations as CategorizedNation[] : await categorizeNations(receivingNations);
@@ -1377,7 +1450,7 @@ export class AidService {
    * Get categorized nations with slots for a specific alliance
    */
   static async getCategorizedNations(allianceId: number) {
-    const { nations, useJsonData } = await AllianceService.getAllianceDataWithJsonPriority(allianceId);
+    const { nations, useJsonData } = await AllianceService.getAllianceData(allianceId);
     
     if (nations.length === 0) {
       return [];

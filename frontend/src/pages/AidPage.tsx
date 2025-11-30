@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
+import { useAlliances } from '../contexts/AlliancesContext';
 
 interface Alliance {
   id: number;
@@ -94,6 +95,7 @@ interface AidRecommendation {
 const AidPage: React.FC = () => {
   const { allianceId } = useParams<{ allianceId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { alliances, loading: alliancesLoading } = useAlliances();
   const [alliance, setAlliance] = useState<Alliance | null>(null);
   const [aidSlots, setAidSlots] = useState<NationAidSlots[]>([]);
   const [allianceStats, setAllianceStats] = useState<AllianceStats | null>(null);
@@ -131,11 +133,19 @@ const AidPage: React.FC = () => {
     setShowRecommendations(parseBooleanParam(searchParams.get('showRecommendations')));
   }, []); // Empty dependency array - only run on mount
 
+  // Update alliance when alliances load or allianceId changes
   useEffect(() => {
-    if (allianceId) {
+    if (allianceId && alliances.length > 0) {
+      const foundAlliance = alliances.find((a: Alliance) => a.id === parseInt(allianceId));
+      setAlliance(foundAlliance || null);
+    }
+  }, [allianceId, alliances]);
+
+  useEffect(() => {
+    if (allianceId && !alliancesLoading) {
       fetchAllianceData(parseInt(allianceId));
     }
-  }, [allianceId]);
+  }, [allianceId, alliancesLoading]);
 
   const fetchAllianceData = async (id: number) => {
     try {
@@ -143,11 +153,7 @@ const AidPage: React.FC = () => {
       setError(null);
 
       // Fetch all data in parallel for better performance
-      const [allianceData, aidSlotsData, statsData, aidStatsData] = await Promise.all([
-        apiCallWithErrorHandling(API_ENDPOINTS.alliances).catch(err => {
-          console.error('Failed to fetch alliances:', err);
-          return { success: false, alliances: [] };
-        }),
+      const [aidSlotsData, statsData, aidStatsData] = await Promise.all([
         apiCallWithErrorHandling(API_ENDPOINTS.allianceAidSlots(id)).catch(err => {
           console.error('Failed to fetch aid slots:', err);
           return { success: false, aidSlots: [] };
@@ -161,12 +167,6 @@ const AidPage: React.FC = () => {
           return { success: false, allianceAidStats: [] };
         }),
       ]);
-
-      // Process alliance info
-      if (allianceData.success) {
-        const foundAlliance = allianceData.alliances.find((a: Alliance) => a.id === id);
-        setAlliance(foundAlliance || null);
-      }
 
       // Process aid slots
       if (aidSlotsData.success) {
@@ -528,6 +528,15 @@ const AidPage: React.FC = () => {
     return (
       <div className="text-center p-10 text-gray-600 mt-20">
         Please select an alliance to view aid data.
+      </div>
+    );
+  }
+
+  // Wait for alliances to load before showing "not found"
+  if (alliancesLoading) {
+    return (
+      <div className="text-center p-10 text-gray-600 mt-20">
+        Loading alliances...
       </div>
     );
   }

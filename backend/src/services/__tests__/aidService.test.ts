@@ -17,7 +17,7 @@ vi.mock('../nationCategorizationService.js', () => ({
 
 vi.mock('../allianceService.js', () => ({
   AllianceService: {
-    getAllianceDataWithJsonPriority: vi.fn(),
+    getAllianceData: vi.fn(),
   },
 }));
 
@@ -83,7 +83,7 @@ describe('AidService', () => {
 
       // Mock the alliance service to return our test data
       const { AllianceService } = await import('../allianceService.js');
-      vi.mocked(AllianceService.getAllianceDataWithJsonPriority).mockResolvedValue({
+      vi.mocked(AllianceService.getAllianceData).mockResolvedValue({
         nations: mockNations,
         aidOffers: mockAidOffers,
         useJsonData: true,
@@ -163,7 +163,7 @@ describe('AidService', () => {
       const mockAidOffers: any[] = [];
 
       const { AllianceService } = await import('../allianceService.js');
-      vi.mocked(AllianceService.getAllianceDataWithJsonPriority).mockResolvedValue({
+      vi.mocked(AllianceService.getAllianceData).mockResolvedValue({
         nations: mockNations,
         aidOffers: mockAidOffers,
         useJsonData: true,
@@ -223,7 +223,7 @@ describe('AidService', () => {
       ];
 
       const { AllianceService } = await import('../allianceService.js');
-      vi.mocked(AllianceService.getAllianceDataWithJsonPriority).mockResolvedValue({
+      vi.mocked(AllianceService.getAllianceData).mockResolvedValue({
         nations: mockNations,
         aidOffers: [],
         useJsonData: true,

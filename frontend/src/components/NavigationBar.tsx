@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { apiCall, API_ENDPOINTS } from '../utils/api';
 import clsx from 'clsx';
-
-interface Alliance {
-  id: number;
-  name: string;
-  nationCount: number;
-}
+import { useAlliances } from '../contexts/AlliancesContext';
 
 interface NavigationBarProps {
   selectedAllianceId: number | null;
@@ -18,47 +12,28 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   selectedAllianceId, 
   setSelectedAllianceId 
 }) => {
-  const [alliances, setAlliances] = useState<Alliance[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { alliances, loading, error } = useAlliances();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchAlliances();
-  }, []);
-
-  const fetchAlliances = async () => {
-    try {
-      setLoading(true);
-      const response = await apiCall(API_ENDPOINTS.alliances);
-      const data = await response.json();
+    // Set Doombrella as default if it exists and no alliance is already selected
+    // Only set default if we're not on an alliance-specific page (to avoid race condition with URL params)
+    if (alliances.length > 0) {
+      const pathParts = location.pathname.split('/');
+      const tabName = pathParts[1];
+      const allianceIdParam = pathParts[2];
+      const isOnAllianceSpecificPage = allianceIdParam && ['aid', 'recommendations', 'nations', 'wars'].includes(tabName);
       
-      if (data.success) {
-        setAlliances(data.alliances);
-        // Set Doombrella as default if it exists and no alliance is already selected
-        // Only set default if we're not on an alliance-specific page (to avoid race condition with URL params)
-        const pathParts = location.pathname.split('/');
-        const tabName = pathParts[1];
-        const allianceIdParam = pathParts[2];
-        const isOnAllianceSpecificPage = allianceIdParam && ['aid', 'recommendations', 'nations', 'wars'].includes(tabName);
-        
-        const doombrella = data.alliances.find((alliance: any) => 
-          alliance.name.toLowerCase().includes('doombrella')
-        );
-        if (doombrella && !selectedAllianceId && !isOnAllianceSpecificPage) {
-          setSelectedAllianceId(doombrella.id);
-        }
-      } else {
-        setError(data.error);
+      const doombrella = alliances.find((alliance: any) => 
+        alliance.name.toLowerCase().includes('doombrella')
+      );
+      if (doombrella && !selectedAllianceId && !isOnAllianceSpecificPage) {
+        setSelectedAllianceId(doombrella.id);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch alliances');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [alliances, selectedAllianceId, location.pathname, setSelectedAllianceId]);
 
   const handleAllianceChange = (allianceId: number | null) => {
     setSelectedAllianceId(allianceId);

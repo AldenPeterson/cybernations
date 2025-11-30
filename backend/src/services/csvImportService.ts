@@ -579,6 +579,7 @@ function getCsvDataPath(): string {
  * Import all CSV files from the data directory
  */
 export async function importAllCsvFiles(): Promise<void> {
+  const overallStartTime = Date.now();
   const dataPath = getCsvDataPath();
   
   const nationsFile = path.join(dataPath, 'nations.csv');
@@ -589,15 +590,28 @@ export async function importAllCsvFiles(): Promise<void> {
   
   try {
     if (fs.existsSync(nationsFile)) {
+      const startTime = Date.now();
+      console.log('[CSV Import] Starting nations import...');
       await importNationsFromCsv(nationsFile);
+      const time = Date.now() - startTime;
+      console.log(`[CSV Import] Nations import completed in ${time}ms (${(time / 1000).toFixed(2)}s)`);
     }
     if (fs.existsSync(aidOffersFile)) {
+      const startTime = Date.now();
+      console.log('[CSV Import] Starting aid offers import...');
       await importAidOffersFromCsv(aidOffersFile);
+      const time = Date.now() - startTime;
+      console.log(`[CSV Import] Aid offers import completed in ${time}ms (${(time / 1000).toFixed(2)}s)`);
     }
     if (fs.existsSync(warsFile)) {
+      const startTime = Date.now();
+      console.log('[CSV Import] Starting wars import...');
       await importWarsFromCsv(warsFile);
+      const time = Date.now() - startTime;
+      console.log(`[CSV Import] Wars import completed in ${time}ms (${(time / 1000).toFixed(2)}s)`);
     }
-    console.log('CSV import completed successfully!');
+    const overallTime = Date.now() - overallStartTime;
+    console.log(`[CSV Import] All CSV imports completed successfully in ${overallTime}ms (${(overallTime / 1000).toFixed(2)}s)`);
   } catch (error) {
     console.error('Error during CSV import:', error);
     throw error;

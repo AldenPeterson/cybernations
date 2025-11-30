@@ -3,6 +3,15 @@ import { loadDataFromFilesWithUpdate, groupNationsByAlliance } from '../services
 import { AllianceService } from '../services/allianceService.js';
 import { syncAllianceFiles } from '../utils/dataDownloader.js';
 
+// Cache for alliances list
+interface AlliancesCache {
+  data: any[];
+  timestamp: number;
+}
+
+let alliancesCache: AlliancesCache | null = null;
+const ALLIANCES_CACHE_TTL_MS = 300000; // 5 minutes cache TTL
+
 export class AllianceController {
   /**
    * Load alliances from database
@@ -36,49 +45,59 @@ export class AllianceController {
    */
   static async getAlliances(req: Request, res: Response) {
     try {
-      console.log('Starting alliance data loading...');
-      
-      // Always try to use the dynamic data loading first
-      const { nations } = await loadDataFromFilesWithUpdate();
-      
-      console.log(`Loaded ${nations.length} nations from data files`);
-      
-      if (nations.length > 0) {
-        // Filter out nations lacking alliance info
-        const nationsWithAlliance = nations.filter(n => 
-          !!n.alliance && n.alliance.trim() !== '' && !!n.allianceId && n.allianceId > 0
-        );
-        
-        // We have nation data, group by alliance
-        const alliances = groupNationsByAlliance(nationsWithAlliance);
-        
-        // Filter out alliances with no name and sort by nation count (descending - most nations first)
-        const filteredAndSortedAlliances = alliances
-          .filter(alliance => alliance.name && alliance.name.trim() !== '')
-          .filter(alliance => alliance.nations.length >= 10)
-          .sort((a, b) => b.nations.length - a.nations.length);
-        
-        res.json({
+      // Check cache first
+      const now = Date.now();
+      if (alliancesCache && (now - alliancesCache.timestamp) < ALLIANCES_CACHE_TTL_MS) {
+        console.log('Returning cached alliances list');
+        return res.json({
           success: true,
-          alliances: filteredAndSortedAlliances.map(alliance => ({
-            id: alliance.id,
-            name: alliance.name,
-            nationCount: alliance.nations.length
-          }))
+          alliances: alliancesCache.data
         });
-        return;
       }
       
-      // If no nations data available, try loading from database as fallback
-      console.log('No nations data available, trying database as fallback');
-      const alliances = await AllianceController.loadAlliancesFromConfig();
+      console.log('Starting alliance data loading from database...');
       
-      // Log what we found for debugging
-      console.log(`Fallback loaded ${alliances.length} alliances from config files`);
+      const { prisma } = await import('../utils/prisma.js');
+      
+      // Query alliances directly with nation counts using aggregation
+      const alliancesWithCounts = await prisma.alliance.findMany({
+        where: {
+          id: { gt: 0 },
+          name: { not: '' }
+        },
+        select: {
+          id: true,
+          name: true,
+          _count: {
+            select: {
+              nations: true
+            }
+          }
+        }
+      });
+      
+      // Filter alliances with at least 10 nations and sort by nation count
+      const filteredAlliances = alliancesWithCounts
+        .filter(alliance => alliance.name && alliance.name.trim() !== '')
+        .filter(alliance => alliance._count.nations >= 10)
+        .sort((a, b) => b._count.nations - a._count.nations)
+        .map(alliance => ({
+          id: alliance.id,
+          name: alliance.name,
+          nationCount: alliance._count.nations
+        }));
+      
+      // Update cache
+      alliancesCache = {
+        data: filteredAlliances,
+        timestamp: now
+      };
+      
+      console.log(`Loaded ${filteredAlliances.length} alliances from database (with nation counts)`);
       
       res.json({
         success: true,
-        alliances: alliances
+        alliances: filteredAlliances
       });
     } catch (error) {
       console.error('Error fetching alliances:', error);

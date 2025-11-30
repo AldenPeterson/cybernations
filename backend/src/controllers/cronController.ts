@@ -67,11 +67,18 @@ export class CronController {
         const successful = results.filter(r => r.success).length;
         const failed = results.filter(r => !r.success).length;
         
+        let message: string;
+        if (results.length === 0) {
+          message = 'Sync job completed: All files are already up to date (no downloads needed)';
+        } else if (failed > 0) {
+          message = `Sync job completed: ${successful} succeeded, ${failed} failed`;
+        } else {
+          message = `Sync job completed: All ${successful} files downloaded successfully`;
+        }
+        
         res.json({
           success: true,
-          message: failed > 0 
-            ? `Sync job completed: ${successful} succeeded, ${failed} failed`
-            : `Sync job completed: All ${successful} files downloaded successfully`,
+          message,
           timestamp: new Date().toISOString(),
           downloads: results,
           summary: {

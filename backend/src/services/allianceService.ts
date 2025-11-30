@@ -3,7 +3,7 @@ import {
   saveAllianceData as saveAllianceDataUtil, 
   updateNationData,
   AllianceData,
-  loadAllianceDataWithJsonPriority
+  loadAllianceData
 } from '../utils/allianceDataLoader.js';
 // Alliance sync is now handled via database - no file sync needed
 import { 
@@ -24,8 +24,8 @@ export class AllianceService {
   /**
    * Get alliance data with JSON priority
    */
-  static async getAllianceDataWithJsonPriority(allianceId: number) {
-    return await loadAllianceDataWithJsonPriority(allianceId);
+  static async getAllianceData(allianceId: number) {
+    return await loadAllianceData(allianceId);
   }
 
   /**
@@ -123,29 +123,61 @@ export class AllianceService {
    * Get alliance statistics
    */
   static async getAllianceStats(allianceId: number) {
-    const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
-    const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
-    const allianceNationIds = new Set(allianceNations.map(nation => nation.id));
+    const { prisma } = await import('../utils/prisma.js');
     
-    // Filter aid offers involving current alliance members, regardless of alliance at aid time
-    const allianceAidOffers = aidOffers.filter(offer => 
-      (allianceNationIds.has(offer.declaringId) || allianceNationIds.has(offer.receivingId)) && 
-      offer.status !== 'Expired'
-    );
+    // Query only nations in this alliance
+    const allianceNations = await prisma.nation.findMany({
+      where: { allianceId },
+      select: { id: true }
+    });
+    
+    const allianceNationIds = allianceNations.map(n => n.id);
+    
+    if (allianceNationIds.length === 0) {
+      return {
+        totalNations: 0,
+        totalOutgoingAid: 0,
+        totalIncomingAid: 0,
+        totalMoneyOut: 0,
+        totalMoneyIn: 0,
+        totalTechOut: 0,
+        totalTechIn: 0,
+        totalSoldiersOut: 0,
+        totalSoldiersIn: 0
+      };
+    }
+    
+    // Query only aid offers involving nations in this alliance
+    const allianceAidOffers = await prisma.aidOffer.findMany({
+      where: {
+        status: { not: 'Expired' },
+        OR: [
+          { declaringNationId: { in: allianceNationIds } },
+          { receivingNationId: { in: allianceNationIds } }
+        ]
+      },
+      select: {
+        declaringNationId: true,
+        receivingNationId: true,
+        money: true,
+        technology: true,
+        soldiers: true
+      }
+    });
 
-    const outgoingOffers = allianceAidOffers.filter(offer => allianceNationIds.has(offer.declaringId));
-    const incomingOffers = allianceAidOffers.filter(offer => allianceNationIds.has(offer.receivingId));
+    const outgoingOffers = allianceAidOffers.filter(offer => allianceNationIds.includes(offer.declaringNationId));
+    const incomingOffers = allianceAidOffers.filter(offer => allianceNationIds.includes(offer.receivingNationId));
 
     return {
-      totalNations: allianceNations.length,
+      totalNations: allianceNationIds.length,
       totalOutgoingAid: outgoingOffers.length,
       totalIncomingAid: incomingOffers.length,
-      totalMoneyOut: outgoingOffers.reduce((sum, offer) => sum + offer.money, 0),
-      totalMoneyIn: incomingOffers.reduce((sum, offer) => sum + offer.money, 0),
-      totalTechOut: outgoingOffers.reduce((sum, offer) => sum + offer.technology, 0),
-      totalTechIn: incomingOffers.reduce((sum, offer) => sum + offer.technology, 0),
-      totalSoldiersOut: outgoingOffers.reduce((sum, offer) => sum + offer.soldiers, 0),
-      totalSoldiersIn: incomingOffers.reduce((sum, offer) => sum + offer.soldiers, 0)
+      totalMoneyOut: outgoingOffers.reduce((sum, offer) => sum + (offer.money || 0), 0),
+      totalMoneyIn: incomingOffers.reduce((sum, offer) => sum + (offer.money || 0), 0),
+      totalTechOut: outgoingOffers.reduce((sum, offer) => sum + (offer.technology || 0), 0),
+      totalTechIn: incomingOffers.reduce((sum, offer) => sum + (offer.technology || 0), 0),
+      totalSoldiersOut: outgoingOffers.reduce((sum, offer) => sum + (offer.soldiers || 0), 0),
+      totalSoldiersIn: incomingOffers.reduce((sum, offer) => sum + (offer.soldiers || 0), 0)
     };
   }
 
@@ -158,8 +190,35 @@ export class AllianceService {
     // Load discord handles from database
     const discordHandles = await loadNationDiscordHandles();
 
-    // Get raw nations data and convert to dictionary for efficient lookups
-    const { nations: rawNations } = await loadDataFromFilesWithUpdate();
+    // Query only nations in this alliance from database
+    const { prisma } = await import('../utils/prisma.js');
+    const rawNationRecords = await prisma.nation.findMany({
+      where: { allianceId },
+      include: { alliance: true }
+    });
+    
+    const rawNations = rawNationRecords.map((n: any) => ({
+      id: n.id,
+      rulerName: n.rulerName,
+      nationName: n.nationName,
+      alliance: n.alliance.name,
+      allianceId: n.allianceId,
+      team: n.team,
+      strength: n.strength,
+      activity: n.activity,
+      technology: n.technology,
+      infrastructure: n.infrastructure,
+      land: n.land,
+      nuclearWeapons: n.nuclearWeapons,
+      governmentType: n.governmentType,
+      inWarMode: n.inWarMode,
+      attackingCasualties: n.attackingCasualties ?? undefined,
+      defensiveCasualties: n.defensiveCasualties ?? undefined,
+      warchest: n.warchest ?? undefined,
+      spyglassLastUpdated: n.spyglassLastUpdated ?? undefined,
+      rank: n.rank ?? undefined,
+    }));
+    
     const rawNationsDict = createNationsDictionary(rawNations);
 
     // If alliance is not present in config files, build nations list from raw data

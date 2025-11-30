@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SlotCountsSummary from './SlotCountsSummary';
 import WarStatusBadge from './WarStatusBadge';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
+import { useAlliances } from '../contexts/AlliancesContext';
 
 interface Alliance {
   id: number;
@@ -162,7 +163,7 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
   setSelectedAllianceId, 
   activeTab 
 }) => {
-  const [alliances, setAlliances] = useState<Alliance[]>([]);
+  const { alliances } = useAlliances();
   const [aidSlots, setAidSlots] = useState<NationAidSlots[]>([]);
   const [allianceStats, setAllianceStats] = useState<AllianceStats | null>(null);
   const [allianceAidStats, setAllianceAidStats] = useState<AllianceAidStats[]>([]);
@@ -177,8 +178,16 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
   const [crossAllianceEnabled, setCrossAllianceEnabled] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchAlliances();
-  }, []);
+    // Set Doombrella as default if it exists and no alliance is selected
+    if (alliances.length > 0 && !selectedAllianceId) {
+      const doombrella = alliances.find((alliance: any) => 
+        alliance.name.toLowerCase().includes('doombrella')
+      );
+      if (doombrella) {
+        setSelectedAllianceId(doombrella.id);
+      }
+    }
+  }, [alliances, selectedAllianceId, setSelectedAllianceId]);
 
   useEffect(() => {
     if (selectedAllianceId) {
@@ -188,31 +197,6 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
       fetchRecommendations(selectedAllianceId);
     }
   }, [selectedAllianceId, crossAllianceEnabled]);
-
-  const fetchAlliances = async () => {
-    try {
-      setLoading(true);
-      const response = await apiCall(API_ENDPOINTS.alliances);
-      const data = await response.json();
-      
-      if (data.success) {
-        setAlliances(data.alliances);
-        // Set Doombrella as default if it exists
-        const doombrella = data.alliances.find((alliance: any) => 
-          alliance.name.toLowerCase().includes('doombrella')
-        );
-        if (doombrella) {
-          setSelectedAllianceId(doombrella.id);
-        }
-      } else {
-        setError(data.error);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch alliances');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchAidSlots = async (allianceId: number) => {
     try {

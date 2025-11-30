@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as https from 'https';
+import * as yauzl from 'yauzl';
 import { extractZipFile } from './zipExtractor.js';
 // Alliance sync is now handled via database - no file sync needed
 import { isInBlackoutWindow } from './dateUtils.js';
@@ -243,12 +244,12 @@ async function getStaleFileTypesFromLatestDownloads(): Promise<FileType[]> {
 
     // Fresh if we have downloaded at or after the most recent scheduled time
     const isFreshByTime = record.timestamp >= lastScheduledUtcMs;
+    const timeSinceDownload = nowUtcMs - record.timestamp;
+    const hoursSinceDownload = (timeSinceDownload / (60 * 60 * 1000)).toFixed(1);
     
     // Check if a custom filename is being used (via environment variable or manual download)
     const customFilename = getCustomFilename(item.type);
-    console.log(`Custom filename: ${customFilename}`);
     const expectedFileInfo = getFileInfo(item.type);
-    console.log(`Expected filename: ${expectedFileInfo.name}`);
     const isFreshByFilename = record.originalFile === expectedFileInfo.name;
     
     // Consider file fresh if:
@@ -262,7 +263,11 @@ async function getStaleFileTypesFromLatestDownloads(): Promise<FileType[]> {
     const isRecentManualDownload = isFreshByTime && !isFreshByFilename && 
                                     (nowUtcMs - record.timestamp < 24 * 60 * 60 * 1000);
     
-    if (!isFreshByFilename || (!customFilename && !isFreshWithCustom && !isFreshWithAuto && !isRecentManualDownload)) {
+    const isFresh = isFreshWithCustom || isFreshWithAuto || isRecentManualDownload;
+    
+    console.log(`[${item.type}] Fresh check: time=${isFreshByTime} (${hoursSinceDownload}h ago), filename=${isFreshByFilename}, custom=${!!customFilename}, fresh=${isFresh}`);
+    
+    if (!isFresh) {
       stale.push(item.type);
     }
   }
@@ -340,15 +345,56 @@ async function checkForRecentFiles(): Promise<boolean> {
 
 /**
  * Download files with timeout protection for serverless environments
+ * Returns partial results if timeout occurs
  */
 async function downloadWithTimeout(): Promise<DownloadResult[]> {
-  const timeoutPromise = new Promise<DownloadResult[]>((_, reject) => {
-    setTimeout(() => reject(new Error('Download timeout')), 50000); // 50 second timeout (Vercel Pro allows up to 60s)
+  // Shared results array to capture partial progress
+  const sharedResults: DownloadResult[] = [];
+  let downloadComplete = false;
+  
+  const downloadPromise = (async () => {
+    try {
+      // Pass shared results array to performDownload so it can update it incrementally
+      const results = await performDownloadWithSharedResults(sharedResults);
+      downloadComplete = true;
+      return results;
+    } catch (error: any) {
+      // If download fails for other reasons, return partial results if available
+      if (sharedResults.length > 0) {
+        console.warn(`Download encountered error but returning ${sharedResults.length} partial results:`, error.message);
+        return sharedResults;
+      }
+      throw error;
+    }
+  })();
+  
+  const timeoutPromise = new Promise<DownloadResult[]>((resolve, reject) => {
+    setTimeout(() => {
+      if (!downloadComplete && sharedResults.length > 0) {
+        // Return partial results instead of throwing
+        console.warn(`Download timeout occurred, returning ${sharedResults.length} partial results`);
+        resolve(sharedResults);
+      } else if (!downloadComplete) {
+        reject(new Error('Download timeout'));
+      }
+    }, 50000); // 50 second timeout (Vercel Pro allows up to 60s)
   });
   
-  const downloadPromise = performDownload();
-  
-  return await Promise.race([downloadPromise, timeoutPromise]);
+  try {
+    return await Promise.race([downloadPromise, timeoutPromise]);
+  } catch (error: any) {
+    // If timeout and no partial results, return empty array
+    if (error.message === 'Download timeout' && sharedResults.length === 0) {
+      console.warn('Download timeout with no partial results');
+      return [];
+    }
+    // Return partial results if available even on error
+    if (sharedResults.length > 0) {
+      console.warn(`Returning ${sharedResults.length} partial results after error:`, error.message);
+      return sharedResults;
+    }
+    throw error;
+  }
 }
 
 /**
@@ -379,7 +425,15 @@ interface DownloadResult {
   filename?: string;
 }
 
-async function performDownload(): Promise<DownloadResult[]> {
+/**
+ * Perform download with shared results array for partial progress tracking
+ */
+async function performDownloadWithSharedResults(sharedResults: DownloadResult[]): Promise<DownloadResult[]> {
+  return performDownload(sharedResults);
+}
+
+async function performDownload(sharedResults?: DownloadResult[]): Promise<DownloadResult[]> {
+  const overallStartTime = Date.now();
   const baseUrl = 'https://www.cybernations.net/assets/';
   
   // Get appropriate data path for environment
@@ -397,63 +451,150 @@ async function performDownload(): Promise<DownloadResult[]> {
   ];
   
   // Get existing tracker from database
+  const dbReadStartTime = Date.now();
   const existingTracker = await readLatestDownloadsTracker() || {};
+  const dbReadTime = Date.now() - dbReadStartTime;
+  console.log(`Database read took ${dbReadTime}ms`);
   const latestDownloads: { [key: string]: { timestamp: number; originalFile: string; downloadTime: string } } = { ...existingTracker };
   
-  // Process files completely one at a time (download + extract) to ensure partial success
-  // if timeout occurs, and to avoid resource contention
+  // Download files in parallel for speed, then extract sequentially to avoid resource contention
   const downloadResults: DownloadResult[] = [];
   
-  for (const file of filesToDownload) {
+  // Step 1: Download all files in parallel
+  const downloadStartTime = Date.now();
+  console.log('Starting parallel downloads...');
+  const downloadItems: Array<{ 
+    file: typeof filesToDownload[0]; 
+    result?: { success: boolean; filename: string; tempZipPath: string; outputPath: string; fileSize: number }; 
+    error?: string;
+  }> = [];
+  
+  const downloadPromises = filesToDownload.map(async (file) => {
     const tempZipPath = path.join(dataPath, `temp_${file.type}.zip`);
     const outputPath = path.join(dataPath, file.outputFile);
+    const fileDownloadStartTime = Date.now();
     
     try {
-      // Download the zip file with fallback
       const result = await downloadFileWithFallback(baseUrl, file.type, tempZipPath);
-      console.log(`Downloaded ${file.type}`);
+      const downloadTime = Date.now() - fileDownloadStartTime;
+      const fileSize = fs.existsSync(tempZipPath) ? fs.statSync(tempZipPath).size : 0;
+      const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(2);
+      console.log(`[${file.type}] Downloaded in ${downloadTime}ms (${fileSizeMB}MB)`);
       
-      // Immediately extract the CSV content to standardized filename
-      await extractCsvToStandardFile(tempZipPath, outputPath, file.type);
-      console.log(`Extracted ${file.type} to ${file.outputFile}`);
+      downloadItems.push({
+        file,
+        result: {
+          success: true,
+          filename: result.filename,
+          tempZipPath,
+          outputPath,
+          fileSize
+        }
+      });
+    } catch (error: any) {
+      const errorMsg = error?.message || String(error);
+      console.error(`[${file.type}] Download failed: ${errorMsg}`);
+      downloadItems.push({
+        file,
+        error: errorMsg
+      });
+    }
+  });
+  
+  // Wait for all downloads to complete
+  await Promise.allSettled(downloadPromises);
+  const totalDownloadTime = Date.now() - downloadStartTime;
+  console.log(`All downloads completed in ${totalDownloadTime}ms (${(totalDownloadTime / 1000).toFixed(2)}s)`);
+  
+  // Step 2: Extract files in parallel for speed
+  const extractStartTime = Date.now();
+  console.log('Starting parallel extractions...');
+  
+  const extractPromises = downloadItems.map(async (item) => {
+    if (!item.result) {
+      // Download failed, record failure
+      const resultEntry = {
+        success: false,
+        fileType: item.file.type,
+        error: item.error || 'Download failed'
+      };
+      return resultEntry;
+    }
+    
+    const fileExtractStartTime = Date.now();
+    try {
+      // Extract the CSV content to standardized filename
+      await extractCsvToStandardFile(item.result.tempZipPath, item.result.outputPath, item.file.type);
+      const extractTime = Date.now() - fileExtractStartTime;
+      console.log(`[${item.file.type}] Extracted to ${item.file.outputFile} in ${extractTime}ms`);
       
       // Track this download in memory (will be saved to database later)
-      latestDownloads[file.type] = {
+      latestDownloads[item.file.type] = {
         timestamp: Date.now(),
-        originalFile: result.filename,
+        originalFile: item.result.filename,
         downloadTime: new Date().toISOString()
       };
       
       // Clean up temp zip file
-      if (fs.existsSync(tempZipPath)) {
-        fs.unlinkSync(tempZipPath);
+      if (fs.existsSync(item.result.tempZipPath)) {
+        fs.unlinkSync(item.result.tempZipPath);
       }
       
-      downloadResults.push({
+      const resultEntry = {
         success: true,
-        fileType: file.type,
-        filename: result.filename
-      });
+        fileType: item.file.type,
+        filename: item.result.filename
+      };
+      return resultEntry;
     } catch (error: any) {
       const errorMsg = error?.message || String(error);
-      console.error(`Failed to download/process ${file.type}: ${errorMsg}`);
+      const extractTime = Date.now() - fileExtractStartTime;
+      console.error(`[${item.file.type}] Extraction failed after ${extractTime}ms: ${errorMsg}`);
       
       // Clean up temp zip file on error
-      if (fs.existsSync(tempZipPath)) {
+      if (fs.existsSync(item.result.tempZipPath)) {
         try {
-          fs.unlinkSync(tempZipPath);
+          fs.unlinkSync(item.result.tempZipPath);
         } catch (e) {
           // Ignore cleanup errors
         }
       }
       
-      downloadResults.push({
+      const resultEntry = {
         success: false,
-        fileType: file.type,
+        fileType: item.file.type,
         error: errorMsg
-      });
+      };
+      return resultEntry;
+    }
+  });
+  
+  // Wait for all extractions to complete in parallel
+  const extractResults = await Promise.allSettled(extractPromises);
+  
+  // Process results
+  for (const result of extractResults) {
+    if (result.status === 'fulfilled') {
+      downloadResults.push(result.value);
+      if (sharedResults) {
+        sharedResults.push(result.value);
+      }
+    } else {
+      // This shouldn't happen since we catch errors in the promise, but handle it anyway
+      const errorEntry = {
+        success: false,
+        fileType: FileType.NATION_STATS, // fallback
+        error: result.reason?.message || 'Unknown extraction error'
+      };
+      downloadResults.push(errorEntry);
+      if (sharedResults) {
+        sharedResults.push(errorEntry);
+      }
     }
   }
+  
+  const totalExtractTime = Date.now() - extractStartTime;
+  console.log(`All extractions completed in ${totalExtractTime}ms (${(totalExtractTime / 1000).toFixed(2)}s)`);
   
   // Log summary of download results
   const successful = downloadResults.filter(r => r.success).length;
@@ -471,115 +612,118 @@ async function performDownload(): Promise<DownloadResult[]> {
     console.log(`Download summary: All ${successful} files downloaded successfully`);
   }
   
-  // Update the database tracker
+  // Update the database tracker - batch all updates in parallel
+  const dbUpdateStartTime = Date.now();
   const { upsertFileDownload } = await import('../services/fileDownloadService.js');
-  for (const [fileType, record] of Object.entries(latestDownloads)) {
-    await upsertFileDownload(fileType as FileType, record.originalFile, record.timestamp);
-  }
-  console.log('Updated latest downloads tracker in database');
+  const updatePromises = Object.entries(latestDownloads).map(([fileType, record]) =>
+    upsertFileDownload(fileType as FileType, record.originalFile, record.timestamp)
+  );
+  await Promise.all(updatePromises);
+  const dbUpdateTime = Date.now() - dbUpdateStartTime;
+  console.log(`Updated ${updatePromises.length} file download records in database (batched) in ${dbUpdateTime}ms`);
+  
+  const overallTime = Date.now() - overallStartTime;
+  console.log(`Total download process time: ${overallTime}ms (${(overallTime / 1000).toFixed(2)}s)`);
   
   return downloadResults;
 }
 
 /**
- * Extract CSV content from zip file to standardized filename
+ * Extract CSV content from zip file directly to standardized filename (optimized)
  */
 export async function extractCsvToStandardFile(zipPath: string, outputPath: string, fileType: FileType): Promise<void> {
-  // Use /tmp for extraction on Vercel, otherwise use same directory as zip
-  const isVercel = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
-  const tempExtractDir = isVercel 
-    ? path.join('/tmp', `cybernations_extract_${Date.now()}`)
-    : path.join(path.dirname(zipPath), 'temp_extract');
+  const extractStartTime = Date.now();
+  console.log(`[${fileType}] Starting extraction...`);
   
-  try {
-    // Ensure temp extraction directory exists
-    if (!fs.existsSync(tempExtractDir)) {
-      fs.mkdirSync(tempExtractDir, { recursive: true });
-    }
+  return new Promise((resolve, reject) => {
+    let foundCsvFile = false;
     
-    // Extract zip to temp directory
-    console.log(`Extracting ${fileType} zip to ${tempExtractDir}...`);
-    
-    // Double-check directory exists before extraction
-    if (!fs.existsSync(tempExtractDir)) {
-      fs.mkdirSync(tempExtractDir, { recursive: true });
-      console.log(`Created extraction directory: ${tempExtractDir}`);
-    }
-    
-    const extractionResult = await extractZipFile(zipPath, tempExtractDir);
-    
-    if (!extractionResult.success) {
-      throw new Error(`Failed to extract zip file: ${extractionResult.error || 'Unknown error'}`);
-    }
-    
-    console.log(`Extraction successful, extracted ${extractionResult.extractedFiles.length} file(s)`);
-    
-    // Wait a brief moment for file system to sync (especially important in serverless)
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Verify extraction directory still exists after extraction
-    if (!fs.existsSync(tempExtractDir)) {
-      throw new Error(`Extraction directory was removed or never created: ${tempExtractDir}`);
-    }
-    
-    // Verify that files were actually extracted
-    if (extractionResult.extractedFiles.length === 0) {
-      throw new Error(`No files were extracted from ${fileType} zip`);
-    }
-    
-    // Find the extracted CSV file that matches the expected file type
-    // Use a recursive function to find files since readdirSync recursive might not be available
-    const findFilesRecursively = (dir: string): string[] => {
-      const files: string[] = [];
-      try {
-        // Double-check directory exists before reading
-        if (!fs.existsSync(dir)) {
-          console.warn(`Directory does not exist: ${dir}`);
-          return files;
+    yauzl.open(zipPath, { lazyEntries: true }, (err: Error | null, zipfile: any) => {
+      if (err) {
+        reject(new Error(`Failed to open zip file: ${err.message}`));
+        return;
+      }
+
+      if (!zipfile) {
+        reject(new Error('Zip file is null or undefined'));
+        return;
+      }
+
+      const writeStream = fs.createWriteStream(outputPath);
+      let entryCount = 0;
+      
+      zipfile.readEntry();
+      
+      zipfile.on('entry', (entry: any) => {
+        entryCount++;
+        
+        // Skip directory entries
+        if (/\/$/.test(entry.fileName)) {
+          zipfile.readEntry();
+          return;
         }
         
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const entry of entries) {
-          const fullPath = path.join(dir, entry.name);
-          if (entry.isDirectory()) {
-            files.push(...findFilesRecursively(fullPath));
-          } else {
-            files.push(path.relative(tempExtractDir, fullPath));
-          }
+        // Check if this is the CSV file we want
+        const isTargetFile = entry.fileName.endsWith('.txt') && 
+                            entry.fileName.includes('CyberNations_SE') && 
+                            entry.fileName.includes(fileType);
+        
+        if (!isTargetFile) {
+          // Skip this file and continue
+          zipfile.readEntry();
+          return;
         }
-      } catch (error: any) {
-        console.warn(`Error reading directory ${dir}:`, error?.message || error);
-      }
-      return files;
-    };
-    
-    const extractedFiles = findFilesRecursively(tempExtractDir);
-    
-    if (extractedFiles.length === 0) {
-      throw new Error(`No files extracted from ${fileType} zip (extraction reported success but directory is empty)`);
-    }
-    
-    const csvFile = extractedFiles.find((file: string) => 
-      file.endsWith('.txt') && file.includes('CyberNations_SE') && file.includes(fileType)
-    );
-    
-    if (!csvFile) {
-      console.error(`Available extracted files: ${extractedFiles.join(', ')}`);
-      throw new Error(`No CSV file found in ${fileType} zip. Expected file containing 'CyberNations_SE' and '${fileType}' with .txt extension`);
-    }
-    
-    const sourcePath = path.join(tempExtractDir, csvFile);
-    const csvContent = fs.readFileSync(sourcePath, 'utf8');
-    
-    // Write to standardized output file
-    fs.writeFileSync(outputPath, csvContent);
-    
-  } finally {
-    // Clean up temp extraction directory
-    if (fs.existsSync(tempExtractDir)) {
-      fs.rmSync(tempExtractDir, { recursive: true, force: true });
-    }
-  }
+        
+        // Found the target file - extract it directly to output
+        foundCsvFile = true;
+        console.log(`[${fileType}] Found target file: ${entry.fileName}`);
+        
+        zipfile.openReadStream(entry, (err: Error | null, readStream: any) => {
+          if (err) {
+            writeStream.destroy();
+            reject(new Error(`Failed to read entry ${entry.fileName}: ${err.message}`));
+            return;
+          }
+
+          if (!readStream) {
+            writeStream.destroy();
+            reject(new Error(`Read stream is null for entry ${entry.fileName}`));
+            return;
+          }
+
+          readStream.pipe(writeStream);
+          
+          writeStream.on('close', () => {
+            const extractTime = Date.now() - extractStartTime;
+            console.log(`[${fileType}] Extraction complete in ${extractTime}ms (checked ${entryCount} entries)`);
+            resolve();
+          });
+          
+          writeStream.on('error', (err: Error) => {
+            reject(new Error(`Failed to write file: ${err.message}`));
+          });
+          
+          readStream.on('error', (err: Error) => {
+            writeStream.destroy();
+            reject(new Error(`Failed to read stream: ${err.message}`));
+          });
+        });
+      });
+
+      zipfile.on('end', () => {
+        if (!foundCsvFile) {
+          writeStream.destroy();
+          const extractTime = Date.now() - extractStartTime;
+          reject(new Error(`No CSV file found in ${fileType} zip after checking ${entryCount} entries (expected file containing 'CyberNations_SE' and '${fileType}' with .txt extension)`));
+        }
+      });
+
+      zipfile.on('error', (err: Error) => {
+        writeStream.destroy();
+        reject(new Error(`Zip file error: ${err.message}`));
+      });
+    });
+  });
 }
 
 export async function ensureRecentFiles(): Promise<DownloadResult[]> {
@@ -593,11 +737,12 @@ export async function ensureRecentFiles(): Promise<DownloadResult[]> {
 
   // Determine staleness using database
   const staleTypes = await getStaleFileTypesFromLatestDownloads();
+  console.log(`Staleness check: ${staleTypes.length} file(s) need updating (${staleTypes.join(', ') || 'none'})`);
 
-    if (staleTypes.length === 0) {
-      console.log('All standardized files are fresh according to database');
-      return [];
-    }
+  if (staleTypes.length === 0) {
+    console.log('All standardized files are fresh according to database - no downloads needed');
+    return [];
+  }
 
   let downloadResults: DownloadResult[] = [];
 
@@ -628,10 +773,12 @@ export async function ensureRecentFiles(): Promise<DownloadResult[]> {
 
   // After refreshing standardized files, import CSV data into database
   try {
+    const csvImportStartTime = Date.now();
     console.log('Importing CSV data into database...');
     const { importAllCsvFiles } = await import('../services/csvImportService.js');
     await importAllCsvFiles();
-    console.log('CSV data imported into database successfully');
+    const csvImportTime = Date.now() - csvImportStartTime;
+    console.log(`CSV data imported into database successfully in ${csvImportTime}ms (${(csvImportTime / 1000).toFixed(2)}s)`);
   } catch (error) {
     console.warn('Error importing CSV data into database:', error);
   }

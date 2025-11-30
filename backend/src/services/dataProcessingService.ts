@@ -20,7 +20,8 @@ interface DataCache {
 }
 
 let dataCache: DataCache | null = null;
-const CACHE_TTL_MS = 60000; // 60 seconds cache TTL
+const CACHE_TTL_MS = 60000;
+let loadingPromise: Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> | null = null; // 60 seconds cache TTL
 
 /**
  * Invalidate the data cache to force a fresh load on next request
@@ -381,12 +382,20 @@ export async function loadDataFromFiles(checkForUpdates: boolean = true): Promis
   const now = Date.now();
   if (dataCache && (now - dataCache.timestamp) < CACHE_TTL_MS) {
     // Cache is still valid, return cached data
+    console.log('Using cached data (cache hit)');
     return dataCache.data;
   }
 
+  // If another request is already loading, wait for it instead of loading again
+  if (loadingPromise) {
+    console.log('Another request is loading data, waiting for it to complete...');
+    return await loadingPromise;
+  }
+
   // Load from database
-  try {
-    console.log('Loading data from database...');
+  loadingPromise = (async () => {
+    try {
+      console.log('Loading data from database...');
     
     // Load nations
     const nationRecords = await prisma.nation.findMany({
@@ -487,25 +496,31 @@ export async function loadDataFromFiles(checkForUpdates: boolean = true): Promis
       isExpired: w.isExpired ?? undefined,
     }));
 
-    const result = { nations, aidOffers, wars };
-    
-    // Update cache
-    dataCache = {
-      data: result,
-      timestamp: now
-    };
+      const result = { nations, aidOffers, wars };
+      
+      // Update cache
+      dataCache = {
+        data: result,
+        timestamp: now
+      };
 
-    console.log(`Successfully loaded ${nations.length} nations, ${aidOffers.length} aid offers, ${wars.length} wars from database`);
-    return result;
-  } catch (error) {
-    console.error('Error loading data from database:', error);
-    // Fallback to cached data if available, otherwise empty data
-    if (dataCache) {
-      console.log('Using cached data due to error');
-      return dataCache.data;
+      console.log(`Successfully loaded ${nations.length} nations, ${aidOffers.length} aid offers, ${wars.length} wars from database`);
+      return result;
+    } catch (error) {
+      console.error('Error loading data from database:', error);
+      // Fallback to cached data if available, otherwise empty data
+      if (dataCache) {
+        console.log('Using cached data due to error');
+        return dataCache.data;
+      }
+      return { nations: [], aidOffers: [], wars: [] };
+    } finally {
+      // Clear the loading promise so future requests can load again if needed
+      loadingPromise = null;
     }
-    return { nations: [], aidOffers: [], wars: [] };
-  }
+  })();
+
+  return await loadingPromise;
 }
 
 export async function loadDataFromFilesWithUpdate(): Promise<{ nations: Nation[]; aidOffers: AidOffer[]; wars: any[] }> {

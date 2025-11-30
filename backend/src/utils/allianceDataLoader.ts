@@ -436,24 +436,69 @@ export async function getAllNationsFlat(): Promise<NationData[]> {
 /**
  * Load alliance data with JSON priority - uses database config if available, falls back to raw data
  */
-export async function loadAllianceDataWithJsonPriority(allianceId: number): Promise<{
+export async function loadAllianceData(allianceId: number): Promise<{
   nations: any[];
   aidOffers: any[];
   useJsonData: boolean;
 }> {
+  const { prisma } = await import('../utils/prisma.js');
+  
   // First try to load from database configuration
   const allianceData = await loadAllianceById(allianceId);
   
   if (allianceData && Object.keys(allianceData.nations).length > 0) {
-    // Get raw data to extract warStatus for peace mode filtering
-    const { 
-      loadDataFromFilesWithUpdate, 
-      createNationsDictionary
-    } = await import('../services/dataProcessingService.js');
-    const { nations: rawNations, aidOffers } = await loadDataFromFilesWithUpdate();
+    // Query only nations in this alliance for war mode status
+    const allianceNationIds = Object.keys(allianceData.nations).map(id => parseInt(id));
+    const rawNationRecords = await prisma.nation.findMany({
+      where: { id: { in: allianceNationIds } },
+      select: { id: true, inWarMode: true }
+    });
     
     // Create a dictionary of raw nations keyed by nation ID for efficient lookups
-    const rawNationsDict = createNationsDictionary(rawNations);
+    const rawNationsDict: Record<number, { inWarMode: boolean }> = {};
+    rawNationRecords.forEach(n => {
+      rawNationsDict[n.id] = { inWarMode: n.inWarMode };
+    });
+
+    // Query only aid offers involving nations in this alliance
+    const aidOfferRecords = await prisma.aidOffer.findMany({
+      where: {
+        status: { not: 'Expired' },
+        OR: [
+          { declaringNationId: { in: allianceNationIds } },
+          { receivingNationId: { in: allianceNationIds } }
+        ]
+      },
+      include: {
+        declaringNation: {
+          include: { alliance: true },
+        },
+        receivingNation: {
+          include: { alliance: true },
+        },
+      },
+    });
+    
+    const aidOffers = aidOfferRecords.map((a: any) => ({
+      aidId: a.aidId,
+      declaringId: a.declaringNationId,
+      declaringRuler: a.declaringNation.rulerName,
+      declaringNation: a.declaringNation.nationName,
+      declaringAlliance: a.declaringNation.alliance.name,
+      declaringAllianceId: a.declaringNation.allianceId,
+      receivingId: a.receivingNationId,
+      receivingRuler: a.receivingNation.rulerName,
+      receivingNation: a.receivingNation.nationName,
+      receivingAlliance: a.receivingNation.alliance.name,
+      receivingAllianceId: a.receivingNation.allianceId,
+      status: a.status,
+      money: a.money,
+      technology: a.technology,
+      soldiers: a.soldiers,
+      date: a.date,
+      reason: a.reason,
+      isExpired: a.isExpired ?? undefined,
+    }));
 
     // Convert database data to the format expected by the frontend and enrich with war mode status
     const nationsArray = Object.entries(allianceData.nations).map(([nationId, nationData]) => {
@@ -494,13 +539,78 @@ export async function loadAllianceDataWithJsonPriority(allianceId: number): Prom
     };
   }
   
-  // Fall back to raw data if no database config exists
-  const { loadDataFromFilesWithUpdate } = await import('../services/dataProcessingService.js');
-  const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
-  const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
+  // Fall back to querying only alliance nations and their aid offers from database
+  const nationRecords = await prisma.nation.findMany({
+    where: { allianceId },
+    include: { alliance: true },
+  });
+  
+  const nations = nationRecords.map((n: any) => ({
+    id: n.id,
+    rulerName: n.rulerName,
+    nationName: n.nationName,
+    alliance: n.alliance.name,
+    allianceId: n.allianceId,
+    team: n.team,
+    strength: n.strength,
+    activity: n.activity,
+    technology: n.technology,
+    infrastructure: n.infrastructure,
+    land: n.land,
+    nuclearWeapons: n.nuclearWeapons,
+    governmentType: n.governmentType,
+    inWarMode: n.inWarMode,
+    attackingCasualties: n.attackingCasualties ?? undefined,
+    defensiveCasualties: n.defensiveCasualties ?? undefined,
+    warchest: n.warchest ?? undefined,
+    spyglassLastUpdated: n.spyglassLastUpdated ?? undefined,
+    rank: n.rank ?? undefined,
+  }));
+  
+  const allianceNationIds = nations.map(n => n.id);
+  
+  // Query only aid offers involving nations in this alliance
+  const aidOfferRecords = await prisma.aidOffer.findMany({
+    where: {
+      status: { not: 'Expired' },
+      OR: [
+        { declaringNationId: { in: allianceNationIds } },
+        { receivingNationId: { in: allianceNationIds } }
+      ]
+    },
+    include: {
+      declaringNation: {
+        include: { alliance: true },
+      },
+      receivingNation: {
+        include: { alliance: true },
+      },
+    },
+  });
+  
+  const aidOffers = aidOfferRecords.map((a: any) => ({
+    aidId: a.aidId,
+    declaringId: a.declaringNationId,
+    declaringRuler: a.declaringNation.rulerName,
+    declaringNation: a.declaringNation.nationName,
+    declaringAlliance: a.declaringNation.alliance.name,
+    declaringAllianceId: a.declaringNation.allianceId,
+    receivingId: a.receivingNationId,
+    receivingRuler: a.receivingNation.rulerName,
+    receivingNation: a.receivingNation.nationName,
+    receivingAlliance: a.receivingNation.alliance.name,
+    receivingAllianceId: a.receivingNation.allianceId,
+    status: a.status,
+    money: a.money,
+    technology: a.technology,
+    soldiers: a.soldiers,
+    date: a.date,
+    reason: a.reason,
+    isExpired: a.isExpired ?? undefined,
+  }));
   
   return {
-    nations: allianceNations,
+    nations,
     aidOffers,
     useJsonData: false
   };
