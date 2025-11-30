@@ -17,6 +17,9 @@ export async function extractZipFile(zipPath: string, extractTo: string): Promis
 
   return new Promise((resolve) => {
     const extractedFiles: string[] = [];
+    let pendingWrites = 0;
+    let hasError = false;
+    let zipfileEnded = false;
     
     yauzl.open(zipPath, { lazyEntries: true }, (err, zipfile) => {
       if (err) {
@@ -51,6 +54,15 @@ export async function extractZipFile(zipPath: string, extractTo: string): Promis
         return;
       }
 
+      const checkComplete = () => {
+        if (zipfileEnded && pendingWrites === 0 && !hasError) {
+          resolve({
+            success: true,
+            extractedFiles
+          });
+        }
+      };
+
       zipfile.readEntry();
       
       zipfile.on('entry', (entry) => {
@@ -63,8 +75,10 @@ export async function extractZipFile(zipPath: string, extractTo: string): Promis
           zipfile.readEntry();
         } else {
           // File entry
+          pendingWrites++;
           zipfile.openReadStream(entry, (err, readStream) => {
             if (err) {
+              hasError = true;
               resolve({
                 success: false,
                 extractedFiles: [],
@@ -74,6 +88,7 @@ export async function extractZipFile(zipPath: string, extractTo: string): Promis
             }
 
             if (!readStream) {
+              hasError = true;
               resolve({
                 success: false,
                 extractedFiles: [],
@@ -89,10 +104,12 @@ export async function extractZipFile(zipPath: string, extractTo: string): Promis
             
             writeStream.on('close', () => {
               extractedFiles.push(entry.fileName);
-              zipfile.readEntry();
+              pendingWrites--;
+              checkComplete();
             });
             
             writeStream.on('error', (err) => {
+              hasError = true;
               resolve({
                 success: false,
                 extractedFiles: [],
@@ -104,13 +121,12 @@ export async function extractZipFile(zipPath: string, extractTo: string): Promis
       });
 
       zipfile.on('end', () => {
-        resolve({
-          success: true,
-          extractedFiles
-        });
+        zipfileEnded = true;
+        checkComplete();
       });
 
       zipfile.on('error', (err) => {
+        hasError = true;
         resolve({
           success: false,
           extractedFiles: [],

@@ -501,6 +501,13 @@ export async function extractCsvToStandardFile(zipPath: string, outputPath: stri
     
     // Extract zip to temp directory
     console.log(`Extracting ${fileType} zip to ${tempExtractDir}...`);
+    
+    // Double-check directory exists before extraction
+    if (!fs.existsSync(tempExtractDir)) {
+      fs.mkdirSync(tempExtractDir, { recursive: true });
+      console.log(`Created extraction directory: ${tempExtractDir}`);
+    }
+    
     const extractionResult = await extractZipFile(zipPath, tempExtractDir);
     
     if (!extractionResult.success) {
@@ -509,9 +516,17 @@ export async function extractCsvToStandardFile(zipPath: string, outputPath: stri
     
     console.log(`Extraction successful, extracted ${extractionResult.extractedFiles.length} file(s)`);
     
+    // Wait a brief moment for file system to sync (especially important in serverless)
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     // Verify extraction directory still exists after extraction
     if (!fs.existsSync(tempExtractDir)) {
       throw new Error(`Extraction directory was removed or never created: ${tempExtractDir}`);
+    }
+    
+    // Verify that files were actually extracted
+    if (extractionResult.extractedFiles.length === 0) {
+      throw new Error(`No files were extracted from ${fileType} zip`);
     }
     
     // Find the extracted CSV file that matches the expected file type
