@@ -343,7 +343,7 @@ async function checkForRecentFiles(): Promise<boolean> {
  */
 async function downloadWithTimeout(): Promise<DownloadResult[]> {
   const timeoutPromise = new Promise<DownloadResult[]>((_, reject) => {
-    setTimeout(() => reject(new Error('Download timeout')), 25000); // 25 second timeout
+    setTimeout(() => reject(new Error('Download timeout')), 50000); // 50 second timeout (Vercel Pro allows up to 60s)
   });
   
   const downloadPromise = performDownload();
@@ -400,62 +400,95 @@ async function performDownload(): Promise<DownloadResult[]> {
   const existingTracker = await readLatestDownloadsTracker() || {};
   const latestDownloads: { [key: string]: { timestamp: number; originalFile: string; downloadTime: string } } = { ...existingTracker };
   
-  // Download and process files
+  // Download files in parallel (fast)
+  const downloadItems: Array<{ file: typeof filesToDownload[0]; result?: { success: boolean; filename: string }; error?: string; tempZipPath: string; outputPath: string }> = [];
+  
   const downloadPromises = filesToDownload.map(async (file) => {
+    const tempZipPath = path.join(dataPath, `temp_${file.type}.zip`);
+    const outputPath = path.join(dataPath, file.outputFile);
+    
     try {
-      const tempZipPath = path.join(dataPath, `temp_${file.type}.zip`);
-      const outputPath = path.join(dataPath, file.outputFile);
-      
       // Download the zip file with fallback
       const result = await downloadFileWithFallback(baseUrl, file.type, tempZipPath);
       console.log(`Downloaded ${file.type}`);
       
+      downloadItems.push({
+        file,
+        result: { success: true, filename: result.filename },
+        tempZipPath,
+        outputPath
+      });
+    } catch (error: any) {
+      const errorMsg = error?.message || String(error);
+      console.error(`Failed to download ${file.type}: ${errorMsg}`);
+      downloadItems.push({
+        file,
+        error: errorMsg,
+        tempZipPath,
+        outputPath
+      });
+    }
+  });
+  
+  // Wait for all downloads to complete
+  await Promise.allSettled(downloadPromises);
+  
+  // Process extractions sequentially to avoid resource contention and better timeout control
+  const downloadResults: DownloadResult[] = [];
+  
+  for (const item of downloadItems) {
+    if (!item.result) {
+      // Download failed, record failure
+      downloadResults.push({
+        success: false,
+        fileType: item.file.type,
+        error: item.error || 'Download failed'
+      });
+      continue;
+    }
+    
+    try {
       // Extract the CSV content to standardized filename
-      await extractCsvToStandardFile(tempZipPath, outputPath, file.type);
-      console.log(`Extracted ${file.type} to ${file.outputFile}`);
+      await extractCsvToStandardFile(item.tempZipPath, item.outputPath, item.file.type);
+      console.log(`Extracted ${item.file.type} to ${item.file.outputFile}`);
       
       // Track this download in memory (will be saved to database later)
-      latestDownloads[file.type] = {
+      latestDownloads[item.file.type] = {
         timestamp: Date.now(),
-        originalFile: result.filename,
+        originalFile: item.result.filename,
         downloadTime: new Date().toISOString()
       };
       
       // Clean up temp zip file
-      if (fs.existsSync(tempZipPath)) {
-        fs.unlinkSync(tempZipPath);
+      if (fs.existsSync(item.tempZipPath)) {
+        fs.unlinkSync(item.tempZipPath);
       }
       
-      return { 
-        success: true, 
-        fileType: file.type,
-        filename: result.filename
-      };
+      downloadResults.push({
+        success: true,
+        fileType: item.file.type,
+        filename: item.result.filename
+      });
     } catch (error: any) {
       const errorMsg = error?.message || String(error);
-      console.error(`Failed to download/process ${file.type}: ${errorMsg}`);
-      return { 
-        success: false, 
-        fileType: file.type, 
-        error: errorMsg 
-      };
-    }
-  });
-  
-  const results = await Promise.allSettled(downloadPromises);
-  
-  // Extract results from Promise.allSettled
-  const downloadResults: DownloadResult[] = results.map((result) => {
-    if (result.status === 'fulfilled') {
-      return result.value;
-    } else {
-      return {
-        fileType: FileType.NATION_STATS, // fallback, shouldn't happen
+      console.error(`Failed to extract/process ${item.file.type}: ${errorMsg}`);
+      
+      // Clean up temp zip file on error
+      if (fs.existsSync(item.tempZipPath)) {
+        try {
+          fs.unlinkSync(item.tempZipPath);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+      
+      downloadResults.push({
         success: false,
-        error: result.reason?.message || 'Unknown error'
-      };
+        fileType: item.file.type,
+        error: errorMsg
+      });
     }
-  });
+  }
   
   // Log summary of download results
   const successful = downloadResults.filter(r => r.success).length;
