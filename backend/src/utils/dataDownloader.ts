@@ -400,10 +400,11 @@ async function performDownload(): Promise<DownloadResult[]> {
   const existingTracker = await readLatestDownloadsTracker() || {};
   const latestDownloads: { [key: string]: { timestamp: number; originalFile: string; downloadTime: string } } = { ...existingTracker };
   
-  // Download files in parallel (fast)
-  const downloadItems: Array<{ file: typeof filesToDownload[0]; result?: { success: boolean; filename: string }; error?: string; tempZipPath: string; outputPath: string }> = [];
+  // Process files completely one at a time (download + extract) to ensure partial success
+  // if timeout occurs, and to avoid resource contention
+  const downloadResults: DownloadResult[] = [];
   
-  const downloadPromises = filesToDownload.map(async (file) => {
+  for (const file of filesToDownload) {
     const tempZipPath = path.join(dataPath, `temp_${file.type}.zip`);
     const outputPath = path.join(dataPath, file.outputFile);
     
@@ -412,71 +413,35 @@ async function performDownload(): Promise<DownloadResult[]> {
       const result = await downloadFileWithFallback(baseUrl, file.type, tempZipPath);
       console.log(`Downloaded ${file.type}`);
       
-      downloadItems.push({
-        file,
-        result: { success: true, filename: result.filename },
-        tempZipPath,
-        outputPath
-      });
-    } catch (error: any) {
-      const errorMsg = error?.message || String(error);
-      console.error(`Failed to download ${file.type}: ${errorMsg}`);
-      downloadItems.push({
-        file,
-        error: errorMsg,
-        tempZipPath,
-        outputPath
-      });
-    }
-  });
-  
-  // Wait for all downloads to complete
-  await Promise.allSettled(downloadPromises);
-  
-  // Process extractions sequentially to avoid resource contention and better timeout control
-  const downloadResults: DownloadResult[] = [];
-  
-  for (const item of downloadItems) {
-    if (!item.result) {
-      // Download failed, record failure
-      downloadResults.push({
-        success: false,
-        fileType: item.file.type,
-        error: item.error || 'Download failed'
-      });
-      continue;
-    }
-    
-    try {
-      // Extract the CSV content to standardized filename
-      await extractCsvToStandardFile(item.tempZipPath, item.outputPath, item.file.type);
-      console.log(`Extracted ${item.file.type} to ${item.file.outputFile}`);
+      // Immediately extract the CSV content to standardized filename
+      await extractCsvToStandardFile(tempZipPath, outputPath, file.type);
+      console.log(`Extracted ${file.type} to ${file.outputFile}`);
       
       // Track this download in memory (will be saved to database later)
-      latestDownloads[item.file.type] = {
+      latestDownloads[file.type] = {
         timestamp: Date.now(),
-        originalFile: item.result.filename,
+        originalFile: result.filename,
         downloadTime: new Date().toISOString()
       };
       
       // Clean up temp zip file
-      if (fs.existsSync(item.tempZipPath)) {
-        fs.unlinkSync(item.tempZipPath);
+      if (fs.existsSync(tempZipPath)) {
+        fs.unlinkSync(tempZipPath);
       }
       
       downloadResults.push({
         success: true,
-        fileType: item.file.type,
-        filename: item.result.filename
+        fileType: file.type,
+        filename: result.filename
       });
     } catch (error: any) {
       const errorMsg = error?.message || String(error);
-      console.error(`Failed to extract/process ${item.file.type}: ${errorMsg}`);
+      console.error(`Failed to download/process ${file.type}: ${errorMsg}`);
       
       // Clean up temp zip file on error
-      if (fs.existsSync(item.tempZipPath)) {
+      if (fs.existsSync(tempZipPath)) {
         try {
-          fs.unlinkSync(item.tempZipPath);
+          fs.unlinkSync(tempZipPath);
         } catch (e) {
           // Ignore cleanup errors
         }
@@ -484,7 +449,7 @@ async function performDownload(): Promise<DownloadResult[]> {
       
       downloadResults.push({
         success: false,
-        fileType: item.file.type,
+        fileType: file.type,
         error: errorMsg
       });
     }
