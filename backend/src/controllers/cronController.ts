@@ -52,7 +52,6 @@ export class CronController {
       // 2. Downloads new files if needed
       // 3. Imports CSV data into database
       // 4. Syncs alliance files
-      
       try {
         const downloadResults = await ensureRecentFiles();
         console.log('[Cron] Sync-all job completed successfully');
