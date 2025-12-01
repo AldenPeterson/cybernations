@@ -200,6 +200,29 @@ export class CronController {
       const allSuccess = Object.values(results).every((r: any) => r.success);
       const statusCode = allSuccess ? 200 : 500;
 
+      // If all syncs succeeded and at least one actually updated data (isFresh === false),
+      // run the post-processing SQL script, mirroring the behavior of sync-all.
+      if (allSuccess) {
+        const anyUpdated = Object.values(results).some((r: any) => r && r.isFresh === false);
+
+        if (anyUpdated) {
+          console.log('[Cron] All detailed syncs succeeded with updates, executing post-processing SQL query...');
+          try {
+            const { executePostProcessingIfConfigured } = await import('../services/postProcessingService.js');
+            const executed = await executePostProcessingIfConfigured();
+            if (executed) {
+              console.log('[Cron] Post-processing SQL query executed successfully');
+            } else {
+              console.log('[Cron] Post-processing SQL query was not executed (no SQL configured)');
+            }
+          } catch (error: any) {
+            console.error('[Cron] Error during post-processing after detailed sync-all:', error?.message || String(error));
+          }
+        } else {
+          console.log('[Cron] Detailed sync-all completed but no datasets reported updates; skipping post-processing SQL query');
+        }
+      }
+
       console.log('[Cron] Detailed sync-all job completed');
 
       res.status(statusCode).json({
@@ -213,6 +236,69 @@ export class CronController {
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to sync all data types',
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  /**
+   * Manually trigger the post-processing SQL script
+   *
+   * POST /api/cron/run-post-processing
+   *
+   * Security: Same as other cron endpoints (Vercel cron header or CRON_SECRET)
+   */
+  static async runPostProcessing(req: Request, res: Response) {
+    try {
+      // Reuse cron security checks
+      const vercelCronHeader = req.headers['x-vercel-cron'];
+      const authHeader = req.headers.authorization;
+      const cronSecret = process.env.CRON_SECRET;
+
+      const isVercelCron = vercelCronHeader === '1';
+
+      if (!isVercelCron && cronSecret) {
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          return res.status(401).json({
+            success: false,
+            error: 'Missing or invalid authorization header'
+          });
+        }
+
+        const token = authHeader.substring(7);
+        if (token !== cronSecret) {
+          return res.status(403).json({
+            success: false,
+            error: 'Invalid authorization token'
+          });
+        }
+      } else if (!isVercelCron && !cronSecret) {
+        console.warn('[Cron] Warning: No security verification configured for cron endpoint (run-post-processing)');
+      }
+
+      console.log('[Cron] Manually triggering post-processing SQL query...');
+
+      const { executePostProcessingIfConfigured } = await import('../services/postProcessingService.js');
+      const executed = await executePostProcessingIfConfigured();
+
+      if (executed) {
+        return res.json({
+          success: true,
+          message: 'Post-processing SQL query executed successfully',
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        return res.json({
+          success: true,
+          message: 'Post-processing SQL query not executed (no SQL configured)',
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (error: any) {
+      console.error('[Cron] Error in run-post-processing endpoint:', error);
+      res.status(500).json({
+        success: false,
+        error: error?.message || 'Failed to execute post-processing SQL query',
         timestamp: new Date().toISOString()
       });
     }

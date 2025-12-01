@@ -45,6 +45,7 @@ apiRoutes.post('/sync/alliances', AllianceController.syncAlliances);
 // Cron job endpoints (protected by CRON_SECRET)
 apiRoutes.post('/cron/sync-all', CronController.syncAll);
 apiRoutes.post('/cron/sync-all-detailed', CronController.syncAllDetailed);
+apiRoutes.post('/cron/run-post-processing', CronController.runPostProcessing);
 
 
 

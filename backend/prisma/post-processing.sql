@@ -3,7 +3,7 @@ WITH cst_window AS (
     SELECT
         date_trunc('day', now() AT TIME ZONE 'America/Chicago') - interval '10 day' AS start_dt,
         date_trunc('day', now() AT TIME ZONE 'America/Chicago') AS end_dt,
-        date_trunc('day', now() AT TIME ZONE 'America/Chicago') AS snapshot_date
+        date_trunc('day', now() AT TIME ZONE 'America/Chicago') - INTERVAL '1 day' AS snapshot_date 
 )
 
 INSERT INTO alliance_aid_utilization_snapshots (
