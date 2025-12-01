@@ -182,3 +182,15 @@ model FileDownload {
 
   @@map("file_downloads")
 }
+
+model AllianceAidUtilizationSnapshot {
+  allianceId            BigInt   @map("alliance_id")
+  allianceName          String   @map("alliance_name")
+  totalAidOffers        Int      @default(0) @map("total_aid_offers")
+  totalNations          Int      @default(0) @map("total_nations")
+  aidUtilizationPercent Decimal  @default(0.00) @db.Decimal(5, 2) @map("aid_utilization_percent")
+  snapshotDate          DateTime @map("snapshot_date")
+
+  @@id([allianceId, snapshotDate])
+  @@map("alliance_aid_utilization_snapshots")
+}

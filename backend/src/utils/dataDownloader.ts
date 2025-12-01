@@ -779,6 +779,35 @@ export async function ensureRecentFiles(): Promise<DownloadResult[]> {
     await importAllCsvFiles();
     const csvImportTime = Date.now() - csvImportStartTime;
     console.log(`CSV data imported into database successfully in ${csvImportTime}ms (${(csvImportTime / 1000).toFixed(2)}s)`);
+    
+    // Check if all required files for the day were successfully processed
+    // Only execute post-processing SQL if all files succeeded
+    const requiredFileTypes = [FileType.NATION_STATS, FileType.AID_STATS, FileType.WAR_STATS];
+    const allFilesSucceeded = requiredFileTypes.every(fileType => {
+      const result = downloadResults.find(r => r.fileType === fileType);
+      return result?.success === true;
+    });
+    
+    if (allFilesSucceeded && downloadResults.length > 0) {
+      console.log('[Post-Processing] All required files successfully processed for the day, executing post-processing SQL query...');
+      try {
+        const { executePostProcessingIfConfigured } = await import('../services/postProcessingService.js');
+        const executed = await executePostProcessingIfConfigured();
+        if (executed) {
+          console.log('[Post-Processing] Post-processing SQL query executed successfully');
+        }
+      } catch (error: any) {
+        // Log error but don't fail the entire process
+        console.error('[Post-Processing] Error during post-processing:', error?.message || String(error));
+      }
+    } else {
+      const failedFiles = downloadResults.filter(r => !r.success).map(r => r.fileType);
+      if (failedFiles.length > 0) {
+        console.log(`[Post-Processing] Skipping post-processing SQL query - some files failed: ${failedFiles.join(', ')}`);
+      } else if (downloadResults.length === 0) {
+        console.log('[Post-Processing] Skipping post-processing SQL query - no files were processed');
+      }
+    }
   } catch (error) {
     console.warn('Error importing CSV data into database:', error);
   }

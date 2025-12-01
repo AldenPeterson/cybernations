@@ -32,7 +32,7 @@ cybernations/
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 20+ (LTS recommended)
 - npm 9+
 
 ### Installation
