@@ -145,7 +145,7 @@ const AidPage: React.FC = () => {
   const [allianceAidStats, setAllianceAidStats] = useState<AllianceAidStats[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expirationFilter, setExpirationFilter] = useState<string[]>(['empty', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days']);
+  const [expirationFilter, setExpirationFilter] = useState<string[]>(['empty', 'expired', 'today', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days']);
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [recommendations, setRecommendations] = useState<AidRecommendation[]>([]);
   const [availableSlots, setAvailableSlots] = useState<{ external?: Array<{ nation: { id: number; nationName: string; rulerName: string; inWarMode: boolean }; available: number }> } | null>(null);
@@ -846,7 +846,7 @@ const AidPage: React.FC = () => {
             Filter by Aid Expiration:
           </label>
           <button
-            onClick={() => setExpirationFilter(['empty', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days'])}
+            onClick={() => setExpirationFilter(['empty', 'expired', 'today', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days'])}
             className="px-2 py-1 bg-slate-50 border border-slate-300 rounded cursor-pointer text-xs text-gray-800 font-medium mr-2 hover:bg-slate-100"
           >
             Check All
@@ -861,6 +861,8 @@ const AidPage: React.FC = () => {
         <div className="flex flex-wrap gap-2">
           {[
             { value: 'empty', label: 'Empty', color: '#f8f9fa', textColor: '#333' },
+            { value: 'expired', label: 'Expired', color: '#ffebee', textColor: '#333' },
+            { value: 'today', label: 'Today', color: '#fff3cd', textColor: '#333' },
             { value: '1 day', label: '1 Day', color: '#ffeaa7', textColor: '#333' },
             { value: '2 days', label: '2 Days', color: '#ffeaa7', textColor: '#333' },
             { value: '3 days', label: '3 Days', color: '#ffeaa7', textColor: '#333' },
