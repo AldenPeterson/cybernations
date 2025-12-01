@@ -1,9 +1,16 @@
 
-WITH cst_window AS (
+WITH target_date AS (
+    -- Change this date to process a specific date in the past
+    -- Use 'YYYY-MM-DD' format - will be interpreted as Central Time date
+    -- Example for Nov 15, 2025: SELECT ('2025-11-15'::date AT TIME ZONE 'America/Chicago')::date AS target_dt
+    -- Or simply: SELECT '2025-11-15'::date AS target_dt (dates are timezone-agnostic)
+    SELECT (now() AT TIME ZONE 'America/Chicago')::date AS target_dt
+),
+cst_window AS (
     SELECT
-        date_trunc('day', now() AT TIME ZONE 'America/Chicago') - interval '10 day' AS start_dt,
-        date_trunc('day', now() AT TIME ZONE 'America/Chicago') AS end_dt,
-        date_trunc('day', now() AT TIME ZONE 'America/Chicago') - INTERVAL '1 day' AS snapshot_date 
+        (SELECT target_dt FROM target_date) - interval '10 day' AS start_dt,
+        (SELECT target_dt FROM target_date) AS end_dt,
+        (SELECT target_dt FROM target_date) - INTERVAL '1 day' AS snapshot_date 
 )
 
 INSERT INTO alliance_aid_utilization_snapshots (
@@ -30,19 +37,19 @@ LEFT JOIN nations n
 LEFT JOIN (
     SELECT declaring_nation_id AS nation_id, aid_id
     FROM aid_offers, cst_window cw
-    WHERE to_timestamp(date, 'MM/DD/YYYY HH12:MI:SS AM') AT TIME ZONE 'America/Chicago'
-          >= cw.start_dt
-      AND to_timestamp(date, 'MM/DD/YYYY HH12:MI:SS AM') AT TIME ZONE 'America/Chicago'
-          < cw.end_dt
+    WHERE to_date("aid_timestamp", 'MM/DD/YYYY')
+            >= cw.start_dt::date
+      AND to_date("aid_timestamp", 'MM/DD/YYYY')
+            <  cw.end_dt::date
 
     UNION ALL
 
     SELECT receiving_nation_id AS nation_id, aid_id
     FROM aid_offers, cst_window cw
-    WHERE to_timestamp(date, 'MM/DD/YYYY HH12:MI:SS AM') AT TIME ZONE 'America/Chicago'
-          >= cw.start_dt
-      AND to_timestamp(date, 'MM/DD/YYYY HH12:MI:SS AM') AT TIME ZONE 'America/Chicago'
-          < cw.end_dt
+    WHERE to_date("aid_timestamp", 'MM/DD/YYYY')
+            >= cw.start_dt::date
+      AND to_date("aid_timestamp", 'MM/DD/YYYY')
+            <  cw.end_dt::date
 ) ao 
     ON n.id = ao.nation_id
 CROSS JOIN cst_window cw

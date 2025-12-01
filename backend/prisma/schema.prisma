@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,46 +7,46 @@ datasource db {
 }
 
 model Alliance {
-  id        Int      @id
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  nations                 Nation[]
+  id                      Int                @id
+  name                    String
+  createdAt               DateTime           @default(now()) @map("created_at")
+  updatedAt               DateTime           @updatedAt @map("updated_at")
   crossAllianceAidSources CrossAllianceAid[] @relation("SourceAlliance")
   crossAllianceAidTargets CrossAllianceAid[] @relation("TargetAlliance")
+  nations                 Nation[]
 
   @@map("alliances")
 }
 
 model Nation {
-  id                  Int      @id
-  rulerName           String   @map("ruler_name")
-  nationName          String   @map("nation_name")
-  allianceId          Int      @map("alliance_id")
-  team                String
-  strength            Float
-  activity            String
-  technology          String
-  infrastructure      String
-  land                String
-  nuclearWeapons      Int      @default(0) @map("nuclear_weapons")
-  governmentType      String   @map("government_type")
-  inWarMode           Boolean  @default(false) @map("in_war_mode")
-  attackingCasualties Int?     @map("attacking_casualties")
-  defensiveCasualties Int?     @map("defensive_casualties")
-  warchest            Float?
-  spyglassLastUpdated Int?     @map("spyglass_last_updated")
-  rank                Int?
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
-
-  alliance             Alliance      @relation(fields: [allianceId], references: [id])
-  nationConfig         NationConfig?
-  declaringAidOffers   AidOffer[]    @relation("DeclaringNation")
-  receivingAidOffers   AidOffer[]    @relation("ReceivingNation")
-  declaringWars        War[]         @relation("DeclaringNation")
-  receivingWars        War[]         @relation("ReceivingNation")
+  id                                                     Int            @id
+  rulerName                                              String         @map("ruler_name")
+  nationName                                             String         @map("nation_name")
+  allianceId                                             Int            @map("alliance_id")
+  team                                                   String
+  strength                                               Float
+  activity                                               String
+  technology                                             String
+  infrastructure                                         String
+  land                                                   String
+  nuclearWeapons                                         Int            @default(0) @map("nuclear_weapons")
+  governmentType                                         String         @map("government_type")
+  inWarMode                                              Boolean        @default(false) @map("in_war_mode")
+  attackingCasualties                                    Int?           @map("attacking_casualties")
+  defensiveCasualties                                    Int?           @map("defensive_casualties")
+  warchest                                               Float?
+  spyglassLastUpdated                                    Int?           @map("spyglass_last_updated")
+  rank                                                   Int?
+  createdAt                                              DateTime       @default(now()) @map("created_at")
+  updatedAt                                              DateTime       @updatedAt @map("updated_at")
+  declaringAidOffers                                     AidOffer[]     @relation("DeclaringNation")
+  receivingAidOffers                                     AidOffer[]     @relation("ReceivingNation")
+  dynamic_wars_dynamic_wars_declaring_nation_idTonations dynamic_wars[] @relation("dynamic_wars_declaring_nation_idTonations")
+  dynamic_wars_dynamic_wars_receiving_nation_idTonations dynamic_wars[] @relation("dynamic_wars_receiving_nation_idTonations")
+  nationConfig                                           NationConfig?
+  alliance                                               Alliance       @relation(fields: [allianceId], references: [id])
+  declaringWars                                          War[]          @relation("DeclaringNation")
+  receivingWars                                          War[]          @relation("ReceivingNation")
 
   @@index([allianceId])
   @@index([id])
@@ -71,34 +68,31 @@ model NationConfig {
   receivePriority Int      @default(3) @map("receive_priority")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
-
-  nation Nation @relation(fields: [nationId], references: [id], onDelete: Cascade)
+  nation          Nation   @relation(fields: [nationId], references: [id], onDelete: Cascade)
 
   @@index([nationId])
   @@map("nation_configs")
 }
 
 model AidOffer {
-  aidId               Int      @id @map("aid_id")
-  declaringNationId   Int      @map("declaring_nation_id")
-  receivingNationId   Int      @map("receiving_nation_id")
-  status              String
-  money               Float    @default(0)
-  technology          Float    @default(0)
-  soldiers            Int      @default(0)
-  date                String
-  reason              String
-  isExpired           Boolean? @default(false) @map("is_expired")
-  // Historical tracking fields
-  firstSeenAt         DateTime @default(now()) @map("first_seen_at")
-  lastSeenAt          DateTime @default(now()) @map("last_seen_at")
-  isActive            Boolean  @default(true) @map("is_active")
-  version             Int      @default(1)
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
-
-  declaringNation Nation @relation("DeclaringNation", fields: [declaringNationId], references: [id])
-  receivingNation Nation @relation("ReceivingNation", fields: [receivingNationId], references: [id])
+  aidId             Int      @id @map("aid_id")
+  declaringNationId Int      @map("declaring_nation_id")
+  receivingNationId Int      @map("receiving_nation_id")
+  status            String
+  money             Float    @default(0)
+  technology        Float    @default(0)
+  soldiers          Int      @default(0)
+  date              String   @map("aid_timestamp")
+  reason            String
+  isExpired         Boolean? @default(false) @map("is_expired")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  firstSeenAt       DateTime @default(now()) @map("first_seen_at")
+  isActive          Boolean  @default(true) @map("is_active")
+  lastSeenAt        DateTime @default(now()) @map("last_seen_at")
+  version           Int      @default(1)
+  declaringNation   Nation   @relation("DeclaringNation", fields: [declaringNationId], references: [id])
+  receivingNation   Nation   @relation("ReceivingNation", fields: [receivingNationId], references: [id])
 
   @@index([declaringNationId])
   @@index([receivingNationId])
@@ -123,16 +117,14 @@ model War {
   daysUntilExpiration Int?     @map("days_until_expiration")
   expirationColor     String?  @map("expiration_color")
   isExpired           Boolean? @default(false) @map("is_expired")
-  // Historical tracking fields
-  firstSeenAt         DateTime @default(now()) @map("first_seen_at")
-  lastSeenAt          DateTime @default(now()) @map("last_seen_at")
-  isActive            Boolean  @default(true) @map("is_active")
-  version             Int      @default(1)
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
-
-  declaringNation Nation @relation("DeclaringNation", fields: [declaringNationId], references: [id])
-  receivingNation Nation @relation("ReceivingNation", fields: [receivingNationId], references: [id])
+  firstSeenAt         DateTime @default(now()) @map("first_seen_at")
+  isActive            Boolean  @default(true) @map("is_active")
+  lastSeenAt          DateTime @default(now()) @map("last_seen_at")
+  version             Int      @default(1)
+  declaringNation     Nation   @relation("DeclaringNation", fields: [declaringNationId], references: [id])
+  receivingNation     Nation   @relation("ReceivingNation", fields: [receivingNationId], references: [id])
 
   @@index([declaringNationId])
   @@index([receivingNationId])
@@ -141,7 +133,6 @@ model War {
   @@index([lastSeenAt])
   @@map("wars")
 }
-
 
 model NuclearHit {
   id              Int      @id @default(autoincrement())
@@ -162,9 +153,8 @@ model CrossAllianceAid {
   targetAllianceId Int      @map("target_alliance_id")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
-
-  sourceAlliance Alliance @relation("SourceAlliance", fields: [sourceAllianceId], references: [id])
-  targetAlliance Alliance @relation("TargetAlliance", fields: [targetAllianceId], references: [id])
+  sourceAlliance   Alliance @relation("SourceAlliance", fields: [sourceAllianceId], references: [id])
+  targetAlliance   Alliance @relation("TargetAlliance", fields: [targetAllianceId], references: [id])
 
   @@unique([sourceAllianceId, targetAllianceId])
   @@index([sourceAllianceId])
@@ -173,9 +163,9 @@ model CrossAllianceAid {
 }
 
 model FileDownload {
-  fileType     String   @id @map("file_type") // Nation_Stats, Aid_Stats, War_Stats
+  fileType     String   @id @map("file_type")
   originalFile String   @map("original_file")
-  timestamp    BigInt   // Unix timestamp in milliseconds
+  timestamp    BigInt
   downloadTime DateTime @map("download_time")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
@@ -188,9 +178,33 @@ model AllianceAidUtilizationSnapshot {
   allianceName          String   @map("alliance_name")
   totalAidOffers        Int      @default(0) @map("total_aid_offers")
   totalNations          Int      @default(0) @map("total_nations")
-  aidUtilizationPercent Decimal  @default(0.00) @db.Decimal(5, 2) @map("aid_utilization_percent")
-  snapshotDate          DateTime @map("snapshot_date")
+  aidUtilizationPercent Decimal  @default(0.00) @map("aid_utilization_percent") @db.Decimal(5, 2)
+  snapshotDate          DateTime @map("snapshot_date") @db.Date
 
   @@id([allianceId, snapshotDate])
   @@map("alliance_aid_utilization_snapshots")
+}
+
+model dynamic_wars {
+  id                                                Int      @id @default(autoincrement())
+  war_id                                            Int      @unique
+  declaring_nation_id                               Int
+  receiving_nation_id                               Int
+  status                                            String
+  date                                              String
+  end_date                                          String
+  reason                                            String?
+  destruction                                       String?
+  attack_percent                                    Float?
+  defend_percent                                    Float?
+  added_at                                          DateTime
+  source                                            String
+  created_at                                        DateTime @default(now())
+  updated_at                                        DateTime
+  nations_dynamic_wars_declaring_nation_idTonations Nation   @relation("dynamic_wars_declaring_nation_idTonations", fields: [declaring_nation_id], references: [id])
+  nations_dynamic_wars_receiving_nation_idTonations Nation   @relation("dynamic_wars_receiving_nation_idTonations", fields: [receiving_nation_id], references: [id])
+
+  @@index([declaring_nation_id])
+  @@index([receiving_nation_id])
+  @@index([status])
 }
