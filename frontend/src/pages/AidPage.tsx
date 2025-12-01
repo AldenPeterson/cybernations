@@ -31,6 +31,7 @@ interface AidSlot {
   slotNumber: number;
   isOutgoing: boolean;
   aidOffer: AidOffer | null;
+  missingSlotType?: string; // 'sendCash' | 'sendTech' | 'getCash' | 'getTech'
 }
 
 interface NationAidSlots {
@@ -92,6 +93,48 @@ interface AidRecommendation {
   };
 }
 
+interface NationSlots {
+  sendTech: number;
+  sendCash: number;
+  getTech: number;
+  getCash: number;
+  external: number;
+  send_priority: number;
+  receive_priority: number;
+}
+
+interface NationConfig {
+  nation_id: number;
+  slots: NationSlots;
+}
+
+interface MismatchedOffer {
+  aidId: number;
+  declaringId: number;
+  declaringNation: string;
+  declaringRuler: string;
+  receivingId: number;
+  receivingNation: string;
+  receivingRuler: string;
+  money: number;
+  technology: number;
+  direction: 'sent' | 'received';
+  type: 'cash' | 'tech';
+  date: string;
+  reason: string;
+  mismatchReason?: string;
+}
+
+interface MismatchedOffers {
+  allianceOffers: {
+    sendCash: Array<{ nation: any; offers: MismatchedOffer[] }>;
+    sendTech: Array<{ nation: any; offers: MismatchedOffer[] }>;
+    getCash: Array<{ nation: any; offers: MismatchedOffer[] }>;
+    getTech: Array<{ nation: any; offers: MismatchedOffer[] }>;
+  };
+  externalMismatches: Array<{ nation: any; offers: MismatchedOffer[] }>;
+}
+
 const AidPage: React.FC = () => {
   const { allianceId } = useParams<{ allianceId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -106,6 +149,8 @@ const AidPage: React.FC = () => {
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [recommendations, setRecommendations] = useState<AidRecommendation[]>([]);
   const [availableSlots, setAvailableSlots] = useState<{ external?: Array<{ nation: { id: number; nationName: string; rulerName: string; inWarMode: boolean }; available: number }> } | null>(null);
+  const [nationsConfig, setNationsConfig] = useState<NationConfig[]>([]);
+  const [mismatchedOffers, setMismatchedOffers] = useState<MismatchedOffers | null>(null);
 
   // Helper function to parse boolean from URL parameter
   const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
@@ -206,9 +251,12 @@ const AidPage: React.FC = () => {
   useEffect(() => {
     if (showRecommendations && allianceId) {
       fetchRecommendations(parseInt(allianceId));
+      fetchNationsConfig(parseInt(allianceId));
     } else {
       setRecommendations([]);
       setAvailableSlots(null);
+      setNationsConfig([]);
+      setMismatchedOffers(null);
     }
   }, [showRecommendations, allianceId]);
 
@@ -219,11 +267,29 @@ const AidPage: React.FC = () => {
       if (recommendationsData.success) {
         setRecommendations(recommendationsData.recommendations || []);
         setAvailableSlots(recommendationsData.availableSlots || null);
+        setMismatchedOffers(recommendationsData.mismatchedOffers || null);
       }
     } catch (err) {
       console.error('Failed to fetch recommendations:', err);
       setRecommendations([]);
       setAvailableSlots(null);
+      setMismatchedOffers(null);
+    }
+  };
+
+  const fetchNationsConfig = async (id: number) => {
+    try {
+      const configData = await apiCallWithErrorHandling(API_ENDPOINTS.nationsConfig(id));
+      
+      if (configData.success && configData.nations) {
+        setNationsConfig(configData.nations.map((n: any) => ({
+          nation_id: n.nation_id,
+          slots: n.slots
+        })));
+      }
+    } catch (err) {
+      console.error('Failed to fetch nations config:', err);
+      setNationsConfig([]);
     }
   };
 
@@ -273,6 +339,84 @@ const AidPage: React.FC = () => {
     if (days === 9) return '9 days';
     if (days === 10) return '10 days';
     return 'expired';
+  };
+
+  // Calculate missing slots for a nation
+  const calculateMissingSlots = (nationId: number, nationAidSlots: NationAidSlots): Array<{ type: string; isOutgoing: boolean }> => {
+    if (!showRecommendations) return [];
+    
+    const nationConfig = nationsConfig.find(nc => nc.nation_id === nationId);
+    if (!nationConfig) return [];
+
+    const missingSlots: Array<{ type: string; isOutgoing: boolean }> = [];
+
+    // Count actual filled slots by type (only real offers, not recommendations)
+    const filledSendCash = nationAidSlots.aidSlots.filter(slot => 
+      slot.isOutgoing && slot.aidOffer && slot.aidOffer.aidId > 0 && slot.aidOffer.money > 0 && slot.aidOffer.technology === 0
+    ).length;
+    const filledSendTech = nationAidSlots.aidSlots.filter(slot => 
+      slot.isOutgoing && slot.aidOffer && slot.aidOffer.aidId > 0 && slot.aidOffer.technology > 0
+    ).length;
+    const filledGetCash = nationAidSlots.aidSlots.filter(slot => 
+      !slot.isOutgoing && slot.aidOffer && slot.aidOffer.aidId > 0 && slot.aidOffer.money > 0 && slot.aidOffer.technology === 0
+    ).length;
+    const filledGetTech = nationAidSlots.aidSlots.filter(slot => 
+      !slot.isOutgoing && slot.aidOffer && slot.aidOffer.aidId > 0 && slot.aidOffer.technology > 0
+    ).length;
+
+    // Calculate missing slots
+    const missingSendCash = Math.max(0, nationConfig.slots.sendCash - filledSendCash);
+    const missingSendTech = Math.max(0, nationConfig.slots.sendTech - filledSendTech);
+    const missingGetCash = Math.max(0, nationConfig.slots.getCash - filledGetCash);
+    const missingGetTech = Math.max(0, nationConfig.slots.getTech - filledGetTech);
+
+    // Add missing slots to array
+    for (let i = 0; i < missingSendCash; i++) {
+      missingSlots.push({ type: 'sendCash', isOutgoing: true });
+    }
+    for (let i = 0; i < missingSendTech; i++) {
+      missingSlots.push({ type: 'sendTech', isOutgoing: true });
+    }
+    for (let i = 0; i < missingGetCash; i++) {
+      missingSlots.push({ type: 'getCash', isOutgoing: false });
+    }
+    for (let i = 0; i < missingGetTech; i++) {
+      missingSlots.push({ type: 'getTech', isOutgoing: false });
+    }
+
+    return missingSlots;
+  };
+
+  // Check if an aid offer is mismatched
+  const isMismatchedOffer = (offer: AidOffer, nationId: number, isOutgoing: boolean): boolean => {
+    if (!showRecommendations || !mismatchedOffers || offer.aidId < 0) return false;
+
+    const nationConfig = nationsConfig.find(nc => nc.nation_id === nationId);
+    if (!nationConfig) return false;
+
+    // Check if this offer is in the mismatched offers list
+    const isCash = offer.money > 0 && offer.technology === 0;
+    const isTech = offer.technology > 0;
+
+    if (isOutgoing) {
+      if (isCash) {
+        const mismatches = mismatchedOffers.allianceOffers.sendCash.find(m => m.nation.id === nationId);
+        return mismatches?.offers.some(m => m.aidId === offer.aidId) || false;
+      } else if (isTech) {
+        const mismatches = mismatchedOffers.allianceOffers.sendTech.find(m => m.nation.id === nationId);
+        return mismatches?.offers.some(m => m.aidId === offer.aidId) || false;
+      }
+    } else {
+      if (isCash) {
+        const mismatches = mismatchedOffers.allianceOffers.getCash.find(m => m.nation.id === nationId);
+        return mismatches?.offers.some(m => m.aidId === offer.aidId) || false;
+      } else if (isTech) {
+        const mismatches = mismatchedOffers.allianceOffers.getTech.find(m => m.nation.id === nationId);
+        return mismatches?.offers.some(m => m.aidId === offer.aidId) || false;
+      }
+    }
+
+    return false;
   };
 
   const mergeRecommendationsIntoSlots = (nationAidSlots: NationAidSlots[]): NationAidSlots[] => {
@@ -443,6 +587,65 @@ const AidPage: React.FC = () => {
             const isOutgoingRec = recToAssign.sender.id === nationId;
             slot.aidOffer = createRecommendationOffer(recToAssign, nationId);
             slot.isOutgoing = isOutgoingRec;
+          }
+        }
+      });
+
+      // Add missing slot boxes after filling recommendations
+      const missingSlots = calculateMissingSlots(nationId, nationAidSlots);
+      
+      // Group missing slots by direction
+      const missingOutgoing = missingSlots.filter(ms => ms.isOutgoing);
+      const missingIncoming = missingSlots.filter(ms => !ms.isOutgoing);
+      
+      let missingOutgoingIndex = 0;
+      let missingIncomingIndex = 0;
+      
+      // Find empty slots and fill them with missing slot indicators
+      // For empty slots, we don't rely on slot.isOutgoing (which defaults to false)
+      // Instead, we assign missing slots based on their type and set isOutgoing accordingly
+      updatedSlots.forEach((slot) => {
+        if (!slot.aidOffer) {
+          // Try outgoing missing slots first
+          if (missingOutgoingIndex < missingOutgoing.length) {
+            const missingSlot = missingOutgoing[missingOutgoingIndex];
+            slot.aidOffer = {
+              aidId: -3, // -3 to indicate it's a missing slot
+              targetNation: '',
+              targetRuler: '',
+              targetId: 0,
+              declaringId: nationId,
+              receivingId: 0,
+              money: 0,
+              technology: 0,
+              soldiers: 0,
+              reason: '',
+              date: '',
+              isExpired: false,
+            };
+            slot.isOutgoing = true;
+            slot.missingSlotType = missingSlot.type; // Store the type for rendering
+            missingOutgoingIndex++;
+          } else if (missingIncomingIndex < missingIncoming.length) {
+            // Then try incoming missing slots
+            const missingSlot = missingIncoming[missingIncomingIndex];
+            slot.aidOffer = {
+              aidId: -3, // -3 to indicate it's a missing slot
+              targetNation: '',
+              targetRuler: '',
+              targetId: 0,
+              declaringId: nationId,
+              receivingId: 0,
+              money: 0,
+              technology: 0,
+              soldiers: 0,
+              reason: '',
+              date: '',
+              isExpired: false,
+            };
+            slot.isOutgoing = false;
+            slot.missingSlotType = missingSlot.type; // Store the type for rendering
+            missingIncomingIndex++;
           }
         }
       });
@@ -631,7 +834,7 @@ const AidPage: React.FC = () => {
         </label>
         {showRecommendations && (
           <p className="text-sm text-gray-600 mt-1">
-            Recommendations are displayed with a dashed border and "RECOMMENDED" label.
+            Recommendations are displayed with a dashed border and "RECOMMENDED" label. Missing slots show empty boxes with slot type labels. Mismatched offers (that don't match configured slots) are highlighted in red.
           </p>
         )}
       </div>
@@ -752,6 +955,19 @@ const AidPage: React.FC = () => {
                       const isExpired = slot.aidOffer ? slot.aidOffer.isExpired : false;
                       const isRecommendation = slot.aidOffer && slot.aidOffer.aidId < 0;
                       const isExternalSlot = slot.aidOffer && slot.aidOffer.aidId === -2;
+                      const isMissingSlot = slot.aidOffer && slot.aidOffer.aidId === -3;
+                      const isMismatched = slot.aidOffer && slot.aidOffer.aidId > 0 && isMismatchedOffer(slot.aidOffer, nationAidSlots.nation.id, slot.isOutgoing);
+                      
+                      // Get slot type label for missing slots
+                      const getSlotTypeLabel = (type?: string): string => {
+                        switch (type) {
+                          case 'sendCash': return '💰 Send Cash';
+                          case 'sendTech': return '🔬 Send Tech';
+                          case 'getCash': return '💰 Get Cash';
+                          case 'getTech': return '🔬 Get Tech';
+                          default: return 'Empty';
+                        }
+                      };
                       
                       return (
                       <td 
@@ -759,25 +975,71 @@ const AidPage: React.FC = () => {
                         className={columnClasses.aidSlot}
                         style={{ 
                           width: slotWidth,
-                          backgroundColor: slot.aidOffer ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) : '#ffffff',
-                          borderStyle: isRecommendation ? 'dashed' : 'solid',
-                          borderWidth: isRecommendation ? '2px' : '1px',
-                          borderColor: isRecommendation ? '#f59e0b' : 'inherit'
+                          backgroundColor: isMissingSlot 
+                            ? '#fff9e6' 
+                            : isMismatched 
+                              ? '#ffebee' 
+                              : slot.aidOffer 
+                                ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) 
+                                : '#ffffff',
+                          borderStyle: isRecommendation || isMissingSlot ? 'dashed' : 'solid',
+                          borderWidth: isRecommendation || isMissingSlot ? '2px' : (isMismatched ? '3px' : '1px'),
+                          borderColor: isMissingSlot 
+                            ? '#f59e0b' 
+                            : isMismatched 
+                              ? '#d32f2f' 
+                              : isRecommendation 
+                                ? '#f59e0b' 
+                                : 'inherit'
                         }}
                       >
                         {slot.aidOffer ? (
                           <div className="text-xs">
-                            {isRecommendation && (
-                              <div className="mb-1">
-                                <span className={`text-xs font-bold px-1 py-0.5 rounded-sm border ${
-                                  isExternalSlot 
-                                    ? 'bg-purple-100 text-purple-800 border-purple-300' 
-                                    : 'bg-amber-100 text-amber-800 border-amber-300'
-                                }`}>
-                                  {isExternalSlot ? 'EXTERNAL SLOT' : 'RECOMMENDED'}
-                                </span>
+                            {isMissingSlot ? (
+                              <div className="text-center">
+                                <div className="mb-1">
+                                  <span className="text-xs font-bold px-1 py-0.5 rounded-sm border bg-amber-100 text-amber-800 border-amber-300">
+                                    MISSING SLOT
+                                  </span>
+                                </div>
+                                <div className="font-bold text-amber-700">
+                                  {getSlotTypeLabel(slot.missingSlotType)}
+                                </div>
+                                {slot.missingSlotType && (
+                                  <div className="mb-1 mt-1 text-[11px]">
+                                    <span className="text-green-900 font-bold bg-green-50 px-1 py-0.5 rounded-sm">
+                                      {slot.missingSlotType === 'sendCash' || slot.missingSlotType === 'getCash'
+                                        ? formatAidValue(9000000, 0, 0)
+                                        : slot.missingSlotType === 'sendTech' || slot.missingSlotType === 'getTech'
+                                        ? formatAidValue(0, 100, 0)
+                                        : ''}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="text-[10px] text-amber-600 font-semibold italic mt-1">
+                                  {slot.isOutgoing ? 'Expected to send' : 'Expected to receive'}
+                                </div>
                               </div>
-                            )}
+                            ) : (
+                              <>
+                                {isMismatched && (
+                                  <div className="mb-1">
+                                    <span className="text-xs font-bold px-1 py-0.5 rounded-sm border bg-red-100 text-red-800 border-red-300">
+                                      ⚠️ MISMATCHED
+                                    </span>
+                                  </div>
+                                )}
+                                {isRecommendation && (
+                                  <div className="mb-1">
+                                    <span className={`text-xs font-bold px-1 py-0.5 rounded-sm border ${
+                                      isExternalSlot 
+                                        ? 'bg-purple-100 text-purple-800 border-purple-300' 
+                                        : 'bg-amber-100 text-amber-800 border-amber-300'
+                                    }`}>
+                                      {isExternalSlot ? 'EXTERNAL SLOT' : 'RECOMMENDED'}
+                                    </span>
+                                  </div>
+                                )}
                             <div 
                               className="font-bold mb-1"
                               style={{ color: isExpired ? '#d32f2f' : (slot.isOutgoing ? '#1976d2' : '#7b1fa2') }}
@@ -801,37 +1063,39 @@ const AidPage: React.FC = () => {
                               )}
                               {isExpired && <span className="text-red-600 text-[10px]"> (EXPIRED)</span>}
                             </div>
-                            {!isExternalSlot && (
-                              <div className="mb-1 text-[11px]">
-                                <span className="text-green-900 font-bold bg-green-50 px-1 py-0.5 rounded-sm">
-                                  {formatAidValue(slot.aidOffer.money, slot.aidOffer.technology, slot.aidOffer.soldiers)}
-                                </span>
-                                {slot.aidOffer.reason && (
-                                  <span className="text-gray-600 ml-1"> - {slot.aidOffer.reason}</span>
+                                {!isExternalSlot && (
+                                  <div className="mb-1 text-[11px]">
+                                    <span className="text-green-900 font-bold bg-green-50 px-1 py-0.5 rounded-sm">
+                                      {formatAidValue(slot.aidOffer.money, slot.aidOffer.technology, slot.aidOffer.soldiers)}
+                                    </span>
+                                    {slot.aidOffer.reason && (
+                                      <span className="text-gray-600 ml-1"> - {slot.aidOffer.reason}</span>
+                                    )}
+                                  </div>
                                 )}
-                              </div>
-                            )}
-                            {isExternalSlot && (
-                              <div className="mb-1 text-[11px] text-purple-700 font-semibold">
-                                {slot.aidOffer.reason}
-                              </div>
-                            )}
-                            {!isRecommendation && (
-                              <div 
-                                className={`text-[10px] ${isExpired ? 'text-red-600 font-bold' : 'text-gray-600 font-normal'}`}
-                              >
-                                Expires: {slot.aidOffer.expirationDate} ({slot.aidOffer.daysUntilExpiration} days)
-                              </div>
-                            )}
-                            {isRecommendation && !isExternalSlot && (
-                              <div className="text-[10px] text-amber-700 font-semibold italic">
-                                Pending recommendation
-                              </div>
-                            )}
-                            {isExternalSlot && (
-                              <div className="text-[10px] text-purple-700 font-semibold italic">
-                                Available for external aid
-                              </div>
+                                {isExternalSlot && (
+                                  <div className="mb-1 text-[11px] text-purple-700 font-semibold">
+                                    {slot.aidOffer.reason}
+                                  </div>
+                                )}
+                                {!isRecommendation && (
+                                  <div 
+                                    className={`text-[10px] ${isExpired ? 'text-red-600 font-bold' : 'text-gray-600 font-normal'}`}
+                                  >
+                                    Expires: {slot.aidOffer.expirationDate} ({slot.aidOffer.daysUntilExpiration} days)
+                                  </div>
+                                )}
+                                {isRecommendation && !isExternalSlot && (
+                                  <div className="text-[10px] text-amber-700 font-semibold italic">
+                                    Pending recommendation
+                                  </div>
+                                )}
+                                {isExternalSlot && (
+                                  <div className="text-[10px] text-purple-700 font-semibold italic">
+                                    Available for external aid
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
                         ) : (
