@@ -953,7 +953,7 @@ const AidPage: React.FC = () => {
           <div className="overflow-x-auto w-full max-w-none">
             <table className="border-collapse border border-slate-300 text-sm w-full" style={{ tableLayout: 'fixed' }}>
               <thead>
-                <tr className="bg-gray-800">
+                <tr className="bg-gray-800 border-b-2 border-slate-500">
                   <th className={headerClasses.nation}>
                     Nation
                   </th>
@@ -1041,7 +1041,7 @@ const AidPage: React.FC = () => {
                   const filledSlots = nationConfig ? countFilledSlots(nationAidSlots) : null;
                   
                   return (
-                    <tr key={nationAidSlots.nation.id}>
+                    <tr key={nationAidSlots.nation.id} className="border-b-2 border-slate-400">
                     <td 
                       className={columnClasses.nation}
                       style={{ backgroundColor: getActivityColor(nationAidSlots.nation.activity) }}

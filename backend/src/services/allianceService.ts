@@ -258,7 +258,7 @@ export class AllianceService {
 
     // If alliance is not present in config files, build nations list from raw data
     if (!allianceData) {
-      const defaultSlots = {
+      const baseDefaultSlots = {
         sendTech: 0,
         sendCash: 0,
         getTech: 0,
@@ -270,20 +270,37 @@ export class AllianceService {
 
       const nationsArrayFromRaw = rawNations
         .filter(n => n.allianceId === allianceId && n.alliance && n.alliance.trim() !== '')
-        .map(n => ({
-          nation_id: n.id,
-          ruler_name: n.rulerName,
-          nation_name: n.nationName,
-          discord_handle: discordHandles[n.id.toString()]?.discord_handle || '',
-          has_dra: false,
-          slots: { ...defaultSlots },
-          current_stats: {
-            technology: n.technology,
-            infrastructure: n.infrastructure,
-            strength: n.strength.toLocaleString()
-          },
-          inWarMode: n.inWarMode
-        }));
+        .map(n => {
+          // Calculate default slots based on tech/infra (same logic as categorizeNation)
+          const tech = parseFloat((n.technology || '0').replace(/,/g, '')) || 0;
+          const infra = parseFloat((n.infrastructure || '0').replace(/,/g, '')) || 0;
+          
+          const calculatedSlots = { ...baseDefaultSlots };
+          
+          if (infra > 3000 && tech < 500) {
+            calculatedSlots.sendTech = 6;
+          } else if (infra <= 3000 && tech < 500) {
+            calculatedSlots.getCash = 6;
+          } else if (tech >= 500) {
+            calculatedSlots.sendCash = 2;
+            calculatedSlots.getTech = 4;
+          }
+          
+          return {
+            nation_id: n.id,
+            ruler_name: n.rulerName,
+            nation_name: n.nationName,
+            discord_handle: discordHandles[n.id.toString()]?.discord_handle || '',
+            has_dra: false,
+            slots: calculatedSlots,
+            current_stats: {
+              technology: n.technology,
+              infrastructure: n.infrastructure,
+              strength: n.strength.toLocaleString()
+            },
+            inWarMode: n.inWarMode
+          };
+        });
 
       const allianceName = nationsArrayFromRaw[0]?.nation_name ? rawNations.find(n => n.allianceId === allianceId)?.alliance : undefined;
 
@@ -333,8 +350,23 @@ export class AllianceService {
         
         nationsArray.push(completeNationData);
       } else {
-        // Nation exists in database but not in config - include it with defaults
+        // Nation exists in database but not in config - calculate defaults based on tech/infra
         const discordHandle = discordHandles[nationIdNum]?.discord_handle || '';
+        
+        // Calculate default slots based on tech/infra (same logic as categorizeNation)
+        const tech = parseFloat((rawNation.technology || '0').replace(/,/g, '')) || 0;
+        const infra = parseFloat((rawNation.infrastructure || '0').replace(/,/g, '')) || 0;
+        
+        const calculatedDefaultSlots = { ...defaultSlots };
+        
+        if (infra > 3000 && tech < 500) {
+          calculatedDefaultSlots.sendTech = 6;
+        } else if (infra <= 3000 && tech < 500) {
+          calculatedDefaultSlots.getCash = 6;
+        } else if (tech >= 500) {
+          calculatedDefaultSlots.sendCash = 2;
+          calculatedDefaultSlots.getTech = 4;
+        }
         
         const completeNationData = {
           nation_id: nationIdNum,
@@ -342,7 +374,7 @@ export class AllianceService {
           nation_name: rawNation.nationName,
           discord_handle: discordHandle,
           has_dra: false,
-          slots: { ...defaultSlots },
+          slots: calculatedDefaultSlots,
           current_stats: {
             technology: rawNation.technology || '0',
             infrastructure: rawNation.infrastructure || '0',
