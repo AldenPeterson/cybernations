@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import { useAlliances } from '../contexts/AlliancesContext';
@@ -151,6 +151,10 @@ const AidPage: React.FC = () => {
   const [availableSlots, setAvailableSlots] = useState<{ external?: Array<{ nation: { id: number; nationName: string; rulerName: string; inWarMode: boolean }; available: number }> } | null>(null);
   const [nationsConfig, setNationsConfig] = useState<NationConfig[]>([]);
   const [mismatchedOffers, setMismatchedOffers] = useState<MismatchedOffers | null>(null);
+  
+  // Ref to track the last fetched allianceId to prevent duplicate requests
+  const lastFetchedAllianceId = useRef<number | null>(null);
+  const isFetchingRef = useRef<boolean>(false);
 
   // Helper function to parse boolean from URL parameter
   const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
@@ -186,13 +190,16 @@ const AidPage: React.FC = () => {
     }
   }, [allianceId, alliances]);
 
-  useEffect(() => {
-    if (allianceId && !alliancesLoading) {
-      fetchAllianceData(parseInt(allianceId));
+  // Memoize fetchAllianceData to prevent unnecessary re-creations
+  const fetchAllianceData = useCallback(async (id: number) => {
+    // Prevent duplicate concurrent requests for the same allianceId
+    if (isFetchingRef.current && lastFetchedAllianceId.current === id) {
+      return;
     }
-  }, [allianceId, alliancesLoading]);
-
-  const fetchAllianceData = async (id: number) => {
+    
+    isFetchingRef.current = true;
+    lastFetchedAllianceId.current = id;
+    
     try {
       setLoading(true);
       setError(null);
@@ -245,22 +252,11 @@ const AidPage: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Failed to fetch alliance data');
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
-  };
+  }, []); // Empty deps - function doesn't depend on any props/state
 
-  useEffect(() => {
-    if (showRecommendations && allianceId) {
-      fetchRecommendations(parseInt(allianceId));
-      fetchNationsConfig(parseInt(allianceId));
-    } else {
-      setRecommendations([]);
-      setAvailableSlots(null);
-      setNationsConfig([]);
-      setMismatchedOffers(null);
-    }
-  }, [showRecommendations, allianceId]);
-
-  const fetchRecommendations = async (id: number) => {
+  const fetchRecommendations = useCallback(async (id: number) => {
     try {
       const recommendationsData = await apiCallWithErrorHandling(API_ENDPOINTS.allianceRecommendations(id));
       
@@ -275,9 +271,9 @@ const AidPage: React.FC = () => {
       setAvailableSlots(null);
       setMismatchedOffers(null);
     }
-  };
+  }, []);
 
-  const fetchNationsConfig = async (id: number) => {
+  const fetchNationsConfig = useCallback(async (id: number) => {
     try {
       const configData = await apiCallWithErrorHandling(API_ENDPOINTS.nationsConfig(id));
       
@@ -291,7 +287,31 @@ const AidPage: React.FC = () => {
       console.error('Failed to fetch nations config:', err);
       setNationsConfig([]);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const parsedAllianceId = allianceId ? parseInt(allianceId) : null;
+    
+    // Only fetch if:
+    // 1. We have an allianceId
+    // 2. Alliances have finished loading
+    // 3. This is a different allianceId than the last one we fetched
+    if (parsedAllianceId && !alliancesLoading && lastFetchedAllianceId.current !== parsedAllianceId) {
+      fetchAllianceData(parsedAllianceId);
+    }
+  }, [allianceId, alliancesLoading, fetchAllianceData]);
+
+  useEffect(() => {
+    if (showRecommendations && allianceId) {
+      fetchRecommendations(parseInt(allianceId));
+      fetchNationsConfig(parseInt(allianceId));
+    } else {
+      setRecommendations([]);
+      setAvailableSlots(null);
+      setNationsConfig([]);
+      setMismatchedOffers(null);
+    }
+  }, [showRecommendations, allianceId, fetchRecommendations, fetchNationsConfig]);
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {

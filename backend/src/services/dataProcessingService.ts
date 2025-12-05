@@ -9,6 +9,7 @@ import { AidOffer } from '../models/AidOffer.js';
 import { Alliance } from '../models/Alliance.js';
 import { AidSlot, NationAidSlots } from '../models/AidSlot.js';
 import { prisma } from '../utils/prisma.js';
+import { isAidOfferExpired, calculateAidDateInfo, getAidDaysUntilExpiration } from '../utils/dateUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -559,11 +560,76 @@ export function createNationsDictionary(rawNations: Nation[]): Record<number, Na
 }
 
 
+/**
+ * Helper function to check if an aid offer is expired (by status or by date)
+ */
+function isOfferExpired(offer: AidOffer): boolean {
+  // Check status first
+  if (offer.status === 'Expired' || offer.status === 'Cancelled') {
+    return true;
+  }
+  
+  // Check date-based expiration - use the calculated field if available
+  if (offer.isExpired === true) {
+    return true;
+  }
+  
+  // Also check daysUntilExpiration - if 0 or negative, it's expired
+  if (offer.daysUntilExpiration !== undefined) {
+    if (offer.daysUntilExpiration <= 0) {
+      return true;
+    }
+    // If daysUntilExpiration > 0, it's not expired
+    return false;
+  }
+  
+  // Calculate expiration based on date if not already calculated
+  if (offer.date) {
+    try {
+      return isAidOfferExpired(offer.date);
+    } catch (error) {
+      console.warn(`Failed to calculate expiration for aid offer ${offer.aidId} with date "${offer.date}":`, error);
+      // If we can't parse the date, don't filter it out - allow it through
+      return false;
+    }
+  }
+  
+  // If no date available, can't determine expiration - don't filter it out
+  return false;
+}
+
 export async function getAidSlotsForAlliance(allianceId: number, nations: Nation[], aidOffers: AidOffer[]): Promise<NationAidSlots[]> {
   const allianceNations = nations.filter(nation => nation.allianceId === allianceId);
   
-  // Get all active aid offers (not filtered by alliance)
-  const activeAidOffers = aidOffers.filter(offer => offer.status !== 'Expired');
+  // Calculate date fields for all offers and filter out expired ones
+  const activeAidOffers = aidOffers
+    .map(offer => {
+      // Always recalculate date fields to ensure accuracy
+      if (offer.date) {
+        try {
+          const dateInfo = calculateAidDateInfo(offer.date);
+          return {
+            ...offer,
+            expirationDate: dateInfo.expirationDate,
+            daysUntilExpiration: dateInfo.daysUntilExpiration,
+            isExpired: dateInfo.isExpired,
+          };
+        } catch (error) {
+          console.warn(`Failed to calculate date info for aid offer ${offer.aidId} with date "${offer.date}":`, error);
+          // If we can't calculate, keep the offer but mark as not expired (will be checked again in filter)
+          return {
+            ...offer,
+            isExpired: false,
+          };
+        }
+      }
+      // If no date, can't determine expiration - keep offer but mark as not expired
+      return {
+        ...offer,
+        isExpired: false,
+      };
+    })
+    .filter(offer => !isOfferExpired(offer));
 
   return Promise.all(allianceNations.map(async nation => {
     const nationAidSlots: NationAidSlots = {

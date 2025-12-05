@@ -26,6 +26,17 @@ export class AidController {
       }, 0);
       console.log(`[API] getAidSlots (allianceId: ${allianceId}): Returning ${nationCount} nations with ${aidOfferCount} aid offers`);
       
+      // Debug: Log details for nation 518299
+      const nation518299 = aidSlots.find(nas => nas.nation.id === 518299);
+      if (nation518299) {
+        const offers = nation518299.aidSlots.filter(slot => slot.aidOffer !== null);
+        console.log(`[DEBUG] Nation 518299 has ${offers.length} aid offers:`);
+        offers.forEach(slot => {
+          const offer = slot.aidOffer!;
+          console.log(`  - Aid ID: ${offer.aidId}, Date: ${offer.date}, Status: ${offer.status}, isExpired: ${offer.isExpired}, daysUntilExpiration: ${offer.daysUntilExpiration}`);
+        });
+      }
+      
       res.json({
         success: true,
         allianceId,

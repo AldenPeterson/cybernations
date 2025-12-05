@@ -113,23 +113,16 @@ export class NationEditorController {
         slots.receive_priority = receivePriority;
       }
 
-      let allianceData = await AllianceService.getAllianceById(allianceId);
+      // Check if nation exists in database and belongs to this alliance
+      const { prisma } = await import('../utils/prisma.js');
+      const nationRecord = await prisma.nation.findFirst({
+        where: {
+          id: nationId,
+          allianceId: allianceId
+        }
+      });
       
-      // If the alliance does not yet have a config file, attempt to create one from raw data
-      if (!allianceData) {
-        allianceData = await AllianceService.createAllianceConfigFromRaw(allianceId);
-      }
-      
-      if (!allianceData) {
-        return res.status(404).json({
-          success: false,
-          error: 'Alliance not found in config or raw data'
-        });
-      }
-
-      const nation = allianceData.nations[nationId];
-      
-      if (!nation) {
+      if (!nationRecord) {
         return res.status(404).json({
           success: false,
           error: 'Nation not found in alliance'
@@ -169,19 +162,57 @@ export class NationEditorController {
         });
       }
 
-      // Get the updated nation data and merge with discord handle
-      const updatedAlliance = await AllianceService.getAllianceById(allianceId);
-      const updatedNation = updatedAlliance?.nations[nationId];
+      // Get the updated nation data from database
+      const updatedNationConfig = await prisma.nationConfig.findUnique({
+        where: { nationId },
+        include: {
+          nation: {
+            include: { alliance: true }
+          }
+        }
+      });
+
       const discordHandleValue = await getDiscordHandle(nationId);
+      
+      // Build response with updated data
+      const defaultSlots = {
+        sendTech: 0,
+        sendCash: 0,
+        getTech: 0,
+        getCash: 0,
+        external: 0,
+        send_priority: 3,
+        receive_priority: 3
+      };
+
+      const responseNation = {
+        nation_id: nationId,
+        ruler_name: nationRecord.rulerName,
+        nation_name: nationRecord.nationName,
+        discord_handle: discordHandleValue || updatedNationConfig?.discordHandle || '',
+        has_dra: updatedNationConfig?.hasDra ?? false,
+        notes: updatedNationConfig?.notes || undefined,
+        slots: updatedNationConfig ? {
+          sendTech: updatedNationConfig.sendTechSlots,
+          sendCash: updatedNationConfig.sendCashSlots,
+          getTech: updatedNationConfig.getTechSlots,
+          getCash: updatedNationConfig.getCashSlots,
+          external: updatedNationConfig.externalSlots,
+          send_priority: updatedNationConfig.sendPriority,
+          receive_priority: updatedNationConfig.receivePriority
+        } : defaultSlots,
+        current_stats: {
+          technology: nationRecord.technology || '0',
+          infrastructure: nationRecord.infrastructure || '0',
+          strength: nationRecord.strength.toLocaleString()
+        },
+        inWarMode: nationRecord.inWarMode ?? false
+      };
 
       res.json({
         success: true,
         message: 'Nation updated successfully',
-        nation: {
-          nation_id: nationId,
-          ...updatedNation,
-          discord_handle: discordHandleValue || updatedNation?.discord_handle || ''
-        }
+        nation: responseNation
       });
     } catch (error) {
       console.error('Error updating nation:', error);

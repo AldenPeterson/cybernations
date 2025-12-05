@@ -1,4 +1,5 @@
 import { prisma } from './prisma.js';
+import { calculateAidDateInfo } from './dateUtils.js';
 
 export interface AllianceData {
   alliance_id: number;
@@ -460,10 +461,12 @@ export async function loadAllianceData(allianceId: number): Promise<{
       rawNationsDict[n.id] = { inWarMode: n.inWarMode };
     });
 
-    // Query only aid offers involving nations in this alliance
+    // Query aid offers involving nations in this alliance
+    // Only get active offers (present in latest CSV data)
+    // Don't filter by status here - we'll filter by date-based expiration in memory
     const aidOfferRecords = await prisma.aidOffer.findMany({
       where: {
-        status: { not: 'Expired' },
+        isActive: true,
         OR: [
           { declaringNationId: { in: allianceNationIds } },
           { receivingNationId: { in: allianceNationIds } }
@@ -479,26 +482,47 @@ export async function loadAllianceData(allianceId: number): Promise<{
       },
     });
     
-    const aidOffers = aidOfferRecords.map((a: any) => ({
-      aidId: a.aidId,
-      declaringId: a.declaringNationId,
-      declaringRuler: a.declaringNation.rulerName,
-      declaringNation: a.declaringNation.nationName,
-      declaringAlliance: a.declaringNation.alliance.name,
-      declaringAllianceId: a.declaringNation.allianceId,
-      receivingId: a.receivingNationId,
-      receivingRuler: a.receivingNation.rulerName,
-      receivingNation: a.receivingNation.nationName,
-      receivingAlliance: a.receivingNation.alliance.name,
-      receivingAllianceId: a.receivingNation.allianceId,
-      status: a.status,
-      money: a.money,
-      technology: a.technology,
-      soldiers: a.soldiers,
-      date: a.date,
-      reason: a.reason,
-      isExpired: a.isExpired ?? undefined,
-    }));
+    const aidOffers = aidOfferRecords
+      .map((a: any) => {
+        // Calculate all date-related fields
+        let dateInfo: { expirationDate?: string; daysUntilExpiration?: number; isExpired?: boolean } = {};
+        try {
+          if (a.date) {
+            dateInfo = calculateAidDateInfo(a.date);
+          }
+        } catch (error) {
+          console.warn(`Failed to calculate date info for aid offer ${a.aidId} with date "${a.date}":`, error);
+        }
+        
+        return {
+          aidId: a.aidId,
+          declaringId: a.declaringNationId,
+          declaringRuler: a.declaringNation.rulerName,
+          declaringNation: a.declaringNation.nationName,
+          declaringAlliance: a.declaringNation.alliance.name,
+          declaringAllianceId: a.declaringNation.allianceId,
+          receivingId: a.receivingNationId,
+          receivingRuler: a.receivingNation.rulerName,
+          receivingNation: a.receivingNation.nationName,
+          receivingAlliance: a.receivingNation.alliance.name,
+          receivingAllianceId: a.receivingNation.allianceId,
+          status: a.status,
+          money: a.money,
+          technology: a.technology,
+          soldiers: a.soldiers,
+          date: a.date,
+          reason: a.reason,
+          expirationDate: dateInfo.expirationDate,
+          daysUntilExpiration: dateInfo.daysUntilExpiration,
+          isExpired: dateInfo.isExpired ?? a.isExpired ?? false,
+        };
+      })
+      // Filter out expired offers (by status OR by date calculation)
+      .filter(offer => {
+        const isStatusExpired = offer.status === 'Expired' || offer.status === 'Cancelled';
+        const isDateExpired = offer.isExpired === true;
+        return !isStatusExpired && !isDateExpired;
+      });
 
     // Convert database data to the format expected by the frontend and enrich with war mode status
     const nationsArray = Object.entries(allianceData.nations).map(([nationId, nationData]) => {
@@ -569,10 +593,12 @@ export async function loadAllianceData(allianceId: number): Promise<{
   
   const allianceNationIds = nations.map(n => n.id);
   
-  // Query only aid offers involving nations in this alliance
+  // Query aid offers involving nations in this alliance
+  // Only get active offers (present in latest CSV data)
+  // Don't filter by status here - we'll filter by date-based expiration in memory
   const aidOfferRecords = await prisma.aidOffer.findMany({
     where: {
-      status: { not: 'Expired' },
+      isActive: true,
       OR: [
         { declaringNationId: { in: allianceNationIds } },
         { receivingNationId: { in: allianceNationIds } }
@@ -588,26 +614,47 @@ export async function loadAllianceData(allianceId: number): Promise<{
     },
   });
   
-  const aidOffers = aidOfferRecords.map((a: any) => ({
-    aidId: a.aidId,
-    declaringId: a.declaringNationId,
-    declaringRuler: a.declaringNation.rulerName,
-    declaringNation: a.declaringNation.nationName,
-    declaringAlliance: a.declaringNation.alliance.name,
-    declaringAllianceId: a.declaringNation.allianceId,
-    receivingId: a.receivingNationId,
-    receivingRuler: a.receivingNation.rulerName,
-    receivingNation: a.receivingNation.nationName,
-    receivingAlliance: a.receivingNation.alliance.name,
-    receivingAllianceId: a.receivingNation.allianceId,
-    status: a.status,
-    money: a.money,
-    technology: a.technology,
-    soldiers: a.soldiers,
-    date: a.date,
-    reason: a.reason,
-    isExpired: a.isExpired ?? undefined,
-  }));
+  const aidOffers = aidOfferRecords
+    .map((a: any) => {
+      // Calculate all date-related fields
+      let dateInfo: { expirationDate?: string; daysUntilExpiration?: number; isExpired?: boolean } = {};
+      try {
+        if (a.date) {
+          dateInfo = calculateAidDateInfo(a.date);
+        }
+      } catch (error) {
+        console.warn(`Failed to calculate date info for aid offer ${a.aidId} with date "${a.date}":`, error);
+      }
+      
+      return {
+        aidId: a.aidId,
+        declaringId: a.declaringNationId,
+        declaringRuler: a.declaringNation.rulerName,
+        declaringNation: a.declaringNation.nationName,
+        declaringAlliance: a.declaringNation.alliance.name,
+        declaringAllianceId: a.declaringNation.allianceId,
+        receivingId: a.receivingNationId,
+        receivingRuler: a.receivingNation.rulerName,
+        receivingNation: a.receivingNation.nationName,
+        receivingAlliance: a.receivingNation.alliance.name,
+        receivingAllianceId: a.receivingNation.allianceId,
+        status: a.status,
+        money: a.money,
+        technology: a.technology,
+        soldiers: a.soldiers,
+        date: a.date,
+        reason: a.reason,
+        expirationDate: dateInfo.expirationDate,
+        daysUntilExpiration: dateInfo.daysUntilExpiration,
+        isExpired: dateInfo.isExpired ?? a.isExpired ?? false,
+      };
+    })
+    // Filter out expired offers (by status OR by date calculation)
+    .filter(offer => {
+      const isStatusExpired = offer.status === 'Expired' || offer.status === 'Cancelled';
+      const isDateExpired = offer.isExpired === true;
+      return !isStatusExpired && !isDateExpired;
+    });
   
   return {
     nations,

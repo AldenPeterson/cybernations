@@ -148,22 +148,57 @@ export class AllianceService {
     }
     
     // Query only aid offers involving nations in this alliance
-    const allianceAidOffers = await prisma.aidOffer.findMany({
+    // Use same filtering as getAidSlots: isActive and filter expired by status/date
+    const allianceAidOfferRecords = await prisma.aidOffer.findMany({
       where: {
-        status: { not: 'Expired' },
+        isActive: true,
         OR: [
           { declaringNationId: { in: allianceNationIds } },
           { receivingNationId: { in: allianceNationIds } }
         ]
       },
       select: {
+        aidId: true,
         declaringNationId: true,
         receivingNationId: true,
         money: true,
         technology: true,
-        soldiers: true
+        soldiers: true,
+        status: true,
+        date: true,
+        isExpired: true
       }
     });
+
+    // Import date calculation utility
+    const { calculateAidDateInfo } = await import('../utils/dateUtils.js');
+    
+    // Filter out expired offers (by status OR by date calculation) - same logic as getAidSlots
+    const allianceAidOffers = allianceAidOfferRecords
+      .map((a: any) => {
+        // Calculate date-based expiration
+        let isDateExpired = false;
+        if (a.date) {
+          try {
+            const dateInfo = calculateAidDateInfo(a.date);
+            isDateExpired = dateInfo.isExpired === true;
+          } catch (error) {
+            // If we can't parse the date, don't filter it out
+            isDateExpired = false;
+          }
+        }
+        
+        return {
+          declaringNationId: a.declaringNationId,
+          receivingNationId: a.receivingNationId,
+          money: a.money || 0,
+          technology: a.technology || 0,
+          soldiers: a.soldiers || 0,
+          isStatusExpired: a.status === 'Expired' || a.status === 'Cancelled',
+          isDateExpired: isDateExpired || a.isExpired === true
+        };
+      })
+      .filter(offer => !offer.isStatusExpired && !offer.isDateExpired);
 
     const outgoingOffers = allianceAidOffers.filter(offer => allianceNationIds.includes(offer.declaringNationId));
     const incomingOffers = allianceAidOffers.filter(offer => allianceNationIds.includes(offer.receivingNationId));
@@ -260,34 +295,64 @@ export class AllianceService {
     }
 
     // Convert nations object back to array format and enrich with war mode status
+    // Include ALL nations from database, not just those in config
+    const defaultSlots = {
+      sendTech: 0,
+      sendCash: 0,
+      getTech: 0,
+      getCash: 0,
+      external: 0,
+      send_priority: 3,
+      receive_priority: 3
+    };
+
     const nationsArray: any[] = [];
-    for (const nationId in allianceData.nations) {
-      const nationData = allianceData.nations[nationId];
-      const nationIdNum = Number(nationId);
+    
+    // Iterate over all nations in the alliance from the database
+    for (const rawNation of rawNations) {
+      const nationIdNum = rawNation.id;
+      const nationData = allianceData.nations[nationIdNum];
       
-      // Ensure all slot fields have default values
-      const defaultSlots = {
-        sendTech: 0,
-        sendCash: 0,
-        getTech: 0,
-        getCash: 0,
-        external: 0,
-        send_priority: 3,
-        receive_priority: 3
-      };
-      
-      // Get discord handle from separate file, falling back to alliance data if not found
-      const discordHandle = discordHandles[nationId]?.discord_handle || nationData.discord_handle || '';
-      
-      const completeNationData = {
-        nation_id: nationIdNum,
-        ...nationData,
-        discord_handle: discordHandle,
-        slots: { ...defaultSlots, ...nationData.slots }, // Merge defaults with existing slots
-        inWarMode: rawNationsDict[nationIdNum]?.inWarMode ?? false
-      };
-      
-      nationsArray.push(completeNationData);
+      // If nation has config data, use it; otherwise use defaults
+      if (nationData) {
+        // Get discord handle from separate file, falling back to alliance data if not found
+        const discordHandle = discordHandles[nationIdNum]?.discord_handle || nationData.discord_handle || '';
+        
+        const completeNationData = {
+          nation_id: nationIdNum,
+          ...nationData,
+          discord_handle: discordHandle,
+          slots: { ...defaultSlots, ...nationData.slots }, // Merge defaults with existing slots
+          inWarMode: rawNation.inWarMode ?? false,
+          current_stats: nationData.current_stats || {
+            technology: rawNation.technology || '0',
+            infrastructure: rawNation.infrastructure || '0',
+            strength: rawNation.strength.toLocaleString()
+          }
+        };
+        
+        nationsArray.push(completeNationData);
+      } else {
+        // Nation exists in database but not in config - include it with defaults
+        const discordHandle = discordHandles[nationIdNum]?.discord_handle || '';
+        
+        const completeNationData = {
+          nation_id: nationIdNum,
+          ruler_name: rawNation.rulerName,
+          nation_name: rawNation.nationName,
+          discord_handle: discordHandle,
+          has_dra: false,
+          slots: { ...defaultSlots },
+          current_stats: {
+            technology: rawNation.technology || '0',
+            infrastructure: rawNation.infrastructure || '0',
+            strength: rawNation.strength.toLocaleString()
+          },
+          inWarMode: rawNation.inWarMode ?? false
+        };
+        
+        nationsArray.push(completeNationData);
+      }
     }
 
     return {

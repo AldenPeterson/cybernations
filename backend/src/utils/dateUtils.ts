@@ -164,7 +164,15 @@ export function calculateDaysBetween(startDate: string, endDate: string): number
 export function calculateDaysUntilExpiration(startDate: string, expirationDays: number): number {
   const start = parseCentralTimeDate(startDate);
   const now = getCurrentCentralTime();
-  const daysSinceStart = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  
+  // Calculate the difference in milliseconds
+  const diffMs = now.getTime() - start.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  
+  // Calculate days since start (using floor to get full days)
+  const daysSinceStart = Math.floor(diffDays);
+  
+  // Return remaining days (0 if expired)
   return Math.max(0, expirationDays - daysSinceStart);
 }
 

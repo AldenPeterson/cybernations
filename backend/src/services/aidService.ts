@@ -13,8 +13,47 @@ import { AllianceService } from './allianceService.js';
 import { AidOffer } from '../models/index.js';
 import { CategorizedNation, Nation } from '../models/Nation.js';
 import { prisma } from '../utils/prisma.js';
+import { isAidOfferExpired, calculateAidDateInfo, getAidDaysUntilExpiration } from '../utils/dateUtils.js';
 
 export class AidService {
+  /**
+   * Helper function to check if an aid offer is expired (by status or by date)
+   */
+  private static isOfferExpired(offer: AidOffer): boolean {
+    // Check status first
+    if (offer.status === 'Expired' || offer.status === 'Cancelled') {
+      return true;
+    }
+    
+    // Check date-based expiration - use the calculated field if available
+    if (offer.isExpired === true) {
+      return true;
+    }
+    
+    // Also check daysUntilExpiration - if 0 or negative, it's expired
+    if (offer.daysUntilExpiration !== undefined) {
+      if (offer.daysUntilExpiration <= 0) {
+        return true;
+      }
+      // If daysUntilExpiration > 0, it's not expired
+      return false;
+    }
+    
+    // Calculate expiration based on date if not already calculated
+    if (offer.date) {
+      try {
+        return isAidOfferExpired(offer.date);
+      } catch (error) {
+        console.warn(`Failed to calculate expiration for aid offer ${offer.aidId} with date "${offer.date}":`, error);
+        // If we can't parse the date, don't filter it out - allow it through
+        return false;
+      }
+    }
+    
+    // If no date available, can't determine expiration - don't filter it out
+    return false;
+  }
+
   /**
    * Load cross-alliance aid coordination configuration from database
    */
@@ -77,10 +116,12 @@ export class AidService {
     // Get alliance nation IDs for filtering aid offers
     const allianceNationIds = new Set(nations.map(n => n.id));
     
-    // Query only aid offers involving nations in this alliance
+    // Query aid offers involving nations in this alliance
+    // Only get active offers (present in latest CSV data)
+    // Don't filter by status here - we'll filter by date-based expiration in memory
     const aidOfferRecords = await prisma.aidOffer.findMany({
       where: {
-        status: { not: 'Expired' },
+        isActive: true,
         OR: [
           { declaringNationId: { in: Array.from(allianceNationIds) } },
           { receivingNationId: { in: Array.from(allianceNationIds) } }
@@ -96,26 +137,63 @@ export class AidService {
       },
     });
     
-    const aidOffers: AidOffer[] = aidOfferRecords.map((a: any) => ({
-      aidId: a.aidId,
-      declaringId: a.declaringNationId,
-      declaringRuler: a.declaringNation.rulerName,
-      declaringNation: a.declaringNation.nationName,
-      declaringAlliance: a.declaringNation.alliance.name,
-      declaringAllianceId: a.declaringNation.allianceId,
-      receivingId: a.receivingNationId,
-      receivingRuler: a.receivingNation.rulerName,
-      receivingNation: a.receivingNation.nationName,
-      receivingAlliance: a.receivingNation.alliance.name,
-      receivingAllianceId: a.receivingNation.allianceId,
-      status: a.status,
-      money: a.money,
-      technology: a.technology,
-      soldiers: a.soldiers,
-      date: a.date,
-      reason: a.reason,
-      isExpired: a.isExpired ?? undefined,
-    }));
+    const aidOffers: AidOffer[] = aidOfferRecords
+      .map((a: any) => {
+        // Calculate all date-related fields
+        // Note: Prisma maps 'date' field to 'aid_timestamp' column in database
+        let dateInfo: { expirationDate?: string; daysUntilExpiration?: number; isExpired?: boolean } = {};
+        
+        // Debug: Log what Prisma is returning for the date field
+        if (!a.date && aidOfferRecords.length > 0 && aidOfferRecords[0].aidId === a.aidId) {
+          console.log(`[DEBUG] First aid offer ${a.aidId} - Prisma returned:`, {
+            hasDate: 'date' in a,
+            dateValue: a.date,
+            allKeys: Object.keys(a).filter(k => k.includes('date') || k.includes('timestamp') || k.includes('Date'))
+          });
+        }
+        
+        try {
+          if (a.date) {
+            dateInfo = calculateAidDateInfo(a.date);
+          } else {
+            // Only log first few to avoid spam
+            if (aidOfferRecords.indexOf(a) < 3) {
+              console.warn(`Aid offer ${a.aidId} has no date field (date is null/undefined). Available fields: ${Object.keys(a).join(', ')}`);
+            }
+          }
+        } catch (error) {
+          console.warn(`Failed to calculate date info for aid offer ${a.aidId} with date "${a.date}":`, error);
+        }
+        
+        return {
+          aidId: a.aidId,
+          declaringId: a.declaringNationId,
+          declaringRuler: a.declaringNation.rulerName,
+          declaringNation: a.declaringNation.nationName,
+          declaringAlliance: a.declaringNation.alliance.name,
+          declaringAllianceId: a.declaringNation.allianceId,
+          receivingId: a.receivingNationId,
+          receivingRuler: a.receivingNation.rulerName,
+          receivingNation: a.receivingNation.nationName,
+          receivingAlliance: a.receivingNation.alliance.name,
+          receivingAllianceId: a.receivingNation.allianceId,
+          status: a.status,
+          money: a.money,
+          technology: a.technology,
+          soldiers: a.soldiers,
+          date: a.date || '',
+          reason: a.reason,
+          expirationDate: dateInfo.expirationDate,
+          daysUntilExpiration: dateInfo.daysUntilExpiration,
+          isExpired: dateInfo.isExpired ?? a.isExpired ?? false,
+        };
+      })
+      // Filter out expired offers (by status OR by date calculation)
+      .filter(offer => {
+        const isStatusExpired = offer.status === 'Expired' || offer.status === 'Cancelled';
+        const isDateExpired = offer.isExpired === true;
+        return !isStatusExpired && !isDateExpired;
+      });
     
     return await getAidSlotsForAlliance(allianceId, nations, aidOffers);
   }
@@ -146,8 +224,7 @@ export class AidService {
     
     // Get existing aid offers (exclude expired and cancelled)
     const existingOffers = aidOffers.filter(offer => 
-      offer.status !== 'Expired' && 
-      offer.status !== 'Cancelled' &&
+      !this.isOfferExpired(offer) &&
       (offer.declaringAllianceId === allianceId || offer.receivingAllianceId === allianceId)
     );
 
@@ -226,13 +303,13 @@ export class AidService {
     
     // Get existing aid offers (exclude expired)
     const existingOffers = aidOffers.filter(offer => 
-      offer.status !== 'Expired' && 
+      !this.isOfferExpired(offer) &&
       (offer.declaringAllianceId === allianceId || offer.receivingAllianceId === allianceId)
     );
 
-    // Get expired aid offers for prioritization
+    // Get expired aid offers for prioritization (by status or by date)
     const expiredOffers = aidOffers.filter(offer => 
-      offer.status === 'Expired' && 
+      this.isOfferExpired(offer) &&
       (offer.declaringAllianceId === allianceId || offer.receivingAllianceId === allianceId)
     );
 
@@ -1313,7 +1390,7 @@ export class AidService {
 
       if (nationAidSlotsData) {
         nationAidSlotsData.aidSlots.forEach(slot => {
-          if (slot.aidOffer && slot.aidOffer.status !== 'Expired') {
+          if (slot.aidOffer && !this.isOfferExpired(slot.aidOffer)) {
             const isCash = slot.aidOffer.money > 0 && slot.aidOffer.technology === 0;
             const isTech = slot.aidOffer.technology > 0;
             
@@ -1480,7 +1557,7 @@ export class AidService {
     
     // Filter for small aid offers (money < 1000000 and technology < 100, but must have some value)
     const smallOffers = aidOffers.filter(offer => 
-      offer.status !== 'Expired' && 
+      !this.isOfferExpired(offer) &&
       ((offer.money < 1000000 && offer.technology < 100 && (offer.money > 0 || offer.technology > 0)) || 
       (offer.technology == 0 && offer.money < 6000000 && offer.money > 0))
     );
