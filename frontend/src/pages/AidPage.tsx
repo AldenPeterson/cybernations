@@ -530,16 +530,42 @@ const AidPage: React.FC = () => {
       console.log(`Deduplicated ${recommendations.length} recommendations down to ${uniqueRecommendations.length}`);
     }
 
+    // Create a Set of all alliance nation IDs for checking if offers are external
+    // This is used to determine if an offer is external (other party not in alliance)
+    const allianceNationIds = new Set(
+      nationAidSlots.map(nas => nas.nation.id)
+    );
+
     // Process each nation's slots and add recommendations to empty slots
     // Recommendations can appear in both sender and recipient rows (like real offers)
     // Create deep copy to avoid mutating the original
-    return nationAidSlots.map(nationAidSlots => {
-      const nationId = nationAidSlots.nation.id;
+    return nationAidSlots.map(nationAidSlotsItem => {
+      const nationId = nationAidSlotsItem.nation.id;
       // Deep copy slots array to avoid mutating the original
-      const updatedSlots = nationAidSlots.aidSlots.map(slot => ({
+      const updatedSlots = nationAidSlotsItem.aidSlots.map(slot => ({
         ...slot,
         aidOffer: slot.aidOffer ? { ...slot.aidOffer } : null
       }));
+
+      // Calculate how many external slots this nation needs
+      const nationConfig = nationsConfig.find(nc => nc.nation_id === nationId);
+      const configuredExternal = nationConfig?.slots.external || 0;
+      
+      // Count actual filled external slots for this specific nation
+      let filledExternal = 0;
+      nationAidSlotsItem.aidSlots.forEach(slot => {
+        if (slot.aidOffer && slot.aidOffer.aidId > 0 && slot.aidOffer.aidId !== -2) {
+          const otherPartyId = slot.isOutgoing 
+            ? slot.aidOffer.receivingId
+            : slot.aidOffer.declaringId;
+          if (!allianceNationIds.has(otherPartyId)) {
+            filledExternal++;
+          }
+        }
+      });
+      
+      // Calculate how many external slots are needed
+      const neededExternal = Math.max(0, configuredExternal - filledExternal);
 
       // Track which recommendations have been assigned to THIS nation's slots to prevent duplicates within the row
       // Key format: "senderId-recipientId" to uniquely identify each recommendation pair
@@ -560,59 +586,59 @@ const AidPage: React.FC = () => {
       // This ensures we process each recommendation exactly once
       let outgoingIndex = 0;
       let incomingIndex = 0;
-      let externalSlotsRemaining = externalSlotsMap.get(nationId) || 0;
+      let externalSlotsNeeded = neededExternal;
 
-      // Fill empty slots with recommendations (prioritize outgoing, then incoming, then external)
+      // Fill empty slots with recommendations (prioritize external needs, then outgoing, then incoming)
       // Each recommendation can only be assigned once per nation
       updatedSlots.forEach((slot) => {
         if (!slot.aidOffer) {
           let recToAssign: AidRecommendation | null = null;
 
-          // Try outgoing recommendations first
-          while (outgoingIndex < allOutgoingRecs.length) {
-            const candidate = allOutgoingRecs[outgoingIndex];
-            const recKey = `${candidate.sender.id}-${candidate.recipient.id}`;
-            if (!assignedRecKeys.has(recKey)) {
-              recToAssign = candidate;
-              assignedRecKeys.add(recKey);
-              outgoingIndex++;
-              break; // Found one, stop looking
-            }
-            outgoingIndex++; // Already assigned, skip to next
-          }
-
-          // If no outgoing available, try incoming
-          if (!recToAssign) {
-            while (incomingIndex < allIncomingRecs.length) {
-              const candidate = allIncomingRecs[incomingIndex];
+          // First, check if this nation needs external slots
+          if (externalSlotsNeeded > 0) {
+            slot.aidOffer = createExternalSlotOffer(nationId);
+            slot.isOutgoing = true; // External slots are typically outgoing
+            externalSlotsNeeded--;
+          } else {
+            // Try outgoing recommendations
+            while (outgoingIndex < allOutgoingRecs.length) {
+              const candidate = allOutgoingRecs[outgoingIndex];
               const recKey = `${candidate.sender.id}-${candidate.recipient.id}`;
               if (!assignedRecKeys.has(recKey)) {
                 recToAssign = candidate;
                 assignedRecKeys.add(recKey);
-                incomingIndex++;
+                outgoingIndex++;
                 break; // Found one, stop looking
               }
-              incomingIndex++; // Already assigned, skip to next
+              outgoingIndex++; // Already assigned, skip to next
             }
-          }
 
-          // If no regular recommendations, try external slots
-          if (!recToAssign && externalSlotsRemaining > 0) {
-            slot.aidOffer = createExternalSlotOffer(nationId);
-            slot.isOutgoing = true; // External slots are typically outgoing
-            externalSlotsRemaining--;
-          }
+            // If no outgoing available, try incoming
+            if (!recToAssign) {
+              while (incomingIndex < allIncomingRecs.length) {
+                const candidate = allIncomingRecs[incomingIndex];
+                const recKey = `${candidate.sender.id}-${candidate.recipient.id}`;
+                if (!assignedRecKeys.has(recKey)) {
+                  recToAssign = candidate;
+                  assignedRecKeys.add(recKey);
+                  incomingIndex++;
+                  break; // Found one, stop looking
+                }
+                incomingIndex++; // Already assigned, skip to next
+              }
+            }
 
-          if (recToAssign) {
-            const isOutgoingRec = recToAssign.sender.id === nationId;
-            slot.aidOffer = createRecommendationOffer(recToAssign, nationId);
-            slot.isOutgoing = isOutgoingRec;
+            if (recToAssign) {
+              const isOutgoingRec = recToAssign.sender.id === nationId;
+              slot.aidOffer = createRecommendationOffer(recToAssign, nationId);
+              slot.isOutgoing = isOutgoingRec;
+            }
           }
         }
       });
 
       // Add missing slot boxes after filling recommendations
-      const missingSlots = calculateMissingSlots(nationId, nationAidSlots);
+      const missingSlots = calculateMissingSlots(nationId, nationAidSlotsItem);
       
       // Group missing slots by direction
       const missingOutgoing = missingSlots.filter(ms => ms.isOutgoing);
@@ -671,7 +697,7 @@ const AidPage: React.FC = () => {
       });
 
       return {
-        ...nationAidSlots,
+        ...nationAidSlotsItem,
         aidSlots: updatedSlots
       };
     });
@@ -943,8 +969,79 @@ const AidPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {getFilteredAidSlots().map((nationAidSlots) => (
-                  <tr key={nationAidSlots.nation.id}>
+                {getFilteredAidSlots().map((nationAidSlots) => {
+                  // Get slot configuration for this nation if recommendations are shown
+                  const nationConfig = showRecommendations 
+                    ? nationsConfig.find(nc => nc.nation_id === nationAidSlots.nation.id)
+                    : null;
+                  
+                  // Count actual filled slots by type (only real offers, not recommendations)
+                  // First check if offer is external (other party not in alliance), then categorize as tech/cash
+                  const countFilledSlots = (nationAidSlots: NationAidSlots) => {
+                    // Create a Set of all nation IDs in the current alliance for quick lookup
+                    const allianceNationIds = new Set(
+                      getFilteredAidSlots().map(nas => nas.nation.id)
+                    );
+                    
+                    let filledSendCash = 0;
+                    let filledSendTech = 0;
+                    let filledGetCash = 0;
+                    let filledGetTech = 0;
+                    let filledExternal = 0;
+                    
+                    // Process each slot
+                    nationAidSlots.aidSlots.forEach(slot => {
+                      if (!slot.aidOffer || slot.aidOffer.aidId <= 0 || slot.aidOffer.aidId === -2) {
+                        return; // Skip empty slots, recommendations, and external slot recommendations
+                      }
+                      
+                      // Determine the other party's ID
+                      const otherPartyId = slot.isOutgoing 
+                        ? slot.aidOffer.receivingId  // For outgoing, check receiving nation
+                        : slot.aidOffer.declaringId; // For incoming, check declaring nation
+                      
+                      // Step 1: Check if the other party is external (not in alliance)
+                      const isExternal = !allianceNationIds.has(otherPartyId);
+                      
+                      if (isExternal) {
+                        // Count as external
+                        filledExternal++;
+                      } else {
+                        // Step 2: Categorize as tech/cash within alliance
+                        const isCash = slot.aidOffer.money > 0 && slot.aidOffer.technology === 0;
+                        const isTech = slot.aidOffer.technology > 0;
+                        
+                        if (slot.isOutgoing) {
+                          // Outgoing (send)
+                          if (isCash) {
+                            filledSendCash++;
+                          } else if (isTech) {
+                            filledSendTech++;
+                          }
+                        } else {
+                          // Incoming (get)
+                          if (isCash) {
+                            filledGetCash++;
+                          } else if (isTech) {
+                            filledGetTech++;
+                          }
+                        }
+                      }
+                    });
+                    
+                    return {
+                      sendCash: filledSendCash,
+                      sendTech: filledSendTech,
+                      getCash: filledGetCash,
+                      getTech: filledGetTech,
+                      external: filledExternal
+                    };
+                  };
+                  
+                  const filledSlots = nationConfig ? countFilledSlots(nationAidSlots) : null;
+                  
+                  return (
+                    <tr key={nationAidSlots.nation.id}>
                     <td 
                       className={columnClasses.nation}
                       style={{ backgroundColor: getActivityColor(nationAidSlots.nation.activity) }}
@@ -971,6 +1068,44 @@ const AidPage: React.FC = () => {
                         >
                           {getWarStatusIcon(nationAidSlots.nation.inWarMode)} {nationAidSlots.nation.inWarMode ? 'War Mode' : 'Peace Mode'}
                         </small>
+                        {showRecommendations && nationConfig && filledSlots && (
+                          <>
+                            <br />
+                            <div className="mt-1 pt-1 border-t border-gray-400">
+                              <small className="text-xs font-semibold text-gray-700 block mb-0.5">Slot Config:</small>
+                              <div className="text-[10px] leading-tight">
+                                {nationConfig.slots.sendCash > 0 && (
+                                  <div className="text-blue-700">
+                                    💰 Send Cash: {filledSlots.sendCash}/{nationConfig.slots.sendCash}
+                                  </div>
+                                )}
+                                {nationConfig.slots.sendTech > 0 && (
+                                  <div className="text-blue-700">
+                                    🔬 Send Tech: {filledSlots.sendTech}/{nationConfig.slots.sendTech}
+                                  </div>
+                                )}
+                                {nationConfig.slots.getCash > 0 && (
+                                  <div className="text-purple-700">
+                                    💰 Get Cash: {filledSlots.getCash}/{nationConfig.slots.getCash}
+                                  </div>
+                                )}
+                                {nationConfig.slots.getTech > 0 && (
+                                  <div className="text-purple-700">
+                                    🔬 Get Tech: {filledSlots.getTech}/{nationConfig.slots.getTech}
+                                  </div>
+                                )}
+                                {nationConfig.slots.external > 0 && (
+                                  <div className="text-gray-600">
+                                    🌐 External: {filledSlots.external}/{nationConfig.slots.external}
+                                  </div>
+                                )}
+                                <div className="text-gray-600 mt-0.5">
+                                  Priority: S{nationConfig.slots.send_priority}/R{nationConfig.slots.receive_priority}
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </td>
                     {nationAidSlots.aidSlots.map((slot) => {
@@ -1127,7 +1262,8 @@ const AidPage: React.FC = () => {
                       );
                     })}
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
