@@ -71,4 +71,5 @@ export const API_ENDPOINTS = {
   statsDecode: '/api/stats/decode',
   nuclearStats: '/api/nuclear/stats',
   nuclearTimeline: (intervalMinutes: number = 5) => `/api/nuclear/timeline?intervalMinutes=${intervalMinutes}`,
+  aidEfficiency: '/api/aid-efficiency',
 } as const;

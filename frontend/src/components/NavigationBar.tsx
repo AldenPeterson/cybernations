@@ -88,6 +88,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         return 'Shame Offers';
       case 'nuclear-stats':
         return 'Nuclear Stats';
+      case 'aid-efficiency':
+        return 'Aid Efficiency';
       default:
         return 'CyberNations';
     }
@@ -203,6 +205,17 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             )}
           >
             Nuclear Stats
+          </Link>
+          <Link 
+            to={'/aid-efficiency'}
+            className={clsx(
+              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
+              isActiveTab('aid-efficiency') 
+                ? 'bg-primary text-white font-semibold shadow-md' 
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+            )}
+          >
+            Aid Efficiency
           </Link>
         </div>
 
@@ -340,6 +353,18 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
               )}
             >
               Nuclear Stats
+            </Link>
+            <Link 
+              to={'/aid-efficiency'}
+              onClick={() => setMobileMenuOpen(false)}
+              className={clsx(
+                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
+                isActiveTab('aid-efficiency') 
+                  ? 'bg-primary text-white font-semibold shadow-md' 
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              )}
+            >
+              Aid Efficiency
             </Link>
           </div>
         </div>

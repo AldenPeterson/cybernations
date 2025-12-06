@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { StatsController } from '../controllers/statsController.js';
 import { AllianceController } from '../controllers/allianceController.js';
 import { CronController } from '../controllers/cronController.js';
+import { AidEfficiencyController } from '../controllers/aidEfficiencyController.js';
 import { aidRoutes } from './aidRoutes.js';
 import { nationEditorRoutes } from './nationEditorRoutes.js';
 import { defendingWarsRoutes } from './defendingWarsRoutes.js';
@@ -41,6 +42,9 @@ apiRoutes.get('/alliances', AllianceController.getAlliances);
 apiRoutes.get('/alliances/:allianceId/stats', AllianceController.getAllianceStats);
 apiRoutes.get('/alliances/:allianceId/nuclear-stats', AllianceController.getNuclearWeaponStats);
 apiRoutes.post('/sync/alliances', AllianceController.syncAlliances);
+
+// Aid efficiency endpoint
+apiRoutes.get('/aid-efficiency', AidEfficiencyController.getAidEfficiency);
 
 // Cron job endpoints (protected by CRON_SECRET)
 apiRoutes.post('/cron/sync-all', CronController.syncAll);
