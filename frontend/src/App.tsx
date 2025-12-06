@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import NavigationBar from './components/NavigationBar'
+import AllianceRedirect from './components/AllianceRedirect'
 import GlobalWarsPage from './pages/GlobalWarsPage'
 import AidPage from './pages/AidPage'
 import RecommendationsPage from './pages/RecommendationsPage'
@@ -46,16 +47,16 @@ function App() {
         <Route path="/global-wars" element={<GlobalWarsPage />} />
         {/* Alliance-specific routes */}
         <Route path="/aid/:allianceId" element={<AidPage />} />
-        <Route path="/aid" element={<Navigate to="/aid" replace />} />
+        <Route path="/aid" element={<AllianceRedirect tabName="aid" />} />
         
         <Route path="/recommendations/:allianceId" element={<RecommendationsPage />} />
-        <Route path="/recommendations" element={<Navigate to="/recommendations" replace />} />
+        <Route path="/recommendations" element={<AllianceRedirect tabName="recommendations" />} />
         
         <Route path="/nations/:allianceId" element={<NationsPage />} />
-        <Route path="/nations" element={<Navigate to="/nations" replace />} />
+        <Route path="/nations" element={<AllianceRedirect tabName="nations" />} />
         
         <Route path="/wars/:allianceId" element={<DefendingWarsPage />} />
-        <Route path="/wars" element={<Navigate to="/wars" replace />} />
+        <Route path="/wars" element={<AllianceRedirect tabName="wars" />} />
         
         
         {/* Non-alliance-specific */}
