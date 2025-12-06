@@ -16,6 +16,7 @@ interface AllianceEfficiencyData {
   currentEfficiency: number;
   currentTotalAidOffers: number;
   currentTotalNations: number;
+  avg10Days: number | null;
   avg30Days: number | null;
   avg60Days: number | null;
   avg90Days: number | null;
@@ -59,7 +60,7 @@ const AidEfficiencyPage: React.FC = () => {
     
     setSearchParams(newSearchParams, { replace: true });
   }, [searchParams, setSearchParams]);
-  const [sortColumn, setSortColumn] = useState<'alliance' | 'efficiency' | 'totalNations' | 'avg30' | 'avg60' | 'avg90'>('efficiency');
+  const [sortColumn, setSortColumn] = useState<'alliance' | 'efficiency' | 'totalNations' | 'avg10' | 'avg30' | 'avg60' | 'avg90'>('efficiency');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
@@ -143,6 +144,12 @@ const AidEfficiencyPage: React.FC = () => {
         case 'totalNations':
           comparison = a.currentTotalNations - b.currentTotalNations;
           break;
+        case 'avg10': {
+          const avgA = a.avg10Days ?? -1;
+          const avgB = b.avg10Days ?? -1;
+          comparison = avgA - avgB;
+          break;
+        }
         case 'avg30': {
           const avgA = a.avg30Days ?? -1;
           const avgB = b.avg30Days ?? -1;
@@ -169,7 +176,7 @@ const AidEfficiencyPage: React.FC = () => {
     return sorted;
   }, [filteredData, sortColumn, sortDirection]);
 
-  const handleSort = (column: 'alliance' | 'efficiency' | 'totalNations' | 'avg30' | 'avg60' | 'avg90') => {
+  const handleSort = (column: 'alliance' | 'efficiency' | 'totalNations' | 'avg10' | 'avg30' | 'avg60' | 'avg90') => {
     if (sortColumn === column) {
       // Toggle direction if clicking the same column
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -181,7 +188,7 @@ const AidEfficiencyPage: React.FC = () => {
   };
 
   // Find the most recent date across all alliances
-  const mostRecentDate = useMemo(() => {
+  const mostRecentDate = useMemo((): string | null => {
     if (data.length === 0) return null;
     
     let latestDate: Date | null = null;
@@ -196,10 +203,11 @@ const AidEfficiencyPage: React.FC = () => {
       });
     });
     
-    if (!latestDate) return null;
+    if (latestDate === null) return null;
     
-    // Format as M/D
-    return `${latestDate.getMonth() + 1}/${latestDate.getDate()}`;
+    // Format as M/D - TypeScript now knows latestDate is Date, not null
+    const date: Date = latestDate;
+    return `${date.getMonth() + 1}/${date.getDate()}`;
   }, [data]);
 
 
@@ -373,6 +381,24 @@ const AidEfficiencyPage: React.FC = () => {
     );
   }
 
+  // Helper function to get cell class based on value and threshold
+  const getCellClass = (value: number | null): string => {
+    if (efficiencyThreshold === null || value === null) {
+      return 'text-black';
+    }
+    
+    const threshold = efficiencyThreshold;
+    const lowerBound = threshold - 5;
+    const upperBound = threshold + 5;
+    
+    if (value < threshold) {
+      return 'bg-red-100 text-red-900 font-bold';
+    } else if (value >= lowerBound && value <= upperBound) {
+      return 'bg-yellow-100 text-yellow-900 font-bold';
+    }
+    return 'text-black';
+  };
+
   return (
     <div className={`${tableClasses.container} mt-20`}>
       <div className={tableClasses.card}>
@@ -454,10 +480,21 @@ const AidEfficiencyPage: React.FC = () => {
                   </th>
                   <th 
                     className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                    onClick={() => handleSort('totalNations')}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Nation Count {mostRecentDate ? `(${mostRecentDate})` : ''}
+                      <span className="text-xs text-gray-400">
+                        {sortColumn === 'totalNations' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                      </span>
+                    </div>
+                  </th>
+                  <th 
+                    className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
                     onClick={() => handleSort('efficiency')}
                   >
                     <div className="flex items-center justify-center gap-2">
-                      Efficiency {mostRecentDate ? `(${mostRecentDate})` : ''}
+                      Most Recent {mostRecentDate ? `(${mostRecentDate})` : ''}
                       <span className="text-xs text-gray-400">
                         {sortColumn === 'efficiency' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                       </span>
@@ -465,12 +502,12 @@ const AidEfficiencyPage: React.FC = () => {
                   </th>
                   <th 
                     className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
-                    onClick={() => handleSort('totalNations')}
+                    onClick={() => handleSort('avg10')}
                   >
                     <div className="flex items-center justify-center gap-2">
-                      Nation Count {mostRecentDate ? `(${mostRecentDate})` : ''}
+                      10 Day Avg
                       <span className="text-xs text-gray-400">
-                        {sortColumn === 'totalNations' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                        {sortColumn === 'avg10' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                       </span>
                     </div>
                   </th>
@@ -522,42 +559,31 @@ const AidEfficiencyPage: React.FC = () => {
                     <td className="p-2 border border-slate-300 font-bold text-black">
                       {alliance.allianceName}
                     </td>
-                    <td 
-                      className={`p-2 border border-slate-300 text-center font-semibold ${
-                        efficiencyThreshold !== null && alliance.currentEfficiency < efficiencyThreshold
-                          ? 'bg-red-100 text-red-900 font-bold'
-                          : 'text-black'
-                      }`}
-                    >
-                      {alliance.currentEfficiency.toFixed(2)}%
-                    </td>
                     <td className="p-2 border border-slate-300 text-center text-black">
                       {alliance.currentTotalNations}
                     </td>
                     <td 
-                      className={`p-2 border border-slate-300 text-center ${
-                        efficiencyThreshold !== null && alliance.avg30Days !== null && alliance.avg30Days < efficiencyThreshold
-                          ? 'bg-red-100 text-red-900 font-bold'
-                          : 'text-black'
-                      }`}
+                      className={`p-2 border border-slate-300 text-center font-semibold ${getCellClass(alliance.currentEfficiency)}`}
+                    >
+                      {alliance.currentEfficiency.toFixed(2)}%
+                    </td>
+                    <td 
+                      className={`p-2 border border-slate-300 text-center ${getCellClass(alliance.avg10Days)}`}
+                    >
+                      {alliance.avg10Days !== null ? `${alliance.avg10Days.toFixed(2)}%` : 'N/A'}
+                    </td>
+                    <td 
+                      className={`p-2 border border-slate-300 text-center ${getCellClass(alliance.avg30Days)}`}
                     >
                       {alliance.avg30Days !== null ? `${alliance.avg30Days.toFixed(2)}%` : 'N/A'}
                     </td>
                     <td 
-                      className={`p-2 border border-slate-300 text-center ${
-                        efficiencyThreshold !== null && alliance.avg60Days !== null && alliance.avg60Days < efficiencyThreshold
-                          ? 'bg-red-100 text-red-900 font-bold'
-                          : 'text-black'
-                      }`}
+                      className={`p-2 border border-slate-300 text-center ${getCellClass(alliance.avg60Days)}`}
                     >
                       {alliance.avg60Days !== null ? `${alliance.avg60Days.toFixed(2)}%` : 'N/A'}
                     </td>
                     <td 
-                      className={`p-2 border border-slate-300 text-center ${
-                        efficiencyThreshold !== null && alliance.avg90Days !== null && alliance.avg90Days < efficiencyThreshold
-                          ? 'bg-red-100 text-red-900 font-bold'
-                          : 'text-black'
-                      }`}
+                      className={`p-2 border border-slate-300 text-center ${getCellClass(alliance.avg90Days)}`}
                     >
                       {alliance.avg90Days !== null ? `${alliance.avg90Days.toFixed(2)}%` : 'N/A'}
                     </td>
@@ -634,6 +660,7 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
     y: number;
   } | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+  const [hoveredAllianceId, setHoveredAllianceId] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const width = 1000;
@@ -751,7 +778,7 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
               fill="#ef4444"
               fontWeight="bold"
             >
-              {efficiencyThreshold}% Threshold
+              Legacy Threshold
             </text>
           </>
         )}
@@ -759,6 +786,8 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
         {/* Plot lines for each alliance */}
         {data.series.map((series, seriesIndex) => {
           const color = getColorForAlliance(seriesIndex);
+          const isHovered = hoveredAllianceId === series.allianceId;
+          const isDimmed = hoveredAllianceId !== null && hoveredAllianceId !== series.allianceId;
           const points: Array<{ x: number; y: number; value: number; date: string }> = [];
 
           // Build path data with value and date info
@@ -786,16 +815,18 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
                   d={pathData}
                   fill="none"
                   stroke={color}
-                  strokeWidth={2}
+                  strokeWidth={isHovered ? 4 : 2}
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  opacity={isDimmed ? 0.3 : 1}
+                  style={{ transition: 'all 0.2s ease' }}
                 />
                 {/* Data points */}
                 {points.map((point, pointIndex) => {
-                  const isHovered = hoveredPoint?.allianceName === series.name && 
+                  const isPointHovered = hoveredPoint?.allianceName === series.name && 
                                     hoveredPoint?.date === point.date;
                   
-                  const handleMouseEnter = (e: React.MouseEvent) => {
+                  const handleMouseEnter = () => {
                     if (svgRef.current) {
                       const svgRect = svgRef.current.getBoundingClientRect();
                       const pointX = point.x + margin.left;
@@ -846,8 +877,9 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
                       <circle
                         cx={point.x}
                         cy={point.y}
-                        r={isHovered ? 6 : 4}
+                        r={isPointHovered ? 6 : 4}
                         fill={color}
+                        opacity={isDimmed ? 0.3 : 1}
                         stroke="white"
                         strokeWidth={isHovered ? 2 : 1}
                         pointerEvents="none"
@@ -891,21 +923,34 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
         {data.series.map((series, index) => {
           const color = getColorForAlliance(index);
           const y = index * 25;
+          const isLegendHovered = hoveredAllianceId === series.allianceId;
+          const isLegendDimmed = hoveredAllianceId !== null && hoveredAllianceId !== series.allianceId;
+          
           return (
-            <g key={`legend-${series.allianceId}`}>
+            <g 
+              key={`legend-${series.allianceId}`}
+              onMouseEnter={() => setHoveredAllianceId(series.allianceId)}
+              onMouseLeave={() => setHoveredAllianceId(null)}
+              style={{ cursor: 'pointer' }}
+            >
               <line
                 x1={0}
                 y1={y + 5}
                 x2={20}
                 y2={y + 5}
                 stroke={color}
-                strokeWidth={2}
+                strokeWidth={isLegendHovered ? 4 : 2}
+                opacity={isLegendDimmed ? 0.3 : 1}
+                style={{ transition: 'all 0.2s ease' }}
               />
               <text
                 x={25}
                 y={y + 9}
                 fontSize={12}
-                fill="#333"
+                fill={isLegendHovered ? "#000" : "#333"}
+                fontWeight={isLegendHovered ? "bold" : "normal"}
+                opacity={isLegendDimmed ? 0.3 : 1}
+                style={{ transition: 'all 0.2s ease' }}
               >
                 {series.name}
               </text>

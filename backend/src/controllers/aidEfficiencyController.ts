@@ -84,6 +84,10 @@ export class AidEfficiencyController {
         const latestDataPoint = alliance.dataPoints[alliance.dataPoints.length - 1];
         
         // Calculate rolling averages
+        const avg10 = calculateRollingAverage(
+          alliance.dataPoints.map(p => ({ date: p.date, efficiency: p.efficiency })),
+          10
+        );
         const avg30 = calculateRollingAverage(
           alliance.dataPoints.map(p => ({ date: p.date, efficiency: p.efficiency })),
           30
@@ -103,6 +107,7 @@ export class AidEfficiencyController {
           currentEfficiency: latestDataPoint ? latestDataPoint.efficiency : 0,
           currentTotalAidOffers: latestDataPoint ? latestDataPoint.totalAidOffers : 0,
           currentTotalNations: latestDataPoint ? latestDataPoint.totalNations : 0,
+          avg10Days: avg10,
           avg30Days: avg30,
           avg60Days: avg60,
           avg90Days: avg90,
