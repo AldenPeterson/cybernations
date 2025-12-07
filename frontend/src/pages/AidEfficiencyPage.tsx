@@ -191,23 +191,32 @@ const AidEfficiencyPage: React.FC = () => {
   const mostRecentDate = useMemo((): string | null => {
     if (data.length === 0) return null;
     
-    let latestDate: Date | null = null;
+    let latestDateStr: string | null = null;
     data.forEach(alliance => {
       alliance.timeSeries.forEach(point => {
-        const pointDate = new Date(point.date);
-        if (!isNaN(pointDate.getTime())) {
-          if (!latestDate || pointDate > latestDate) {
-            latestDate = pointDate;
-          }
+        // Compare date strings directly (YYYY-MM-DD format)
+        if (latestDateStr === null || point.date > latestDateStr) {
+          latestDateStr = point.date;
         }
       });
     });
     
-    if (latestDate === null) return null;
+    if (!latestDateStr) return null;
     
-    // Format as M/D - TypeScript now knows latestDate is Date, not null
-    const date: Date = latestDate;
-    return `${date.getMonth() + 1}/${date.getDate()}`;
+    // Parse date string (YYYY-MM-DD) and format as M/D
+    // The date string represents a Central Time date, so we parse it as such
+    const dateStr: string = latestDateStr;
+    const dateParts = dateStr.split('-');
+    if (dateParts.length !== 3) return null;
+    const year = parseInt(dateParts[0], 10);
+    const month = parseInt(dateParts[1], 10);
+    const day = parseInt(dateParts[2], 10);
+    
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+    
+    // Create date in Central Time by using the date components directly
+    // Format as M/D (month/day)
+    return `${month}/${day}`;
   }, [data]);
 
 
@@ -665,7 +674,7 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
 
   const width = 1000;
   const height = 500;
-  const margin = { top: 20, right: 150, bottom: 60, left: 60 };
+  const margin = { top: 20, right: 150, bottom: 80, left: 60 };
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
 
@@ -679,21 +688,45 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
   const xScale = (index: number) => (index / (data.dates.length - 1 || 1)) * plotWidth;
   const yScale = (value: number) => plotHeight - ((value - minEfficiency) / efficiencyRange) * plotHeight;
 
-  // Format date for display
+  // Format date for display (treats date string as Central Time date)
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return `${date.getMonth() + 1}/${date.getDate()}`;
+    // Parse YYYY-MM-DD format and treat as Central Time date
+    const [, month, day] = dateStr.split('-').map(Number);
+    return `${month}/${day}`;
   };
 
-  // Format date with year for full date labels
-  const formatDateFull = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-  };
-
-  // Generate x-axis ticks (show every nth date to avoid crowding)
-  const tickInterval = Math.max(1, Math.floor(data.dates.length / 10));
-  const xTicks = data.dates.filter((_, i) => i % tickInterval === 0 || i === data.dates.length - 1);
+  // Generate x-axis ticks (show dates at regular intervals, ensuring we show at least a few)
+  // Aim for about 8-12 ticks, but always show first, last, and a few in between
+  const maxTicks = 12;
+  const minTicks = 5;
+  const numTicks = Math.min(maxTicks, Math.max(minTicks, data.dates.length));
+  const xTicks: string[] = [];
+  
+  if (data.dates.length === 0) {
+    // No dates to show
+  } else if (data.dates.length <= numTicks) {
+    // Show all dates if we have few enough
+    xTicks.push(...data.dates);
+  } else {
+    // Show evenly spaced dates
+    const tickInterval = Math.floor((data.dates.length - 1) / (numTicks - 1));
+    
+    // Always include first date
+    xTicks.push(data.dates[0]);
+    
+    // Add intermediate dates
+    for (let i = tickInterval; i < data.dates.length - 1; i += tickInterval) {
+      if (!xTicks.includes(data.dates[i])) {
+        xTicks.push(data.dates[i]);
+      }
+    }
+    
+    // Always include last date if it's not already included
+    const lastDate = data.dates[data.dates.length - 1];
+    if (!xTicks.includes(lastDate)) {
+      xTicks.push(lastDate);
+    }
+  }
 
   // Generate y-axis ticks
   const yTicks = [0, 20, 40, 60, 80, 100];
@@ -717,12 +750,12 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
                 x={0}
                 y={plotHeight + 20}
                 textAnchor="middle"
-                fontSize={11}
+                fontSize={10}
                 fill="#333"
-                transform={`rotate(-45, ${x}, ${plotHeight + 20})`}
-                style={{ transformOrigin: `${x}px ${plotHeight + 20}px` }}
+                transform={`rotate(-45, 0, ${plotHeight + 20})`}
+                style={{ dominantBaseline: 'hanging' }}
               >
-                {formatDateFull(date)}
+                {formatDate(date)}
               </text>
             </g>
           );

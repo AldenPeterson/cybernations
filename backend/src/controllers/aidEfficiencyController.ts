@@ -118,7 +118,17 @@ export class AidEfficiencyController {
       // Sort by current efficiency (descending)
       allianceEfficiencyData.sort((a, b) => b.currentEfficiency - a.currentEfficiency);
 
-      console.log(`[API] getAidEfficiency: Returning ${allianceEfficiencyData.length} alliances with efficiency data`);
+      // Find the most recent snapshot date across all data
+      let mostRecentSnapshotDate: string | null = null;
+      allianceEfficiencyData.forEach(alliance => {
+        alliance.timeSeries.forEach(point => {
+          if (!mostRecentSnapshotDate || point.date > mostRecentSnapshotDate) {
+            mostRecentSnapshotDate = point.date;
+          }
+        });
+      });
+
+      console.log(`[API] getAidEfficiency: Returning ${allianceEfficiencyData.length} alliances with efficiency data. Most recent snapshot date: ${mostRecentSnapshotDate || 'N/A'}`);
 
       res.json({
         success: true,
