@@ -18,6 +18,7 @@ export class DefendingWarsService {
     const allianceNationRecords = await prisma.nation.findMany({
       where: { 
         allianceId,
+        isActive: true,
         ...(includePeaceMode ? {} : { inWarMode: true })
       },
       include: { alliance: true }
@@ -104,7 +105,8 @@ export class DefendingWarsService {
     const opposingNationRecords = await prisma.nation.findMany({
       where: {
         id: { in: Array.from(allWarNationIds) },
-        allianceId: { not: allianceId }
+        allianceId: { not: allianceId },
+        isActive: true
       },
       include: { alliance: true }
     });
@@ -310,7 +312,7 @@ export class DefendingWarsService {
     
     // Query only nations in this alliance
     const allianceNationRecords = await prisma.nation.findMany({
-      where: { allianceId },
+      where: { allianceId, isActive: true },
       select: { id: true }
     });
     
@@ -397,7 +399,7 @@ export class DefendingWarsService {
     
     // Query only nations in this alliance
     const allianceNationRecords = await prisma.nation.findMany({
-      where: { allianceId },
+      where: { allianceId, isActive: true },
       select: { id: true }
     });
     

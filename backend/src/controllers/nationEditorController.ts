@@ -118,7 +118,8 @@ export class NationEditorController {
       const nationRecord = await prisma.nation.findFirst({
         where: {
           id: nationId,
-          allianceId: allianceId
+          allianceId: allianceId,
+          isActive: true
         }
       });
       

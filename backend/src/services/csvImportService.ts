@@ -93,8 +93,16 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
           });
         }
 
+        // Step 1: Mark all existing nations as inactive BEFORE processing new data
+        console.log('Marking existing nations as inactive...');
+        await prisma.nation.updateMany({
+          data: { isActive: false } as any
+        });
+
         // Then, upsert nations using batch operations
         console.log('Preparing nations for batch upsert...');
+        
+        const now = new Date();
         
         // Prepare nations data and filter invalid ones
         const validNations: any[] = [];
@@ -147,7 +155,12 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
             // Use createMany for batch insert (much faster)
             const batchSize = 1000; // Process in batches to avoid query size limits
             for (let i = 0; i < newNations.length; i += batchSize) {
-              const batch = newNations.slice(i, i + batchSize);
+              const batch = newNations.slice(i, i + batchSize).map(nation => ({
+                ...nation,
+                firstSeenAt: now,
+                lastSeenAt: now,
+                isActive: true,
+              }));
               await prisma.nation.createMany({
                 data: batch,
                 skipDuplicates: true
@@ -193,6 +206,8 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
                     attackingCasualties: nation.attackingCasualties,
                     defensiveCasualties: nation.defensiveCasualties,
                     rank: nation.rank,
+                    lastSeenAt: now,
+                    isActive: true,
                   }
                 }).catch((error: any) => {
                   console.warn(`Error updating nation ${nation.id}: ${error.message}`);

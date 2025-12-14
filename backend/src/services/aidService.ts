@@ -87,7 +87,7 @@ export class AidService {
     
     // Query only nations in this alliance
     const nationRecords = await prisma.nation.findMany({
-      where: { allianceId },
+      where: { allianceId, isActive: true },
       include: { alliance: true },
     });
     

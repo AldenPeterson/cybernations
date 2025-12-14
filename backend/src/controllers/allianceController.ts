@@ -22,6 +22,9 @@ export class AllianceController {
       const alliances = await prisma.alliance.findMany({
         include: {
           nations: {
+            where: {
+              isActive: true
+            },
             include: {
               nationConfig: true,
             },
@@ -60,7 +63,8 @@ export class AllianceController {
       const { prisma } = await import('../utils/prisma.js');
       
       // Query alliances directly with nation counts using aggregation
-      const alliancesWithCounts = await prisma.alliance.findMany({
+      // Only count active nations - Prisma _count doesn't support where, so we count separately
+      const alliances = await prisma.alliance.findMany({
         where: {
           id: { gt: 0 },
           name: { not: '' }
@@ -68,24 +72,31 @@ export class AllianceController {
         select: {
           id: true,
           name: true,
-          _count: {
-            select: {
-              nations: true
-            }
-          }
         }
       });
+      
+      // Count active nations for each alliance
+      const alliancesWithCounts = await Promise.all(
+        alliances.map(async (alliance) => {
+          const activeNationCount = await prisma.nation.count({
+            where: {
+              allianceId: alliance.id,
+              isActive: true
+            }
+          });
+          return {
+            id: alliance.id,
+            name: alliance.name,
+            nationCount: activeNationCount
+          };
+        })
+      );
       
       // Filter alliances with at least 10 nations and sort by nation count
       const filteredAlliances = alliancesWithCounts
         .filter(alliance => alliance.name && alliance.name.trim() !== '')
-        .filter(alliance => alliance._count.nations >= 10)
-        .sort((a, b) => b._count.nations - a._count.nations)
-        .map(alliance => ({
-          id: alliance.id,
-          name: alliance.name,
-          nationCount: alliance._count.nations
-        }));
+        .filter(alliance => alliance.nationCount >= 10)
+        .sort((a, b) => b.nationCount - a.nationCount);
       
       // Update cache
       alliancesCache = {

@@ -7,7 +7,10 @@ export class CronController {
    * Sync all data types (nations, aid-offers, wars)
    * This endpoint is designed to be called by Vercel cron jobs
    * 
-   * POST /api/cron/sync-all
+   * POST /api/cron/sync-all?force=true
+   * 
+   * Query Parameters:
+   * - force: Set to 'true' or '1' to force reprocessing even if files are fresh
    * 
    * Security: Verifies request is from Vercel cron using:
    * 1. x-vercel-cron header (automatically set by Vercel)
@@ -45,6 +48,12 @@ export class CronController {
         console.warn('[Cron] Warning: No security verification configured for cron endpoint');
       }
 
+      // Check for force parameter
+      const force = req.query.force === 'true' || req.query.force === '1';
+      if (force) {
+        console.log('[Cron] Force mode enabled - will reprocess all files regardless of freshness');
+      }
+
       console.log('[Cron] Starting sync-all job at', new Date().toISOString());
 
       // Use the existing ensureRecentFiles function which:
@@ -53,7 +62,7 @@ export class CronController {
       // 3. Imports CSV data into database
       // 4. Syncs alliance files
       try {
-        const downloadResults = await ensureRecentFiles();
+        const downloadResults = await ensureRecentFiles(force);
         console.log('[Cron] Sync-all job completed successfully');
         
         // Format results for response
@@ -119,7 +128,10 @@ export class CronController {
    * Alternative endpoint that syncs each type individually
    * Useful for debugging or manual triggers
    * 
-   * POST /api/cron/sync-all-detailed
+   * POST /api/cron/sync-all-detailed?force=true
+   * 
+   * Query Parameters:
+   * - force: Set to 'true' or '1' to force reprocessing even if files are fresh
    */
   static async syncAllDetailed(req: Request, res: Response) {
     try {
@@ -153,6 +165,12 @@ export class CronController {
         console.warn('[Cron] Warning: No security verification configured for cron endpoint');
       }
 
+      // Check for force parameter
+      const force = req.query.force === 'true' || req.query.force === '1';
+      if (force) {
+        console.log('[Cron] Force mode enabled - will reprocess all files regardless of freshness');
+      }
+
       console.log('[Cron] Starting detailed sync-all job at', new Date().toISOString());
 
       const results: Record<string, any> = {};
@@ -165,9 +183,10 @@ export class CronController {
         try {
           console.log(`[Cron] Syncing ${type}...`);
           
-          // Create a mock request object
+          // Create a mock request object with force parameter
           const mockReq = {
             params: { type },
+            query: { force: force ? 'true' : undefined },
             headers: req.headers
           } as unknown as Request;
           

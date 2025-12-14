@@ -400,6 +400,7 @@ export async function loadDataFromFiles(checkForUpdates: boolean = true): Promis
     
     // Load nations
     const nationRecords = await prisma.nation.findMany({
+      where: { isActive: true },
       include: {
         alliance: true,
       },

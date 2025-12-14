@@ -218,7 +218,12 @@ function getLastScheduledUpdateUtcMs(now: Date): number {
  * Determine which file types are stale based on database
  * using the twice-daily schedule at 6am/6pm Central.
  */
-async function getStaleFileTypesFromLatestDownloads(): Promise<FileType[]> {
+async function getStaleFileTypesFromLatestDownloads(force: boolean = false): Promise<FileType[]> {
+  // If force is enabled, return all file types as stale
+  if (force) {
+    return [FileType.NATION_STATS, FileType.AID_STATS, FileType.WAR_STATS];
+  }
+
   const tracker = await readLatestDownloadsTracker();
   const requiredKeys: { key: string; type: FileType; csv: string }[] = [
     { key: FileType.NATION_STATS, type: FileType.NATION_STATS, csv: 'nations.csv' },
@@ -726,9 +731,9 @@ export async function extractCsvToStandardFile(zipPath: string, outputPath: stri
   });
 }
 
-export async function ensureRecentFiles(): Promise<DownloadResult[]> {
+export async function ensureRecentFiles(force: boolean = false): Promise<DownloadResult[]> {
   // Check if we're in the blackout window before doing anything
-  if (isInBlackoutWindow()) {
+  if (isInBlackoutWindow() && !force) {
     // Don't spam logs - only check staleness if we would actually try to download
     return [];
   }
@@ -736,12 +741,18 @@ export async function ensureRecentFiles(): Promise<DownloadResult[]> {
   const isProd = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
 
   // Determine staleness using database
-  const staleTypes = await getStaleFileTypesFromLatestDownloads();
+  const staleTypes = await getStaleFileTypesFromLatestDownloads(force);
   console.log(`Staleness check: ${staleTypes.length} file(s) need updating (${staleTypes.join(', ') || 'none'})`);
 
-  if (staleTypes.length === 0) {
+  if (staleTypes.length === 0 && !force) {
     console.log('All standardized files are fresh according to database - no downloads needed');
     return [];
+  }
+  
+  // If force is enabled, process all file types
+  if (force && staleTypes.length === 0) {
+    console.log('Force mode: Processing all file types regardless of freshness');
+    staleTypes.push(FileType.NATION_STATS, FileType.AID_STATS, FileType.WAR_STATS);
   }
 
   let downloadResults: DownloadResult[] = [];
@@ -772,44 +783,56 @@ export async function ensureRecentFiles(): Promise<DownloadResult[]> {
   }
 
   // After refreshing standardized files, import CSV data into database
-  try {
-    const csvImportStartTime = Date.now();
-    console.log('Importing CSV data into database...');
-    const { importAllCsvFiles } = await import('../services/csvImportService.js');
-    await importAllCsvFiles();
-    const csvImportTime = Date.now() - csvImportStartTime;
-    console.log(`CSV data imported into database successfully in ${csvImportTime}ms (${(csvImportTime / 1000).toFixed(2)}s)`);
-    
-    // Check if all required files for the day were successfully processed
-    // Only execute post-processing SQL if all files succeeded
-    const requiredFileTypes = [FileType.NATION_STATS, FileType.AID_STATS, FileType.WAR_STATS];
-    const allFilesSucceeded = requiredFileTypes.every(fileType => {
-      const result = downloadResults.find(r => r.fileType === fileType);
-      return result?.success === true;
-    });
-    
-    if (allFilesSucceeded && downloadResults.length > 0) {
-      console.log('[Post-Processing] All required files successfully processed for the day, executing post-processing SQL query...');
-      try {
-        const { executePostProcessingIfConfigured } = await import('../services/postProcessingService.js');
-        const executed = await executePostProcessingIfConfigured();
-        if (executed) {
-          console.log('[Post-Processing] Post-processing SQL query executed successfully');
+  // If force is enabled, always import even if no new files were downloaded
+  if (force || downloadResults.length > 0) {
+    try {
+      const csvImportStartTime = Date.now();
+      console.log('Importing CSV data into database...');
+      if (force) {
+        console.log('Force mode: Importing CSV data regardless of download status');
+      }
+      const { importAllCsvFiles } = await import('../services/csvImportService.js');
+      await importAllCsvFiles();
+      const csvImportTime = Date.now() - csvImportStartTime;
+      console.log(`CSV data imported into database successfully in ${csvImportTime}ms (${(csvImportTime / 1000).toFixed(2)}s)`);
+      
+      // Check if all required files for the day were successfully processed
+      // Only execute post-processing SQL if all files succeeded
+      const requiredFileTypes = [FileType.NATION_STATS, FileType.AID_STATS, FileType.WAR_STATS];
+      const allFilesSucceeded = requiredFileTypes.every(fileType => {
+        const result = downloadResults.find(r => r.fileType === fileType);
+        return result?.success === true;
+      });
+      
+      if ((allFilesSucceeded && downloadResults.length > 0) || force) {
+        if (force) {
+          console.log('[Post-Processing] Force mode: Executing post-processing SQL query');
+        } else {
+          console.log('[Post-Processing] All required files successfully processed for the day, executing post-processing SQL query...');
         }
-      } catch (error: any) {
-        // Log error but don't fail the entire process
-        console.error('[Post-Processing] Error during post-processing:', error?.message || String(error));
+        try {
+          const { executePostProcessingIfConfigured } = await import('../services/postProcessingService.js');
+          const executed = await executePostProcessingIfConfigured();
+          if (executed) {
+            console.log('[Post-Processing] Post-processing SQL query executed successfully');
+          }
+        } catch (error: any) {
+          // Log error but don't fail the entire process
+          console.error('[Post-Processing] Error during post-processing:', error?.message || String(error));
+        }
+      } else {
+        const failedFiles = downloadResults.filter(r => !r.success).map(r => r.fileType);
+        if (failedFiles.length > 0) {
+          console.log(`[Post-Processing] Skipping post-processing SQL query - some files failed: ${failedFiles.join(', ')}`);
+        } else if (downloadResults.length === 0 && !force) {
+          console.log('[Post-Processing] Skipping post-processing SQL query - no files were processed');
+        }
       }
-    } else {
-      const failedFiles = downloadResults.filter(r => !r.success).map(r => r.fileType);
-      if (failedFiles.length > 0) {
-        console.log(`[Post-Processing] Skipping post-processing SQL query - some files failed: ${failedFiles.join(', ')}`);
-      } else if (downloadResults.length === 0) {
-        console.log('[Post-Processing] Skipping post-processing SQL query - no files were processed');
-      }
+    } catch (error) {
+      console.warn('Error importing CSV data into database:', error);
     }
-  } catch (error) {
-    console.warn('Error importing CSV data into database:', error);
+  } else {
+    console.log('No files downloaded and force mode disabled - skipping CSV import');
   }
 
   // Alliance data is now stored in the database via CSV imports

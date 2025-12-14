@@ -34,6 +34,7 @@ SELECT
 FROM alliances a
 LEFT JOIN nations n 
     ON a.id = n.alliance_id
+    AND n.is_active = true
 LEFT JOIN (
     SELECT declaring_nation_id AS nation_id, aid_id
     FROM aid_offers, cst_window cw

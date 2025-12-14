@@ -451,7 +451,7 @@ export async function loadAllianceData(allianceId: number): Promise<{
     // Query only nations in this alliance for war mode status
     const allianceNationIds = Object.keys(allianceData.nations).map(id => parseInt(id));
     const rawNationRecords = await prisma.nation.findMany({
-      where: { id: { in: allianceNationIds } },
+      where: { id: { in: allianceNationIds }, isActive: true },
       select: { id: true, inWarMode: true }
     });
     
@@ -565,7 +565,7 @@ export async function loadAllianceData(allianceId: number): Promise<{
   
   // Fall back to querying only alliance nations and their aid offers from database
   const nationRecords = await prisma.nation.findMany({
-    where: { allianceId },
+    where: { allianceId, isActive: true },
     include: { alliance: true },
   });
   

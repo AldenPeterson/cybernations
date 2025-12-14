@@ -39,6 +39,9 @@ model Nation {
   rank                                                   Int?
   createdAt                                              DateTime       @default(now()) @map("created_at")
   updatedAt                                              DateTime       @updatedAt @map("updated_at")
+  firstSeenAt                                            DateTime       @default(now()) @map("first_seen_at")
+  isActive                                                Boolean        @default(true) @map("is_active")
+  lastSeenAt                                              DateTime       @default(now()) @map("last_seen_at")
   declaringAidOffers                                     AidOffer[]     @relation("DeclaringNation")
   receivingAidOffers                                     AidOffer[]     @relation("ReceivingNation")
   dynamic_wars_dynamic_wars_declaring_nation_idTonations dynamic_wars[] @relation("dynamic_wars_declaring_nation_idTonations")
@@ -50,6 +53,8 @@ model Nation {
 
   @@index([allianceId])
   @@index([id])
+  @@index([isActive])
+  @@index([lastSeenAt])
   @@map("nations")
 }
 

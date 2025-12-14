@@ -262,17 +262,23 @@ export class CsvController {
         });
       }
 
+      // Check for force parameter
+      const force = req.query.force === 'true' || req.query.force === '1';
+      
       // Get expected file info based on current time
       const expectedFileInfo = getFileInfo(config.type);
       const expectedFilename = expectedFileInfo.name;
       
       console.log(`[Sync] Starting sync for ${config.type}...`);
       console.log(`[Sync] Expected filename: ${expectedFilename}`);
+      if (force) {
+        console.log(`[Sync] Force mode enabled - will reprocess regardless of freshness`);
+      }
       
       // Check database for last downloaded file
       const lastDownload = await getFileDownload(config.type);
       
-      if (lastDownload && lastDownload.originalFile === expectedFilename) {
+      if (!force && lastDownload && lastDownload.originalFile === expectedFilename) {
         // Data is fresh - same filename as expected
         console.log(`[Sync] Data is fresh. Last downloaded: ${lastDownload.originalFile}`);
         return res.json({
@@ -283,6 +289,10 @@ export class CsvController {
           lastDownloaded: lastDownload.originalFile,
           lastDownloadTime: lastDownload.downloadTime.toISOString()
         });
+      }
+      
+      if (force && lastDownload) {
+        console.log(`[Sync] Force mode: Reprocessing despite fresh data. Last downloaded: ${lastDownload.originalFile}`);
       }
       
       // Need to download - either no record or different filename
