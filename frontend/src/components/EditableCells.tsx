@@ -109,8 +109,8 @@ interface EditableNumberInputProps {
 export const EditableNumberInput: React.FC<EditableNumberInputProps> = ({
   value,
   onChange,
-  min = 0,
-  max = 6,
+  min,
+  max,
   className = 'input-field number-input'
 }) => (
   <input
@@ -120,8 +120,8 @@ export const EditableNumberInput: React.FC<EditableNumberInputProps> = ({
     value={value}
     onChange={(e) => onChange(parseInt(e.target.value) || 0)}
     className={clsx(tableClasses.inputField, tableClasses.numberInput, 'h-10 touch-manipulation', className)}
-    min={min}
-    max={max}
+    {...(min !== undefined && { min })}
+    {...(max !== undefined && { max })}
   />
 );
 

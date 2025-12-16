@@ -170,8 +170,8 @@ export const createNationTableColumns = ({
         <EditableNumberInput
           value={getValue()}
           onChange={(value) => handleSlotChange(row.original.nation_id, 'send_priority', value)}
-          min={1}
-          max={3}
+          min={undefined}
+          max={undefined}
         />
       </div>
     ),
@@ -192,8 +192,8 @@ export const createNationTableColumns = ({
         <EditableNumberInput
           value={getValue()}
           onChange={(value) => handleSlotChange(row.original.nation_id, 'receive_priority', value)}
-          min={1}
-          max={3}
+          min={undefined}
+          max={undefined}
         />
       </div>
     ),
