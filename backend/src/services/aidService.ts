@@ -1569,12 +1569,206 @@ export class AidService {
       }
     });
 
+    // Find nations that need alerts
+    const nationsNeedingAcceptance: Array<{
+      nationId: number;
+      nationName: string;
+      rulerName: string;
+      discord_handle?: string;
+      daysRemaining: number;
+      offerId: number;
+      senderName: string;
+      senderRuler: string;
+    }> = [];
+
+    const nationsWithUnacceptedTech: Array<{
+      nationId: number;
+      nationName: string;
+      rulerName: string;
+      discord_handle?: string;
+      tech: number;
+      offerId: number;
+      recipientName: string;
+      recipientRuler: string;
+    }> = [];
+
+    const nationsWithOldReceivedOffers: Array<{
+      nationId: number;
+      nationName: string;
+      rulerName: string;
+      discord_handle?: string;
+      daysOld: number;
+      offerId: number;
+      senderName: string;
+      senderRuler: string;
+    }> = [];
+
+    const nationsWithOldTechOffers: Array<{
+      nationId: number;
+      nationName: string;
+      rulerName: string;
+      discord_handle?: string;
+      daysOld: number;
+      tech: number;
+      offerId: number;
+      recipientName: string;
+      recipientRuler: string;
+    }> = [];
+
+    // Check for nations that need to accept offers (incoming offers with < 5 days remaining)
+    existingOffers.forEach(offer => {
+      // Only check incoming offers (where receivingId is in our alliance)
+      if (offer.receivingAllianceId === allianceId) {
+        const daysRemaining = offer.daysUntilExpiration ?? (offer.date ? getAidDaysUntilExpiration(offer.date) : undefined);
+        
+        // Check if offer is not expired and has less than 5 days remaining
+        if (daysRemaining !== undefined && daysRemaining < 5 && daysRemaining >= 0 && !this.isOfferExpired(offer)) {
+          // Check if offer is still pending (not approved)
+          const isPending = offer.status !== 'Approved' && 
+                           offer.status !== 'Expired' && 
+                           offer.status !== 'Cancelled';
+          
+          if (isPending) {
+            const receivingNation = activeNations.find(n => n.id === offer.receivingId);
+            if (receivingNation) {
+              nationsNeedingAcceptance.push({
+                nationId: offer.receivingId,
+                nationName: offer.receivingNation,
+                rulerName: offer.receivingRuler,
+                discord_handle: receivingNation.discord_handle,
+                daysRemaining: Math.floor(daysRemaining),
+                offerId: offer.aidId,
+                senderName: offer.declaringNation,
+                senderRuler: offer.declaringRuler
+              });
+            }
+          }
+        }
+      }
+    });
+
+    // Check for nations with unaccepted tech offers and < 100 tech
+    existingOffers.forEach(offer => {
+      // Only check outgoing tech offers (where declaringId is in our alliance and offer has tech)
+      if (offer.declaringAllianceId === allianceId && offer.technology > 0) {
+        // Check if offer is unaccepted (status is "Pending" or similar, not "Approved")
+        const isUnaccepted = offer.status !== 'Approved' && 
+                            offer.status !== 'Expired' && 
+                            offer.status !== 'Cancelled' &&
+                            !this.isOfferExpired(offer);
+        
+        if (isUnaccepted) {
+          const sendingNation = activeNations.find(n => n.id === offer.declaringId);
+          if (sendingNation) {
+            // Parse technology level
+            const techStr = sendingNation.technology || '0';
+            const tech = parseFloat(techStr.replace(/,/g, '')) || 0;
+            
+            if (tech < 100) {
+              nationsWithUnacceptedTech.push({
+                nationId: offer.declaringId,
+                nationName: offer.declaringNation,
+                rulerName: offer.declaringRuler,
+                discord_handle: sendingNation.discord_handle,
+                tech: tech,
+                offerId: offer.aidId,
+                recipientName: offer.receivingNation,
+                recipientRuler: offer.receivingRuler
+              });
+            }
+          }
+        }
+      }
+    });
+
+    // Check for nations with received offers that are 5+ days old
+    existingOffers.forEach(offer => {
+      // Only check incoming offers (where receivingId is in our alliance)
+      if (offer.receivingAllianceId === allianceId) {
+        const daysRemaining = offer.daysUntilExpiration ?? (offer.date ? getAidDaysUntilExpiration(offer.date) : undefined);
+        
+        // Check if offer is not expired and is 5+ days old (5 or fewer days remaining)
+        // Offers expire after 10 days, so 5+ days old means <= 5 days remaining
+        if (daysRemaining !== undefined && daysRemaining <= 5 && daysRemaining >= 0 && !this.isOfferExpired(offer)) {
+          // Check if offer is still pending (not approved)
+          const isPending = offer.status !== 'Approved' && 
+                           offer.status !== 'Expired' && 
+                           offer.status !== 'Cancelled';
+          
+          if (isPending) {
+            const receivingNation = activeNations.find(n => n.id === offer.receivingId);
+            if (receivingNation) {
+              const daysOld = 10 - Math.floor(daysRemaining);
+              nationsWithOldReceivedOffers.push({
+                nationId: offer.receivingId,
+                nationName: offer.receivingNation,
+                rulerName: offer.receivingRuler,
+                discord_handle: receivingNation.discord_handle,
+                daysOld: daysOld,
+                offerId: offer.aidId,
+                senderName: offer.declaringNation,
+                senderRuler: offer.declaringRuler
+              });
+            }
+          }
+        }
+      }
+    });
+
+    // Check for nations with tech offers that are more than 3 days old but less than 100 tech
+    existingOffers.forEach(offer => {
+      // Only check outgoing tech offers (where declaringId is in our alliance and offer has tech)
+      if (offer.declaringAllianceId === allianceId && offer.technology > 0) {
+        const daysRemaining = offer.daysUntilExpiration ?? (offer.date ? getAidDaysUntilExpiration(offer.date) : undefined);
+        
+        // Check if offer is not expired and is more than 3 days old (less than 7 days remaining)
+        // Offers expire after 10 days, so more than 3 days old means < 7 days remaining
+        if (daysRemaining !== undefined && daysRemaining < 7 && daysRemaining >= 0 && !this.isOfferExpired(offer)) {
+          // Check if offer is still pending (not approved)
+          const isPending = offer.status !== 'Approved' && 
+                           offer.status !== 'Expired' && 
+                           offer.status !== 'Cancelled';
+          
+          if (isPending) {
+            const sendingNation = activeNations.find(n => n.id === offer.declaringId);
+            if (sendingNation) {
+              // Parse technology level
+              const techStr = sendingNation.technology || '0';
+              const tech = parseFloat(techStr.replace(/,/g, '')) || 0;
+              
+              // Check if tech is less than 100
+              if (tech < 100) {
+                const daysOld = 10 - Math.floor(daysRemaining);
+                nationsWithOldTechOffers.push({
+                  nationId: offer.declaringId,
+                  nationName: offer.declaringNation,
+                  rulerName: offer.declaringRuler,
+                  discord_handle: sendingNation.discord_handle,
+                  daysOld: daysOld,
+                  tech: tech,
+                  offerId: offer.aidId,
+                  recipientName: offer.receivingNation,
+                  recipientRuler: offer.receivingRuler
+                });
+              }
+            }
+          }
+        }
+      }
+    });
+
     return {
       recommendations: finalRecommendations,
       slotCounts,
       availableSlots,
       mismatchedOffers,
-      unfilledSlots
+      unfilledSlots,
+      alerts: {
+        nationsNeedingAcceptance,
+        nationsWithUnacceptedTech,
+        nationsWithOldReceivedOffers,
+        nationsWithOldTechOffers
+      }
     };
   }
 

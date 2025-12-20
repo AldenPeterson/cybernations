@@ -146,6 +146,28 @@ interface MismatchedOffers {
   externalMismatches: Array<{ nation: any; offers: MismatchedOffer[] }>;
 }
 
+interface AlertNation {
+  nationId: number;
+  nationName: string;
+  rulerName: string;
+  discord_handle?: string;
+  daysRemaining?: number;
+  daysOld?: number;
+  tech?: number;
+  offerId: number;
+  senderName?: string;
+  senderRuler?: string;
+  recipientName?: string;
+  recipientRuler?: string;
+}
+
+interface Alerts {
+  nationsNeedingAcceptance: AlertNation[];
+  nationsWithUnacceptedTech: AlertNation[];
+  nationsWithOldReceivedOffers: AlertNation[];
+  nationsWithOldTechOffers: AlertNation[];
+}
+
 interface AllianceDashboardProps {
   selectedAllianceId: number | null;
   setSelectedAllianceId: (id: number | null) => void;
@@ -166,6 +188,7 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
   const [slotCounts, setSlotCounts] = useState<SlotCounts | null>(null);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlots | null>(null);
   const [mismatchedOffers, setMismatchedOffers] = useState<MismatchedOffers | null>(null);
+  const [alerts, setAlerts] = useState<Alerts | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expirationFilter, setExpirationFilter] = useState<string[]>(['empty', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days']);
@@ -291,8 +314,63 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
   };
 
   const generateDiscordText = (): string => {
+    const discordLines: string[] = [];
+
+    // Add alerts section if there are any
+    if (alerts) {
+      const hasAlerts = alerts.nationsNeedingAcceptance.length > 0 || 
+                       alerts.nationsWithUnacceptedTech.length > 0 ||
+                       alerts.nationsWithOldReceivedOffers.length > 0 ||
+                       alerts.nationsWithOldTechOffers.length > 0;
+      
+      if (hasAlerts) {
+        discordLines.push('⚠️ ALERTS:');
+        discordLines.push('');
+        
+        // Nations needing to accept offers
+        if (alerts.nationsNeedingAcceptance.length > 0) {
+          alerts.nationsNeedingAcceptance.forEach(nation => {
+            const handle = nation.discord_handle || nation.rulerName;
+            discordLines.push(`@${handle} - ACCEPT OFFER from ${nation.senderRuler} (${nation.daysRemaining} day${nation.daysRemaining !== 1 ? 's' : ''} remaining)`);
+          });
+          discordLines.push('');
+        }
+        
+        // Nations with unaccepted tech offers and < 100 tech
+        if (alerts.nationsWithUnacceptedTech.length > 0) {
+          alerts.nationsWithUnacceptedTech.forEach(nation => {
+            const handle = nation.discord_handle || nation.rulerName;
+            discordLines.push(`@${handle} - Unaccepted tech offer to ${nation.recipientRuler} (${nation.tech} tech)`);
+          });
+          discordLines.push('');
+        }
+        
+        // Nations with received offers that are 5+ days old
+        if (alerts.nationsWithOldReceivedOffers.length > 0) {
+          alerts.nationsWithOldReceivedOffers.forEach(nation => {
+            const handle = nation.discord_handle || nation.rulerName;
+            discordLines.push(`@${handle} - Received offer from ${nation.senderRuler} is ${nation.daysOld} day${nation.daysOld !== 1 ? 's' : ''} old`);
+          });
+          discordLines.push('');
+        }
+        
+        // Nations with tech offers that are more than 3 days old but less than 100 tech
+        if (alerts.nationsWithOldTechOffers.length > 0) {
+          alerts.nationsWithOldTechOffers.forEach(nation => {
+            const handle = nation.discord_handle || nation.rulerName;
+            discordLines.push(`@${handle} - Tech offer to ${nation.recipientRuler} is ${nation.daysOld} day${nation.daysOld !== 1 ? 's' : ''} old (${nation.tech} tech)`);
+          });
+          discordLines.push('');
+        }
+      }
+    }
+
+    // Add recommendations section
     if (recommendations.length === 0) {
-      return 'No aid recommendations available.';
+      if (discordLines.length === 0) {
+        return 'No aid recommendations available.';
+      }
+      return discordLines.join('\n');
     }
 
     // Group recommendations by sender
@@ -307,8 +385,6 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
       acc[senderId].recipients.push(rec);
       return acc;
     }, {} as Record<number, { sender: any, recipients: any[] }>);
-
-    const discordLines: string[] = [];
     
     Object.values(groupedBySender).forEach(group => {
       // Use discord_handle if available, otherwise fall back to rulerName
@@ -795,6 +871,61 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
             <div className="text-center p-10 text-gray-600">
               No aid recommendations available for this alliance.
             </div>
+          )}
+
+          {/* Alerts Section */}
+          {alerts && (
+            (alerts.nationsNeedingAcceptance.length > 0 || 
+             alerts.nationsWithUnacceptedTech.length > 0) && (
+              <div className="mb-5 p-4 bg-transparent rounded-lg border border-orange-300">
+                <h3 className="m-0 mb-4 text-lg font-bold text-orange-900">⚠️ Alerts</h3>
+                
+                {/* Nations needing to accept offers */}
+                {alerts.nationsNeedingAcceptance.length > 0 && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+                    <div className="font-bold text-sm mb-2 text-red-900">Nations needing to accept aid</div>
+                    <div className="space-y-1">
+                      {alerts.nationsNeedingAcceptance.map((nation) => (
+                        <div key={nation.offerId} className="text-sm text-slate-900">
+                          <a 
+                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nation.nationId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 font-medium hover:underline"
+                          >
+                            {nation.nationName}
+                          </a>
+                          {' '}({nation.rulerName}) - ACCEPT OFFER from {nation.senderRuler} ({nation.daysRemaining} day{nation.daysRemaining !== 1 ? 's' : ''} remaining)
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Nations with unaccepted tech offers */}
+                {alerts.nationsWithUnacceptedTech.length > 0 && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                    <div className="font-bold text-sm mb-2 text-yellow-900">Nations with insufficient tech to fill aid offers</div>
+                    <div className="space-y-1">
+                      {alerts.nationsWithUnacceptedTech.map((nation) => (
+                        <div key={nation.offerId} className="text-sm text-slate-900">
+                          <a 
+                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nation.nationId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 font-medium hover:underline"
+                          >
+                            {nation.nationName}
+                          </a>
+                          {' '}({nation.rulerName}) - Unaccepted tech offer to {nation.recipientRuler} ({nation.tech} tech)
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+              </div>
+            )
           )}
 
           {/* Available Slots Section */}
