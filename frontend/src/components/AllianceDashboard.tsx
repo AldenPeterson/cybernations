@@ -274,6 +274,7 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
         setSlotCounts(data.slotCounts);
         setAvailableSlots(data.availableSlots || null);
         setMismatchedOffers(data.mismatchedOffers || null);
+        setAlerts(data.alerts || null);
       }
     } catch (err) {
       console.error('Failed to fetch recommendations:', err);
