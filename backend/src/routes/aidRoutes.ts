@@ -16,6 +16,8 @@ aidRoutes.get('/alliances/:allianceId/recommendations', validateAllianceId, AidC
 // Get categorized nations with slots for a specific alliance
 aidRoutes.get('/alliances/:allianceId/categorized-nations', validateAllianceId, AidController.getCategorizedNations);
 
+// Get nation aid efficiency for an alliance over a date range
+aidRoutes.get('/alliances/:allianceId/nation-aid-efficiency', validateAllianceId, AidController.getNationAidEfficiency);
 
 // Get small aid offers
 aidRoutes.get('/small-aid-offers', AidController.getSmallAidOffers);

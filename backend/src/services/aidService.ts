@@ -1848,4 +1848,143 @@ export class AidService {
       totalCount: offersWithAllianceInfo.length
     };
   }
+
+  /**
+   * Get aid slot efficiency for nations in an alliance over a date range
+   * Uses SQL query for efficiency
+   */
+  static async getNationAidEfficiency(
+    allianceId: number, 
+    startDate: string, 
+    endDate: string
+  ): Promise<Array<{
+    nationId: number;
+    nationName: string;
+    rulerName: string;
+    maxSlots: number;
+    averageActiveSlots: number;
+    efficiency: number;
+    averageSendingSlots: number;
+    averageReceivingSlots: number;
+    daysAnalyzed: number;
+  }>> {
+    const { prisma, Prisma } = await import('../utils/prisma.js');
+    
+    // Validate and sanitize inputs
+    if (typeof allianceId !== 'number' || isNaN(allianceId) || allianceId <= 0) {
+      throw new Error('Invalid alliance ID');
+    }
+    
+    // Validate date format (MM/DD/YYYY)
+    const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+    if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+      throw new Error('Invalid date format. Expected MM/DD/YYYY');
+    }
+    
+    // Use Prisma.sql template tag for safe parameterization
+    const query = Prisma.sql`
+      WITH 
+      parsed_dates AS (
+        SELECT 
+          TO_DATE(${startDate}, 'MM/DD/YYYY') AS start_date,
+          TO_DATE(${endDate}, 'MM/DD/YYYY') AS end_date
+      ),
+      date_series AS (
+        SELECT generate_series(
+          (SELECT start_date FROM parsed_dates),
+          (SELECT end_date FROM parsed_dates),
+          '1 day'::interval
+        )::date AS check_date
+      ),
+      alliance_nations AS (
+        SELECT 
+          n.id AS nation_id,
+          n.nation_name,
+          n.ruler_name,
+          6 AS max_slots
+        FROM nations n
+        WHERE n.alliance_id = ${allianceId}
+          AND n.is_active = true
+      ),
+      parsed_offers AS (
+        SELECT 
+          ao.aid_id,
+          ao.declaring_nation_id,
+          ao.receiving_nation_id,
+          ao.status,
+          TO_DATE(SPLIT_PART(ao.aid_timestamp, ' ', 1), 'MM/DD/YYYY') AS offer_date,
+          TO_DATE(SPLIT_PART(ao.aid_timestamp, ' ', 1), 'MM/DD/YYYY') + INTERVAL '10 days' AS expiration_date
+        FROM aid_offers ao
+        WHERE ao.status != 'Cancelled'
+          AND ao.aid_timestamp IS NOT NULL
+          AND ao.aid_timestamp != ''
+          AND SPLIT_PART(ao.aid_timestamp, ' ', 1) ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$'
+          AND (
+            ao.declaring_nation_id IN (SELECT nation_id FROM alliance_nations)
+            OR ao.receiving_nation_id IN (SELECT nation_id FROM alliance_nations)
+          )
+          AND TO_DATE(SPLIT_PART(ao.aid_timestamp, ' ', 1), 'MM/DD/YYYY') <= 
+              (SELECT end_date FROM parsed_dates)
+          AND TO_DATE(SPLIT_PART(ao.aid_timestamp, ' ', 1), 'MM/DD/YYYY') + INTERVAL '10 days' >= 
+              (SELECT start_date FROM parsed_dates)
+      ),
+      daily_slot_counts AS (
+        SELECT 
+          ds.check_date,
+          an.nation_id,
+          an.nation_name,
+          an.ruler_name,
+          an.max_slots,
+          COUNT(DISTINCT CASE WHEN po.declaring_nation_id = an.nation_id THEN po.aid_id END) AS sending_slots,
+          COUNT(DISTINCT CASE WHEN po.receiving_nation_id = an.nation_id THEN po.aid_id END) AS receiving_slots,
+          COUNT(DISTINCT po.aid_id) AS total_active_slots
+        FROM date_series ds
+        CROSS JOIN alliance_nations an
+        LEFT JOIN parsed_offers po ON (
+          po.offer_date <= ds.check_date
+          AND po.expiration_date::date >= ds.check_date
+          AND (po.declaring_nation_id = an.nation_id OR po.receiving_nation_id = an.nation_id)
+        )
+        GROUP BY ds.check_date, an.nation_id, an.nation_name, an.ruler_name, an.max_slots
+      )
+      SELECT 
+        nation_id AS "nationId",
+        nation_name AS "nationName",
+        ruler_name AS "rulerName",
+        max_slots AS "maxSlots",
+        ROUND(AVG(LEAST(total_active_slots, max_slots))::numeric, 2) AS "averageActiveSlots",
+        ROUND((AVG(LEAST(total_active_slots, max_slots))::numeric / max_slots * 100)::numeric, 2) AS "efficiency",
+        ROUND(AVG(LEAST(sending_slots, max_slots))::numeric, 2) AS "averageSendingSlots",
+        ROUND(AVG(LEAST(receiving_slots, max_slots))::numeric, 2) AS "averageReceivingSlots",
+        COUNT(*) AS "daysAnalyzed"
+      FROM daily_slot_counts
+      GROUP BY nation_id, nation_name, ruler_name, max_slots
+      ORDER BY efficiency DESC;
+    `;
+    
+    const results = await prisma.$queryRaw<Array<{
+      nationId: bigint | number;
+      nationName: string;
+      rulerName: string;
+      maxSlots: bigint | number;
+      averageActiveSlots: bigint | number;
+      efficiency: bigint | number;
+      averageSendingSlots: bigint | number;
+      averageReceivingSlots: bigint | number;
+      daysAnalyzed: bigint | number;
+    }>>(query);
+    
+    // Convert BigInt values to numbers for JSON serialization
+    return results.map(row => ({
+      nationId: Number(row.nationId),
+      nationName: row.nationName,
+      rulerName: row.rulerName,
+      maxSlots: Number(row.maxSlots),
+      averageActiveSlots: Number(row.averageActiveSlots),
+      efficiency: Number(row.efficiency),
+      averageSendingSlots: Number(row.averageSendingSlots),
+      averageReceivingSlots: Number(row.averageReceivingSlots),
+      daysAnalyzed: Number(row.daysAnalyzed),
+    }));
+  }
 }

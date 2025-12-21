@@ -211,4 +211,47 @@ export class AidController {
       });
     }
   }
+
+  /**
+   * Get nation aid efficiency for an alliance over a date range
+   */
+  static async getNationAidEfficiency(req: Request, res: Response) {
+    try {
+      const allianceId = parseInt(req.params.allianceId);
+      const startDate = req.query.startDate as string;
+      const endDate = req.query.endDate as string;
+      
+      if (isNaN(allianceId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid alliance ID'
+        });
+      }
+
+      if (!startDate || !endDate) {
+        return res.status(400).json({
+          success: false,
+          error: 'startDate and endDate query parameters are required (format: MM/DD/YYYY)'
+        });
+      }
+
+      const result = await AidService.getNationAidEfficiency(allianceId, startDate, endDate);
+
+      console.log(`[API] getNationAidEfficiency (allianceId: ${allianceId}, startDate: ${startDate}, endDate: ${endDate}): Returning ${result.length} nations`);
+
+      res.json({
+        success: true,
+        allianceId,
+        startDate,
+        endDate,
+        data: result
+      });
+    } catch (error) {
+      console.error('Error fetching nation aid efficiency:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
 }

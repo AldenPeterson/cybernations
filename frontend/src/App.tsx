@@ -11,6 +11,7 @@ import ShameOffersPage from './pages/ShameOffersPage'
 import NSComparisonsPage from './pages/NSComparisonsPage.tsx'
 import NuclearStatsPage from './pages/NuclearStatsPage'
 import AidEfficiencyPage from './pages/AidEfficiencyPage'
+import NationAidEfficiencyPage from './pages/NationAidEfficiencyPage'
 
 function App() {
   const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(null);
@@ -31,8 +32,18 @@ function App() {
     } else if (!allianceIdParam && ['aid', 'recommendations', 'nations', 'wars'].includes(tabName)) {
       // If we're on an alliance-specific page but no alliance ID in URL, clear selection
       setSelectedAllianceId(null);
+    } else if (tabName === 'nation-aid-efficiency') {
+      // For nation-aid-efficiency, sync from query params
+      const searchParams = new URLSearchParams(location.search);
+      const allianceIdFromQuery = searchParams.get('allianceId');
+      if (allianceIdFromQuery) {
+        const allianceId = parseInt(allianceIdFromQuery);
+        if (!isNaN(allianceId)) {
+          setSelectedAllianceId(allianceId);
+        }
+      }
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   return (
     <div className="font-sans max-w-full overflow-x-hidden">
@@ -63,6 +74,7 @@ function App() {
         <Route path="/ns-comparisons" element={<NSComparisonsPage />} />
         <Route path="/nuclear-stats" element={<NuclearStatsPage />} />
         <Route path="/aid-efficiency" element={<AidEfficiencyPage />} />
+        <Route path="/nation-aid-efficiency" element={<NationAidEfficiencyPage />} />
         {/* Shame offers doesn't need alliance ID */}
         <Route path="/shame-offers" element={<ShameOffersPage />} />
         

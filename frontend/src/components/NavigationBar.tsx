@@ -47,6 +47,15 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       navigate(`/${tabName}/${allianceId}`);
     } else if (allianceId && tabName === 'aid') {
       navigate(`/${tabName}/${allianceId}`);
+    } else if (tabName === 'nation-aid-efficiency') {
+      // For nation-aid-efficiency page, update query parameter
+      const searchParams = new URLSearchParams(location.search);
+      if (allianceId) {
+        searchParams.set('allianceId', allianceId.toString());
+      } else {
+        searchParams.delete('allianceId');
+      }
+      navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
     }
   };
 
@@ -90,6 +99,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         return 'Nuclear Stats';
       case 'aid-efficiency':
         return 'Aid Efficiency';
+      case 'nation-aid-efficiency':
+        return 'Nation Aid Efficiency';
       default:
         return 'CyberNations';
     }
@@ -216,6 +227,17 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             )}
           >
             Aid Efficiency
+          </Link>
+          <Link 
+            to={'/nation-aid-efficiency'}
+            className={clsx(
+              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
+              isActiveTab('nation-aid-efficiency') 
+                ? 'bg-primary text-white font-semibold shadow-md' 
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+            )}
+          >
+            Nation Aid Efficiency
           </Link>
         </div>
 
@@ -365,6 +387,18 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
               )}
             >
               Aid Efficiency
+            </Link>
+            <Link 
+              to={'/nation-aid-efficiency'}
+              onClick={() => setMobileMenuOpen(false)}
+              className={clsx(
+                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
+                isActiveTab('nation-aid-efficiency') 
+                  ? 'bg-primary text-white font-semibold shadow-md' 
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              )}
+            >
+              Nation Aid Efficiency
             </Link>
           </div>
         </div>
