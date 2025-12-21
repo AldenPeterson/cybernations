@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import { tableClasses } from '../styles/tableClasses';
@@ -55,17 +55,32 @@ const getDefaultDates = (): { startDate: string; endDate: string } => {
 };
 
 const NationAidEfficiencyPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Get alliance ID from URL query params (set by navigation bar)
   const allianceIdParam = searchParams.get('allianceId');
   const selectedAllianceId = allianceIdParam ? parseInt(allianceIdParam, 10) : null;
   
   // Initialize default dates (last 30 days, ending yesterday in Central Time)
-  // Store dates in YYYY-MM-DD format for the date input
   const defaultDates = getDefaultDates();
-  const [startDate, setStartDate] = useState<string>(defaultDates.startDate);
-  const [endDate, setEndDate] = useState<string>(defaultDates.endDate);
+  
+  // Get dates from URL params or use defaults
+  const getInitialStartDate = (): string => {
+    const urlStartDate = searchParams.get('startDate');
+    return urlStartDate || defaultDates.startDate;
+  };
+  
+  const getInitialEndDate = (): string => {
+    const urlEndDate = searchParams.get('endDate');
+    return urlEndDate || defaultDates.endDate;
+  };
+  
+  // Store dates in YYYY-MM-DD format for the date input
+  const [startDate, setStartDate] = useState<string>(getInitialStartDate());
+  const [endDate, setEndDate] = useState<string>(getInitialEndDate());
+  // Debounced dates - these update after user stops changing dates
+  const [debouncedStartDate, setDebouncedStartDate] = useState<string>(getInitialStartDate());
+  const [debouncedEndDate, setDebouncedEndDate] = useState<string>(getInitialEndDate());
   const [data, setData] = useState<NationEfficiencyData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,15 +89,36 @@ const NationAidEfficiencyPage: React.FC = () => {
 
   // Format date from input (YYYY-MM-DD) to MM/DD/YYYY for API
   const formatDateForApi = (dateStr: string): string => {
+    // If empty or invalid, return empty string
+    if (!dateStr || dateStr.trim() === '') {
+      return '';
+    }
+    
     // If already in MM/DD/YYYY format, return as-is
     if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
       return dateStr;
     }
+    
     // Convert from YYYY-MM-DD to MM/DD/YYYY
     const parts = dateStr.split('-');
-    if (parts.length !== 3) return dateStr;
+    if (parts.length !== 3) {
+      console.error('Invalid date format:', dateStr);
+      return '';
+    }
+    
     const [year, month, day] = parts;
-    return `${parseInt(month)}/${parseInt(day)}/${year}`;
+    const monthNum = parseInt(month, 10);
+    const dayNum = parseInt(day, 10);
+    const yearNum = parseInt(year, 10);
+    
+    // Validate the parsed values
+    if (isNaN(monthNum) || isNaN(dayNum) || isNaN(yearNum)) {
+      console.error('Invalid date values:', { year, month, day });
+      return '';
+    }
+    
+    // Format as MM/DD/YYYY (without leading zeros is fine per backend regex)
+    return `${monthNum}/${dayNum}/${yearNum}`;
   };
 
   // Calculate days analyzed from date range
@@ -106,7 +142,31 @@ const NationAidEfficiencyPage: React.FC = () => {
 
   const daysAnalyzed = calculateDaysAnalyzed();
 
-  const fetchData = async () => {
+  // Track if we're updating URL from user input (to avoid sync loops)
+  const isUpdatingFromUser = useRef(false);
+
+  // Debounce date changes - update debounced dates and URL after 500ms of no changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedStartDate(startDate);
+      setDebouncedEndDate(endDate);
+      
+      // Update URL parameters with debounced dates
+      isUpdatingFromUser.current = true;
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.set('startDate', startDate);
+      newSearchParams.set('endDate', endDate);
+      setSearchParams(newSearchParams, { replace: true });
+      // Reset flag after a brief delay to allow URL update to complete
+      setTimeout(() => {
+        isUpdatingFromUser.current = false;
+      }, 100);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [startDate, endDate, searchParams, setSearchParams]);
+
+  const fetchData = useCallback(async () => {
     if (!selectedAllianceId) {
       setData([]);
       return;
@@ -116,8 +176,15 @@ const NationAidEfficiencyPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const formattedStartDate = formatDateForApi(startDate);
-      const formattedEndDate = formatDateForApi(endDate);
+      const formattedStartDate = formatDateForApi(debouncedStartDate);
+      const formattedEndDate = formatDateForApi(debouncedEndDate);
+
+      // Validate dates before making the API call
+      if (!formattedStartDate || !formattedEndDate) {
+        setError('Please select valid start and end dates');
+        setLoading(false);
+        return;
+      }
 
       const response: NationAidEfficiencyResponse = await apiCallWithErrorHandling(
         API_ENDPOINTS.nationAidEfficiency(selectedAllianceId, formattedStartDate, formattedEndDate)
@@ -132,13 +199,43 @@ const NationAidEfficiencyPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedAllianceId, debouncedStartDate, debouncedEndDate]);
 
+  // Sync dates from URL on mount or when URL params change externally (but not from our own updates)
   useEffect(() => {
-    if (selectedAllianceId) {
-      fetchData();
+    // Skip if we're updating from user input to avoid loops
+    if (isUpdatingFromUser.current) {
+      return;
     }
-  }, [selectedAllianceId, startDate, endDate]);
+    
+    const urlStartDate = searchParams.get('startDate');
+    const urlEndDate = searchParams.get('endDate');
+    
+    // Only update if URL params differ from current state
+    if (urlStartDate && urlStartDate !== startDate) {
+      setStartDate(urlStartDate);
+      setDebouncedStartDate(urlStartDate);
+    } else if (!urlStartDate && startDate !== defaultDates.startDate) {
+      // If URL param is missing, use default
+      setStartDate(defaultDates.startDate);
+      setDebouncedStartDate(defaultDates.startDate);
+    }
+    
+    if (urlEndDate && urlEndDate !== endDate) {
+      setEndDate(urlEndDate);
+      setDebouncedEndDate(urlEndDate);
+    } else if (!urlEndDate && endDate !== defaultDates.endDate) {
+      // If URL param is missing, use default
+      setEndDate(defaultDates.endDate);
+      setDebouncedEndDate(defaultDates.endDate);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]); // Only run when searchParams change externally
+
+  // Fetch data when debounced dates or alliance changes
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSort = (column: 'nation' | 'efficiency' | 'averageActiveSlots' | 'averageSendingSlots' | 'averageReceivingSlots') => {
     if (sortColumn === column) {

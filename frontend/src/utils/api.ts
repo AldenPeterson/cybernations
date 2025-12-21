@@ -46,6 +46,18 @@ export const apiCallWithErrorHandling = async (endpoint: string, options: Reques
   const response = await apiCall(endpoint, options);
   
   if (!response.ok) {
+    // Try to parse error message from response
+    const text = await response.text();
+    if (text.trim()) {
+      try {
+        const errorData = JSON.parse(text);
+        if (errorData && errorData.error) {
+          throw new Error(errorData.error);
+        }
+      } catch (parseError) {
+        // If JSON parsing fails or error property doesn't exist, fall through to generic error
+      }
+    }
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
   
