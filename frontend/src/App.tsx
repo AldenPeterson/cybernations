@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import NavigationBar from './components/NavigationBar'
 import AllianceRedirect from './components/AllianceRedirect'
 import GlobalWarsPage from './pages/GlobalWarsPage'
@@ -16,6 +16,8 @@ import NationAidEfficiencyPage from './pages/NationAidEfficiencyPage'
 function App() {
   const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const hasInitializedNationAidEfficiency = useRef(false);
 
   // Sync selectedAllianceId with URL parameters
   useEffect(() => {
@@ -40,10 +42,19 @@ function App() {
         const allianceId = parseInt(allianceIdFromQuery);
         if (!isNaN(allianceId)) {
           setSelectedAllianceId(allianceId);
+          hasInitializedNationAidEfficiency.current = true;
         }
+      } else if (selectedAllianceId && !hasInitializedNationAidEfficiency.current) {
+        // If no allianceId in URL but we have one selected, add it to URL (only once on initial load)
+        searchParams.set('allianceId', selectedAllianceId.toString());
+        navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
+        hasInitializedNationAidEfficiency.current = true;
       }
+    } else {
+      // Reset flag when navigating away from nation-aid-efficiency
+      hasInitializedNationAidEfficiency.current = false;
     }
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.search, selectedAllianceId, navigate]);
 
   return (
     <div className="font-sans max-w-full overflow-x-hidden">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import { tableClasses } from '../styles/tableClasses';
 
@@ -57,7 +57,7 @@ const getDefaultDates = (): { startDate: string; endDate: string } => {
 const NationAidEfficiencyPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // Get alliance ID from URL query params (set by navigation bar)
+  // Get alliance ID from URL query params (set by navigation bar or App)
   const allianceIdParam = searchParams.get('allianceId');
   const selectedAllianceId = allianceIdParam ? parseInt(allianceIdParam, 10) : null;
   
