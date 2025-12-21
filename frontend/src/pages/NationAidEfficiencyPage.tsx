@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams, useLocation } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
-import { tableClasses } from '../styles/tableClasses';
+import TableContainer from '../components/TableContainer';
 
 interface NationEfficiencyData {
   nationId: number;
@@ -278,9 +278,8 @@ const NationAidEfficiencyPage: React.FC = () => {
   });
 
   return (
-    <div className={`${tableClasses.container} mt-20`}>
-      <div className={tableClasses.card}>
-        <p className="text-gray-600 mb-6">
+    <TableContainer>
+        <p className="text-gray-400 mb-6">
           Aid slot efficiency for nations in a selected alliance over a custom date range. 
           Efficiency represents the percentage of available aid slots (using 6) that were active each day.
         </p>
@@ -289,7 +288,7 @@ const NationAidEfficiencyPage: React.FC = () => {
         <div className="mb-6 flex flex-wrap items-center gap-4">
           {/* Start Date */}
           <div className="flex items-center gap-3">
-            <label htmlFor="start-date" className="text-sm font-semibold text-gray-700 whitespace-nowrap w-24">
+            <label htmlFor="start-date" className="text-sm font-semibold text-gray-300 whitespace-nowrap w-24">
               Start Date:
             </label>
             <input
@@ -297,13 +296,13 @@ const NationAidEfficiencyPage: React.FC = () => {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="px-3 py-2 border-2 border-slate-400 rounded-lg text-base font-medium bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className="px-3 py-2 border-2 border-gray-600 rounded-lg text-base font-medium bg-gray-800 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
 
           {/* End Date */}
           <div className="flex items-center gap-3">
-            <label htmlFor="end-date" className="text-sm font-semibold text-gray-700 whitespace-nowrap w-24">
+            <label htmlFor="end-date" className="text-sm font-semibold text-gray-300 whitespace-nowrap w-24">
               End Date:
             </label>
             <input
@@ -311,23 +310,23 @@ const NationAidEfficiencyPage: React.FC = () => {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="px-3 py-2 border-2 border-slate-400 rounded-lg text-base font-medium bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className="px-3 py-2 border-2 border-gray-600 rounded-lg text-base font-medium bg-gray-800 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
 
           {/* Days Analyzed */}
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-gray-700 whitespace-nowrap w-24">
+            <span className="text-sm font-semibold text-gray-300 whitespace-nowrap w-24">
               Days Analyzed:
             </span>
-            <span className="px-3 py-2 border-2 border-slate-300 rounded-lg text-base font-medium bg-slate-50 text-gray-700">
+            <span className="px-3 py-2 border-2 border-gray-700 rounded-lg text-base font-medium bg-gray-800 text-gray-200">
               {daysAnalyzed}
             </span>
           </div>
         </div>
 
         {loading && (
-          <div className="text-center p-5">
+          <div className="text-center p-5 text-gray-300">
             Loading nation aid efficiency data...
           </div>
         )}
@@ -339,13 +338,13 @@ const NationAidEfficiencyPage: React.FC = () => {
         )}
 
         {!loading && !error && !selectedAllianceId && (
-          <div className="text-center p-10 text-gray-600">
+          <div className="text-center p-10 text-gray-400">
             Please select an alliance from the navigation bar to view nation aid efficiency data.
           </div>
         )}
 
         {!loading && !error && selectedAllianceId && data.length === 0 && (
-          <div className="text-center p-10 text-gray-600">
+          <div className="text-center p-10 text-gray-400">
             No data available for the selected alliance and date range.
           </div>
         )}
@@ -353,11 +352,11 @@ const NationAidEfficiencyPage: React.FC = () => {
         {!loading && !error && data.length > 0 && (
           <div className="mb-8">
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-slate-300 text-sm bg-white">
+              <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800">
                 <thead>
-                  <tr className="bg-gray-800">
+                  <tr className="bg-gray-700">
                     <th 
-                      className="p-3 border border-slate-300 text-left text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                      className="p-3 border border-gray-600 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                       onClick={() => handleSort('nation')}
                     >
                       <div className="flex items-center gap-2">
@@ -368,7 +367,7 @@ const NationAidEfficiencyPage: React.FC = () => {
                       </div>
                     </th>
                     <th 
-                      className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                      className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                       onClick={() => handleSort('efficiency')}
                     >
                       <div className="flex items-center justify-center gap-2">
@@ -379,7 +378,7 @@ const NationAidEfficiencyPage: React.FC = () => {
                       </div>
                     </th>
                     <th 
-                      className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                      className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                       onClick={() => handleSort('averageActiveSlots')}
                     >
                       <div className="flex items-center justify-center gap-2">
@@ -390,7 +389,7 @@ const NationAidEfficiencyPage: React.FC = () => {
                       </div>
                     </th>
                     <th 
-                      className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                      className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                       onClick={() => handleSort('averageSendingSlots')}
                     >
                       <div className="flex items-center justify-center gap-2">
@@ -401,7 +400,7 @@ const NationAidEfficiencyPage: React.FC = () => {
                       </div>
                     </th>
                     <th 
-                      className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                      className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                       onClick={() => handleSort('averageReceivingSlots')}
                     >
                       <div className="flex items-center justify-center gap-2">
@@ -417,9 +416,9 @@ const NationAidEfficiencyPage: React.FC = () => {
                   {sortedData.map((nation) => (
                     <tr 
                       key={nation.nationId} 
-                      className="bg-white hover:bg-slate-50"
+                      className="bg-gray-800 hover:bg-gray-700"
                     >
-                      <td className="p-2 border border-slate-300 font-bold text-black">
+                      <td className="p-2 border border-gray-700 font-bold text-gray-200">
                         <a 
                           href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nation.nationId}`}
                           target="_blank"
@@ -429,16 +428,16 @@ const NationAidEfficiencyPage: React.FC = () => {
                           {decodeHtmlEntities(nation.rulerName)} / {decodeHtmlEntities(nation.nationName)}
                         </a>
                       </td>
-                      <td className="p-2 border border-slate-300 text-center font-semibold text-black">
+                      <td className="p-2 border border-gray-700 text-center font-semibold text-gray-200">
                         {nation.efficiency.toFixed(1)}%
                       </td>
-                      <td className="p-2 border border-slate-300 text-center text-black">
+                      <td className="p-2 border border-gray-700 text-center text-gray-200">
                         {nation.averageActiveSlots.toFixed(2)}
                       </td>
-                      <td className="p-2 border border-slate-300 text-center text-black">
+                      <td className="p-2 border border-gray-700 text-center text-gray-200">
                         {nation.averageSendingSlots.toFixed(2)}
                       </td>
-                      <td className="p-2 border border-slate-300 text-center text-black">
+                      <td className="p-2 border border-gray-700 text-center text-gray-200">
                         {nation.averageReceivingSlots.toFixed(2)}
                       </td>
                     </tr>
@@ -448,8 +447,7 @@ const NationAidEfficiencyPage: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </TableContainer>
   );
 };
 

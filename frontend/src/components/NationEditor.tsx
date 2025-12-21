@@ -428,7 +428,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
                       'nation-table-row'
                     )}
                     style={{
-                      backgroundColor: hasErrors ? '#fef2f2' : hasWarnings ? '#fffbeb' : undefined,
+                      backgroundColor: hasErrors ? '#7f1d1d' : hasWarnings ? '#78350f' : undefined,
                       borderLeft: hasErrors ? '4px solid #ef4444' : hasWarnings ? '4px solid #f59e0b' : undefined,
                     }}
                   >
@@ -442,7 +442,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
                         style={{ 
                           verticalAlign: 'middle',
                           width: `${cell.column.getSize()}px`,
-                          backgroundColor: hasErrors ? '#fef2f2' : hasWarnings ? '#fffbeb' : undefined,
+                          backgroundColor: hasErrors ? '#7f1d1d' : hasWarnings ? '#78350f' : undefined,
                         }}
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}

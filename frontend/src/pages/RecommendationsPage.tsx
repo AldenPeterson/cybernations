@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import SlotCountsSummary from '../components/SlotCountsSummary';
 import WarStatusBadge from '../components/WarStatusBadge';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
+import PageContainer from '../components/PageContainer';
 
 interface Alliance {
   id: number;
@@ -299,38 +300,38 @@ const RecommendationsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-5 text-center mt-20">
+      <PageContainer className="p-5 text-center">
         Loading recommendations...
-      </div>
+      </PageContainer>
     );
   }
 
   if (error) {
     return (
-      <div className="p-5 text-error mt-20">
+      <PageContainer className="p-5 text-error">
         Error: {error}
-      </div>
+      </PageContainer>
     );
   }
 
   if (!allianceId) {
     return (
-      <div className="text-center p-10 text-gray-600 mt-20">
+      <PageContainer className="text-center p-10 text-gray-400">
         Please select an alliance to view aid recommendations.
-      </div>
+      </PageContainer>
     );
   }
 
   if (!alliance) {
     return (
-      <div className="text-center p-10 text-gray-600 mt-20">
+      <PageContainer className="text-center p-10 text-gray-400">
         Alliance not found.
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="p-5 font-sans mt-20">
+    <PageContainer className="p-5">
       <h1>{alliance.name} - Aid Recommendations</h1>
 
       {/* Slot Counts Summary */}
@@ -344,9 +345,9 @@ const RecommendationsPage: React.FC = () => {
 
       {/* Recommendations Table */}
       {recommendations.length > 0 && (
-        <div className="mb-5 p-4 bg-transparent rounded-lg border border-slate-300">
+        <div className="mb-5 p-4 bg-transparent rounded-lg border border-gray-700">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="m-0">Aid Recommendations</h3>
+            <h3 className="m-0 text-gray-200">Aid Recommendations</h3>
             <button
               onClick={copyDiscordText}
               className="bg-[#5865F2] text-white border-none px-4 py-2 rounded-md cursor-pointer text-sm font-bold flex items-center gap-2 hover:bg-[#4752C4] transition-colors"
@@ -355,13 +356,13 @@ const RecommendationsPage: React.FC = () => {
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-slate-300 text-sm bg-white">
+            <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800">
               <thead>
-                <tr className="bg-gray-800">
-                  <th className="p-3 border border-slate-300 text-left bg-gray-800 text-white font-bold">
+                <tr className="bg-gray-700">
+                  <th className="p-3 border border-gray-600 text-left bg-gray-700 text-white font-bold">
                     Sender
                   </th>
-                  <th className="p-3 border border-slate-300 text-left bg-gray-800 text-white font-bold">
+                  <th className="p-3 border border-gray-600 text-left bg-gray-700 text-white font-bold">
                     Recipients
                   </th>
                 </tr>
@@ -382,8 +383,8 @@ const RecommendationsPage: React.FC = () => {
                   }, {} as Record<number, { sender: any, recipients: any[] }>);
 
                   return Object.values(groupedBySender).map((group, groupIndex) => (
-                    <tr key={groupIndex} className="bg-white hover:bg-slate-50">
-                      <td className="p-2 border border-slate-300 text-black bg-white align-top w-[30%]">
+                    <tr key={groupIndex} className="bg-gray-800 hover:bg-gray-700">
+                      <td className="p-2 border border-gray-700 text-gray-200 bg-gray-800 align-top w-[30%]">
                         <div>
                           <strong>
                             <a 
@@ -396,26 +397,24 @@ const RecommendationsPage: React.FC = () => {
                             </a>
                           </strong>
                           <br />
-                          <small className="text-gray-600">{group.sender.rulerName}</small>
-                          <br />
-                          <WarStatusBadge inWarMode={group.sender.inWarMode} />
+                          <small className="text-gray-400">{group.sender.rulerName}</small>
                         </div>
                       </td>
-                      <td className="p-2 border border-slate-300 text-black bg-white align-top">
+                      <td className="p-2 border border-gray-700 text-gray-200 bg-gray-800 align-top">
                         {group.recipients.map((rec, recIndex) => (
                           <div 
                             key={recIndex}
-                            className={recIndex < group.recipients.length - 1 ? 'mb-2 pb-2 border-b border-slate-200' : ''}
+                            className={recIndex < group.recipients.length - 1 ? 'mb-2 pb-2 border-b border-gray-700' : ''}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center flex-wrap">
                                 <span 
                                   className="text-[11px] px-1 py-px rounded-sm font-bold mr-1.5"
                                   style={{ 
-                                    backgroundColor: rec.priority === 0 ? '#ffebee' : 
-                                      (rec.type && rec.type.includes('cross_alliance')) ? '#fff3e0' : '#e8f5e8',
-                                    color: rec.priority === 0 ? '#d32f2f' : 
-                                      (rec.type && rec.type.includes('cross_alliance')) ? '#f57c00' : '#2e7d32'
+                                    backgroundColor: rec.priority === 0 ? '#7f1d1d' : 
+                                      (rec.type && rec.type.includes('cross_alliance')) ? '#78350f' : '#14532d',
+                                    color: rec.priority === 0 ? '#fca5a5' : 
+                                      (rec.type && rec.type.includes('cross_alliance')) ? '#fbbf24' : '#86efac'
                                   }}
                                 >
                                   {rec.type && rec.type.includes('cross_alliance') ? '🌐' : `P${rec.priority}`}
@@ -433,7 +432,7 @@ const RecommendationsPage: React.FC = () => {
                                     {rec.recipient.nationName}
                                   </a>
                                 </strong>
-                                <span className="text-[11px] text-gray-600 italic mr-1.5">
+                                <span className="text-[11px] text-gray-400 italic mr-1.5">
                                   {rec.recipient.rulerName} • {rec.reason}
                                 </span>
                                 <WarStatusBadge inWarMode={rec.recipient.inWarMode} variant="compact" />
@@ -452,7 +451,7 @@ const RecommendationsPage: React.FC = () => {
       )}
 
       {recommendations.length === 0 && !loading && (
-        <div className="text-center p-10 text-gray-600">
+        <div className="text-center p-10 text-gray-400">
           No aid recommendations available for this alliance.
         </div>
       )}
@@ -461,21 +460,21 @@ const RecommendationsPage: React.FC = () => {
       {alerts && (
         (alerts.nationsNeedingAcceptance.length > 0 || 
          alerts.nationsWithUnacceptedTech.length > 0) && (
-          <div className="mb-5 p-4 bg-transparent rounded-lg border border-orange-300">
-            <h3 className="m-0 mb-4 text-lg font-bold text-orange-900">⚠️ Alerts</h3>
+          <div className="mb-5 p-4 bg-transparent rounded-lg border border-orange-600">
+            <h3 className="m-0 mb-4 text-lg font-bold text-orange-400">⚠️ Alerts</h3>
             
             {/* Nations needing to accept offers */}
             {alerts.nationsNeedingAcceptance.length > 0 && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
-                <div className="font-bold text-sm mb-2 text-red-900">Nations needing to accept aid</div>
+              <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded">
+                <div className="font-bold text-sm mb-2 text-red-400">Nations needing to accept aid</div>
                 <div className="space-y-1">
                   {alerts.nationsNeedingAcceptance.map((nation) => (
-                    <div key={nation.offerId} className="text-sm text-slate-900">
+                    <div key={nation.offerId} className="text-sm text-gray-200">
                       <a 
                         href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nation.nationId}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-700 font-medium hover:underline"
+                        className="text-blue-400 font-medium hover:underline"
                       >
                         {nation.nationName}
                       </a>
@@ -488,16 +487,16 @@ const RecommendationsPage: React.FC = () => {
             
             {/* Nations with unaccepted tech offers */}
             {alerts.nationsWithUnacceptedTech.length > 0 && (
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                <div className="font-bold text-sm mb-2 text-yellow-900">Nations with insufficient tech to fill aid offers</div>
+              <div className="mb-4 p-3 bg-yellow-900/30 border border-yellow-700 rounded">
+                <div className="font-bold text-sm mb-2 text-yellow-400">Nations with insufficient tech to fill aid offers</div>
                 <div className="space-y-1">
                   {alerts.nationsWithUnacceptedTech.map((nation) => (
-                    <div key={nation.offerId} className="text-sm text-slate-900">
+                    <div key={nation.offerId} className="text-sm text-gray-200">
                       <a 
                         href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nation.nationId}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-700 font-medium hover:underline"
+                        className="text-blue-400 font-medium hover:underline"
                       >
                         {nation.nationName}
                       </a>
@@ -514,32 +513,32 @@ const RecommendationsPage: React.FC = () => {
 
       {/* Available Slots Section */}
       {availableSlots && (
-        <div className="mb-5 p-4 bg-transparent rounded-lg border border-slate-300">
-          <h3 className="m-0 mb-4 text-lg font-bold text-white">Available Unassigned Slots</h3>
+        <div className="mb-5 p-4 bg-transparent rounded-lg border border-gray-700">
+          <h3 className="m-0 mb-4 text-lg font-bold text-gray-200">Available Unassigned Slots</h3>
           
           {/* Send Types */}
           <div className="mb-4">
-            <h4 className="text-sm font-bold mb-2 text-slate-900">Send Types</h4>
+            <h4 className="text-sm font-bold mb-2 text-gray-200">Send Types</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Send Cash */}
               {availableSlots.sendCash.length > 0 && (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
-                  <div className="font-bold text-sm mb-2 text-yellow-900">💰 Send Cash ({availableSlots.sendCash.reduce((sum, s) => sum + s.available, 0)} total)</div>
+                <div className="p-3 bg-yellow-900/10 border border-yellow-800 rounded">
+                  <div className="font-bold text-sm mb-2 text-yellow-500">💰 Send Cash ({availableSlots.sendCash.reduce((sum, s) => sum + s.available, 0)} total)</div>
                   <div className="space-y-1">
                     {availableSlots.sendCash.map((slot) => (
                       <div key={slot.nation.id} className="text-sm flex items-center justify-between gap-3">
-                        <span className="text-slate-900">
+                        <span className="text-gray-200">
                           <a 
                             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-700 font-medium no-underline hover:underline"
+                            className="text-blue-400 font-medium no-underline hover:underline"
                           >
                             {slot.nation.nationName}
                           </a>
-                          {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                          {' '}<span className="text-gray-400">({slot.nation.rulerName})</span>
                         </span>
-                        <span className="font-bold text-yellow-900 text-base flex-shrink-0">{slot.available}</span>
+                        <span className="font-bold text-yellow-500 text-base flex-shrink-0">{slot.available}</span>
                       </div>
                     ))}
                   </div>
@@ -548,23 +547,23 @@ const RecommendationsPage: React.FC = () => {
               
               {/* Send Tech */}
               {availableSlots.sendTech.length > 0 && (
-                <div className="p-3 bg-purple-50 border border-purple-200 rounded">
-                  <div className="font-bold text-sm mb-2 text-purple-900">🔬 Send Tech ({availableSlots.sendTech.reduce((sum, s) => sum + s.available, 0)} total)</div>
+                <div className="p-3 bg-purple-900/20 border border-purple-700 rounded">
+                  <div className="font-bold text-sm mb-2 text-purple-400">🔬 Send Tech ({availableSlots.sendTech.reduce((sum, s) => sum + s.available, 0)} total)</div>
                   <div className="space-y-1">
                     {availableSlots.sendTech.map((slot) => (
                       <div key={slot.nation.id} className="text-sm flex items-center justify-between gap-3">
-                        <span className="text-slate-900">
+                        <span className="text-gray-200">
                           <a 
                             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-700 font-medium no-underline hover:underline"
+                            className="text-blue-400 font-medium no-underline hover:underline"
                           >
                             {slot.nation.nationName}
                           </a>
-                          {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                          {' '}<span className="text-gray-400">({slot.nation.rulerName})</span>
                         </span>
-                        <span className="font-bold text-purple-900 text-base flex-shrink-0">{slot.available}</span>
+                        <span className="font-bold text-purple-400 text-base flex-shrink-0">{slot.available}</span>
                       </div>
                     ))}
                   </div>
@@ -575,27 +574,27 @@ const RecommendationsPage: React.FC = () => {
 
           {/* Receive Types */}
           <div className="mb-4">
-            <h4 className="text-sm font-bold mb-2 text-slate-900">Receive Types</h4>
+            <h4 className="text-sm font-bold mb-2 text-gray-200">Receive Types</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Get Cash */}
               {availableSlots.getCash.length > 0 && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded">
-                  <div className="font-bold text-sm mb-2 text-green-900">💰 Get Cash ({availableSlots.getCash.reduce((sum, s) => sum + s.available, 0)} total)</div>
+                <div className="p-3 bg-green-900/20 border border-green-700 rounded">
+                  <div className="font-bold text-sm mb-2 text-green-400">💰 Get Cash ({availableSlots.getCash.reduce((sum, s) => sum + s.available, 0)} total)</div>
                   <div className="space-y-1">
                     {availableSlots.getCash.map((slot) => (
                       <div key={slot.nation.id} className="text-sm flex items-center justify-between gap-3">
-                        <span className="text-slate-900">
+                        <span className="text-gray-200">
                           <a 
                             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-700 font-medium no-underline hover:underline"
+                            className="text-blue-400 font-medium no-underline hover:underline"
                           >
                             {slot.nation.nationName}
                           </a>
-                          {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                          {' '}<span className="text-gray-400">({slot.nation.rulerName})</span>
                         </span>
-                        <span className="font-bold text-green-900 text-base flex-shrink-0">{slot.available}</span>
+                        <span className="font-bold text-green-400 text-base flex-shrink-0">{slot.available}</span>
                       </div>
                     ))}
                   </div>
@@ -604,23 +603,23 @@ const RecommendationsPage: React.FC = () => {
               
               {/* Get Tech */}
               {availableSlots.getTech.length > 0 && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded">
-                  <div className="font-bold text-sm mb-2 text-blue-900">🔬 Get Tech ({availableSlots.getTech.reduce((sum, s) => sum + s.available, 0)} total)</div>
+                <div className="p-3 bg-blue-900/20 border border-blue-700 rounded">
+                  <div className="font-bold text-sm mb-2 text-blue-400">🔬 Get Tech ({availableSlots.getTech.reduce((sum, s) => sum + s.available, 0)} total)</div>
                   <div className="space-y-1">
                     {availableSlots.getTech.map((slot) => (
                       <div key={slot.nation.id} className="text-sm flex items-center justify-between gap-3">
-                        <span className="text-slate-900">
+                        <span className="text-gray-200">
                           <a 
                             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-700 font-medium no-underline hover:underline"
+                            className="text-blue-400 font-medium no-underline hover:underline"
                           >
                             {slot.nation.nationName}
                           </a>
-                          {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                          {' '}<span className="text-gray-400">({slot.nation.rulerName})</span>
                         </span>
-                        <span className="font-bold text-blue-900 text-base flex-shrink-0">{slot.available}</span>
+                        <span className="font-bold text-blue-400 text-base flex-shrink-0">{slot.available}</span>
                       </div>
                     ))}
                   </div>
@@ -632,24 +631,24 @@ const RecommendationsPage: React.FC = () => {
           {/* External */}
           {availableSlots.external.length > 0 && (
             <div>
-              <h4 className="text-sm font-bold mb-2 text-slate-900">External</h4>
-              <div className="p-3 bg-orange-50 border border-orange-200 rounded">
-                <div className="font-bold text-sm mb-2 text-orange-900">🌐 External ({availableSlots.external.reduce((sum, s) => sum + s.available, 0)} total)</div>
+              <h4 className="text-sm font-bold mb-2 text-gray-200">External</h4>
+              <div className="p-3 bg-orange-900/20 border border-orange-700 rounded">
+                <div className="font-bold text-sm mb-2 text-orange-400">🌐 External ({availableSlots.external.reduce((sum, s) => sum + s.available, 0)} total)</div>
                 <div className="space-y-1 max-h-96 overflow-y-auto">
                   {availableSlots.external.map((slot) => (
                     <div key={slot.nation.id} className="text-sm flex items-center justify-between gap-3">
-                      <span className="text-slate-900">
+                      <span className="text-gray-200">
                         <a 
                           href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-700 font-medium no-underline hover:underline"
+                          className="text-blue-400 font-medium no-underline hover:underline"
                         >
                           {slot.nation.nationName}
                         </a>
-                        {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                        {' '}<span className="text-gray-400">({slot.nation.rulerName})</span>
                       </span>
-                      <span className="font-bold text-orange-900 text-base flex-shrink-0">{slot.available}</span>
+                      <span className="font-bold text-orange-400 text-base flex-shrink-0">{slot.available}</span>
                     </div>
                   ))}
                 </div>
@@ -663,7 +662,7 @@ const RecommendationsPage: React.FC = () => {
            availableSlots.getCash.length === 0 && 
            availableSlots.getTech.length === 0 && 
            availableSlots.external.length === 0 && (
-            <div className="text-center p-3 text-slate-700 text-sm">
+            <div className="text-center p-3 text-gray-300 text-sm">
               No unassigned available slots found.
             </div>
           )}
@@ -672,25 +671,25 @@ const RecommendationsPage: React.FC = () => {
 
       {/* Mismatched Offers Section */}
       {mismatchedOffers && (
-        <div className="mb-5 p-4 bg-transparent rounded-lg border border-red-300">
-          <h3 className="m-0 mb-4 text-lg font-bold text-red-900">⚠️ Mismatched Offers (Exceed Configured Slots)</h3>
+        <div className="mb-5 p-4 bg-transparent rounded-lg border border-red-700">
+          <h3 className="m-0 mb-4 text-lg font-bold text-red-400">⚠️ Mismatched Offers (Exceed Configured Slots)</h3>
           
           {/* Alliance Offers Mismatches */}
           <div className="mb-4">
-            <h4 className="text-sm font-bold mb-2 text-slate-900">Alliance Offers</h4>
+            <h4 className="text-sm font-bold mb-2 text-gray-200">Alliance Offers</h4>
             
             {/* Send Cash Mismatches */}
             {mismatchedOffers.allianceOffers.sendCash.length > 0 && (
-              <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded">
-                <div className="font-bold text-sm mb-2 text-red-900">💰 Send Cash</div>
+              <div className="mb-3 p-3 bg-red-900/30 border border-red-700 rounded">
+                <div className="font-bold text-sm mb-2 text-red-400">💰 Send Cash</div>
                 {mismatchedOffers.allianceOffers.sendCash.map((item) => (
                   <div key={item.nation.id} className="mb-3 last:mb-0">
-                    <div className="font-semibold text-sm text-slate-900 mb-1">
+                    <div className="font-semibold text-sm text-gray-200 mb-1">
                       <a 
                         href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${item.nation.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-700 hover:underline"
+                        className="text-blue-400 hover:underline"
                       >
                         {item.nation.nationName}
                       </a>
@@ -698,19 +697,19 @@ const RecommendationsPage: React.FC = () => {
                     </div>
                     <div className="ml-4 space-y-1">
                       {item.offers.map((offer) => (
-                        <div key={offer.aidId} className="text-xs text-slate-700">
+                        <div key={offer.aidId} className="text-xs text-gray-300">
                           <span className="font-medium">Sent</span> to{' '}
                           <a 
                             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.receivingId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
+                            className="text-blue-400 hover:underline"
                           >
                             {offer.receivingNation}
                           </a>
                           {' '}({offer.receivingRuler}): ${(offer.money / 1000000).toFixed(2)}M
                           {offer.mismatchReason && (
-                            <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                            <span className="text-red-400 font-semibold ml-1">({offer.mismatchReason})</span>
                           )}
                         </div>
                       ))}
@@ -722,16 +721,16 @@ const RecommendationsPage: React.FC = () => {
 
             {/* Send Tech Mismatches */}
             {mismatchedOffers.allianceOffers.sendTech.length > 0 && (
-              <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded">
-                <div className="font-bold text-sm mb-2 text-red-900">🔬 Send Tech</div>
+              <div className="mb-3 p-3 bg-red-900/30 border border-red-700 rounded">
+                <div className="font-bold text-sm mb-2 text-red-400">🔬 Send Tech</div>
                 {mismatchedOffers.allianceOffers.sendTech.map((item) => (
                   <div key={item.nation.id} className="mb-3 last:mb-0">
-                    <div className="font-semibold text-sm text-slate-900 mb-1">
+                    <div className="font-semibold text-sm text-gray-200 mb-1">
                       <a 
                         href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${item.nation.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-700 hover:underline"
+                        className="text-blue-400 hover:underline"
                       >
                         {item.nation.nationName}
                       </a>
@@ -739,19 +738,19 @@ const RecommendationsPage: React.FC = () => {
                     </div>
                     <div className="ml-4 space-y-1">
                       {item.offers.map((offer) => (
-                        <div key={offer.aidId} className="text-xs text-slate-700">
+                        <div key={offer.aidId} className="text-xs text-gray-300">
                           <span className="font-medium">Sent</span> to{' '}
                           <a 
                             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.receivingId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
+                            className="text-blue-400 hover:underline"
                           >
                             {offer.receivingNation}
                           </a>
                           {' '}({offer.receivingRuler}): {offer.technology} tech
                           {offer.mismatchReason && (
-                            <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                            <span className="text-red-400 font-semibold ml-1">({offer.mismatchReason})</span>
                           )}
                         </div>
                       ))}
@@ -763,16 +762,16 @@ const RecommendationsPage: React.FC = () => {
 
             {/* Get Cash Mismatches */}
             {mismatchedOffers.allianceOffers.getCash.length > 0 && (
-              <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded">
-                <div className="font-bold text-sm mb-2 text-red-900">💰 Get Cash</div>
+              <div className="mb-3 p-3 bg-red-900/30 border border-red-700 rounded">
+                <div className="font-bold text-sm mb-2 text-red-400">💰 Get Cash</div>
                 {mismatchedOffers.allianceOffers.getCash.map((item) => (
                   <div key={item.nation.id} className="mb-3 last:mb-0">
-                    <div className="font-semibold text-sm text-slate-900 mb-1">
+                    <div className="font-semibold text-sm text-gray-200 mb-1">
                       <a 
                         href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${item.nation.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-700 hover:underline"
+                        className="text-blue-400 hover:underline"
                       >
                         {item.nation.nationName}
                       </a>
@@ -780,19 +779,19 @@ const RecommendationsPage: React.FC = () => {
                     </div>
                     <div className="ml-4 space-y-1">
                       {item.offers.map((offer) => (
-                        <div key={offer.aidId} className="text-xs text-slate-700">
+                        <div key={offer.aidId} className="text-xs text-gray-300">
                           <span className="font-medium">Received</span> from{' '}
                           <a 
                             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.declaringId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
+                            className="text-blue-400 hover:underline"
                           >
                             {offer.declaringNation}
                           </a>
                           {' '}({offer.declaringRuler}): ${(offer.money / 1000000).toFixed(2)}M
                           {offer.mismatchReason && (
-                            <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                            <span className="text-red-400 font-semibold ml-1">({offer.mismatchReason})</span>
                           )}
                         </div>
                       ))}
@@ -804,16 +803,16 @@ const RecommendationsPage: React.FC = () => {
 
             {/* Get Tech Mismatches */}
             {mismatchedOffers.allianceOffers.getTech.length > 0 && (
-              <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded">
-                <div className="font-bold text-sm mb-2 text-red-900">🔬 Get Tech</div>
+              <div className="mb-3 p-3 bg-red-900/30 border border-red-700 rounded">
+                <div className="font-bold text-sm mb-2 text-red-400">🔬 Get Tech</div>
                 {mismatchedOffers.allianceOffers.getTech.map((item) => (
                   <div key={item.nation.id} className="mb-3 last:mb-0">
-                    <div className="font-semibold text-sm text-slate-900 mb-1">
+                    <div className="font-semibold text-sm text-gray-200 mb-1">
                       <a 
                         href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${item.nation.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-700 hover:underline"
+                        className="text-blue-400 hover:underline"
                       >
                         {item.nation.nationName}
                       </a>
@@ -821,19 +820,19 @@ const RecommendationsPage: React.FC = () => {
                     </div>
                     <div className="ml-4 space-y-1">
                       {item.offers.map((offer) => (
-                        <div key={offer.aidId} className="text-xs text-slate-700">
+                        <div key={offer.aidId} className="text-xs text-gray-300">
                           <span className="font-medium">Received</span> from{' '}
                           <a 
                             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.declaringId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
+                            className="text-blue-400 hover:underline"
                           >
                             {offer.declaringNation}
                           </a>
                           {' '}({offer.declaringRuler}): {offer.technology} tech
                           {offer.mismatchReason && (
-                            <span className="text-red-600 font-semibold ml-1">({offer.mismatchReason})</span>
+                            <span className="text-red-400 font-semibold ml-1">({offer.mismatchReason})</span>
                           )}
                         </div>
                       ))}
@@ -847,19 +846,19 @@ const RecommendationsPage: React.FC = () => {
           {/* External Mismatches */}
           {mismatchedOffers.externalMismatches.length > 0 && (
             <div>
-              <h4 className="text-sm font-bold mb-2 text-slate-900">External Slot Mismatches</h4>
-              <div className="p-3 bg-orange-50 border border-orange-200 rounded">
-                <div className="text-sm text-slate-700 mb-2">
+              <h4 className="text-sm font-bold mb-2 text-gray-200">External Slot Mismatches</h4>
+              <div className="p-3 bg-orange-900/30 border border-orange-700 rounded">
+                <div className="text-sm text-gray-300 mb-2">
                   Nations with external slots configured but have internal (alliance) offers:
                 </div>
                 {mismatchedOffers.externalMismatches.map((item) => (
                   <div key={item.nation.id} className="mb-3 last:mb-0">
-                    <div className="font-semibold text-sm text-slate-900 mb-1">
+                    <div className="font-semibold text-sm text-gray-200 mb-1">
                       <a 
                         href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${item.nation.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-700 hover:underline"
+                        className="text-blue-400 hover:underline"
                       >
                         {item.nation.nationName}
                       </a>
@@ -867,14 +866,14 @@ const RecommendationsPage: React.FC = () => {
                     </div>
                     <div className="ml-4 space-y-1">
                       {item.offers.map((offer) => (
-                        <div key={offer.aidId} className="text-xs text-slate-700">
+                        <div key={offer.aidId} className="text-xs text-gray-300">
                           <span className="font-medium">{offer.direction === 'sent' ? 'Sent' : 'Received'}</span>{' '}
                           {offer.direction === 'sent' ? 'to' : 'from'}{' '}
                           <a 
                             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${offer.direction === 'sent' ? offer.receivingId : offer.declaringId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
+                            className="text-blue-400 hover:underline"
                           >
                             {offer.direction === 'sent' ? offer.receivingNation : offer.declaringNation}
                           </a>
@@ -895,7 +894,7 @@ const RecommendationsPage: React.FC = () => {
            mismatchedOffers.allianceOffers.getCash.length === 0 && 
            mismatchedOffers.allianceOffers.getTech.length === 0 && 
            mismatchedOffers.externalMismatches.length === 0 && (
-            <div className="text-center p-3 text-slate-700 text-sm">
+            <div className="text-center p-3 text-gray-300 text-sm">
               No mismatched offers found. All offers map correctly to configured slots.
             </div>
           )}
@@ -904,9 +903,9 @@ const RecommendationsPage: React.FC = () => {
 
       {/* Unfilled/Used Aid Slots Section */}
       {unfilledSlots && (
-        <div className="mb-5 p-4 bg-transparent rounded-lg border border-blue-300">
-          <h3 className="m-0 mb-4 text-lg font-bold text-blue-900">📊 Unfilled/Used Aid Slots</h3>
-          <p className="text-sm text-slate-700 mb-4">
+        <div className="mb-5 p-4 bg-transparent rounded-lg border border-blue-700">
+          <h3 className="m-0 mb-4 text-lg font-bold text-blue-400">📊 Unfilled/Used Aid Slots</h3>
+          <p className="text-sm text-gray-300 mb-4">
             Comparison of assigned slots (from configuration) vs used slots (from existing aid offers)
           </p>
           
@@ -916,30 +915,30 @@ const RecommendationsPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Send Cash */}
               {unfilledSlots.sendCash.length > 0 && (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
-                  <div className="font-bold text-sm mb-2 text-yellow-900">
+                <div className="p-3 bg-yellow-900/10 border border-yellow-800 rounded">
+                  <div className="font-bold text-sm mb-2 text-yellow-500">
                     💰 Send Cash
                   </div>
                   <div className="space-y-2">
                     {unfilledSlots.sendCash.map((slot) => (
                       <div key={slot.nation.id} className="text-sm">
                         <div className="flex items-center justify-between gap-3 mb-1">
-                          <span className="text-slate-900">
+                          <span className="text-gray-200">
                             <a 
                               href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-700 font-medium no-underline hover:underline"
+                              className="text-blue-400 font-medium no-underline hover:underline"
                             >
                               {slot.nation.nationName}
                             </a>
-                            {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                            {' '}<span className="text-gray-400">({slot.nation.rulerName})</span>
                           </span>
                         </div>
-                        <div className="ml-4 text-xs text-slate-600">
+                        <div className="ml-4 text-xs text-gray-400">
                           Assigned: <span className="font-semibold">{slot.assigned}</span> | 
                           Used: <span className="font-semibold">{slot.used}</span> | 
-                          Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-700' : 'text-slate-700'}`}>{slot.unfilled}</span>
+                          Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-400' : 'text-gray-300'}`}>{slot.unfilled}</span>
                         </div>
                       </div>
                     ))}
@@ -949,30 +948,30 @@ const RecommendationsPage: React.FC = () => {
               
               {/* Send Tech */}
               {unfilledSlots.sendTech.length > 0 && (
-                <div className="p-3 bg-purple-50 border border-purple-200 rounded">
-                  <div className="font-bold text-sm mb-2 text-purple-900">
+                <div className="p-3 bg-purple-900/20 border border-purple-700 rounded">
+                  <div className="font-bold text-sm mb-2 text-purple-400">
                     🔬 Send Tech
                   </div>
                   <div className="space-y-2">
                     {unfilledSlots.sendTech.map((slot) => (
                       <div key={slot.nation.id} className="text-sm">
                         <div className="flex items-center justify-between gap-3 mb-1">
-                          <span className="text-slate-900">
+                          <span className="text-gray-200">
                             <a 
                               href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-700 font-medium no-underline hover:underline"
+                              className="text-blue-400 font-medium no-underline hover:underline"
                             >
                               {slot.nation.nationName}
                             </a>
-                            {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                            {' '}<span className="text-gray-400">({slot.nation.rulerName})</span>
                           </span>
                         </div>
-                        <div className="ml-4 text-xs text-slate-600">
+                        <div className="ml-4 text-xs text-gray-400">
                           Assigned: <span className="font-semibold">{slot.assigned}</span> | 
                           Used: <span className="font-semibold">{slot.used}</span> | 
-                          Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-700' : 'text-slate-700'}`}>{slot.unfilled}</span>
+                          Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-400' : 'text-gray-300'}`}>{slot.unfilled}</span>
                         </div>
                       </div>
                     ))}
@@ -984,34 +983,34 @@ const RecommendationsPage: React.FC = () => {
 
           {/* Receive Types */}
           <div className="mb-4">
-            <h4 className="text-sm font-bold mb-2 text-slate-900">Receive Types</h4>
+            <h4 className="text-sm font-bold mb-2 text-gray-200">Receive Types</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Get Cash */}
               {unfilledSlots.getCash.length > 0 && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded">
-                  <div className="font-bold text-sm mb-2 text-green-900">
+                <div className="p-3 bg-green-900/20 border border-green-700 rounded">
+                  <div className="font-bold text-sm mb-2 text-green-400">
                     💰 Get Cash
                   </div>
                   <div className="space-y-2">
                     {unfilledSlots.getCash.map((slot) => (
                       <div key={slot.nation.id} className="text-sm">
                         <div className="flex items-center justify-between gap-3 mb-1">
-                          <span className="text-slate-900">
+                          <span className="text-gray-200">
                             <a 
                               href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-700 font-medium no-underline hover:underline"
+                              className="text-blue-400 font-medium no-underline hover:underline"
                             >
                               {slot.nation.nationName}
                             </a>
-                            {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                            {' '}<span className="text-gray-400">({slot.nation.rulerName})</span>
                           </span>
                         </div>
-                        <div className="ml-4 text-xs text-slate-600">
+                        <div className="ml-4 text-xs text-gray-400">
                           Assigned: <span className="font-semibold">{slot.assigned}</span> | 
                           Used: <span className="font-semibold">{slot.used}</span> | 
-                          Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-700' : 'text-slate-700'}`}>{slot.unfilled}</span>
+                          Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-400' : 'text-gray-300'}`}>{slot.unfilled}</span>
                         </div>
                       </div>
                     ))}
@@ -1021,30 +1020,30 @@ const RecommendationsPage: React.FC = () => {
               
               {/* Get Tech */}
               {unfilledSlots.getTech.length > 0 && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded">
-                  <div className="font-bold text-sm mb-2 text-blue-900">
+                <div className="p-3 bg-blue-900/20 border border-blue-700 rounded">
+                  <div className="font-bold text-sm mb-2 text-blue-400">
                     🔬 Get Tech
                   </div>
                   <div className="space-y-2">
                     {unfilledSlots.getTech.map((slot) => (
                       <div key={slot.nation.id} className="text-sm">
                         <div className="flex items-center justify-between gap-3 mb-1">
-                          <span className="text-slate-900">
+                          <span className="text-gray-200">
                             <a 
                               href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-700 font-medium no-underline hover:underline"
+                              className="text-blue-400 font-medium no-underline hover:underline"
                             >
                               {slot.nation.nationName}
                             </a>
-                            {' '}<span className="text-slate-600">({slot.nation.rulerName})</span>
+                            {' '}<span className="text-gray-400">({slot.nation.rulerName})</span>
                           </span>
                         </div>
-                        <div className="ml-4 text-xs text-slate-600">
+                        <div className="ml-4 text-xs text-gray-400">
                           Assigned: <span className="font-semibold">{slot.assigned}</span> | 
                           Used: <span className="font-semibold">{slot.used}</span> | 
-                          Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-700' : 'text-slate-700'}`}>{slot.unfilled}</span>
+                          Unfilled: <span className={`font-semibold ${slot.unfilled > 0 ? 'text-green-400' : 'text-gray-300'}`}>{slot.unfilled}</span>
                         </div>
                       </div>
                     ))}
@@ -1057,19 +1056,19 @@ const RecommendationsPage: React.FC = () => {
           {/* External */}
           {unfilledSlots.external.length > 0 && (
             <div>
-              <h4 className="text-sm font-bold mb-2 text-slate-900">External</h4>
-              <div className="p-3 bg-orange-50 border border-orange-200 rounded">
-                <div className="font-bold text-sm mb-2 text-orange-900">🌐 External</div>
+              <h4 className="text-sm font-bold mb-2 text-gray-200">External</h4>
+              <div className="p-3 bg-orange-900/20 border border-orange-700 rounded">
+                <div className="font-bold text-sm mb-2 text-orange-400">🌐 External</div>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {unfilledSlots.external.map((slot) => (
                     <div key={slot.nation.id} className="text-sm">
                       <div className="flex items-center justify-between gap-3 mb-1">
-                        <span className="text-slate-900">
+                        <span className="text-gray-200">
                           <a 
                             href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${slot.nation.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-700 font-medium no-underline hover:underline"
+                            className="text-blue-400 font-medium no-underline hover:underline"
                           >
                             {slot.nation.nationName}
                           </a>
@@ -1094,13 +1093,13 @@ const RecommendationsPage: React.FC = () => {
            unfilledSlots.getCash.length === 0 && 
            unfilledSlots.getTech.length === 0 && 
            unfilledSlots.external.length === 0 && (
-            <div className="text-center p-3 text-slate-700 text-sm">
+            <div className="text-center p-3 text-gray-300 text-sm">
               No slot data available.
             </div>
           )}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };
 

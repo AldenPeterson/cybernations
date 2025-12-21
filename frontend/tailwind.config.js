@@ -26,6 +26,11 @@ export default {
           DEFAULT: '#dc2626',
           light: '#fecaca',
         },
+        // Coalition colors for NSComparisonsPage
+        coalition: {
+          blue: '#0d6efd',
+          red: '#dc3545',
+        },
       },
       boxShadow: {
         'custom': '0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import { useAlliances } from '../contexts/AlliancesContext';
+import PageContainer from '../components/PageContainer';
+import { EMPTY_CELL_BG } from '../styles/tableClasses';
 
 interface Alliance {
   id: number;
@@ -759,47 +761,47 @@ const AidPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-5 text-center mt-20">
+      <PageContainer className="p-5 text-center">
         Loading alliance data...
-      </div>
+      </PageContainer>
     );
   }
 
   if (error) {
     return (
-      <div className="p-5 text-error mt-20">
+      <PageContainer className="p-5 text-error">
         Error: {error}
-      </div>
+      </PageContainer>
     );
   }
 
   if (!allianceId) {
     return (
-      <div className="text-center p-10 text-gray-600 mt-20">
+      <PageContainer className="text-center p-10 text-gray-400">
         Please select an alliance to view aid data.
-      </div>
+      </PageContainer>
     );
   }
 
   // Wait for alliances to load before showing "not found"
   if (alliancesLoading) {
     return (
-      <div className="text-center p-10 text-gray-600 mt-20">
+      <PageContainer className="text-center p-10 text-gray-400">
         Loading alliances...
-      </div>
+      </PageContainer>
     );
   }
 
   if (!alliance) {
     return (
-      <div className="text-center p-10 text-gray-600 mt-20">
+      <PageContainer className="text-center p-10 text-gray-400">
         Alliance not found.
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="p-5 font-sans mt-20">
+    <PageContainer className="p-5">
       {/* Alliance Stats */}
       {allianceStats && allianceStats.totalNations > 0 && (
         <div className="mb-5 p-4 bg-transparent rounded-lg border border-slate-300">
@@ -823,36 +825,36 @@ const AidPage: React.FC = () => {
         <div className="mb-5 p-4 bg-transparent rounded-lg border border-slate-300">
           <h3>{alliance.name} Aid Offers, by receiving/sending alliance</h3>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-slate-300 text-sm bg-white">
+            <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800">
               <thead>
-                <tr className="bg-gray-800">
-                  <th className="p-3 border border-slate-300 text-left bg-gray-800 text-white font-bold">
+                <tr className="bg-gray-700">
+                  <th className="p-3 border border-gray-600 text-left bg-gray-700 text-white font-bold">
                     Alliance
                   </th>
-                  <th className="p-3 border border-slate-300 text-center bg-gray-800 text-white font-bold">
+                  <th className="p-3 border border-gray-600 text-center bg-gray-700 text-white font-bold">
                     Received
                   </th>
-                  <th className="p-3 border border-slate-300 text-center bg-gray-800 text-white font-bold">
+                  <th className="p-3 border border-gray-600 text-center bg-gray-700 text-white font-bold">
                     Sent
                   </th>
-                  <th className="p-3 border border-slate-300 text-center bg-gray-800 text-white font-bold">
+                  <th className="p-3 border border-gray-600 text-center bg-gray-700 text-white font-bold">
                     Total
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {allianceAidStats?.map((stats) => (
-                  <tr key={stats.allianceId} className="bg-white hover:bg-slate-50">
-                    <td className="p-2 border border-slate-300 font-bold text-black bg-white">
+                  <tr key={stats.allianceId} className="bg-gray-800 hover:bg-gray-700">
+                    <td className="p-2 border border-gray-700 font-bold text-gray-200 bg-gray-800">
                       {stats.allianceName}
                     </td>
-                    <td className={`p-2 border border-slate-300 text-center text-black bg-white ${stats.incomingAid > 0 ? 'font-bold' : 'font-normal'}`}>
+                    <td className={`p-2 border border-gray-700 text-center text-gray-200 bg-gray-800 ${stats.incomingAid > 0 ? 'font-bold' : 'font-normal'}`}>
                       {stats.incomingAid}
                     </td>
-                    <td className={`p-2 border border-slate-300 text-center text-black bg-white ${stats.outgoingAid > 0 ? 'font-bold' : 'font-normal'}`}>
+                    <td className={`p-2 border border-gray-700 text-center text-gray-200 bg-gray-800 ${stats.outgoingAid > 0 ? 'font-bold' : 'font-normal'}`}>
                       {stats.outgoingAid}
                     </td>
-                    <td className="p-2 border border-slate-300 text-center text-black bg-white font-bold">
+                    <td className="p-2 border border-gray-700 text-center text-gray-200 bg-gray-800 font-bold">
                       {stats.incomingAid + stats.outgoingAid}
                     </td>
                   </tr>
@@ -893,13 +895,13 @@ const AidPage: React.FC = () => {
           </label>
           <button
             onClick={() => setExpirationFilter(['empty', 'expired', 'today', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days'])}
-            className="px-2 py-1 bg-slate-50 border border-slate-300 rounded cursor-pointer text-xs text-gray-800 font-medium mr-2 hover:bg-slate-100"
+            className="px-2 py-1 bg-gray-800 border border-gray-600 rounded cursor-pointer text-xs text-gray-200 font-medium mr-2 hover:bg-gray-700"
           >
             Check All
           </button>
           <button
             onClick={() => setExpirationFilter([])}
-            className="px-2 py-1 bg-slate-50 border border-slate-300 rounded cursor-pointer text-xs text-gray-800 font-medium hover:bg-slate-100"
+            className="px-2 py-1 bg-gray-800 border border-gray-600 rounded cursor-pointer text-xs text-gray-200 font-medium hover:bg-gray-700"
           >
             Uncheck All
           </button>
@@ -951,7 +953,7 @@ const AidPage: React.FC = () => {
         <div>
           <h2>Aid Slots by Nation</h2>
           <div className="overflow-x-auto w-full max-w-none">
-            <table className="border-collapse border border-slate-300 text-sm w-full" style={{ tableLayout: 'fixed' }}>
+            <table className="border-collapse border border-slate-300 text-sm w-full table-fixed">
               <thead>
                 <tr className="bg-gray-800 border-b-2 border-slate-500">
                   <th className={headerClasses.nation}>
@@ -1138,7 +1140,7 @@ const AidPage: React.FC = () => {
                               ? '#ffebee' 
                               : slot.aidOffer 
                                 ? (isExpired ? '#ffebee' : (slot.isOutgoing ? '#e3f2fd' : '#f3e5f5')) 
-                                : '#ffffff',
+                                : EMPTY_CELL_BG,
                           borderStyle: isRecommendation || isMissingSlot ? 'dashed' : 'solid',
                           borderWidth: isRecommendation || isMissingSlot ? '2px' : (isMismatched ? '3px' : '1px'),
                           borderColor: isMissingSlot 
@@ -1278,7 +1280,7 @@ const AidPage: React.FC = () => {
           }
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };
 

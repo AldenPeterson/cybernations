@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
+import PageContainer from '../components/PageContainer';
 
 type Alliance = {
   id: number;
@@ -226,7 +227,7 @@ const GlobalWarsPage: React.FC = () => {
   };
 
   return (
-    <div className="pt-24 px-4 sm:px-6 lg:px-8 font-sans">
+    <PageContainer className="px-4 sm:px-6 lg:px-8">
       <div className="mb-4 flex items-center justify-between gap-4">
         <h1 className="text-xl sm:text-2xl font-bold text-white">Global Wars</h1>
         <div className="flex items-center gap-2">
@@ -422,7 +423,7 @@ const GlobalWarsPage: React.FC = () => {
           </tfoot>
         </table>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

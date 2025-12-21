@@ -5,7 +5,7 @@ import FilterCheckbox from './FilterCheckbox';
 import NSPercentageBadge from './NSPercentageBadge';
 import AllianceMultiSelect from './AllianceMultiSelect';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
-import { tableClasses } from '../styles/tableClasses';
+import { tableClasses, EMPTY_CELL_BG } from '../styles/tableClasses';
 import { useAlliances } from '../contexts/AlliancesContext';
 
 interface StaggerRecommendationsCellProps {
@@ -86,7 +86,7 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
                 href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attacker.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-700 no-underline font-bold hover:underline overflow-hidden overflow-ellipsis whitespace-nowrap flex-1 min-w-0"
+                className="text-blue-400 no-underline font-bold hover:underline overflow-hidden overflow-ellipsis whitespace-nowrap flex-1 min-w-0"
                 title={`${attacker.name} / ${attacker.ruler}`}
               >
                 {attacker.name} / {attacker.ruler}
@@ -115,7 +115,7 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
           <div className={tableClasses.assignmentCell.nukes}>
             {attacker.nuclearWeapons} nukes
           </div>
-          <div className={`${tableClasses.assignmentCell.wars} ${attacker.currentWars > 0 ? 'text-red-600 font-bold' : ''}`}>
+          <div className={`${tableClasses.assignmentCell.wars} ${attacker.currentWars > 0 ? 'text-red-400 font-bold' : ''}`}>
             {attacker.currentWars !== undefined && attacker.currentWars > 0 ? `${attacker.currentWars} war${attacker.currentWars !== 1 ? 's' : ''}` : '—'}
           </div>
         </div>
@@ -123,7 +123,7 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
       {hasMore && (
         <div 
           onClick={() => setIsExpanded(!isExpanded)}
-          className="mt-2 px-2 py-1 bg-yellow-100 border border-yellow-400 rounded text-yellow-800 font-bold text-[9px] cursor-pointer select-none hover:bg-yellow-200"
+          className="mt-2 px-2 py-1 bg-yellow-900/30 border border-yellow-700 rounded text-yellow-400 font-bold text-[9px] cursor-pointer select-none hover:bg-yellow-900/40"
         >
           {isExpanded 
             ? `▲ Show less (${totalRecommendations} total)` 
@@ -438,13 +438,13 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     const techValue = formatTechnology(technology).replace(/K/g, 'k');
     const nukesBackground = getNuclearWeaponsColor(nuclearWeapons);
     return (
-      <span className="inline-flex items-center gap-1 text-[9px] text-gray-600">
+      <span className="inline-flex items-center gap-1 text-[9px] text-gray-400">
         <span>{`${formatNumber(strength)}NS`}</span>
         <span>|</span>
         <span>{techValue}</span>
         <span>|</span>
         <span
-          className="px-1 rounded text-gray-800 font-semibold"
+          className="px-1 rounded text-gray-200 font-semibold"
           style={{ backgroundColor: nukesBackground }}
         >
           {nuclearWeapons}
@@ -518,7 +518,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   };
 
   const getLastNukedCellColor = (lastNukedDate?: string): string => {
-    if (!lastNukedDate) return '#ffffff';
+    if (!lastNukedDate) return EMPTY_CELL_BG;
     const parsed = parseMmDdYyyy(lastNukedDate);
     if (!parsed) return '#ffffff';
     const today = getCentralTodayYMD();
@@ -802,8 +802,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       {/* Filter Controls - positioned above table */}
       <div className="mb-4 mx-5 flex flex-col gap-4">
         {/* Target Assignment Controls Section */}
-        <div className="p-4 bg-slate-50 border border-slate-300 rounded-lg">
-          <h4 className="m-0 mb-3 text-sm font-bold text-gray-800">
+        <div className="p-4 bg-gray-800 border border-gray-700 rounded-lg">
+          <h4 className="m-0 mb-3 text-sm font-bold text-gray-200">
             Target Assignment Configuration
           </h4>
           <div className="flex flex-col lg:flex-row lg:justify-between items-stretch lg:items-center gap-3">
@@ -851,7 +851,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                 }}
               />
               <div className="flex items-center gap-1.5">
-                <label className="text-sm text-gray-800 font-medium whitespace-nowrap">
+                <label className="text-sm text-gray-200 font-medium whitespace-nowrap">
                   Max recommendations:
                 </label>
                 <select
@@ -861,14 +861,14 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     setMaxRecommendations(value);
                     updateUrlParams({ maxRecommendations: value.toString() });
                   }}
-                  className="w-[80px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
+                  className="w-[80px] px-2 py-1 text-sm text-gray-200 font-medium border border-gray-600 rounded text-center bg-gray-800 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
                 >
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30].map(num => (
                     <option key={num} value={num}>{num}</option>
                   ))}
                 </select>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-1.5 p-2 border border-gray-300 rounded bg-gray-50">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-1.5 p-2 border border-gray-600 rounded bg-gray-800">
                 <FilterCheckbox
                   label="Sell down?"
                   checked={sellDownEnabled}
@@ -878,7 +878,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                   }}
                 />
                 <div className="flex items-center gap-1.5">
-                  <label className="text-sm text-gray-800 font-medium whitespace-nowrap">
+                  <label className="text-sm text-gray-200 font-medium whitespace-nowrap">
                     Fixed Military NS to drop:
                   </label>
                   <input
@@ -895,7 +895,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       }
                     }}
                     disabled={!sellDownEnabled}
-                    className="w-[80px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:bg-gray-100 disabled:text-gray-500 touch-manipulation"
+                    className="w-[80px] px-2 py-1 text-sm text-gray-200 font-medium border border-gray-600 rounded text-center bg-gray-800 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:bg-gray-700 disabled:text-gray-500 touch-manipulation"
                   />
                 </div>
               </div>
@@ -953,7 +953,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
               updateUrlParams({ showPMNations: checked.toString() });
             }}
           />
-          <div className="flex items-center gap-1.5 p-2 border border-gray-300 rounded bg-gray-50">
+          <div className="flex items-center gap-1.5 p-2 border border-gray-600 rounded bg-gray-800">
             <FilterCheckbox
               label="Wars ending in under"
               checked={allWarsEndingInDays}
@@ -970,13 +970,13 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                 updateUrlParams({ warsEndingInDays: value.toString() });
               }}
               disabled={!allWarsEndingInDays}
-              className="w-[80px] px-2 py-1 text-sm text-gray-800 font-medium border border-gray-300 rounded text-center bg-white focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:bg-gray-100 disabled:text-gray-500"
+              className="w-[80px] px-2 py-1 text-sm text-gray-200 font-medium border border-gray-600 rounded text-center bg-gray-800 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 disabled:bg-gray-700 disabled:text-gray-500"
             >
               {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
                 <option key={num} value={num}>{num}</option>
               ))}
             </select>
-            <span className="text-sm text-gray-800 font-medium">days</span>
+            <span className="text-sm text-gray-200 font-medium">days</span>
           </div>
         </div>
       </div>
@@ -1022,7 +1022,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                           </a>
                         </strong>
                         <br />
-                        <span className={`text-[10px] ${nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? 'text-red-600 font-bold' : 'text-gray-600 font-normal'}`}>
+                        <span className={`text-[10px] ${nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? 'text-red-400 font-bold' : 'text-gray-400 font-normal'}`}>
                           {formatNumber(nationWar.nation.strength)} NS / {formatTechnology(nationWar.nation.technology)} Tech
                         </span>
                         <br />
@@ -1032,15 +1032,15 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                     {/* Warchest Column */}
                     <td 
                       className={columnClasses.warchest}
-                      style={{ backgroundColor: nationWar.nation.warchest !== undefined ? getWarchestColor(nationWar.nation.warchest) : '#ffffff' }}
+                      style={{ backgroundColor: nationWar.nation.warchest !== undefined ? getWarchestColor(nationWar.nation.warchest) : EMPTY_CELL_BG }}
                     >
                       {nationWar.nation.warchest !== undefined ? (
                         <div className="text-[11px]">
-                          <div className="text-green-800 font-bold">
+                          <div className="text-green-400 font-bold">
                             {formatWarchest(nationWar.nation.warchest)}
                           </div>
                           {nationWar.nation.spyglassLastUpdated !== undefined && (
-                            <div className="text-gray-600 text-[9px] mt-0.5">
+                            <div className="text-gray-400 text-[9px] mt-0.5">
                               ({nationWar.nation.spyglassLastUpdated}d)
                             </div>
                           )}
@@ -1054,7 +1054,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       className={columnClasses.nukes}
                       style={{ backgroundColor: getNuclearWeaponsColor(nationWar.nation.nuclearWeapons) }}
                     >
-                      <div className="text-xs font-bold text-red-600">
+                      <div className="text-xs font-bold text-red-400">
                         {nationWar.nation.nuclearWeapons}
                       </div>
                     </td>
@@ -1063,7 +1063,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       className={columnClasses.lastNuked}
                       style={{ backgroundColor: getLastNukedCellColor(nationWar.nation.lastNukedDate) }}
                     >
-                      <div className="text-[11px] text-gray-800">
+                      <div className="text-[11px] text-gray-200">
                         {formatLastNukedDisplay(nationWar.nation.lastNukedDate)}
                       </div>
                     </td>
@@ -1075,21 +1075,21 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       <td
                         key={`attacking-${index}`}
                         className={columnClasses.war}
-                        style={{ backgroundColor: attackingWar ? (attackingWar.expirationColor || '#e8f5e8') : '#ffffff' }}
+                        style={{ backgroundColor: attackingWar ? (attackingWar.expirationColor || '#e8f5e8') : EMPTY_CELL_BG }}
                       >
                         {attackingWar && defendingNation ? (
                           <div className="text-[11px]">
-                            <div className="font-bold mb-0.5 text-blue-700">
+                            <div className="font-bold mb-0.5 text-blue-400">
                               <a 
                                 href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${defendingNation.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-700 no-underline hover:underline"
+                                className="text-blue-400 no-underline hover:underline"
                               >
                                 {defendingNation.ruler} / {defendingNation.name}
                               </a>
                             </div>
-                            <div className="text-[9px] text-gray-600 mb-0.5">
+                            <div className="text-[9px] text-gray-400 mb-0.5">
                               {defendingNation.alliance}
                             </div>
                             <div className="mb-0.5">
@@ -1097,17 +1097,17 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                             </div>
                             {defendingNation.warchest !== undefined && (
                               <div className="text-[9px] mb-0.5">
-                                <span className="text-green-800 font-bold">
+                                <span className="text-green-400 font-bold">
                                   {formatWarchest(defendingNation.warchest!)}
                                 </span>
                                 {defendingNation.spyglassLastUpdated !== undefined && (
-                                  <span className="text-gray-600 ml-1">
+                                  <span className="text-gray-400 ml-1">
                                     ({defendingNation.spyglassLastUpdated}d)
                                   </span>
                                 )}
                               </div>
                             )}
-                            <div className="text-[9px] text-gray-600">
+                            <div className="text-[9px] text-gray-400">
                               {attackingWar.formattedEndDate || attackingWar.endDate}
                             </div>
                           </div>
@@ -1125,21 +1125,21 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       <td
                         key={`defending-${index}`}
                         className={columnClasses.war}
-                        style={{ backgroundColor: defendingWar ? (defendingWar.expirationColor || '#e8f5e8') : '#ffffff' }}
+                        style={{ backgroundColor: defendingWar ? (defendingWar.expirationColor || '#e8f5e8') : EMPTY_CELL_BG }}
                       >
                         {defendingWar && attackingNation ? (
                           <div className="text-[11px]">
-                            <div className="font-bold mb-0.5 text-red-600">
+                            <div className="font-bold mb-0.5 text-red-400">
                               <a 
                                 href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attackingNation.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-red-600 no-underline hover:underline"
+                                className="text-red-400 no-underline hover:underline"
                               >
                                 {attackingNation.ruler} / {attackingNation.name}
                               </a>
                             </div>
-                            <div className="text-[9px] text-gray-600 mb-0.5">
+                            <div className="text-[9px] text-gray-400 mb-0.5">
                               {attackingNation.alliance}
                             </div>
                             <div className="mb-0.5">
@@ -1147,17 +1147,17 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                             </div>
                             {attackingNation.warchest !== undefined && (
                               <div className="text-[9px] mb-0.5">
-                                <span className="text-green-800 font-bold">
+                                <span className="text-green-400 font-bold">
                                   {formatWarchest(attackingNation.warchest!)}
                                 </span>
                                 {attackingNation.spyglassLastUpdated !== undefined && (
-                                  <span className="text-gray-600 ml-1">
+                                  <span className="text-gray-400 ml-1">
                                     ({attackingNation.spyglassLastUpdated}d)
                                   </span>
                                 )}
                               </div>
                             )}
-                            <div className="text-[9px] text-gray-600">
+                            <div className="text-[9px] text-gray-400">
                               {defendingWar.formattedEndDate || defendingWar.endDate}
                             </div>
                           </div>
@@ -1177,19 +1177,19 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                         if (staggeredInfo.status === 'empty') {
                           return <span className="text-gray-400 text-[10px]">—</span>;
                         } else if (staggeredInfo.status === 'staggered') {
-                          return <span className="text-green-800 text-[10px] font-bold">✓</span>;
+                          return <span className="text-green-400 text-[10px] font-bold">✓</span>;
                         } else {
-                          return <span className="text-red-600 text-[10px] font-bold">⚠</span>;
+                          return <span className="text-red-400 text-[10px] font-bold">⚠</span>;
                         }
                       })()}
                     </td>
                     {/* PM Column */}
                     <td 
                       className={columnClasses.pm}
-                      style={{ backgroundColor: shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? '#ffebee' : '#ffffff' }}
+                      style={{ backgroundColor: shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? '#ffebee' : EMPTY_CELL_BG }}
                     >
                       {shouldBeInPeaceMode(nationWar.nation.nuclearWeapons, nationWar.nation.governmentType, nationWar.attackingWars, nationWar.defendingWars) ? (
-                        <span className="text-red-600 text-[10px] font-bold">✓</span>
+                        <span className="text-red-400 text-[10px] font-bold">✓</span>
                       ) : (
                         <span className="text-gray-400 text-[10px]">—</span>
                       )}
@@ -1217,7 +1217,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
             </table>
           </div>
       ) : (
-        <div className="text-center p-10 text-gray-600">
+        <div className="text-center p-10 text-gray-400">
           No results found with current filters.
         </div>
       )}

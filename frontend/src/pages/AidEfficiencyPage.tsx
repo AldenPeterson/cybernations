@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import { tableClasses } from '../styles/tableClasses';
+import TableContainer from '../components/TableContainer';
+import PageContainer from '../components/PageContainer';
 
 interface AidEfficiencyDataPoint {
   date: string;
@@ -376,17 +378,17 @@ const AidEfficiencyPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-5 text-center mt-20">
+      <PageContainer className="p-5 text-center">
         Loading aid efficiency data...
-      </div>
+      </PageContainer>
     );
   }
 
   if (error) {
     return (
-      <div className="p-5 text-error mt-20">
+      <PageContainer className="p-5 text-error">
         Error: {error}
-      </div>
+      </PageContainer>
     );
   }
 
@@ -401,18 +403,17 @@ const AidEfficiencyPage: React.FC = () => {
     const upperBound = threshold + 5;
     
     if (value < threshold) {
-      return 'bg-red-100 text-red-900 font-bold';
+      return 'bg-red-900/30 text-red-400 font-bold';
     } else if (value >= lowerBound && value <= upperBound) {
-      return 'bg-yellow-100 text-yellow-900 font-bold';
+      return 'bg-yellow-900/30 text-yellow-400 font-bold';
     }
-    return 'text-black';
+    return 'text-gray-200';
   };
 
   return (
-    <div className={`${tableClasses.container} mt-20`}>
-      <div className={tableClasses.card}>
-        <h1 className={tableClasses.title}>Aid Efficiency</h1>
-        <p className="text-gray-600 mb-6">
+    <TableContainer>
+      <h1 className={tableClasses.title}>Aid Efficiency</h1>
+        <p className="text-gray-400 mb-6">
           Aid efficiency percentage represents the percentage of available aid slots that are being utilized by each alliance.
         </p>
 
@@ -431,9 +432,9 @@ const AidEfficiencyPage: React.FC = () => {
                   setMinMemberThreshold(value);
                 }
               }}
-              className="px-3 py-2 border-2 border-slate-400 rounded-lg text-base font-medium w-24 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className="px-3 py-2 border-2 border-gray-600 rounded-lg text-base font-medium w-24 bg-gray-800 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-400">
               Alliances with at least this many members in last data update.
             </span>
           </div>
@@ -457,13 +458,13 @@ const AidEfficiencyPage: React.FC = () => {
                   }
                 }}
                 placeholder="e.g. 30"
-                className="px-3 py-2 pr-7 border-2 border-slate-400 rounded-lg text-base font-medium w-24 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="px-3 py-2 pr-7 border-2 border-gray-600 rounded-lg text-base font-medium w-24 bg-gray-800 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
               />
-              <span className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-base font-medium text-gray-700 pointer-events-none">
+              <span className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-base font-medium text-gray-400 pointer-events-none">
                 %
               </span>
             </div>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-400">
               Legacy Alliance Aid % Threshold
             </span>
           </div>
@@ -471,13 +472,13 @@ const AidEfficiencyPage: React.FC = () => {
 
         {/* Table */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4 text-gray-800">Alliance Efficiency Table</h2>
+          <h2 className="text-xl font-bold mb-4 text-gray-200">Alliance Efficiency Table</h2>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-slate-300 text-sm bg-white">
+            <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800">
               <thead>
-                <tr className="bg-gray-800">
+                <tr className="bg-gray-700">
                   <th 
-                    className="p-3 border border-slate-300 text-left text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                    className="p-3 border border-gray-600 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                     onClick={() => handleSort('alliance')}
                   >
                     <div className="flex items-center gap-2">
@@ -488,7 +489,7 @@ const AidEfficiencyPage: React.FC = () => {
                     </div>
                   </th>
                   <th 
-                    className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                    className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                     onClick={() => handleSort('totalNations')}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -499,7 +500,7 @@ const AidEfficiencyPage: React.FC = () => {
                     </div>
                   </th>
                   <th 
-                    className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                    className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                     onClick={() => handleSort('efficiency')}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -510,7 +511,7 @@ const AidEfficiencyPage: React.FC = () => {
                     </div>
                   </th>
                   <th 
-                    className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                    className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                     onClick={() => handleSort('avg10')}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -521,7 +522,7 @@ const AidEfficiencyPage: React.FC = () => {
                     </div>
                   </th>
                   <th 
-                    className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                    className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                     onClick={() => handleSort('avg30')}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -532,7 +533,7 @@ const AidEfficiencyPage: React.FC = () => {
                     </div>
                   </th>
                   <th 
-                    className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                    className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                     onClick={() => handleSort('avg60')}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -543,7 +544,7 @@ const AidEfficiencyPage: React.FC = () => {
                     </div>
                   </th>
                   <th 
-                    className="p-3 border border-slate-300 text-center text-white font-bold cursor-pointer hover:bg-gray-700 transition-colors select-none"
+                    className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                     onClick={() => handleSort('avg90')}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -553,7 +554,7 @@ const AidEfficiencyPage: React.FC = () => {
                       </span>
                     </div>
                   </th>
-                  <th className="p-3 border border-slate-300 text-center text-white font-bold">
+                  <th className="p-3 border border-gray-600 text-center text-white font-bold">
                     Show in Chart
                   </th>
                 </tr>
@@ -562,41 +563,41 @@ const AidEfficiencyPage: React.FC = () => {
                 {sortedData.map((alliance) => (
                   <tr 
                     key={alliance.allianceId} 
-                    className="bg-white hover:bg-slate-50 cursor-pointer"
+                    className="bg-gray-800 hover:bg-gray-700 cursor-pointer"
                     onClick={() => toggleAllianceSelection(alliance.allianceId)}
                   >
-                    <td className="p-2 border border-slate-300 font-bold text-black">
+                    <td className="p-2 border border-gray-700 font-bold text-gray-200">
                       {alliance.allianceName}
                     </td>
-                    <td className="p-2 border border-slate-300 text-center text-black">
+                    <td className="p-2 border border-gray-700 text-center text-gray-200">
                       {alliance.currentTotalNations}
                     </td>
                     <td 
-                      className={`p-2 border border-slate-300 text-center font-semibold ${getCellClass(alliance.currentEfficiency)}`}
+                      className={`p-2 border border-gray-700 text-center font-semibold ${getCellClass(alliance.currentEfficiency)}`}
                     >
                       {alliance.currentEfficiency.toFixed(2)}%
                     </td>
                     <td 
-                      className={`p-2 border border-slate-300 text-center ${getCellClass(alliance.avg10Days)}`}
+                      className={`p-2 border border-gray-700 text-center ${getCellClass(alliance.avg10Days)}`}
                     >
                       {alliance.avg10Days !== null ? `${alliance.avg10Days.toFixed(2)}%` : 'N/A'}
                     </td>
                     <td 
-                      className={`p-2 border border-slate-300 text-center ${getCellClass(alliance.avg30Days)}`}
+                      className={`p-2 border border-gray-700 text-center ${getCellClass(alliance.avg30Days)}`}
                     >
                       {alliance.avg30Days !== null ? `${alliance.avg30Days.toFixed(2)}%` : 'N/A'}
                     </td>
                     <td 
-                      className={`p-2 border border-slate-300 text-center ${getCellClass(alliance.avg60Days)}`}
+                      className={`p-2 border border-gray-700 text-center ${getCellClass(alliance.avg60Days)}`}
                     >
                       {alliance.avg60Days !== null ? `${alliance.avg60Days.toFixed(2)}%` : 'N/A'}
                     </td>
                     <td 
-                      className={`p-2 border border-slate-300 text-center ${getCellClass(alliance.avg90Days)}`}
+                      className={`p-2 border border-gray-700 text-center ${getCellClass(alliance.avg90Days)}`}
                     >
                       {alliance.avg90Days !== null ? `${alliance.avg90Days.toFixed(2)}%` : 'N/A'}
                     </td>
-                    <td className="p-2 border border-slate-300 text-center">
+                    <td className="p-2 border border-gray-700 text-center">
                       <input
                         type="checkbox"
                         checked={selectedAlliances.has(alliance.allianceId)}
@@ -616,15 +617,15 @@ const AidEfficiencyPage: React.FC = () => {
         {chartData && chartData.series.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-800">Aid Efficiency Over Time</h2>
+              <h2 className="text-xl font-bold text-gray-200">Aid Efficiency Over Time</h2>
               <button
                 onClick={clearAllSelections}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-slate-400 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-200 bg-gray-800 border-2 border-gray-600 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
               >
                 Clear All Selections
               </button>
             </div>
-            <div className="bg-white p-6 rounded-lg border border-slate-300 overflow-x-auto">
+            <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 overflow-x-auto">
               <div className="min-w-[1000px]">
                 <AidEfficiencyChart 
                   data={chartData} 
@@ -637,12 +638,11 @@ const AidEfficiencyPage: React.FC = () => {
         )}
 
         {chartData && chartData.series.length === 0 && (
-          <div className="text-center p-10 text-gray-600">
+          <div className="text-center p-10 text-gray-400">
             Select alliances from the table above to display them in the chart.
           </div>
         )}
-      </div>
-    </div>
+    </TableContainer>
   );
 };
 
@@ -736,8 +736,8 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
       <svg ref={svgRef} width={width} height={height} className="overflow-visible">
       <g transform={`translate(${margin.left},${margin.top})`}>
         {/* Axes */}
-        <line x1={0} y1={plotHeight} x2={plotWidth} y2={plotHeight} stroke="#999" strokeWidth={2} />
-        <line x1={0} y1={0} x2={0} y2={plotHeight} stroke="#999" strokeWidth={2} />
+        <line x1={0} y1={plotHeight} x2={plotWidth} y2={plotHeight} stroke="#9ca3af" strokeWidth={2} />
+        <line x1={0} y1={0} x2={0} y2={plotHeight} stroke="#9ca3af" strokeWidth={2} />
 
         {/* X-axis ticks and labels */}
         {xTicks.map((date, i) => {
@@ -745,13 +745,13 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
           const x = xScale(dateIndex);
           return (
             <g key={`xtick-${i}`} transform={`translate(${x},0)`}>
-              <line x1={0} y1={plotHeight} x2={0} y2={plotHeight + 6} stroke="#999" />
+              <line x1={0} y1={plotHeight} x2={0} y2={plotHeight + 6} stroke="#9ca3af" />
               <text
                 x={0}
                 y={plotHeight + 20}
                 textAnchor="middle"
                 fontSize={10}
-                fill="#333"
+                fill="#e5e7eb"
                 transform={`rotate(-45, 0, ${plotHeight + 20})`}
                 style={{ dominantBaseline: 'hanging' }}
               >
@@ -766,8 +766,8 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
           const y = yScale(tick);
           return (
             <g key={`ytick-${i}`} transform={`translate(0,${y})`}>
-              <line x1={-6} y1={0} x2={0} y2={0} stroke="#999" />
-              <text x={-10} y={4} textAnchor="end" fontSize={12} fill="#333">
+              <line x1={-6} y1={0} x2={0} y2={0} stroke="#9ca3af" />
+              <text x={-10} y={4} textAnchor="end" fontSize={12} fill="#e5e7eb">
                 {tick}%
               </text>
             </g>
@@ -785,7 +785,7 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
               y1={y}
               x2={plotWidth}
               y2={y}
-              stroke="#e5e7eb"
+              stroke="#4b5563"
               strokeWidth={1}
               strokeDasharray="2,2"
             />
@@ -852,13 +852,10 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   opacity={isDimmed ? 0.3 : 1}
-                  style={{ transition: 'all 0.2s ease' }}
+                  className="transition-all duration-200 ease-in-out"
                 />
-                {/* Data points */}
+                {/* Invisible hover areas for tooltips */}
                 {points.map((point, pointIndex) => {
-                  const isPointHovered = hoveredPoint?.allianceName === series.name && 
-                                    hoveredPoint?.date === point.date;
-                  
                   const handleMouseEnter = () => {
                     if (svgRef.current) {
                       const svgRect = svgRef.current.getBoundingClientRect();
@@ -876,7 +873,7 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
                       // Calculate tooltip position relative to viewport
                       setTooltipPosition({
                         x: svgRect.left + pointX,
-                        y: svgRect.top + pointY - 60
+                        y: svgRect.top + pointY - 80
                       });
                     }
                   };
@@ -891,36 +888,18 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
                   };
 
                   return (
-                    <g 
-                      key={`point-${pointIndex}`}
+                    <circle
+                      key={`hover-${pointIndex}`}
+                      cx={point.x}
+                      cy={point.y}
+                      r={8}
+                      fill="transparent"
+                      stroke="none"
+                      pointerEvents="all"
                       onMouseEnter={handleMouseEnter}
                       onMouseLeave={handleMouseLeave}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {/* Invisible larger circle for easier hovering */}
-                      <circle
-                        cx={point.x}
-                        cy={point.y}
-                        r={8}
-                        fill="transparent"
-                        stroke="none"
-                        pointerEvents="all"
-                      />
-                      {/* Visible data point */}
-                      <circle
-                        cx={point.x}
-                        cy={point.y}
-                        r={isPointHovered ? 6 : 4}
-                        fill={color}
-                        opacity={isDimmed ? 0.3 : 1}
-                        stroke="white"
-                        strokeWidth={isHovered ? 2 : 1}
-                        pointerEvents="none"
-                        style={{ 
-                          transition: 'r 0.2s, stroke-width 0.2s'
-                        }}
-                      />
-                    </g>
+                      className="cursor-pointer"
+                    />
                   );
                 })}
               </g>
@@ -935,7 +914,7 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
           y={plotHeight + 50}
           textAnchor="middle"
           fontSize={14}
-          fill="#333"
+          fill="#e5e7eb"
           fontWeight="bold"
         >
           Date
@@ -944,7 +923,7 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
           transform={`translate(${-45}, ${plotHeight / 2}) rotate(-90)`}
           textAnchor="middle"
           fontSize={14}
-          fill="#333"
+          fill="#e5e7eb"
           fontWeight="bold"
         >
           Aid Efficiency (%)
@@ -964,7 +943,7 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
               key={`legend-${series.allianceId}`}
               onMouseEnter={() => setHoveredAllianceId(series.allianceId)}
               onMouseLeave={() => setHoveredAllianceId(null)}
-              style={{ cursor: 'pointer' }}
+              className="cursor-pointer"
             >
               <line
                 x1={0}
@@ -974,16 +953,16 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
                 stroke={color}
                 strokeWidth={isLegendHovered ? 4 : 2}
                 opacity={isLegendDimmed ? 0.3 : 1}
-                style={{ transition: 'all 0.2s ease' }}
+                className="transition-all duration-200 ease-in-out"
               />
               <text
                 x={25}
                 y={y + 9}
                 fontSize={12}
-                fill={isLegendHovered ? "#000" : "#333"}
+                fill={isLegendHovered ? "#fff" : "#e5e7eb"}
                 fontWeight={isLegendHovered ? "bold" : "normal"}
                 opacity={isLegendDimmed ? 0.3 : 1}
-                style={{ transition: 'all 0.2s ease' }}
+                className="transition-all duration-200 ease-in-out"
               >
                 {series.name}
               </text>
@@ -1020,7 +999,7 @@ const AidEfficiencyChart: React.FC<ChartProps> = ({ data, getColorForAlliance, e
         </div>
       </div>
     )}
-  </>
+    </>
   );
 };
 

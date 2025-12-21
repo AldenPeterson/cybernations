@@ -226,7 +226,7 @@ const NuclearStatsPage: React.FC = () => {
       </div>
 
       <div className="mb-6">
-        <h2 className="text-xl font-bold mb-2 text-slate-800">Time of Day Analysis (5-minute intervals)</h2>
+        <h2 className="text-xl font-bold mb-2 text-gray-200">Time of Day Analysis (5-minute intervals)</h2>
         <p className="text-sm text-gray-600 mb-3">Hit rate percentage by time of day - aggregated across all days</p>
         {timelineError && (
           <div className="text-red-600 text-sm mb-2">{timelineError}</div>
@@ -258,8 +258,8 @@ const NuclearStatsPage: React.FC = () => {
               const areaPath = `${pathData} L ${points[points.length - 1].x} 280 L ${points[0].x} 280 Z`;
 
               return (
-                <div className="relative w-full" style={{ height: '320px', paddingTop: '20px', paddingBottom: '60px' }}>
-                  <svg width={chartWidth} height="320" className="overflow-visible" style={{ overflow: 'visible', minWidth: '100%' }}>
+                <div className="relative w-full h-80 pt-5 pb-15">
+                  <svg width={chartWidth} height="320" className="overflow-visible min-w-full">
                     <defs>
                       <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                         <stop offset="0%" stopColor="rgb(34, 197, 94)" stopOpacity="0.3" />
@@ -415,7 +415,7 @@ const NuclearStatsPage: React.FC = () => {
       </div>
 
       <div className="mb-2">
-        <h2 className="text-xl font-bold mb-2 text-slate-800">Summary</h2>
+        <h2 className="text-xl font-bold mb-2 text-gray-200">Summary</h2>
         <ReusableTable<SummaryRow>
           data={summaryRows}
           columns={summaryColumns}
@@ -428,7 +428,7 @@ const NuclearStatsPage: React.FC = () => {
       </div>
 
       <div>
-        <h2 className="text-xl font-bold mb-2 text-slate-800">Details by Pair</h2>
+        <h2 className="text-xl font-bold mb-2 text-gray-200">Details by Pair</h2>
         {/* Filters */}
         <div className={tableClasses.filterContainer}>
           <input 

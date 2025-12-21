@@ -21,8 +21,8 @@ const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
   return (
     <label 
       className={clsx(
-        'flex items-center px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded text-xs font-medium',
-        disabled ? 'cursor-not-allowed text-gray-400 opacity-60' : 'cursor-pointer text-gray-800',
+        'flex items-center px-2.5 py-1.5 bg-gray-800 border border-gray-600 rounded text-xs font-medium',
+        disabled ? 'cursor-not-allowed text-gray-500 opacity-60' : 'cursor-pointer text-gray-200',
         className
       )}
     >
