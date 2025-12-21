@@ -35,6 +35,11 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     }
   }, [alliances, selectedAllianceId, location.pathname, setSelectedAllianceId]);
 
+  // Update document title
+  useEffect(() => {
+    document.title = 'Doomation';
+  }, [location.pathname]);
+
   const handleAllianceChange = (allianceId: number | null) => {
     setSelectedAllianceId(allianceId);
     
@@ -100,7 +105,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       case 'aid-efficiency':
         return 'Aid Efficiency';
       case 'nation-aid-efficiency':
-        return 'Nation Aid Efficiency';
+        return 'Aid Slot Efficiency';
       default:
         return 'CyberNations';
     }
