@@ -87,6 +87,13 @@ const NationAidEfficiencyPage: React.FC = () => {
   const [sortColumn, setSortColumn] = useState<'nation' | 'efficiency' | 'averageActiveSlots' | 'averageSendingSlots' | 'averageReceivingSlots'>('efficiency');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
+  // Decode HTML entities in text
+  const decodeHtmlEntities = (text: string): string => {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = text;
+    return textarea.value;
+  };
+
   // Format date from input (YYYY-MM-DD) to MM/DD/YYYY for API
   const formatDateForApi = (dateStr: string): string => {
     // If empty or invalid, return empty string
@@ -419,7 +426,7 @@ const NationAidEfficiencyPage: React.FC = () => {
                           rel="noopener noreferrer"
                           className="text-primary no-underline hover:underline"
                         >
-                          {nation.rulerName} / {nation.nationName}
+                          {decodeHtmlEntities(nation.rulerName)} / {decodeHtmlEntities(nation.nationName)}
                         </a>
                       </td>
                       <td className="p-2 border border-slate-300 text-center font-semibold text-black">
