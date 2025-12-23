@@ -226,6 +226,21 @@ const AidEfficiencyPage: React.FC = () => {
     }
   }, [debouncedTotalsStartDate, debouncedTotalsEndDate]);
 
+  // Initialize activeTab from URL parameter on mount and sync when URL changes
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    // Support both 'efficiency' and 'totals' for direct linking, default to 'efficiency'
+    const newTab = tabParam === 'totals' ? 'totals' : 'efficiency';
+    
+    // Only update if different from current state to avoid unnecessary re-renders
+    setActiveTab(prevTab => {
+      if (prevTab !== newTab) {
+        return newTab;
+      }
+      return prevTab;
+    });
+  }, [searchParams.toString()]); // Sync when URL changes (e.g., browser back/forward)
+
   // Fetch totals data when debounced dates change or tab changes to totals
   useEffect(() => {
     if (activeTab === 'totals') {
@@ -674,7 +689,7 @@ const AidEfficiencyPage: React.FC = () => {
             onClick={() => {
               setActiveTab('efficiency');
               const newSearchParams = new URLSearchParams(searchParams);
-              newSearchParams.delete('tab');
+              newSearchParams.set('tab', 'efficiency');
               setSearchParams(newSearchParams, { replace: true });
             }}
             className={`px-4 py-2 font-semibold transition-colors ${
