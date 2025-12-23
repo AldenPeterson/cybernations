@@ -38,6 +38,7 @@ interface AllianceAidTotalsData {
   totalTechReceived: number;
   totalCashSent: number;
   totalCashReceived: number;
+  pricePer100Tech: number;
   totalOffersSent: number;
   totalOffersReceived: number;
   daysAnalyzed: number;
@@ -124,7 +125,7 @@ const AidEfficiencyPage: React.FC = () => {
   const [totalsEndDate, setTotalsEndDate] = useState<string>(defaultEndDate);
   const [debouncedTotalsStartDate, setDebouncedTotalsStartDate] = useState<string>(defaultStartDate);
   const [debouncedTotalsEndDate, setDebouncedTotalsEndDate] = useState<string>(defaultEndDate);
-  const [totalsSortColumn, setTotalsSortColumn] = useState<'alliance' | 'efficiency' | 'totalTechSent' | 'totalTechReceived' | 'totalCashSent' | 'totalCashReceived' | 'totalOffersSent' | 'totalOffersReceived'>('efficiency');
+  const [totalsSortColumn, setTotalsSortColumn] = useState<'alliance' | 'efficiency' | 'totalTechSent' | 'totalTechReceived' | 'totalCashSent' | 'totalCashReceived' | 'pricePer100Tech' | 'totalOffersSent' | 'totalOffersReceived'>('efficiency');
   const [totalsSortDirection, setTotalsSortDirection] = useState<'asc' | 'desc'>('desc');
   const [sortColumn, setSortColumn] = useState<'alliance' | 'efficiency' | 'totalNations' | 'avg10' | 'avg30' | 'avg60' | 'avg90'>('efficiency');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -587,6 +588,13 @@ const AidEfficiencyPage: React.FC = () => {
 
   const totalsDaysAnalyzed = calculateTotalsDaysAnalyzed();
 
+  // Helper function to format numbers in millions (XX.X million)
+  const formatMillions = (value: number): string => {
+    if (value === 0) return '0.0M';
+    const millions = value / 1000000;
+    return `${millions.toFixed(1)}M`;
+  };
+
   // Sort totals data
   const sortedTotalsData = useMemo(() => {
     const sorted = [...totalsData];
@@ -613,6 +621,9 @@ const AidEfficiencyPage: React.FC = () => {
         case 'totalCashReceived':
           comparison = a.totalCashReceived - b.totalCashReceived;
           break;
+        case 'pricePer100Tech':
+          comparison = a.pricePer100Tech - b.pricePer100Tech;
+          break;
         case 'totalOffersSent':
           comparison = a.totalOffersSent - b.totalOffersSent;
           break;
@@ -627,7 +638,7 @@ const AidEfficiencyPage: React.FC = () => {
     return sorted;
   }, [totalsData, totalsSortColumn, totalsSortDirection]);
 
-  const handleTotalsSort = (column: 'alliance' | 'efficiency' | 'totalTechSent' | 'totalTechReceived' | 'totalCashSent' | 'totalCashReceived' | 'totalOffersSent' | 'totalOffersReceived') => {
+  const handleTotalsSort = (column: 'alliance' | 'efficiency' | 'totalTechSent' | 'totalTechReceived' | 'totalCashSent' | 'totalCashReceived' | 'pricePer100Tech' | 'totalOffersSent' | 'totalOffersReceived') => {
     if (totalsSortColumn === column) {
       setTotalsSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
@@ -1063,6 +1074,17 @@ const AidEfficiencyPage: React.FC = () => {
                       </th>
                       <th 
                         className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                        onClick={() => handleTotalsSort('pricePer100Tech')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Price/100 Tech
+                          <span className="text-xs text-gray-400">
+                            {totalsSortColumn === 'pricePer100Tech' ? (totalsSortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                         onClick={() => handleTotalsSort('totalOffersSent')}
                       >
                         <div className="flex items-center justify-center gap-2">
@@ -1107,10 +1129,13 @@ const AidEfficiencyPage: React.FC = () => {
                           {alliance.totalTechReceived.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                         </td>
                         <td className="p-2 border border-gray-700 text-center text-gray-200">
-                          ${alliance.totalCashSent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          ${formatMillions(alliance.totalCashSent)}
                         </td>
                         <td className="p-2 border border-gray-700 text-center text-gray-200">
-                          ${alliance.totalCashReceived.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          ${formatMillions(alliance.totalCashReceived)}
+                        </td>
+                        <td className="p-2 border border-gray-700 text-center text-gray-200">
+                          ${formatMillions(alliance.pricePer100Tech)}
                         </td>
                         <td className="p-2 border border-gray-700 text-center text-gray-200">
                           {alliance.totalOffersSent.toLocaleString()}

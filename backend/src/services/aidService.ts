@@ -26,6 +26,7 @@ interface AllianceAidTotalsCache {
     totalTechReceived: number;
     totalCashSent: number;
     totalCashReceived: number;
+    pricePer100Tech: number;
     totalOffersSent: number;
     totalOffersReceived: number;
     daysAnalyzed: number;
@@ -2025,6 +2026,7 @@ export class AidService {
     totalTechReceived: number;
     totalCashSent: number;
     totalCashReceived: number;
+    pricePer100Tech: number;
     totalOffersSent: number;
     totalOffersReceived: number;
     daysAnalyzed: number;
@@ -2088,6 +2090,11 @@ export class AidService {
               (SELECT start_date FROM parsed_dates)
           AND TO_DATE(SPLIT_PART(aid_timestamp, ' ', 1), 'MM/DD/YYYY') <= 
               (SELECT end_date FROM parsed_dates)
+        UNION
+        SELECT DISTINCT alliance_id
+        FROM alliance_aid_utilization_snapshots
+        WHERE snapshot_date >= (SELECT start_date FROM parsed_dates)
+          AND snapshot_date <= (SELECT end_date FROM parsed_dates)
       ),
       alliance_info AS (
         SELECT 
@@ -2125,26 +2132,6 @@ export class AidService {
           AND TO_DATE(SPLIT_PART(ao.aid_timestamp, ' ', 1), 'MM/DD/YYYY') <= 
               (SELECT end_date FROM parsed_dates)
       ),
-      daily_alliance_slot_counts AS (
-        SELECT 
-          ds.check_date,
-          ai.alliance_id,
-          ai.alliance_name,
-          anc.total_nations,
-          COUNT(DISTINCT CASE 
-            WHEN po.declaring_alliance_id = ai.alliance_id OR po.receiving_alliance_id = ai.alliance_id 
-            THEN po.aid_id 
-          END) AS total_active_slots
-        FROM date_series ds
-        CROSS JOIN alliance_info ai
-        LEFT JOIN alliance_nation_counts anc ON anc.alliance_id = ai.alliance_id
-        LEFT JOIN parsed_offers po ON (
-          po.offer_date <= ds.check_date
-          AND po.expiration_date::date >= ds.check_date
-          AND (po.declaring_alliance_id = ai.alliance_id OR po.receiving_alliance_id = ai.alliance_id)
-        )
-        GROUP BY ds.check_date, ai.alliance_id, ai.alliance_name, anc.total_nations
-      ),
       alliance_totals AS (
         SELECT 
           ai.alliance_id,
@@ -2165,24 +2152,37 @@ export class AidService {
           po.declaring_alliance_id = ai.alliance_id OR po.receiving_alliance_id = ai.alliance_id
         )
         GROUP BY ai.alliance_id, ai.alliance_name, anc.total_nations
+      ),
+      efficiency_snapshots AS (
+        SELECT 
+          aaus.alliance_id,
+          AVG(aaus.aid_utilization_percent::numeric) AS avg_efficiency,
+          COUNT(DISTINCT aaus.snapshot_date) AS snapshot_count
+        FROM alliance_aid_utilization_snapshots aaus
+        WHERE aaus.snapshot_date >= (SELECT start_date FROM parsed_dates)
+          AND aaus.snapshot_date <= (SELECT end_date FROM parsed_dates)
+        GROUP BY aaus.alliance_id
       )
       SELECT 
         at.alliance_id AS "allianceId",
         at.alliance_name AS "allianceName",
         COALESCE(at.total_nations, 0) AS "totalNations",
-        ROUND((AVG(dasc.total_active_slots)::numeric / NULLIF(MAX(at.total_nations) * 6, 0) * 100)::numeric, 2) AS "efficiency",
+        COALESCE(ROUND(es.avg_efficiency::numeric, 2), 0) AS "efficiency",
         ROUND(at.total_tech_sent::numeric, 2) AS "totalTechSent",
         ROUND(at.total_tech_received::numeric, 2) AS "totalTechReceived",
         ROUND(at.total_cash_sent::numeric, 2) AS "totalCashSent",
         ROUND(at.total_cash_received::numeric, 2) AS "totalCashReceived",
+        CASE 
+          WHEN at.total_tech_received > 0 THEN 
+            ROUND((at.total_cash_sent::numeric * 100.0 / at.total_tech_received::numeric), 2)
+          ELSE 0
+        END AS "pricePer100Tech",
         at.total_offers_sent AS "totalOffersSent",
         at.total_offers_received AS "totalOffersReceived",
-        COUNT(DISTINCT dasc.check_date) AS "daysAnalyzed"
+        COALESCE(es.snapshot_count, 0) AS "daysAnalyzed"
       FROM alliance_totals at
-      LEFT JOIN daily_alliance_slot_counts dasc ON dasc.alliance_id = at.alliance_id
-      GROUP BY at.alliance_id, at.alliance_name, at.total_nations, at.total_tech_sent, at.total_tech_received, 
-               at.total_cash_sent, at.total_cash_received, at.total_offers_sent, at.total_offers_received
-      HAVING COALESCE(at.total_nations, 0) > 0
+      LEFT JOIN efficiency_snapshots es ON es.alliance_id = at.alliance_id
+      WHERE COALESCE(at.total_nations, 0) > 0
       ORDER BY "efficiency" DESC;
     `;
     
@@ -2195,6 +2195,7 @@ export class AidService {
       totalTechReceived: bigint | number;
       totalCashSent: bigint | number;
       totalCashReceived: bigint | number;
+      pricePer100Tech: bigint | number;
       totalOffersSent: bigint | number;
       totalOffersReceived: bigint | number;
       daysAnalyzed: bigint | number;
@@ -2210,6 +2211,7 @@ export class AidService {
       totalTechReceived: Number(row.totalTechReceived),
       totalCashSent: Number(row.totalCashSent),
       totalCashReceived: Number(row.totalCashReceived),
+      pricePer100Tech: Number(row.pricePer100Tech),
       totalOffersSent: Number(row.totalOffersSent),
       totalOffersReceived: Number(row.totalOffersReceived),
       daysAnalyzed: Number(row.daysAnalyzed),
