@@ -41,6 +41,8 @@ interface AllianceAidTotalsData {
   pricePer100Tech: number;
   totalOffersSent: number;
   totalOffersReceived: number;
+  techSentPercent: number;
+  techReceivedPercent: number;
   daysAnalyzed: number;
 }
 
@@ -125,7 +127,7 @@ const AidEfficiencyPage: React.FC = () => {
   const [totalsEndDate, setTotalsEndDate] = useState<string>(defaultEndDate);
   const [debouncedTotalsStartDate, setDebouncedTotalsStartDate] = useState<string>(defaultStartDate);
   const [debouncedTotalsEndDate, setDebouncedTotalsEndDate] = useState<string>(defaultEndDate);
-  const [totalsSortColumn, setTotalsSortColumn] = useState<'alliance' | 'efficiency' | 'totalTechSent' | 'totalTechReceived' | 'totalCashSent' | 'totalCashReceived' | 'pricePer100Tech' | 'totalOffersSent' | 'totalOffersReceived'>('efficiency');
+  const [totalsSortColumn, setTotalsSortColumn] = useState<'alliance' | 'efficiency' | 'totalTechSent' | 'totalTechReceived' | 'techSentPercent' | 'techReceivedPercent' | 'totalCashSent' | 'totalCashReceived' | 'pricePer100Tech' | 'totalOffersSent' | 'totalOffersReceived' | 'totalNations'>('totalTechReceived');
   const [totalsSortDirection, setTotalsSortDirection] = useState<'asc' | 'desc'>('desc');
   const [sortColumn, setSortColumn] = useState<'alliance' | 'efficiency' | 'totalNations' | 'avg10' | 'avg30' | 'avg60' | 'avg90'>('efficiency');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -603,16 +605,27 @@ const AidEfficiencyPage: React.FC = () => {
 
   const totalsDaysAnalyzed = calculateTotalsDaysAnalyzed();
 
-  // Helper function to format numbers in millions (XX.X million)
+  // Helper function to format numbers in millions (XX.X million) or billions (XX.X billion)
   const formatMillions = (value: number): string => {
-    if (value === 0) return '0.0M';
+    if (value === 0) return '0M';
     const millions = value / 1000000;
-    return `${millions.toFixed(1)}M`;
+    if (millions >= 1000) {
+      const billions = millions / 1000;
+      return `${billions.toFixed(1)}B`;
+    }
+    const formatted = millions.toFixed(1);
+    return formatted.endsWith('.0') ? `${millions.toFixed(0)}M` : `${formatted}M`;
   };
 
-  // Sort totals data
+  // Filter and sort totals data
   const sortedTotalsData = useMemo(() => {
-    const sorted = [...totalsData];
+    // First filter by minimum member threshold
+    const filtered = totalsData.filter(alliance => 
+      alliance.totalNations >= minMemberThreshold
+    );
+    
+    // Then sort
+    const sorted = [...filtered];
     
     sorted.sort((a, b) => {
       let comparison = 0;
@@ -630,6 +643,12 @@ const AidEfficiencyPage: React.FC = () => {
         case 'totalTechReceived':
           comparison = a.totalTechReceived - b.totalTechReceived;
           break;
+        case 'techSentPercent':
+          comparison = a.techSentPercent - b.techSentPercent;
+          break;
+        case 'techReceivedPercent':
+          comparison = a.techReceivedPercent - b.techReceivedPercent;
+          break;
         case 'totalCashSent':
           comparison = a.totalCashSent - b.totalCashSent;
           break;
@@ -645,15 +664,18 @@ const AidEfficiencyPage: React.FC = () => {
         case 'totalOffersReceived':
           comparison = a.totalOffersReceived - b.totalOffersReceived;
           break;
+        case 'totalNations':
+          comparison = a.totalNations - b.totalNations;
+          break;
       }
       
       return totalsSortDirection === 'asc' ? comparison : -comparison;
     });
     
-    return sorted;
-  }, [totalsData, totalsSortColumn, totalsSortDirection]);
+      return sorted;
+  }, [totalsData, totalsSortColumn, totalsSortDirection, minMemberThreshold]);
 
-  const handleTotalsSort = (column: 'alliance' | 'efficiency' | 'totalTechSent' | 'totalTechReceived' | 'totalCashSent' | 'totalCashReceived' | 'pricePer100Tech' | 'totalOffersSent' | 'totalOffersReceived') => {
+  const handleTotalsSort = (column: 'alliance' | 'efficiency' | 'totalTechSent' | 'totalTechReceived' | 'techSentPercent' | 'techReceivedPercent' | 'totalCashSent' | 'totalCashReceived' | 'pricePer100Tech' | 'totalOffersSent' | 'totalOffersReceived' | 'totalNations') => {
     if (totalsSortColumn === column) {
       setTotalsSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
@@ -955,9 +977,31 @@ const AidEfficiencyPage: React.FC = () => {
       {activeTab === 'totals' && (
         <>
           <p className="text-gray-400 mb-6">
-            Alliance aid totals aggregated by alliance over a custom date range. 
-            Efficiency represents the percentage of available aid slots (using 6 per nation) that were active each day.
+            Alliance aid totals count offers originated between the start date and end date. Efficiency represents the average alliance aid slot utilization.
           </p>
+
+          {/* Filters */}
+          <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Minimum Member Filter */}
+            <div className="flex items-center gap-3">
+              <input
+                id="totals-min-member-threshold"
+                type="number"
+                min="1"
+                value={minMemberThreshold}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value, 10);
+                  if (!isNaN(value) && value >= 1) {
+                    setMinMemberThreshold(value);
+                  }
+                }}
+                className="px-3 py-2 border-2 border-gray-600 rounded-lg text-base font-medium w-24 bg-gray-800 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+              <span className="text-sm text-gray-400">
+                Alliances with at least this many members.
+              </span>
+            </div>
+          </div>
 
           {/* Date Filters */}
           <div className="mb-6 flex flex-wrap items-center gap-4">
@@ -1111,6 +1155,17 @@ const AidEfficiencyPage: React.FC = () => {
                       </th>
                       <th 
                         className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                        onClick={() => handleTotalsSort('techSentPercent')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Tech Sent %
+                          <span className="text-xs text-gray-400">
+                            {totalsSortColumn === 'techSentPercent' ? (totalsSortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                         onClick={() => handleTotalsSort('totalOffersReceived')}
                       >
                         <div className="flex items-center justify-center gap-2">
@@ -1120,8 +1175,27 @@ const AidEfficiencyPage: React.FC = () => {
                           </span>
                         </div>
                       </th>
-                      <th className="p-3 border border-gray-600 text-center text-white font-bold">
-                        Total Nations
+                      <th 
+                        className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                        onClick={() => handleTotalsSort('techReceivedPercent')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Tech Received %
+                          <span className="text-xs text-gray-400">
+                            {totalsSortColumn === 'techReceivedPercent' ? (totalsSortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                        onClick={() => handleTotalsSort('totalNations')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Total Nations
+                          <span className="text-xs text-gray-400">
+                            {totalsSortColumn === 'totalNations' ? (totalsSortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </div>
                       </th>
                     </tr>
                   </thead>
@@ -1156,7 +1230,13 @@ const AidEfficiencyPage: React.FC = () => {
                           {alliance.totalOffersSent.toLocaleString()}
                         </td>
                         <td className="p-2 border border-gray-700 text-center text-gray-200">
+                          {alliance.techSentPercent.toFixed(1)}%
+                        </td>
+                        <td className="p-2 border border-gray-700 text-center text-gray-200">
                           {alliance.totalOffersReceived.toLocaleString()}
+                        </td>
+                        <td className="p-2 border border-gray-700 text-center text-gray-200">
+                          {alliance.techReceivedPercent.toFixed(1)}%
                         </td>
                         <td className="p-2 border border-gray-700 text-center text-gray-200">
                           {alliance.totalNations}

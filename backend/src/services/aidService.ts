@@ -29,6 +29,8 @@ interface AllianceAidTotalsCache {
     pricePer100Tech: number;
     totalOffersSent: number;
     totalOffersReceived: number;
+    techSentPercent: number;
+    techReceivedPercent: number;
     daysAnalyzed: number;
   }>;
   timestamp: number;
@@ -2029,6 +2031,8 @@ export class AidService {
     pricePer100Tech: number;
     totalOffersSent: number;
     totalOffersReceived: number;
+    techSentPercent: number;
+    techReceivedPercent: number;
     daysAnalyzed: number;
   }>> {
     // Validate date format (MM/DD/YYYY)
@@ -2070,6 +2074,7 @@ export class AidService {
         SELECT DISTINCT declaring_alliance_id AS alliance_id
         FROM aid_offers
         WHERE declaring_alliance_id IS NOT NULL
+          AND declaring_alliance_id > 0
           AND status != 'Cancelled'
           AND aid_timestamp IS NOT NULL
           AND aid_timestamp != ''
@@ -2082,6 +2087,7 @@ export class AidService {
         SELECT DISTINCT receiving_alliance_id AS alliance_id
         FROM aid_offers
         WHERE receiving_alliance_id IS NOT NULL
+          AND receiving_alliance_id > 0
           AND status != 'Cancelled'
           AND aid_timestamp IS NOT NULL
           AND aid_timestamp != ''
@@ -2093,7 +2099,8 @@ export class AidService {
         UNION
         SELECT DISTINCT alliance_id
         FROM alliance_aid_utilization_snapshots
-        WHERE snapshot_date >= (SELECT start_date FROM parsed_dates)
+        WHERE alliance_id > 0
+          AND snapshot_date >= (SELECT start_date FROM parsed_dates)
           AND snapshot_date <= (SELECT end_date FROM parsed_dates)
       ),
       alliance_info AS (
@@ -2145,7 +2152,10 @@ export class AidService {
           COALESCE(SUM(CASE WHEN po.receiving_alliance_id = ai.alliance_id THEN po.money ELSE 0 END), 0) AS total_cash_received,
           -- Offer counts
           COUNT(DISTINCT CASE WHEN po.declaring_alliance_id = ai.alliance_id THEN po.aid_id END) AS total_offers_sent,
-          COUNT(DISTINCT CASE WHEN po.receiving_alliance_id = ai.alliance_id THEN po.aid_id END) AS total_offers_received
+          COUNT(DISTINCT CASE WHEN po.receiving_alliance_id = ai.alliance_id THEN po.aid_id END) AS total_offers_received,
+          -- Tech offer counts (>= 50 tech)
+          COUNT(DISTINCT CASE WHEN po.declaring_alliance_id = ai.alliance_id AND po.technology >= 50 THEN po.aid_id END) AS tech_offers_sent,
+          COUNT(DISTINCT CASE WHEN po.receiving_alliance_id = ai.alliance_id AND po.technology >= 50 THEN po.aid_id END) AS tech_offers_received
         FROM alliance_info ai
         LEFT JOIN alliance_nation_counts anc ON anc.alliance_id = ai.alliance_id
         LEFT JOIN parsed_offers po ON (
@@ -2179,10 +2189,21 @@ export class AidService {
         END AS "pricePer100Tech",
         at.total_offers_sent AS "totalOffersSent",
         at.total_offers_received AS "totalOffersReceived",
+        CASE 
+          WHEN at.total_offers_sent > 0 THEN 
+            ROUND((at.tech_offers_sent::numeric / at.total_offers_sent::numeric * 100.0), 2)
+          ELSE 0
+        END AS "techSentPercent",
+        CASE 
+          WHEN at.total_offers_received > 0 THEN 
+            ROUND((at.tech_offers_received::numeric / at.total_offers_received::numeric * 100.0), 2)
+          ELSE 0
+        END AS "techReceivedPercent",
         COALESCE(es.snapshot_count, 0) AS "daysAnalyzed"
       FROM alliance_totals at
       LEFT JOIN efficiency_snapshots es ON es.alliance_id = at.alliance_id
       WHERE COALESCE(at.total_nations, 0) > 0
+        AND at.alliance_id > 0
       ORDER BY "efficiency" DESC;
     `;
     
@@ -2198,6 +2219,8 @@ export class AidService {
       pricePer100Tech: bigint | number;
       totalOffersSent: bigint | number;
       totalOffersReceived: bigint | number;
+      techSentPercent: bigint | number;
+      techReceivedPercent: bigint | number;
       daysAnalyzed: bigint | number;
     }>>(query);
     
@@ -2214,6 +2237,8 @@ export class AidService {
       pricePer100Tech: Number(row.pricePer100Tech),
       totalOffersSent: Number(row.totalOffersSent),
       totalOffersReceived: Number(row.totalOffersReceived),
+      techSentPercent: Number(row.techSentPercent),
+      techReceivedPercent: Number(row.techReceivedPercent),
       daysAnalyzed: Number(row.daysAnalyzed),
     }));
     
