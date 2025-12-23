@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import { tableClasses } from '../styles/tableClasses';
 import TableContainer from '../components/TableContainer';
-import PageContainer from '../components/PageContainer';
 
 interface AidEfficiencyDataPoint {
   date: string;
@@ -30,17 +29,105 @@ interface AidEfficiencyResponse {
   data: AllianceEfficiencyData[];
 }
 
+interface AllianceAidTotalsData {
+  allianceId: number;
+  allianceName: string;
+  totalNations: number;
+  efficiency: number;
+  totalTechSent: number;
+  totalTechReceived: number;
+  totalCashSent: number;
+  totalCashReceived: number;
+  totalOffersSent: number;
+  totalOffersReceived: number;
+  daysAnalyzed: number;
+}
+
+interface AllianceAidTotalsResponse {
+  success: boolean;
+  startDate: string;
+  endDate: string;
+  data: AllianceAidTotalsData[];
+}
+
+// Helper functions for date calculations (return YYYY-MM-DD format for date inputs)
+const getYesterdayCentralTime = (): string => {
+  const now = new Date();
+  const centralTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Chicago' }));
+  const yesterday = new Date(centralTime);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  const month = (yesterday.getMonth() + 1).toString().padStart(2, '0');
+  const day = yesterday.getDate().toString().padStart(2, '0');
+  const year = yesterday.getFullYear().toString();
+  return `${year}-${month}-${day}`;
+};
+
+const getDate30DaysBefore = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  date.setDate(date.getDate() - 30);
+  
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const year = date.getFullYear().toString();
+  return `${year}-${month}-${day}`;
+};
+
+const getDefaultDates = (): { startDate: string; endDate: string } => {
+  const endDate = getYesterdayCentralTime();
+  const startDate = getDate30DaysBefore(endDate);
+  return { startDate, endDate };
+};
+
+// Calculate default dates once outside component to avoid calling on every render
+// Wrap in try-catch to handle any potential errors during module initialization
+let DEFAULT_DATES: { startDate: string; endDate: string };
+try {
+  DEFAULT_DATES = getDefaultDates();
+} catch (error) {
+  console.error('Error calculating default dates:', error);
+  // Fallback to a safe default
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const month = (yesterday.getMonth() + 1).toString().padStart(2, '0');
+  const day = yesterday.getDate().toString().padStart(2, '0');
+  const year = yesterday.getFullYear().toString();
+  const endDate = `${year}-${month}-${day}`;
+  const startDate = getDate30DaysBefore(endDate);
+  DEFAULT_DATES = { startDate, endDate };
+}
+
 const AidEfficiencyPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'efficiency' | 'totals'>('efficiency');
   const [data, setData] = useState<AllianceEfficiencyData[]>([]);
+  const [totalsData, setTotalsData] = useState<AllianceAidTotalsData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [totalsLoading, setTotalsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [totalsError, setTotalsError] = useState<string | null>(null);
   const [selectedAlliances, setSelectedAlliances] = useState<Set<number>>(new Set());
   const [minMemberThreshold, setMinMemberThreshold] = useState<number>(10);
   const [efficiencyThreshold, setEfficiencyThreshold] = useState<number | null>(20);
   const hasInitializedFromUrl = useRef(false);
   const hasInitializedThresholds = useRef(false);
   const hasFetchedData = useRef(false);
+  const isUpdatingTotalsDatesFromUser = useRef(false);
+  
+  // Date state for Alliance Aid Totals tab - initialize with defaults, sync from URL in useEffect
+  // Use safe fallback in case DEFAULT_DATES is undefined
+  const defaultStartDate = DEFAULT_DATES?.startDate || '2024-01-01';
+  const defaultEndDate = DEFAULT_DATES?.endDate || '2024-01-31';
+  const [totalsStartDate, setTotalsStartDate] = useState<string>(defaultStartDate);
+  const [totalsEndDate, setTotalsEndDate] = useState<string>(defaultEndDate);
+  const [debouncedTotalsStartDate, setDebouncedTotalsStartDate] = useState<string>(defaultStartDate);
+  const [debouncedTotalsEndDate, setDebouncedTotalsEndDate] = useState<string>(defaultEndDate);
+  const [totalsSortColumn, setTotalsSortColumn] = useState<'alliance' | 'efficiency' | 'totalTechSent' | 'totalTechReceived' | 'totalCashSent' | 'totalCashReceived' | 'totalOffersSent' | 'totalOffersReceived'>('efficiency');
+  const [totalsSortDirection, setTotalsSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortColumn, setSortColumn] = useState<'alliance' | 'efficiency' | 'totalNations' | 'avg10' | 'avg30' | 'avg60' | 'avg90'>('efficiency');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Helper function to parse number array from URL parameter
   const parseNumberArrayParam = (value: string | null): number[] => {
@@ -62,8 +149,90 @@ const AidEfficiencyPage: React.FC = () => {
     
     setSearchParams(newSearchParams, { replace: true });
   }, [searchParams, setSearchParams]);
-  const [sortColumn, setSortColumn] = useState<'alliance' | 'efficiency' | 'totalNations' | 'avg10' | 'avg30' | 'avg60' | 'avg90'>('efficiency');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  // Format date from input (YYYY-MM-DD) to MM/DD/YYYY for API
+  const formatDateForApi = (dateStr: string): string => {
+    if (!dateStr || dateStr.trim() === '') {
+      return '';
+    }
+    if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+      return dateStr;
+    }
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) {
+      console.error('Invalid date format:', dateStr);
+      return '';
+    }
+    const [year, month, day] = parts;
+    const monthNum = parseInt(month, 10);
+    const dayNum = parseInt(day, 10);
+    const yearNum = parseInt(year, 10);
+    if (isNaN(monthNum) || isNaN(dayNum) || isNaN(yearNum)) {
+      console.error('Invalid date values:', { year, month, day });
+      return '';
+    }
+    return `${monthNum}/${dayNum}/${yearNum}`;
+  };
+
+  // Debounce totals date changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTotalsStartDate(totalsStartDate);
+      setDebouncedTotalsEndDate(totalsEndDate);
+      
+      isUpdatingTotalsDatesFromUser.current = true;
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.set('totalsStartDate', totalsStartDate);
+      newSearchParams.set('totalsEndDate', totalsEndDate);
+      setSearchParams(newSearchParams, { replace: true });
+      setTimeout(() => {
+        isUpdatingTotalsDatesFromUser.current = false;
+      }, 100);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [totalsStartDate, totalsEndDate, searchParams, setSearchParams]);
+
+  // Fetch totals data
+  const fetchTotalsData = useCallback(async () => {
+    try {
+      setTotalsLoading(true);
+      setTotalsError(null);
+
+      const formattedStartDate = formatDateForApi(debouncedTotalsStartDate);
+      const formattedEndDate = formatDateForApi(debouncedTotalsEndDate);
+
+      if (!formattedStartDate || !formattedEndDate) {
+        setTotalsError('Please select valid start and end dates');
+        setTotalsLoading(false);
+        return;
+      }
+
+      const response: AllianceAidTotalsResponse = await apiCallWithErrorHandling(
+        API_ENDPOINTS.allianceAidTotals(formattedStartDate, formattedEndDate)
+      );
+      if (response.success && response.data) {
+        setTotalsData(response.data);
+      } else {
+        setTotalsError('Failed to load data: Unknown error');
+      }
+    } catch (err) {
+      console.error('Error fetching alliance aid totals:', err);
+      const msg = err instanceof Error ? err.message : 'Failed to load alliance aid totals data';
+      setTotalsError(msg);
+    } finally {
+      setTotalsLoading(false);
+    }
+  }, [debouncedTotalsStartDate, debouncedTotalsEndDate]);
+
+  // Fetch totals data when debounced dates change or tab changes to totals
+  useEffect(() => {
+    if (activeTab === 'totals') {
+      fetchTotalsData();
+    }
+  }, [activeTab, fetchTotalsData]);
+
+  // Note: Totals dates are initialized with defaults. URL sync happens via the debounce effect below.
 
   useEffect(() => {
     // Prevent duplicate calls in React StrictMode
@@ -121,9 +290,10 @@ const AidEfficiencyPage: React.FC = () => {
   // Include alliance if it ever had >= threshold members (check max across all time points)
   const filteredData = useMemo(() => {
     return data.filter(alliance => {
+      const timeSeriesNations = alliance.timeSeries?.map(point => point.totalNations) || [];
       const maxNations = Math.max(
-        alliance.currentTotalNations,
-        ...alliance.timeSeries.map(point => point.totalNations)
+        alliance.currentTotalNations || 0,
+        ...timeSeriesNations
       );
       return maxNations >= minMemberThreshold;
     });
@@ -195,12 +365,14 @@ const AidEfficiencyPage: React.FC = () => {
     
     let latestDateStr: string | null = null;
     data.forEach(alliance => {
-      alliance.timeSeries.forEach(point => {
-        // Compare date strings directly (YYYY-MM-DD format)
-        if (latestDateStr === null || point.date > latestDateStr) {
-          latestDateStr = point.date;
-        }
-      });
+      if (alliance.timeSeries && Array.isArray(alliance.timeSeries)) {
+        alliance.timeSeries.forEach(point => {
+          // Compare date strings directly (YYYY-MM-DD format)
+          if (latestDateStr === null || point.date > latestDateStr) {
+            latestDateStr = point.date;
+          }
+        });
+      }
     });
     
     if (!latestDateStr) return null;
@@ -329,9 +501,11 @@ const AidEfficiencyPage: React.FC = () => {
     // Get all unique dates across all alliances
     const allDates = new Set<string>();
     sortedData.forEach(alliance => {
-      alliance.timeSeries.forEach(point => {
-        allDates.add(point.date);
-      });
+      if (alliance.timeSeries && Array.isArray(alliance.timeSeries)) {
+        alliance.timeSeries.forEach(point => {
+          allDates.add(point.date);
+        });
+      }
     });
 
     const sortedDates = Array.from(allDates).sort();
@@ -340,8 +514,9 @@ const AidEfficiencyPage: React.FC = () => {
     const series = sortedData
       .filter(alliance => selectedAlliances.has(alliance.allianceId))
       .map(alliance => {
+        const timeSeries = alliance.timeSeries || [];
         const points = sortedDates.map(date => {
-          const point = alliance.timeSeries.find(p => p.date === date);
+          const point = timeSeries.find(p => p.date === date);
           return point ? point.efficiency : null;
         });
 
@@ -376,22 +551,6 @@ const AidEfficiencyPage: React.FC = () => {
     return colors[index % colors.length];
   };
 
-  if (loading) {
-    return (
-      <PageContainer className="p-5 text-center">
-        Loading aid efficiency data...
-      </PageContainer>
-    );
-  }
-
-  if (error) {
-    return (
-      <PageContainer className="p-5 text-error">
-        Error: {error}
-      </PageContainer>
-    );
-  }
-
   // Helper function to get cell class based on value and threshold
   const getCellClass = (value: number | null): string => {
     if (efficiencyThreshold === null || value === null) {
@@ -410,12 +569,134 @@ const AidEfficiencyPage: React.FC = () => {
     return 'text-gray-200';
   };
 
+  // Calculate days analyzed for totals
+  const calculateTotalsDaysAnalyzed = (): number => {
+    try {
+      const start = new Date(totalsStartDate);
+      const end = new Date(totalsEndDate);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return 0;
+      }
+      const diffTime = end.getTime() - start.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      return Math.max(0, diffDays);
+    } catch {
+      return 0;
+    }
+  };
+
+  const totalsDaysAnalyzed = calculateTotalsDaysAnalyzed();
+
+  // Sort totals data
+  const sortedTotalsData = useMemo(() => {
+    const sorted = [...totalsData];
+    
+    sorted.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (totalsSortColumn) {
+        case 'alliance':
+          comparison = a.allianceName.localeCompare(b.allianceName);
+          break;
+        case 'efficiency':
+          comparison = a.efficiency - b.efficiency;
+          break;
+        case 'totalTechSent':
+          comparison = a.totalTechSent - b.totalTechSent;
+          break;
+        case 'totalTechReceived':
+          comparison = a.totalTechReceived - b.totalTechReceived;
+          break;
+        case 'totalCashSent':
+          comparison = a.totalCashSent - b.totalCashSent;
+          break;
+        case 'totalCashReceived':
+          comparison = a.totalCashReceived - b.totalCashReceived;
+          break;
+        case 'totalOffersSent':
+          comparison = a.totalOffersSent - b.totalOffersSent;
+          break;
+        case 'totalOffersReceived':
+          comparison = a.totalOffersReceived - b.totalOffersReceived;
+          break;
+      }
+      
+      return totalsSortDirection === 'asc' ? comparison : -comparison;
+    });
+    
+    return sorted;
+  }, [totalsData, totalsSortColumn, totalsSortDirection]);
+
+  const handleTotalsSort = (column: 'alliance' | 'efficiency' | 'totalTechSent' | 'totalTechReceived' | 'totalCashSent' | 'totalCashReceived' | 'totalOffersSent' | 'totalOffersReceived') => {
+    if (totalsSortColumn === column) {
+      setTotalsSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setTotalsSortColumn(column);
+      setTotalsSortDirection('desc');
+    }
+  };
+
   return (
     <TableContainer>
       <h1 className={tableClasses.title}>Aid Efficiency</h1>
-        <p className="text-gray-400 mb-6">
-          Aid efficiency percentage represents the percentage of available aid slots that are being utilized by each alliance.
-        </p>
+      
+      {/* Show loading/error states inside the container instead of early return */}
+      {loading && (
+        <div className="p-5 text-center">
+          Loading aid efficiency data...
+        </div>
+      )}
+      
+      {error && (
+        <div className="p-5 text-error">
+          Error: {error}
+        </div>
+      )}
+      
+      {!loading && !error && (
+        <>
+      
+      {/* Tabs */}
+      <div className="mb-6 border-b border-gray-700">
+        <div className="flex gap-4">
+          <button
+            onClick={() => {
+              setActiveTab('efficiency');
+              const newSearchParams = new URLSearchParams(searchParams);
+              newSearchParams.delete('tab');
+              setSearchParams(newSearchParams, { replace: true });
+            }}
+            className={`px-4 py-2 font-semibold transition-colors ${
+              activeTab === 'efficiency'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            Alliance Efficiency
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('totals');
+              const newSearchParams = new URLSearchParams(searchParams);
+              newSearchParams.set('tab', 'totals');
+              setSearchParams(newSearchParams, { replace: true });
+            }}
+            className={`px-4 py-2 font-semibold transition-colors ${
+              activeTab === 'totals'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            Alliance Aid Totals
+          </button>
+        </div>
+      </div>
+
+      {activeTab === 'efficiency' && (
+        <>
+          <p className="text-gray-400 mb-6">
+            Aid efficiency percentage represents the percentage of available aid slots that are being utilized by each alliance.
+          </p>
 
         {/* Filters */}
         <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -642,6 +923,215 @@ const AidEfficiencyPage: React.FC = () => {
             Select alliances from the table above to display them in the chart.
           </div>
         )}
+        </>
+      )}
+
+      {activeTab === 'totals' && (
+        <>
+          <p className="text-gray-400 mb-6">
+            Alliance aid totals aggregated by alliance over a custom date range. 
+            Efficiency represents the percentage of available aid slots (using 6 per nation) that were active each day.
+          </p>
+
+          {/* Date Filters */}
+          <div className="mb-6 flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-3">
+              <label htmlFor="totals-start-date" className="text-sm font-semibold text-gray-300 whitespace-nowrap w-24">
+                Start Date:
+              </label>
+              <input
+                id="totals-start-date"
+                type="date"
+                value={totalsStartDate}
+                onChange={(e) => setTotalsStartDate(e.target.value)}
+                className="px-3 py-2 border-2 border-gray-600 rounded-lg text-base font-medium bg-gray-800 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <label htmlFor="totals-end-date" className="text-sm font-semibold text-gray-300 whitespace-nowrap w-24">
+                End Date:
+              </label>
+              <input
+                id="totals-end-date"
+                type="date"
+                value={totalsEndDate}
+                onChange={(e) => setTotalsEndDate(e.target.value)}
+                className="px-3 py-2 border-2 border-gray-600 rounded-lg text-base font-medium bg-gray-800 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-gray-300 whitespace-nowrap w-24">
+                Days Analyzed:
+              </span>
+              <span className="px-3 py-2 border-2 border-gray-700 rounded-lg text-base font-medium bg-gray-800 text-gray-200">
+                {totalsDaysAnalyzed}
+              </span>
+            </div>
+          </div>
+
+          {totalsLoading && (
+            <div className="text-center p-5 text-gray-300">
+              Loading alliance aid totals data...
+            </div>
+          )}
+
+          {totalsError && (
+            <div className="p-5 text-error">
+              Error: {totalsError}
+            </div>
+          )}
+
+          {!totalsLoading && !totalsError && totalsData.length === 0 && (
+            <div className="text-center p-10 text-gray-400">
+              No data available for the selected date range.
+            </div>
+          )}
+
+          {!totalsLoading && !totalsError && totalsData.length > 0 && (
+            <div className="mb-8">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800">
+                  <thead>
+                    <tr className="bg-gray-700">
+                      <th 
+                        className="p-3 border border-gray-600 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                        onClick={() => handleTotalsSort('alliance')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Alliance
+                          <span className="text-xs text-gray-400">
+                            {totalsSortColumn === 'alliance' ? (totalsSortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                        onClick={() => handleTotalsSort('efficiency')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Efficiency %
+                          <span className="text-xs text-gray-400">
+                            {totalsSortColumn === 'efficiency' ? (totalsSortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                        onClick={() => handleTotalsSort('totalTechSent')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Tech Sent
+                          <span className="text-xs text-gray-400">
+                            {totalsSortColumn === 'totalTechSent' ? (totalsSortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                        onClick={() => handleTotalsSort('totalTechReceived')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Tech Received
+                          <span className="text-xs text-gray-400">
+                            {totalsSortColumn === 'totalTechReceived' ? (totalsSortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                        onClick={() => handleTotalsSort('totalCashSent')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Cash Sent
+                          <span className="text-xs text-gray-400">
+                            {totalsSortColumn === 'totalCashSent' ? (totalsSortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                        onClick={() => handleTotalsSort('totalCashReceived')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Cash Received
+                          <span className="text-xs text-gray-400">
+                            {totalsSortColumn === 'totalCashReceived' ? (totalsSortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                        onClick={() => handleTotalsSort('totalOffersSent')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Offers Sent
+                          <span className="text-xs text-gray-400">
+                            {totalsSortColumn === 'totalOffersSent' ? (totalsSortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                        onClick={() => handleTotalsSort('totalOffersReceived')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Offers Received
+                          <span className="text-xs text-gray-400">
+                            {totalsSortColumn === 'totalOffersReceived' ? (totalsSortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </div>
+                      </th>
+                      <th className="p-3 border border-gray-600 text-center text-white font-bold">
+                        Total Nations
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedTotalsData.map((alliance) => (
+                      <tr 
+                        key={alliance.allianceId} 
+                        className="bg-gray-800 hover:bg-gray-700"
+                      >
+                        <td className="p-2 border border-gray-700 font-bold text-gray-200">
+                          {alliance.allianceName}
+                        </td>
+                        <td className="p-2 border border-gray-700 text-center font-semibold text-gray-200">
+                          {alliance.efficiency.toFixed(1)}%
+                        </td>
+                        <td className="p-2 border border-gray-700 text-center text-gray-200">
+                          {alliance.totalTechSent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </td>
+                        <td className="p-2 border border-gray-700 text-center text-gray-200">
+                          {alliance.totalTechReceived.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </td>
+                        <td className="p-2 border border-gray-700 text-center text-gray-200">
+                          ${alliance.totalCashSent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </td>
+                        <td className="p-2 border border-gray-700 text-center text-gray-200">
+                          ${alliance.totalCashReceived.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </td>
+                        <td className="p-2 border border-gray-700 text-center text-gray-200">
+                          {alliance.totalOffersSent.toLocaleString()}
+                        </td>
+                        <td className="p-2 border border-gray-700 text-center text-gray-200">
+                          {alliance.totalOffersReceived.toLocaleString()}
+                        </td>
+                        <td className="p-2 border border-gray-700 text-center text-gray-200">
+                          {alliance.totalNations}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+        </>
+      )}
     </TableContainer>
   );
 };

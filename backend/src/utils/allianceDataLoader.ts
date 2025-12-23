@@ -525,36 +525,39 @@ export async function loadAllianceData(allianceId: number): Promise<{
       });
 
     // Convert database data to the format expected by the frontend and enrich with war mode status
-    const nationsArray = Object.entries(allianceData.nations).map(([nationId, nationData]) => {
-      // Ensure all slots have default values including priorities
-      const defaultSlots = {
-        sendTech: 0,
-        sendCash: 0,
-        getTech: 0,
-        getCash: 0,
-        external: 0,
-        send_priority: 3,
-        receive_priority: 3
-      };
-      
-      return {
-        id: parseInt(nationId),
-        nation_id: parseInt(nationId),
-        rulerName: nationData.ruler_name,
-        nationName: nationData.nation_name,
-        discord_handle: nationData.discord_handle || '',
-        alliance: allianceData.alliance_name,
-        allianceId: allianceId,
-        team: '', // Not available in config
-        strength: parseFloat(nationData.current_stats?.strength?.replace(/,/g, '') || '0'),
-        activity: '', // Not available in config
-        technology: nationData.current_stats?.technology || '0',
-        infrastructure: nationData.current_stats?.infrastructure || '0',
-        inWarMode: rawNationsDict[parseInt(nationId)]?.inWarMode ?? false,
-        has_dra: nationData.has_dra,
-        slots: { ...defaultSlots, ...nationData.slots }
-      };
-    });
+    const nationsArray = Object.entries(allianceData.nations)
+      // Only include nations that are still marked active in the database
+      .filter(([nationId]) => !!rawNationsDict[parseInt(nationId)])
+      .map(([nationId, nationData]) => {
+        // Ensure all slots have default values including priorities
+        const defaultSlots = {
+          sendTech: 0,
+          sendCash: 0,
+          getTech: 0,
+          getCash: 0,
+          external: 0,
+          send_priority: 3,
+          receive_priority: 3
+        };
+        
+        return {
+          id: parseInt(nationId),
+          nation_id: parseInt(nationId),
+          rulerName: nationData.ruler_name,
+          nationName: nationData.nation_name,
+          discord_handle: nationData.discord_handle || '',
+          alliance: allianceData.alliance_name,
+          allianceId: allianceId,
+          team: '', // Not available in config
+          strength: parseFloat(nationData.current_stats?.strength?.replace(/,/g, '') || '0'),
+          activity: '', // Not available in config
+          technology: nationData.current_stats?.technology || '0',
+          infrastructure: nationData.current_stats?.infrastructure || '0',
+          inWarMode: rawNationsDict[parseInt(nationId)]?.inWarMode ?? false,
+          has_dra: nationData.has_dra,
+          slots: { ...defaultSlots, ...nationData.slots }
+        };
+      });
     
     return {
       nations: nationsArray,

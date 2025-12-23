@@ -15,6 +15,27 @@ import { CategorizedNation, Nation } from '../models/Nation.js';
 import { prisma } from '../utils/prisma.js';
 import { isAidOfferExpired, calculateAidDateInfo, getAidDaysUntilExpiration } from '../utils/dateUtils.js';
 
+// Cache for alliance aid totals
+interface AllianceAidTotalsCache {
+  data: Array<{
+    allianceId: number;
+    allianceName: string;
+    totalNations: number;
+    efficiency: number;
+    totalTechSent: number;
+    totalTechReceived: number;
+    totalCashSent: number;
+    totalCashReceived: number;
+    totalOffersSent: number;
+    totalOffersReceived: number;
+    daysAnalyzed: number;
+  }>;
+  timestamp: number;
+}
+
+const allianceAidTotalsCache = new Map<string, AllianceAidTotalsCache>();
+const ALLIANCE_AID_TOTALS_CACHE_TTL_MS = 3600000; // 1 hour cache TTL (historical data doesn't change)
+
 export class AidService {
   /**
    * Helper function to check if an aid offer is expired (by status or by date)
@@ -1986,5 +2007,228 @@ export class AidService {
       averageReceivingSlots: Number(row.averageReceivingSlots),
       daysAnalyzed: Number(row.daysAnalyzed),
     }));
+  }
+
+  /**
+   * Get alliance aid totals aggregated by alliance over a date range
+   * Aggregates aid offers by sending/receiving alliance IDs
+   */
+  static async getAllianceAidTotals(
+    startDate: string, 
+    endDate: string
+  ): Promise<Array<{
+    allianceId: number;
+    allianceName: string;
+    totalNations: number;
+    efficiency: number;
+    totalTechSent: number;
+    totalTechReceived: number;
+    totalCashSent: number;
+    totalCashReceived: number;
+    totalOffersSent: number;
+    totalOffersReceived: number;
+    daysAnalyzed: number;
+  }>> {
+    // Validate date format (MM/DD/YYYY)
+    const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+    if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+      throw new Error('Invalid date format. Expected MM/DD/YYYY');
+    }
+    
+    // Check cache first
+    const cacheKey = `${startDate}-${endDate}`;
+    const now = Date.now();
+    const cached = allianceAidTotalsCache.get(cacheKey);
+    
+    if (cached && (now - cached.timestamp) < ALLIANCE_AID_TOTALS_CACHE_TTL_MS) {
+      console.log(`[Cache Hit] getAllianceAidTotals for ${cacheKey}`);
+      return cached.data;
+    }
+    
+    console.log(`[Cache Miss] getAllianceAidTotals for ${cacheKey}, executing query...`);
+    
+    const { prisma, Prisma } = await import('../utils/prisma.js');
+    
+    // Use Prisma.sql template tag for safe parameterization
+    const query = Prisma.sql`
+      WITH 
+      parsed_dates AS (
+        SELECT 
+          TO_DATE(${startDate}, 'MM/DD/YYYY') AS start_date,
+          TO_DATE(${endDate}, 'MM/DD/YYYY') AS end_date
+      ),
+      date_series AS (
+        SELECT generate_series(
+          (SELECT start_date FROM parsed_dates),
+          (SELECT end_date FROM parsed_dates),
+          '1 day'::interval
+        )::date AS check_date
+      ),
+      alliance_ids AS (
+        SELECT DISTINCT declaring_alliance_id AS alliance_id
+        FROM aid_offers
+        WHERE declaring_alliance_id IS NOT NULL
+          AND status != 'Cancelled'
+          AND aid_timestamp IS NOT NULL
+          AND aid_timestamp != ''
+          AND SPLIT_PART(aid_timestamp, ' ', 1) ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$'
+          AND TO_DATE(SPLIT_PART(aid_timestamp, ' ', 1), 'MM/DD/YYYY') >= 
+              (SELECT start_date FROM parsed_dates)
+          AND TO_DATE(SPLIT_PART(aid_timestamp, ' ', 1), 'MM/DD/YYYY') <= 
+              (SELECT end_date FROM parsed_dates)
+        UNION
+        SELECT DISTINCT receiving_alliance_id AS alliance_id
+        FROM aid_offers
+        WHERE receiving_alliance_id IS NOT NULL
+          AND status != 'Cancelled'
+          AND aid_timestamp IS NOT NULL
+          AND aid_timestamp != ''
+          AND SPLIT_PART(aid_timestamp, ' ', 1) ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$'
+          AND TO_DATE(SPLIT_PART(aid_timestamp, ' ', 1), 'MM/DD/YYYY') >= 
+              (SELECT start_date FROM parsed_dates)
+          AND TO_DATE(SPLIT_PART(aid_timestamp, ' ', 1), 'MM/DD/YYYY') <= 
+              (SELECT end_date FROM parsed_dates)
+      ),
+      alliance_info AS (
+        SELECT 
+          ai.alliance_id,
+          COALESCE(a.name, 'Unknown Alliance') AS alliance_name
+        FROM alliance_ids ai
+        LEFT JOIN alliances a ON ai.alliance_id = a.id
+      ),
+      alliance_nation_counts AS (
+        SELECT 
+          ai.alliance_id,
+          COUNT(DISTINCT n.id) AS total_nations
+        FROM alliance_info ai
+        LEFT JOIN nations n ON n.alliance_id = ai.alliance_id AND n.is_active = true
+        GROUP BY ai.alliance_id
+      ),
+      parsed_offers AS (
+        SELECT 
+          ao.aid_id,
+          ao.declaring_alliance_id,
+          ao.receiving_alliance_id,
+          ao.status,
+          ao.technology,
+          ao.money,
+          TO_DATE(SPLIT_PART(ao.aid_timestamp, ' ', 1), 'MM/DD/YYYY') AS offer_date,
+          TO_DATE(SPLIT_PART(ao.aid_timestamp, ' ', 1), 'MM/DD/YYYY') + INTERVAL '10 days' AS expiration_date
+        FROM aid_offers ao
+        WHERE ao.status != 'Cancelled'
+          AND ao.aid_timestamp IS NOT NULL
+          AND ao.aid_timestamp != ''
+          AND SPLIT_PART(ao.aid_timestamp, ' ', 1) ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$'
+          AND (ao.declaring_alliance_id IS NOT NULL OR ao.receiving_alliance_id IS NOT NULL)
+          AND TO_DATE(SPLIT_PART(ao.aid_timestamp, ' ', 1), 'MM/DD/YYYY') >= 
+              (SELECT start_date FROM parsed_dates)
+          AND TO_DATE(SPLIT_PART(ao.aid_timestamp, ' ', 1), 'MM/DD/YYYY') <= 
+              (SELECT end_date FROM parsed_dates)
+      ),
+      daily_alliance_slot_counts AS (
+        SELECT 
+          ds.check_date,
+          ai.alliance_id,
+          ai.alliance_name,
+          anc.total_nations,
+          COUNT(DISTINCT CASE 
+            WHEN po.declaring_alliance_id = ai.alliance_id OR po.receiving_alliance_id = ai.alliance_id 
+            THEN po.aid_id 
+          END) AS total_active_slots
+        FROM date_series ds
+        CROSS JOIN alliance_info ai
+        LEFT JOIN alliance_nation_counts anc ON anc.alliance_id = ai.alliance_id
+        LEFT JOIN parsed_offers po ON (
+          po.offer_date <= ds.check_date
+          AND po.expiration_date::date >= ds.check_date
+          AND (po.declaring_alliance_id = ai.alliance_id OR po.receiving_alliance_id = ai.alliance_id)
+        )
+        GROUP BY ds.check_date, ai.alliance_id, ai.alliance_name, anc.total_nations
+      ),
+      alliance_totals AS (
+        SELECT 
+          ai.alliance_id,
+          ai.alliance_name,
+          anc.total_nations,
+          -- Tech totals
+          COALESCE(SUM(CASE WHEN po.declaring_alliance_id = ai.alliance_id THEN po.technology ELSE 0 END), 0) AS total_tech_sent,
+          COALESCE(SUM(CASE WHEN po.receiving_alliance_id = ai.alliance_id THEN po.technology ELSE 0 END), 0) AS total_tech_received,
+          -- Cash totals
+          COALESCE(SUM(CASE WHEN po.declaring_alliance_id = ai.alliance_id THEN po.money ELSE 0 END), 0) AS total_cash_sent,
+          COALESCE(SUM(CASE WHEN po.receiving_alliance_id = ai.alliance_id THEN po.money ELSE 0 END), 0) AS total_cash_received,
+          -- Offer counts
+          COUNT(DISTINCT CASE WHEN po.declaring_alliance_id = ai.alliance_id THEN po.aid_id END) AS total_offers_sent,
+          COUNT(DISTINCT CASE WHEN po.receiving_alliance_id = ai.alliance_id THEN po.aid_id END) AS total_offers_received
+        FROM alliance_info ai
+        LEFT JOIN alliance_nation_counts anc ON anc.alliance_id = ai.alliance_id
+        LEFT JOIN parsed_offers po ON (
+          po.declaring_alliance_id = ai.alliance_id OR po.receiving_alliance_id = ai.alliance_id
+        )
+        GROUP BY ai.alliance_id, ai.alliance_name, anc.total_nations
+      )
+      SELECT 
+        at.alliance_id AS "allianceId",
+        at.alliance_name AS "allianceName",
+        COALESCE(at.total_nations, 0) AS "totalNations",
+        ROUND((AVG(dasc.total_active_slots)::numeric / NULLIF(MAX(at.total_nations) * 6, 0) * 100)::numeric, 2) AS "efficiency",
+        ROUND(at.total_tech_sent::numeric, 2) AS "totalTechSent",
+        ROUND(at.total_tech_received::numeric, 2) AS "totalTechReceived",
+        ROUND(at.total_cash_sent::numeric, 2) AS "totalCashSent",
+        ROUND(at.total_cash_received::numeric, 2) AS "totalCashReceived",
+        at.total_offers_sent AS "totalOffersSent",
+        at.total_offers_received AS "totalOffersReceived",
+        COUNT(DISTINCT dasc.check_date) AS "daysAnalyzed"
+      FROM alliance_totals at
+      LEFT JOIN daily_alliance_slot_counts dasc ON dasc.alliance_id = at.alliance_id
+      GROUP BY at.alliance_id, at.alliance_name, at.total_nations, at.total_tech_sent, at.total_tech_received, 
+               at.total_cash_sent, at.total_cash_received, at.total_offers_sent, at.total_offers_received
+      HAVING COALESCE(at.total_nations, 0) > 0
+      ORDER BY "efficiency" DESC;
+    `;
+    
+    const results = await prisma.$queryRaw<Array<{
+      allianceId: bigint | number;
+      allianceName: string;
+      totalNations: bigint | number;
+      efficiency: bigint | number;
+      totalTechSent: bigint | number;
+      totalTechReceived: bigint | number;
+      totalCashSent: bigint | number;
+      totalCashReceived: bigint | number;
+      totalOffersSent: bigint | number;
+      totalOffersReceived: bigint | number;
+      daysAnalyzed: bigint | number;
+    }>>(query);
+    
+    // Convert BigInt values to numbers for JSON serialization
+    const data = results.map(row => ({
+      allianceId: Number(row.allianceId),
+      allianceName: row.allianceName,
+      totalNations: Number(row.totalNations),
+      efficiency: Number(row.efficiency),
+      totalTechSent: Number(row.totalTechSent),
+      totalTechReceived: Number(row.totalTechReceived),
+      totalCashSent: Number(row.totalCashSent),
+      totalCashReceived: Number(row.totalCashReceived),
+      totalOffersSent: Number(row.totalOffersSent),
+      totalOffersReceived: Number(row.totalOffersReceived),
+      daysAnalyzed: Number(row.daysAnalyzed),
+    }));
+    
+    // Update cache
+    allianceAidTotalsCache.set(cacheKey, {
+      data,
+      timestamp: now
+    });
+    
+    // Clean up old cache entries (older than 24 hours)
+    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    for (const [key, value] of allianceAidTotalsCache.entries()) {
+      if (now - value.timestamp > maxAge) {
+        allianceAidTotalsCache.delete(key);
+      }
+    }
+    
+    return data;
   }
 }

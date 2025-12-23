@@ -19,5 +19,8 @@ aidRoutes.get('/alliances/:allianceId/categorized-nations', validateAllianceId, 
 // Get nation aid efficiency for an alliance over a date range
 aidRoutes.get('/alliances/:allianceId/nation-aid-efficiency', validateAllianceId, AidController.getNationAidEfficiency);
 
+// Get alliance aid totals aggregated by alliance over a date range
+aidRoutes.get('/alliance-aid-totals', AidController.getAllianceAidTotals);
+
 // Get small aid offers
 aidRoutes.get('/small-aid-offers', AidController.getSmallAidOffers);

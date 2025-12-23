@@ -254,4 +254,38 @@ export class AidController {
       });
     }
   }
+
+  /**
+   * Get alliance aid totals aggregated by alliance over a date range
+   */
+  static async getAllianceAidTotals(req: Request, res: Response) {
+    try {
+      const startDate = req.query.startDate as string;
+      const endDate = req.query.endDate as string;
+      
+      if (!startDate || !endDate) {
+        return res.status(400).json({
+          success: false,
+          error: 'startDate and endDate query parameters are required (format: MM/DD/YYYY)'
+        });
+      }
+
+      const result = await AidService.getAllianceAidTotals(startDate, endDate);
+
+      console.log(`[API] getAllianceAidTotals (startDate: ${startDate}, endDate: ${endDate}): Returning ${result.length} alliances`);
+
+      res.json({
+        success: true,
+        startDate,
+        endDate,
+        data: result
+      });
+    } catch (error) {
+      console.error('Error fetching alliance aid totals:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
 }
