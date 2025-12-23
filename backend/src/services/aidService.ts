@@ -1886,6 +1886,9 @@ export class AidService {
     nationName: string;
     rulerName: string;
     maxSlots: number;
+    strength: number;
+    technology: string;
+    infrastructure: string;
     averageActiveSlots: number;
     efficiency: number;
     averageSendingSlots: number;
@@ -1925,7 +1928,10 @@ export class AidService {
           n.id AS nation_id,
           n.nation_name,
           n.ruler_name,
-          6 AS max_slots
+          6 AS max_slots,
+          n.strength,
+          n.technology,
+          n.infrastructure
         FROM nations n
         WHERE n.alliance_id = ${allianceId}
           AND n.is_active = true
@@ -1959,6 +1965,9 @@ export class AidService {
           an.nation_name,
           an.ruler_name,
           an.max_slots,
+          an.strength,
+          an.technology,
+          an.infrastructure,
           COUNT(DISTINCT CASE WHEN po.declaring_nation_id = an.nation_id THEN po.aid_id END) AS sending_slots,
           COUNT(DISTINCT CASE WHEN po.receiving_nation_id = an.nation_id THEN po.aid_id END) AS receiving_slots,
           COUNT(DISTINCT po.aid_id) AS total_active_slots
@@ -1969,20 +1978,23 @@ export class AidService {
           AND po.expiration_date::date >= ds.check_date
           AND (po.declaring_nation_id = an.nation_id OR po.receiving_nation_id = an.nation_id)
         )
-        GROUP BY ds.check_date, an.nation_id, an.nation_name, an.ruler_name, an.max_slots
+        GROUP BY ds.check_date, an.nation_id, an.nation_name, an.ruler_name, an.max_slots, an.strength, an.technology, an.infrastructure
       )
       SELECT 
         nation_id AS "nationId",
         nation_name AS "nationName",
         ruler_name AS "rulerName",
         max_slots AS "maxSlots",
+        strength AS "strength",
+        technology AS "technology",
+        infrastructure AS "infrastructure",
         ROUND(AVG(LEAST(total_active_slots, max_slots))::numeric, 2) AS "averageActiveSlots",
         ROUND((AVG(LEAST(total_active_slots, max_slots))::numeric / max_slots * 100)::numeric, 2) AS "efficiency",
         ROUND(AVG(LEAST(sending_slots, max_slots))::numeric, 2) AS "averageSendingSlots",
         ROUND(AVG(LEAST(receiving_slots, max_slots))::numeric, 2) AS "averageReceivingSlots",
         COUNT(*) AS "daysAnalyzed"
       FROM daily_slot_counts
-      GROUP BY nation_id, nation_name, ruler_name, max_slots
+      GROUP BY nation_id, nation_name, ruler_name, max_slots, strength, technology, infrastructure
       ORDER BY efficiency DESC;
     `;
     
@@ -1991,6 +2003,9 @@ export class AidService {
       nationName: string;
       rulerName: string;
       maxSlots: bigint | number;
+      strength: number;
+      technology: string;
+      infrastructure: string;
       averageActiveSlots: bigint | number;
       efficiency: bigint | number;
       averageSendingSlots: bigint | number;
@@ -2004,6 +2019,9 @@ export class AidService {
       nationName: row.nationName,
       rulerName: row.rulerName,
       maxSlots: Number(row.maxSlots),
+      strength: Number(row.strength),
+      technology: row.technology,
+      infrastructure: row.infrastructure,
       averageActiveSlots: Number(row.averageActiveSlots),
       efficiency: Number(row.efficiency),
       averageSendingSlots: Number(row.averageSendingSlots),

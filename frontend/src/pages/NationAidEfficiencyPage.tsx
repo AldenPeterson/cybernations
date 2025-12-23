@@ -8,6 +8,9 @@ interface NationEfficiencyData {
   nationName: string;
   rulerName: string;
   maxSlots: number;
+  strength: number;
+  technology: string;
+  infrastructure: string;
   averageActiveSlots: number;
   efficiency: number;
   averageSendingSlots: number;
@@ -84,8 +87,38 @@ const NationAidEfficiencyPage: React.FC = () => {
   const [data, setData] = useState<NationEfficiencyData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sortColumn, setSortColumn] = useState<'nation' | 'efficiency' | 'averageActiveSlots' | 'averageSendingSlots' | 'averageReceivingSlots'>('efficiency');
+  const [sortColumn, setSortColumn] = useState<'nation' | 'strength' | 'infrastructure' | 'technology' | 'efficiency' | 'averageActiveSlots' | 'averageSendingSlots' | 'averageReceivingSlots' | 'sendReceiveRatio'>('efficiency');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  // Format number with K/M suffixes
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  };
+
+  // Format technology/infrastructure string (may contain commas)
+  const formatTechInfra = (value: string): string => {
+    const num = parseFloat(value.replace(/,/g, '')) || 0;
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  };
+
+  // Calculate send/receive ratio
+  const calculateSendReceiveRatio = (sending: number, receiving: number): number => {
+    if (receiving === 0) {
+      // If receiving is 0, return Infinity (or a large number for sorting)
+      return sending > 0 ? Infinity : 0;
+    }
+    return sending / receiving;
+  };
 
   // Decode HTML entities in text
   const decodeHtmlEntities = (text: string): string => {
@@ -244,7 +277,7 @@ const NationAidEfficiencyPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  const handleSort = (column: 'nation' | 'efficiency' | 'averageActiveSlots' | 'averageSendingSlots' | 'averageReceivingSlots') => {
+  const handleSort = (column: 'nation' | 'strength' | 'infrastructure' | 'technology' | 'efficiency' | 'averageActiveSlots' | 'averageSendingSlots' | 'averageReceivingSlots' | 'sendReceiveRatio') => {
     if (sortColumn === column) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
@@ -260,6 +293,15 @@ const NationAidEfficiencyPage: React.FC = () => {
       case 'nation':
         comparison = a.nationName.localeCompare(b.nationName);
         break;
+      case 'strength':
+        comparison = a.strength - b.strength;
+        break;
+      case 'infrastructure':
+        comparison = parseFloat(a.infrastructure.replace(/,/g, '')) - parseFloat(b.infrastructure.replace(/,/g, ''));
+        break;
+      case 'technology':
+        comparison = parseFloat(a.technology.replace(/,/g, '')) - parseFloat(b.technology.replace(/,/g, ''));
+        break;
       case 'efficiency':
         comparison = a.efficiency - b.efficiency;
         break;
@@ -271,6 +313,20 @@ const NationAidEfficiencyPage: React.FC = () => {
         break;
       case 'averageReceivingSlots':
         comparison = a.averageReceivingSlots - b.averageReceivingSlots;
+        break;
+      case 'sendReceiveRatio':
+        const ratioA = calculateSendReceiveRatio(a.averageSendingSlots, a.averageReceivingSlots);
+        const ratioB = calculateSendReceiveRatio(b.averageSendingSlots, b.averageReceivingSlots);
+        // Handle Infinity values for sorting
+        if (ratioA === Infinity && ratioB === Infinity) {
+          comparison = 0;
+        } else if (ratioA === Infinity) {
+          comparison = 1;
+        } else if (ratioB === Infinity) {
+          comparison = -1;
+        } else {
+          comparison = ratioA - ratioB;
+        }
         break;
     }
     
@@ -368,6 +424,39 @@ const NationAidEfficiencyPage: React.FC = () => {
                     </th>
                     <th 
                       className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                      onClick={() => handleSort('strength')}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        Strength
+                        <span className="text-xs text-gray-400">
+                          {sortColumn === 'strength' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                        </span>
+                      </div>
+                    </th>
+                    <th 
+                      className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                      onClick={() => handleSort('infrastructure')}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        Infra
+                        <span className="text-xs text-gray-400">
+                          {sortColumn === 'infrastructure' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                        </span>
+                      </div>
+                    </th>
+                    <th 
+                      className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                      onClick={() => handleSort('technology')}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        Tech
+                        <span className="text-xs text-gray-400">
+                          {sortColumn === 'technology' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                        </span>
+                      </div>
+                    </th>
+                    <th 
+                      className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
                       onClick={() => handleSort('efficiency')}
                     >
                       <div className="flex items-center justify-center gap-2">
@@ -410,6 +499,17 @@ const NationAidEfficiencyPage: React.FC = () => {
                         </span>
                       </div>
                     </th>
+                    <th 
+                      className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                      onClick={() => handleSort('sendReceiveRatio')}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        Send/Receive Ratio
+                        <span className="text-xs text-gray-400">
+                          {sortColumn === 'sendReceiveRatio' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                        </span>
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -428,6 +528,15 @@ const NationAidEfficiencyPage: React.FC = () => {
                           {decodeHtmlEntities(nation.rulerName)} / {decodeHtmlEntities(nation.nationName)}
                         </a>
                       </td>
+                      <td className="p-2 border border-gray-700 text-center text-gray-200">
+                        {formatNumber(nation.strength)}
+                      </td>
+                      <td className="p-2 border border-gray-700 text-center text-gray-200">
+                        {formatTechInfra(nation.infrastructure)}
+                      </td>
+                      <td className="p-2 border border-gray-700 text-center text-gray-200">
+                        {formatTechInfra(nation.technology)}
+                      </td>
                       <td className="p-2 border border-gray-700 text-center font-semibold text-gray-200">
                         {nation.efficiency.toFixed(1)}%
                       </td>
@@ -439,6 +548,15 @@ const NationAidEfficiencyPage: React.FC = () => {
                       </td>
                       <td className="p-2 border border-gray-700 text-center text-gray-200">
                         {nation.averageReceivingSlots.toFixed(2)}
+                      </td>
+                      <td className="p-2 border border-gray-700 text-center text-gray-200">
+                        {(() => {
+                          const ratio = calculateSendReceiveRatio(nation.averageSendingSlots, nation.averageReceivingSlots);
+                          if (ratio === Infinity) {
+                            return '∞';
+                          }
+                          return ratio.toFixed(2);
+                        })()}
                       </td>
                     </tr>
                   ))}
