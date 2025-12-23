@@ -258,6 +258,8 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
           const aidId = parseInt(row.aidId);
           const declaringId = parseInt(row.declaringId);
           const receivingId = parseInt(row.receivingId);
+          const declaringAllianceId = row.declaringAllianceId ? parseInt(row.declaringAllianceId) : null;
+          const receivingAllianceId = row.receivingAllianceId ? parseInt(row.receivingAllianceId) : null;
           
           // Skip if any ID is invalid
           if (isNaN(aidId) || isNaN(declaringId) || isNaN(receivingId)) {
@@ -268,6 +270,8 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
             aidId,
             declaringNationId: declaringId,
             receivingNationId: receivingId,
+            declaringAllianceId: declaringAllianceId && !isNaN(declaringAllianceId) ? declaringAllianceId : undefined,
+            receivingAllianceId: receivingAllianceId && !isNaN(receivingAllianceId) ? receivingAllianceId : undefined,
             status: row.status || '',
             money: parseFloat(row.money?.replace(/,/g, '') || '0') || 0,
             technology: parseFloat(row.technology?.replace(/,/g, '') || '0') || 0,
@@ -289,19 +293,32 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
           data: { isActive: false } as any
         });
         
-        // Step 2: Batch verify nations exist
+        // Step 2: Batch verify nations exist and get their alliance IDs
         const nationIds = new Set<number>();
         for (const offer of aidOffers) {
           nationIds.add(offer.declaringNationId);
           nationIds.add(offer.receivingNationId);
         }
         
-        const existingNationIds = new Set(
-          (await prisma.nation.findMany({
-            where: { id: { in: Array.from(nationIds) } },
-            select: { id: true }
-          })).map((n: { id: number }) => n.id)
+        const nations = await prisma.nation.findMany({
+          where: { id: { in: Array.from(nationIds) } },
+          select: { id: true, allianceId: true }
+        });
+        
+        const existingNationIds = new Set(nations.map((n: { id: number }) => n.id));
+        const nationAllianceMap = new Map(
+          nations.map((n: { id: number; allianceId: number }) => [n.id, n.allianceId])
         );
+        
+        // Backfill alliance IDs from nations if missing from CSV
+        for (const offer of aidOffers) {
+          if (!offer.declaringAllianceId && nationAllianceMap.has(offer.declaringNationId)) {
+            offer.declaringAllianceId = nationAllianceMap.get(offer.declaringNationId)!;
+          }
+          if (!offer.receivingAllianceId && nationAllianceMap.has(offer.receivingNationId)) {
+            offer.receivingAllianceId = nationAllianceMap.get(offer.receivingNationId)!;
+          }
+        }
         
         // Filter valid aid offers (both nations must exist)
         const validOffers = aidOffers.filter(offer =>
@@ -370,6 +387,8 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
                 aidId: a.aidId,
                 declaringNationId: a.declaringNationId,
                 receivingNationId: a.receivingNationId,
+                declaringAllianceId: (a as any).declaringAllianceId,
+                receivingAllianceId: (a as any).receivingAllianceId,
                 status: a.status,
                 money: a.money,
                 technology: a.technology,
@@ -390,6 +409,8 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
               return (
                 existing.declaringNationId !== newOffer.declaringNationId ||
                 existing.receivingNationId !== newOffer.receivingNationId ||
+                existing.declaringAllianceId !== newOffer.declaringAllianceId ||
+                existing.receivingAllianceId !== newOffer.receivingAllianceId ||
                 existing.status !== newOffer.status ||
                 Math.abs(existing.money - newOffer.money) > 0.01 || // Float comparison with tolerance
                 Math.abs(existing.technology - newOffer.technology) > 0.01 ||
