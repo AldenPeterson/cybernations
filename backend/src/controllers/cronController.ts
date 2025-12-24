@@ -63,7 +63,6 @@ export class CronController {
       // 4. Syncs alliance files
       try {
         const downloadResults = await ensureRecentFiles(force);
-        console.log('[Cron] Sync-all job completed successfully');
         
         // Format results for response
         const results = downloadResults.map(result => ({
@@ -76,18 +75,43 @@ export class CronController {
         const successful = results.filter(r => r.success).length;
         const failed = results.filter(r => !r.success).length;
         
-        let message: string;
+        // If no downloads were attempted (all files were already fresh), return 200
         if (results.length === 0) {
-          message = 'Sync job completed: All files are already up to date (no downloads needed)';
-        } else if (failed > 0) {
-          message = `Sync job completed: ${successful} succeeded, ${failed} failed`;
-        } else {
-          message = `Sync job completed: All ${successful} files downloaded successfully`;
+          console.log('[Cron] Sync-all job completed: All files are already up to date');
+          return res.json({
+            success: true,
+            message: 'Sync job completed: All files are already up to date (no downloads needed)',
+            timestamp: new Date().toISOString(),
+            downloads: results,
+            summary: {
+              total: 0,
+              successful: 0,
+              failed: 0
+            }
+          });
         }
         
+        // If any download failed, return non-200 status
+        if (failed > 0) {
+          console.error(`[Cron] Sync-all job completed with failures: ${successful} succeeded, ${failed} failed`);
+          return res.status(500).json({
+            success: false,
+            message: `Sync job failed: ${successful} succeeded, ${failed} failed`,
+            timestamp: new Date().toISOString(),
+            downloads: results,
+            summary: {
+              total: results.length,
+              successful,
+              failed
+            }
+          });
+        }
+        
+        // All downloads succeeded
+        console.log('[Cron] Sync-all job completed successfully');
         res.json({
           success: true,
-          message,
+          message: `Sync job completed: All ${successful} files downloaded successfully`,
           timestamp: new Date().toISOString(),
           downloads: results,
           summary: {
@@ -97,14 +121,14 @@ export class CronController {
           }
         });
       } catch (error: any) {
-        // Log the error but don't fail the entire request
-        // ensureRecentFiles already handles errors gracefully
+        // Log the error and return non-200 for fatal errors
         const errorMsg = error?.message || String(error);
-        console.error('[Cron] Error in sync-all job (non-fatal):', errorMsg);
+        console.error('[Cron] Fatal error in sync-all job:', errorMsg);
         
-        res.json({
-          success: true,
-          message: `Sync job completed with warnings: ${errorMsg}`,
+        res.status(500).json({
+          success: false,
+          error: errorMsg,
+          message: `Sync job failed with fatal error: ${errorMsg}`,
           timestamp: new Date().toISOString(),
           downloads: [],
           summary: {
