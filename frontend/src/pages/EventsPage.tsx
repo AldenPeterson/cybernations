@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import PageContainer from '../components/PageContainer';
+import { useAlliances } from '../contexts/AlliancesContext';
 
 type Event = {
   id: number;
@@ -39,6 +40,7 @@ type FilterType = 'all' | 'nation' | 'alliance';
 type EventTypeFilter = 'all' | 'new_nation' | 'nation_inactive' | 'alliance_change';
 
 const EventsPage: React.FC = () => {
+  const { alliances } = useAlliances();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +49,7 @@ const EventsPage: React.FC = () => {
   const [offset, setOffset] = useState<number>(0);
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [eventTypeFilter, setEventTypeFilter] = useState<EventTypeFilter>('all');
+  const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,6 +69,10 @@ const EventsPage: React.FC = () => {
         
         if (eventTypeFilter !== 'all') {
           params.eventType = eventTypeFilter;
+        }
+        
+        if (selectedAllianceId !== null) {
+          params.allianceId = selectedAllianceId;
         }
         
         const response = await apiCallWithErrorHandling(API_ENDPOINTS.events(params)) as EventsResponse;
@@ -94,7 +101,7 @@ const EventsPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [limit, offset, filterType, eventTypeFilter]);
+  }, [limit, offset, filterType, eventTypeFilter, selectedAllianceId]);
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -178,6 +185,25 @@ const EventsPage: React.FC = () => {
               <option value="new_nation">New Nation</option>
               <option value="nation_inactive">Nation Inactive</option>
               <option value="alliance_change">Alliance Change</option>
+            </select>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-300">Alliance:</label>
+            <select
+              value={selectedAllianceId || ''}
+              onChange={(e) => {
+                setSelectedAllianceId(e.target.value ? parseInt(e.target.value) : null);
+                setOffset(0);
+              }}
+              className="px-3 py-1.5 bg-gray-800 text-white border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm min-w-[200px]"
+            >
+              <option value="">All Alliances</option>
+              {alliances.map(alliance => (
+                <option key={alliance.id} value={alliance.id}>
+                  {alliance.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>
