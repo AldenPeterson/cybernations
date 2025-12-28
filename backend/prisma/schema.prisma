@@ -14,6 +14,7 @@ model Alliance {
   crossAllianceAidSources CrossAllianceAid[] @relation("SourceAlliance")
   crossAllianceAidTargets CrossAllianceAid[] @relation("TargetAlliance")
   nations                 Nation[]
+  events                  Event[]
 
   @@map("alliances")
 }
@@ -50,6 +51,7 @@ model Nation {
   alliance                                               Alliance       @relation(fields: [allianceId], references: [id])
   declaringWars                                          War[]          @relation("DeclaringNation")
   receivingWars                                          War[]          @relation("ReceivingNation")
+  events                                                 Event[]
 
   @@index([allianceId])
   @@index([id])
@@ -216,4 +218,24 @@ model dynamic_wars {
   @@index([declaring_nation_id])
   @@index([receiving_nation_id])
   @@index([status])
+}
+
+model Event {
+  id          Int       @id @default(autoincrement())
+  type        String    // 'nation' or 'alliance'
+  eventType   String    @map("event_type") // e.g., 'new_nation', 'nation_inactive'
+  nationId    Int?      @map("nation_id")
+  allianceId  Int?      @map("alliance_id")
+  description String
+  metadata    Json?     // Additional data as JSON
+  createdAt   DateTime  @default(now()) @map("created_at")
+  nation      Nation?   @relation(fields: [nationId], references: [id], onDelete: Cascade)
+  alliance    Alliance? @relation(fields: [allianceId], references: [id], onDelete: Cascade)
+
+  @@index([type])
+  @@index([eventType])
+  @@index([nationId])
+  @@index([allianceId])
+  @@index([createdAt])
+  @@map("events")
 }

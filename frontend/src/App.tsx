@@ -12,6 +12,7 @@ import NSComparisonsPage from './pages/NSComparisonsPage.tsx'
 import NuclearStatsPage from './pages/NuclearStatsPage'
 import AidEfficiencyPage from './pages/AidEfficiencyPage'
 import NationAidEfficiencyPage from './pages/NationAidEfficiencyPage'
+import EventsPage from './pages/EventsPage'
 
 function App() {
   const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(null);
@@ -86,6 +87,7 @@ function App() {
         <Route path="/nuclear-stats" element={<NuclearStatsPage />} />
         <Route path="/aid-efficiency" element={<AidEfficiencyPage />} />
         <Route path="/nation-aid-efficiency" element={<NationAidEfficiencyPage />} />
+        <Route path="/events" element={<EventsPage />} />
         {/* Shame offers doesn't need alliance ID */}
         <Route path="/shame-offers" element={<ShameOffersPage />} />
         

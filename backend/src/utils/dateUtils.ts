@@ -165,15 +165,29 @@ export function calculateDaysUntilExpiration(startDate: string, expirationDays: 
   const start = parseCentralTimeDate(startDate);
   const now = getCurrentCentralTime();
   
-  // Calculate the difference in milliseconds
-  const diffMs = now.getTime() - start.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  // Calculate the expiration date by adding expirationDays to the start date
+  const expirationDate = new Date(start.getTime() + (expirationDays * 24 * 60 * 60 * 1000));
   
-  // Calculate days since start (using floor to get full days)
-  const daysSinceStart = Math.floor(diffDays);
+  // Get Central Time date components for expiration date (date only, no time)
+  const expYear = parseInt(expirationDate.toLocaleDateString('en-US', { timeZone: 'America/Chicago', year: 'numeric' }));
+  const expMonth = parseInt(expirationDate.toLocaleDateString('en-US', { timeZone: 'America/Chicago', month: 'numeric' }));
+  const expDay = parseInt(expirationDate.toLocaleDateString('en-US', { timeZone: 'America/Chicago', day: 'numeric' }));
+  
+  // Get Central Time date components for current date (date only, no time)
+  const nowYear = parseInt(now.toLocaleDateString('en-US', { timeZone: 'America/Chicago', year: 'numeric' }));
+  const nowMonth = parseInt(now.toLocaleDateString('en-US', { timeZone: 'America/Chicago', month: 'numeric' }));
+  const nowDay = parseInt(now.toLocaleDateString('en-US', { timeZone: 'America/Chicago', day: 'numeric' }));
+  
+  // Create date objects for comparison (using date only, no time)
+  const expirationDateOnly = new Date(expYear, expMonth - 1, expDay);
+  const currentDateOnly = new Date(nowYear, nowMonth - 1, nowDay);
+  
+  // Calculate difference in days
+  const diffTime = expirationDateOnly.getTime() - currentDateOnly.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   
   // Return remaining days (0 if expired)
-  return Math.max(0, expirationDays - daysSinceStart);
+  return Math.max(0, diffDays);
 }
 
 /**

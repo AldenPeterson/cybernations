@@ -98,6 +98,10 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
         await prisma.nation.updateMany({
           data: { isActive: false } as any
         });
+        
+        // Process inactive events after marking as inactive (nations > 1000 NS that are now inactive)
+        const { processInactiveNations } = await import('./eventService.js');
+        await processInactiveNations();
 
         // Then, upsert nations using batch operations
         console.log('Preparing nations for batch upsert...');
@@ -168,6 +172,14 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
             }
             imported = newNations.length;
             console.log(`Batch created ${imported} new nations`);
+            
+            // Process events for new nations (> 1000 NS)
+            const { detectNewNationEvent } = await import('./eventService.js');
+            for (const nation of newNations) {
+              if (nation.strength >= 1000) {
+                await detectNewNationEvent(nation.id, nation.strength);
+              }
+            }
           } catch (error: any) {
             console.warn(`Error batch creating nations: ${error.message}`);
             skipped += newNations.length;

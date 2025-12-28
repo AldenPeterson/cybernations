@@ -106,6 +106,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         return 'Aid Efficiency';
       case 'nation-aid-efficiency':
         return 'Aid Slot Efficiency';
+      case 'events':
+        return 'Events';
       default:
         return 'CyberNations';
     }
@@ -243,6 +245,17 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             )}
           >
             Nation Aid Efficiency
+          </Link>
+          <Link 
+            to={'/events'}
+            className={clsx(
+              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
+              isActiveTab('events') 
+                ? 'bg-primary text-white font-semibold shadow-md' 
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+            )}
+          >
+            Events
           </Link>
         </div>
 
@@ -404,6 +417,18 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
               )}
             >
               Nation Aid Efficiency
+            </Link>
+            <Link 
+              to={'/events'}
+              onClick={() => setMobileMenuOpen(false)}
+              className={clsx(
+                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
+                isActiveTab('events') 
+                  ? 'bg-primary text-white font-semibold shadow-md' 
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              )}
+            >
+              Events
             </Link>
           </div>
         </div>
