@@ -227,7 +227,7 @@ const EventsPage: React.FC = () => {
                       
                       {event.nation && (
                         <div className="text-sm text-gray-400">
-                          Nation: {event.nation.rulerName} ({event.nation.nationName}) - {event.nation.alliance.name}
+                          Nation: {event.nation.rulerName} ({event.nation.nationName}) [ID: {event.nation.id}] - {event.nation.alliance.name}
                         </div>
                       )}
                       
@@ -240,6 +240,9 @@ const EventsPage: React.FC = () => {
                       {event.eventType === 'alliance_change' && event.metadata && (
                         <div className="text-sm text-gray-400">
                           Changed from <span className="text-gray-300">{event.metadata.oldAllianceName || 'Unknown'}</span> to <span className="text-gray-300">{event.metadata.newAllianceName || 'Unknown'}</span>
+                          {event.metadata.strength && (
+                            <span className="ml-2">({event.metadata.strength.toLocaleString()} NS)</span>
+                          )}
                         </div>
                       )}
                     </div>

@@ -68,11 +68,15 @@ export async function detectNewNationEvent(nationId: number, strength: number): 
 
 /**
  * Detect and create events for nations that go inactive (> 1000 NS)
- * Called when a nation is marked as inactive
+ * A nation is considered "inactive" when it no longer appears in the nation data file,
+ * not based on the nation's activity status field.
+ * Called when a nation is marked as inactive (isActive = false)
  */
 export async function detectNationInactiveEvent(nationId: number): Promise<void> {
   try {
     // Get the nation to check if it meets the NS threshold
+    // Note: "inactive" here means the nation is not in the current data file (isActive = false),
+    // not based on the nation's activity status field
     const nation = await prisma.nation.findUnique({
       where: { id: nationId },
       include: { alliance: true },
@@ -186,11 +190,14 @@ export async function detectAllianceChangeEvent(
 
 /**
  * Process events for nations that became inactive during import
- * This is called after marking all nations as inactive, before reactivating active ones
+ * A nation is considered "inactive" when it no longer appears in the nation data file.
+ * This is called after marking all nations as inactive (isActive = false), before reactivating
+ * those that appear in the current data file.
  */
 export async function processInactiveNations(): Promise<void> {
   try {
-    // Find all nations that are inactive and have strength > 1000 NS
+    // Find all nations that are inactive (not in current data file) and have strength > 1000 NS
+    // Note: isActive = false means the nation is not present in the current data file
     const inactiveNations = await prisma.nation.findMany({
       where: {
         isActive: false,
@@ -203,9 +210,11 @@ export async function processInactiveNations(): Promise<void> {
       },
     });
 
-    // Process each inactive nation
-    for (const nation of inactiveNations) {
-      await detectNationInactiveEvent(nation.id);
+    // Process inactive events in parallel batches to improve performance
+    const batchSize = 50;
+    for (let i = 0; i < inactiveNations.length; i += batchSize) {
+      const batch = inactiveNations.slice(i, i + batchSize);
+      await Promise.all(batch.map(nation => detectNationInactiveEvent(nation.id)));
     }
   } catch (error: any) {
     console.error('Error processing inactive nations for events:', error.message);

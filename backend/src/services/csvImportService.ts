@@ -94,14 +94,13 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
         }
 
         // Step 1: Mark all existing nations as inactive BEFORE processing new data
+        // This marks nations as not present in the current file. Nations that appear in the
+        // current file will be reactivated below. A nation is "inactive" if it's not in the file,
+        // regardless of the nation's activity status field.
         console.log('Marking existing nations as inactive...');
         await prisma.nation.updateMany({
           data: { isActive: false } as any
         });
-        
-        // Process inactive events after marking as inactive (nations > 1000 NS that are now inactive)
-        const { processInactiveNations } = await import('./eventService.js');
-        await processInactiveNations();
 
         // Then, upsert nations using batch operations
         console.log('Preparing nations for batch upsert...');
@@ -177,10 +176,26 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
             console.log(`Batch created ${imported} new nations`);
             
             // Process events for new nations (> 1000 NS)
-            const { detectNewNationEvent } = await import('./eventService.js');
-            for (const nation of newNations) {
-              if (nation.strength >= 1000) {
-                await detectNewNationEvent(nation.id, nation.strength);
+            // Batch verify which nations were actually created (createMany with skipDuplicates may skip some)
+            const newNationsOver1000 = newNations.filter(n => n.strength >= 1000);
+            if (newNationsOver1000.length > 0) {
+              const newNationIds = newNationsOver1000.map(n => n.id);
+              const actuallyCreatedNations = await prisma.nation.findMany({
+                where: { id: { in: newNationIds } },
+                select: { id: true },
+              });
+              const actuallyCreatedIds = new Set(actuallyCreatedNations.map(n => n.id));
+              
+              // Process events in parallel batches
+              const { detectNewNationEvent } = await import('./eventService.js');
+              const eventPromises = newNationsOver1000
+                .filter(n => actuallyCreatedIds.has(n.id))
+                .map(nation => detectNewNationEvent(nation.id, nation.strength));
+              
+              // Process in batches to avoid overwhelming the connection pool
+              const eventBatchSize = 50;
+              for (let i = 0; i < eventPromises.length; i += eventBatchSize) {
+                await Promise.all(eventPromises.slice(i, i + eventBatchSize));
               }
             }
           } catch (error: any) {
@@ -229,16 +244,14 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
                   }
                 }).catch((error: any) => {
                   console.warn(`Error updating nation ${nation.id}: ${error.message}`);
-                  return null; // Continue processing other updates
+                  return { updateResult: null, allianceChanged: null }; // Continue processing other updates
                 });
                 
-                // Detect alliance change events after successful update
-                if (updateResult && oldAllianceId !== undefined && oldAllianceId !== newAllianceId) {
-                  const { detectAllianceChangeEvent } = await import('./eventService.js');
-                  await detectAllianceChangeEvent(nation.id, oldAllianceId, newAllianceId);
+                // Track alliance changes for later batch processing (don't process immediately to avoid blocking)
+                if (updateResult && oldAllianceId !== undefined && oldAllianceId !== newAllianceId && nation.strength >= 1000) {
+                  return { updateResult, allianceChanged: { nationId: nation.id, oldAllianceId, newAllianceId } };
                 }
-                
-                return updateResult;
+                return { updateResult, allianceChanged: null };
               });
               
               updatePromises.push(...batchPromises);
@@ -246,14 +259,39 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
             
             // Wait for all updates to complete
             const results = await Promise.all(updatePromises);
-            updated = results.filter(r => r !== null).length;
+            updated = results.filter(r => r !== null && r.updateResult !== null).length;
             skipped = existingNations.length - updated;
             console.log(`Batch updated ${updated} existing nations`);
+            
+            // Process alliance change events in batch after all updates complete
+            const allianceChanges = results
+              .filter((r): r is { updateResult: any; allianceChanged: { nationId: number; oldAllianceId: number; newAllianceId: number } } => 
+                r !== null && r.allianceChanged !== null
+              )
+              .map(r => r.allianceChanged);
+            
+            if (allianceChanges.length > 0) {
+              const { detectAllianceChangeEvent } = await import('./eventService.js');
+              // Process in parallel batches
+              const batchSize = 50;
+              for (let i = 0; i < allianceChanges.length; i += batchSize) {
+                const batch = allianceChanges.slice(i, i + batchSize);
+                await Promise.all(
+                  batch.map(change => detectAllianceChangeEvent(change.nationId, change.oldAllianceId, change.newAllianceId))
+                );
+              }
+            }
           } catch (error: any) {
             console.warn(`Error batch updating nations: ${error.message}`);
             skipped += existingNations.length;
           }
         }
+        
+        // Process inactive events AFTER reactivating nations in the file
+        // At this point, only nations NOT in the current file remain inactive
+        console.log('Processing inactive nation events...');
+        const { processInactiveNations } = await import('./eventService.js');
+        await processInactiveNations();
         
         if (skipped > 0) {
           console.log(`Skipped ${skipped} nations due to errors`);
