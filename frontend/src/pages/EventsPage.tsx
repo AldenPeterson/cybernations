@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import PageContainer from '../components/PageContainer';
 import { useAlliances } from '../contexts/AlliancesContext';
@@ -41,15 +42,87 @@ type EventTypeFilter = 'all' | 'new_nation' | 'nation_inactive' | 'alliance_chan
 
 const EventsPage: React.FC = () => {
   const { alliances } = useAlliances();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState<number>(0);
   const [limit] = useState<number>(100);
-  const [offset, setOffset] = useState<number>(0);
-  const [filterType, setFilterType] = useState<FilterType>('all');
-  const [eventTypeFilter, setEventTypeFilter] = useState<EventTypeFilter>('all');
-  const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(null);
+  
+  // Initialize state from URL query parameters
+  const getFilterFromUrl = (key: string, defaultValue: string): string => {
+    return searchParams.get(key) || defaultValue;
+  };
+  
+  const [offset, setOffset] = useState<number>(parseInt(searchParams.get('offset') || '0'));
+  const [filterType, setFilterType] = useState<FilterType>(getFilterFromUrl('type', 'all') as FilterType);
+  const [eventTypeFilter, setEventTypeFilter] = useState<EventTypeFilter>(getFilterFromUrl('eventType', 'all') as EventTypeFilter);
+  const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(
+    searchParams.get('allianceId') ? parseInt(searchParams.get('allianceId')!) : null
+  );
+  
+  // Update URL when filters change
+  const updateUrlParams = (updates: { type?: FilterType; eventType?: EventTypeFilter; allianceId?: number | null; offset?: number }) => {
+    const newParams = new URLSearchParams(searchParams);
+    
+    if (updates.type !== undefined) {
+      if (updates.type === 'all') {
+        newParams.delete('type');
+      } else {
+        newParams.set('type', updates.type);
+      }
+    }
+    
+    if (updates.eventType !== undefined) {
+      if (updates.eventType === 'all') {
+        newParams.delete('eventType');
+      } else {
+        newParams.set('eventType', updates.eventType);
+      }
+    }
+    
+    if (updates.allianceId !== undefined) {
+      if (updates.allianceId === null) {
+        newParams.delete('allianceId');
+      } else {
+        newParams.set('allianceId', updates.allianceId.toString());
+      }
+    }
+    
+    if (updates.offset !== undefined) {
+      if (updates.offset === 0) {
+        newParams.delete('offset');
+      } else {
+        newParams.set('offset', updates.offset.toString());
+      }
+    }
+    
+    setSearchParams(newParams, { replace: true });
+  };
+
+  // Sync state from URL params when they change externally (e.g., browser back/forward)
+  // Only update if URL params differ from current state to avoid loops
+  useEffect(() => {
+    const urlFilterType = getFilterFromUrl('type', 'all') as FilterType;
+    const urlEventTypeFilter = getFilterFromUrl('eventType', 'all') as EventTypeFilter;
+    const urlAllianceId = searchParams.get('allianceId') ? parseInt(searchParams.get('allianceId')!) : null;
+    const urlOffset = parseInt(searchParams.get('offset') || '0');
+    
+    // Only update state if URL params differ from current state
+    if (urlFilterType !== filterType) {
+      setFilterType(urlFilterType);
+    }
+    if (urlEventTypeFilter !== eventTypeFilter) {
+      setEventTypeFilter(urlEventTypeFilter);
+    }
+    if (urlAllianceId !== selectedAllianceId) {
+      setSelectedAllianceId(urlAllianceId);
+    }
+    if (urlOffset !== offset) {
+      setOffset(urlOffset);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]); // Only run when searchParams change externally
 
   useEffect(() => {
     let cancelled = false;
@@ -139,13 +212,17 @@ const EventsPage: React.FC = () => {
 
   const handlePreviousPage = () => {
     if (offset > 0) {
-      setOffset(Math.max(0, offset - limit));
+      const newOffset = Math.max(0, offset - limit);
+      setOffset(newOffset);
+      updateUrlParams({ offset: newOffset });
     }
   };
 
   const handleNextPage = () => {
     if (offset + limit < total) {
-      setOffset(offset + limit);
+      const newOffset = offset + limit;
+      setOffset(newOffset);
+      updateUrlParams({ offset: newOffset });
     }
   };
 
@@ -160,8 +237,10 @@ const EventsPage: React.FC = () => {
             <select
               value={filterType}
               onChange={(e) => {
-                setFilterType(e.target.value as FilterType);
+                const newFilterType = e.target.value as FilterType;
+                setFilterType(newFilterType);
                 setOffset(0);
+                updateUrlParams({ type: newFilterType, offset: 0 });
               }}
               className="px-3 py-1.5 bg-gray-800 text-white border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
             >
@@ -176,8 +255,10 @@ const EventsPage: React.FC = () => {
             <select
               value={eventTypeFilter}
               onChange={(e) => {
-                setEventTypeFilter(e.target.value as EventTypeFilter);
+                const newEventTypeFilter = e.target.value as EventTypeFilter;
+                setEventTypeFilter(newEventTypeFilter);
                 setOffset(0);
+                updateUrlParams({ eventType: newEventTypeFilter, offset: 0 });
               }}
               className="px-3 py-1.5 bg-gray-800 text-white border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
             >
@@ -193,8 +274,10 @@ const EventsPage: React.FC = () => {
             <select
               value={selectedAllianceId || ''}
               onChange={(e) => {
-                setSelectedAllianceId(e.target.value ? parseInt(e.target.value) : null);
+                const newAllianceId = e.target.value ? parseInt(e.target.value) : null;
+                setSelectedAllianceId(newAllianceId);
                 setOffset(0);
+                updateUrlParams({ allianceId: newAllianceId, offset: 0 });
               }}
               className="px-3 py-1.5 bg-gray-800 text-white border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm min-w-[200px]"
             >

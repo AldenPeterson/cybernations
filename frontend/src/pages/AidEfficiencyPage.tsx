@@ -305,15 +305,11 @@ const AidEfficiencyPage: React.FC = () => {
 
 
   // Filter data based on minimum member threshold
-  // Include alliance if it ever had >= threshold members (check max across all time points)
+  // Filter by current nation count (last data update)
   const filteredData = useMemo(() => {
     return data.filter(alliance => {
-      const timeSeriesNations = alliance.timeSeries?.map(point => point.totalNations) || [];
-      const maxNations = Math.max(
-        alliance.currentTotalNations || 0,
-        ...timeSeriesNations
-      );
-      return maxNations >= minMemberThreshold;
+      const currentNations = alliance.currentTotalNations || 0;
+      return currentNations >= minMemberThreshold;
     });
   }, [data, minMemberThreshold]);
 
