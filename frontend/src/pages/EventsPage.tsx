@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import PageContainer from '../components/PageContainer';
 
@@ -36,14 +36,14 @@ type EventsResponse = {
 };
 
 type FilterType = 'all' | 'nation' | 'alliance';
-type EventTypeFilter = 'all' | 'new_nation' | 'nation_inactive';
+type EventTypeFilter = 'all' | 'new_nation' | 'nation_inactive' | 'alliance_change';
 
 const EventsPage: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState<number>(0);
-  const [limit, setLimit] = useState<number>(100);
+  const [limit] = useState<number>(100);
   const [offset, setOffset] = useState<number>(0);
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [eventTypeFilter, setEventTypeFilter] = useState<EventTypeFilter>('all');
@@ -107,6 +107,8 @@ const EventsPage: React.FC = () => {
         return 'New Nation';
       case 'nation_inactive':
         return 'Nation Inactive';
+      case 'alliance_change':
+        return 'Alliance Change';
       default:
         return eventType;
     }
@@ -118,6 +120,8 @@ const EventsPage: React.FC = () => {
         return 'bg-green-600';
       case 'nation_inactive':
         return 'bg-red-600';
+      case 'alliance_change':
+        return 'bg-blue-600';
       default:
         return 'bg-gray-600';
     }
@@ -173,6 +177,7 @@ const EventsPage: React.FC = () => {
               <option value="all">All</option>
               <option value="new_nation">New Nation</option>
               <option value="nation_inactive">Nation Inactive</option>
+              <option value="alliance_change">Alliance Change</option>
             </select>
           </div>
         </div>
@@ -229,6 +234,12 @@ const EventsPage: React.FC = () => {
                       {event.alliance && !event.nation && (
                         <div className="text-sm text-gray-400">
                           Alliance: {event.alliance.name}
+                        </div>
+                      )}
+                      
+                      {event.eventType === 'alliance_change' && event.metadata && (
+                        <div className="text-sm text-gray-400">
+                          Changed from <span className="text-gray-300">{event.metadata.oldAllianceName || 'Unknown'}</span> to <span className="text-gray-300">{event.metadata.newAllianceName || 'Unknown'}</span>
                         </div>
                       )}
                     </div>

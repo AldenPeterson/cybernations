@@ -8,6 +8,7 @@ const MIN_NS_THRESHOLD = 1000;
 export const NATION_EVENT_TYPES = {
   NEW_NATION: 'new_nation',
   NATION_INACTIVE: 'nation_inactive',
+  ALLIANCE_CHANGE: 'alliance_change',
 } as const;
 
 /**
@@ -120,6 +121,65 @@ export async function detectNationInactiveEvent(nationId: number): Promise<void>
     });
   } catch (error: any) {
     console.error(`Error creating nation inactive event for nation ${nationId}:`, error.message);
+    // Don't throw - event creation failure shouldn't break the import
+  }
+}
+
+/**
+ * Detect and create events for nations that change alliance (> 1000 NS)
+ * Called when a nation's allianceId changes
+ */
+export async function detectAllianceChangeEvent(
+  nationId: number,
+  oldAllianceId: number,
+  newAllianceId: number
+): Promise<void> {
+  // Skip if alliance hasn't actually changed
+  if (oldAllianceId === newAllianceId) {
+    return;
+  }
+
+  try {
+    // Get the nation to check if it meets the NS threshold
+    const nation = await prisma.nation.findUnique({
+      where: { id: nationId },
+      include: { alliance: true },
+    });
+
+    if (!nation || nation.strength < MIN_NS_THRESHOLD) {
+      return; // Only track nations > 1000 NS
+    }
+
+    // Get old and new alliance information
+    const [oldAlliance, newAlliance] = await Promise.all([
+      oldAllianceId ? prisma.alliance.findUnique({ where: { id: oldAllianceId } }) : null,
+      newAllianceId ? prisma.alliance.findUnique({ where: { id: newAllianceId } }) : null,
+    ]);
+
+    const oldAllianceName = oldAlliance?.name || 'No Alliance';
+    const newAllianceName = newAlliance?.name || 'No Alliance';
+
+    // Create the event
+    await prisma.event.create({
+      data: {
+        type: 'nation',
+        eventType: NATION_EVENT_TYPES.ALLIANCE_CHANGE,
+        nationId,
+        allianceId: newAllianceId, // Set to new alliance
+        description: `${nation.rulerName} (${nation.nationName}) changed from ${oldAllianceName} to ${newAllianceName}`,
+        metadata: {
+          strength: nation.strength,
+          rulerName: nation.rulerName,
+          nationName: nation.nationName,
+          oldAllianceId,
+          oldAllianceName,
+          newAllianceId,
+          newAllianceName,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error(`Error creating alliance change event for nation ${nationId}:`, error.message);
     // Don't throw - event creation failure shouldn't break the import
   }
 }

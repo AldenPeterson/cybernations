@@ -135,12 +135,15 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
         
         console.log(`Processing ${validNations.length} valid nations...`);
         
-        // Fetch existing nation IDs in one batch query
-        const existingNationIds = new Set(
-          (await prisma.nation.findMany({
-            where: { id: { in: Array.from(nationIds) } },
-            select: { id: true }
-          })).map((n: { id: number }) => n.id)
+        // Fetch existing nation IDs and allianceIds in one batch query for comparison
+        const existingNationsData = await prisma.nation.findMany({
+          where: { id: { in: Array.from(nationIds) } },
+          select: { id: true, allianceId: true }
+        });
+        
+        const existingNationIds = new Set(existingNationsData.map((n: { id: number }) => n.id));
+        const existingAllianceMap = new Map(
+          existingNationsData.map((n: { id: number; allianceId: number }) => [n.id, n.allianceId])
         );
         
         // Split into new and existing nations
@@ -199,8 +202,11 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
               const batch = existingNations.slice(i, i + batchSize);
               
               // Process each update in parallel (each update is atomic)
-              const batchPromises = batch.map(nation =>
-                prisma.nation.update({
+              const batchPromises = batch.map(async nation => {
+                const oldAllianceId = existingAllianceMap.get(nation.id);
+                const newAllianceId = nation.allianceId;
+                
+                const updateResult = await prisma.nation.update({
                   where: { id: nation.id },
                   data: {
                     rulerName: nation.rulerName,
@@ -224,8 +230,16 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
                 }).catch((error: any) => {
                   console.warn(`Error updating nation ${nation.id}: ${error.message}`);
                   return null; // Continue processing other updates
-                })
-              );
+                });
+                
+                // Detect alliance change events after successful update
+                if (updateResult && oldAllianceId !== undefined && oldAllianceId !== newAllianceId) {
+                  const { detectAllianceChangeEvent } = await import('./eventService.js');
+                  await detectAllianceChangeEvent(nation.id, oldAllianceId, newAllianceId);
+                }
+                
+                return updateResult;
+              });
               
               updatePromises.push(...batchPromises);
             }
