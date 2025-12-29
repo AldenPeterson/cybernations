@@ -86,24 +86,48 @@ export async function detectNationInactiveEvent(nationId: number): Promise<void>
       return; // Only track nations > 1000 NS
     }
 
+    // Only create an event if the nation was previously active (recently seen)
+    // If lastSeenAt is old, the nation was already inactive, so don't create a duplicate event
+    // Use 48 hours as the threshold - if last seen more than 48 hours ago, consider it already inactive
+    const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    if (nation.lastSeenAt < twoDaysAgo) {
+      return; // Nation was already inactive (not seen recently)
+    }
+
     // Check if there's already an event for this nation going inactive
-    // (we want to create one event per inactivity, not duplicate events)
+    // that was created after the nation's lastSeenAt timestamp
+    // This means we already processed this transition from active to inactive
     const existingEvent = await prisma.event.findFirst({
       where: {
         nationId,
         eventType: NATION_EVENT_TYPES.NATION_INACTIVE,
+        createdAt: {
+          gte: nation.lastSeenAt, // Event created after the nation was last seen
+        },
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
 
-    // Only create a new event if:
-    // 1. No event exists, OR
-    // 2. The last event was created more than 1 hour ago (to avoid spam if nation flickers)
+    if (existingEvent) {
+      return; // Already processed this nation going inactive
+    }
+
+    // Also check if there's a recent event (within 1 hour) to avoid spam if nation flickers
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    if (existingEvent && existingEvent.createdAt > oneHourAgo) {
-      return; // Recently created event exists
+    const recentEvent = await prisma.event.findFirst({
+      where: {
+        nationId,
+        eventType: NATION_EVENT_TYPES.NATION_INACTIVE,
+        createdAt: {
+          gte: oneHourAgo,
+        },
+      },
+    });
+
+    if (recentEvent) {
+      return; // Recently created event exists (avoid spam)
     }
 
     // Create the event
