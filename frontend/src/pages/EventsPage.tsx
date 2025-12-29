@@ -207,6 +207,83 @@ const EventsPage: React.FC = () => {
     }
   };
 
+  const renderDescription = (event: Event): React.ReactNode => {
+    // Handle alliance change events
+    if (event.eventType === 'alliance_change' && event.metadata) {
+      const oldAllianceName = event.metadata.oldAllianceName || 'Unknown';
+      const newAllianceName = event.metadata.newAllianceName || 'Unknown';
+      
+      // Parse the description: "RulerName (NationName) changed from OldAlliance to NewAlliance"
+      const fromIndex = event.description.indexOf('changed from');
+      const toIndex = event.description.indexOf(' to ', fromIndex);
+      
+      if (fromIndex !== -1 && toIndex !== -1) {
+        const before = event.description.substring(0, fromIndex + 'changed from'.length);
+        const after = event.description.substring(toIndex + ' to '.length);
+        
+        return (
+          <>
+            {before}{' '}
+            <span className="text-red-400 font-semibold">{oldAllianceName}</span>
+            {' to '}
+            <span className="text-green-400 font-semibold">{newAllianceName}</span>
+            {after !== newAllianceName ? ` ${after}` : ''}
+          </>
+        );
+      }
+    }
+    
+    // Handle new nation events - color alliance name green
+    if (event.eventType === 'new_nation' && event.metadata) {
+      const allianceName = event.metadata.allianceName || (event.nation?.alliance?.name);
+      
+      if (allianceName) {
+        // Parse the description: "RulerName (NationName) from AllianceName appeared with X NS"
+        const fromIndex = event.description.indexOf(' from ');
+        const appearedIndex = event.description.indexOf(' appeared', fromIndex);
+        
+        if (fromIndex !== -1 && appearedIndex !== -1) {
+          const before = event.description.substring(0, fromIndex + ' from '.length);
+          const after = event.description.substring(appearedIndex);
+          
+          return (
+            <>
+              {before}
+              <span className="text-green-400 font-semibold">{allianceName}</span>
+              {after}
+            </>
+          );
+        }
+      }
+    }
+    
+    // Handle nation inactive events - color alliance name red
+    if (event.eventType === 'nation_inactive' && event.metadata) {
+      const allianceName = event.metadata.allianceName || (event.nation?.alliance?.name);
+      
+      if (allianceName) {
+        // Parse the description: "RulerName (NationName) from AllianceName is no longer active (was X NS)"
+        const fromIndex = event.description.indexOf(' from ');
+        const isIndex = event.description.indexOf(' is no longer active', fromIndex);
+        
+        if (fromIndex !== -1 && isIndex !== -1) {
+          const before = event.description.substring(0, fromIndex + ' from '.length);
+          const after = event.description.substring(isIndex);
+          
+          return (
+            <>
+              {before}
+              <span className="text-red-400 font-semibold">{allianceName}</span>
+              {after}
+            </>
+          );
+        }
+      }
+    }
+    
+    return event.description;
+  };
+
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
 
@@ -332,7 +409,7 @@ const EventsPage: React.FC = () => {
                         </span>
                       </div>
                       
-                      <p className="text-white mb-2">{event.description}</p>
+                      <p className="text-white mb-2">{renderDescription(event)}</p>
                       
                       {event.nation && (
                         <div className="text-sm text-gray-400">
@@ -348,7 +425,7 @@ const EventsPage: React.FC = () => {
                       
                       {event.eventType === 'alliance_change' && event.metadata && (
                         <div className="text-sm text-gray-400">
-                          Changed from <span className="text-gray-300">{event.metadata.oldAllianceName || 'Unknown'}</span> to <span className="text-gray-300">{event.metadata.newAllianceName || 'Unknown'}</span>
+                          Changed from <span className="text-red-400 font-semibold">{event.metadata.oldAllianceName || 'Unknown'}</span> to <span className="text-green-400 font-semibold">{event.metadata.newAllianceName || 'Unknown'}</span>
                           {event.metadata.strength && (
                             <span className="ml-2">({event.metadata.strength.toLocaleString()} NS)</span>
                           )}
