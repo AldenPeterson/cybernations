@@ -1829,10 +1829,12 @@ export class AidService {
     const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
     
     // Filter for small aid offers (money < 1000000 and technology < 100, but must have some value)
+    // Also include offers with only soldiers (no money/tech) as these are also "shame offers"
     const smallOffers = aidOffers.filter(offer => 
       !this.isOfferExpired(offer) &&
       ((offer.money < 1000000 && offer.technology < 100 && (offer.money > 0 || offer.technology > 0)) || 
-      (offer.technology == 0 && offer.money < 6000000 && offer.money > 0))
+      (offer.technology == 0 && offer.money < 6000000 && offer.money > 0) ||
+      (offer.money == 0 && offer.technology == 0 && offer.soldiers > 0))
     );
 
     // Add alliance information to each offer

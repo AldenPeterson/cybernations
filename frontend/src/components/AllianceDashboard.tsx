@@ -404,7 +404,8 @@ const AllianceDashboard: React.FC<AllianceDashboardProps> = ({
         
         // Add cross-alliance indicator
         const crossAllianceIndicator = rec.type && rec.type.includes('cross_alliance') ? ' (Cross-Alliance)' : '';
-        discordLines.push(`send ${aidType} to ${rec.recipient.rulerName}${crossAllianceIndicator} https://www.cybernations.net/aid_form.asp?Nation_ID=${rec.recipient.id}&bynation=${rec.sender.id}`)
+        const aidUrl = `https://www.cybernations.net/aid_form.asp?Nation_ID=${rec.recipient.id}&bynation=${rec.sender.id}`;
+        discordLines.push(`send ${aidType} to [${rec.recipient.rulerName}](${aidUrl})${crossAllianceIndicator}`)
       });
       discordLines.push('');
     });
