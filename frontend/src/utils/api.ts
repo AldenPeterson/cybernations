@@ -70,6 +70,7 @@ export const API_ENDPOINTS = {
   alliances: '/api/alliances',
   allianceStats: (id: number) => `/api/alliances/${id}/stats`,
   allianceAidStats: (id: number) => `/api/alliances/${id}/aid-stats`,
+  activeAidByAlliance: (id: number) => `/api/alliances/${id}/active-aid-by-alliance`,
   allianceAidSlots: (id: number) => `/api/alliances/${id}/aid-slots`,
   allianceRecommendations: (id: number) => `/api/alliances/${id}/recommendations`,
   nationsConfig: (id: number) => `/api/alliances/${id}/nations-config`,

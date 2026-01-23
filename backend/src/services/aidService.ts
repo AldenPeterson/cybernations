@@ -281,6 +281,106 @@ export class AidService {
   }
 
   /**
+   * Get active aid offers grouped by alliance (sent/received)
+   */
+  static async getActiveAidOffersByAlliance(allianceId: number): Promise<Array<{
+    allianceId: number;
+    allianceName: string;
+    sentOffers: number;
+    receivedOffers: number;
+  }>> {
+    const { nations, aidOffers } = await AllianceService.getAllianceData(allianceId);
+    
+    if (nations.length === 0) {
+      return [];
+    }
+
+    // Get active aid offers (exclude expired and cancelled)
+    const activeOffers = aidOffers.filter(offer => 
+      !this.isOfferExpired(offer) &&
+      (offer.declaringAllianceId === allianceId || offer.receivingAllianceId === allianceId)
+    );
+
+    // Group by other alliance
+    const allianceMap = new Map<number, {
+      allianceId: number;
+      allianceName: string;
+      sentOffers: number;
+      receivedOffers: number;
+    }>();
+
+    for (const offer of activeOffers) {
+      const declaringAllianceId = offer.declaringAllianceId;
+      const receivingAllianceId = offer.receivingAllianceId;
+      
+      // Skip if no alliance IDs
+      if (!declaringAllianceId || !receivingAllianceId || declaringAllianceId === 0 || receivingAllianceId === 0) {
+        continue;
+      }
+
+      // Check if this is an internal offer (same alliance for both parties)
+      const isInternalOffer = declaringAllianceId === receivingAllianceId;
+      
+      if (isInternalOffer) {
+        // Internal offer: count as both sent and received for the same alliance
+        if (declaringAllianceId === allianceId) {
+          // This is an internal offer for the current alliance
+          const allianceName = offer.declaringAlliance || 'Unknown Alliance';
+          
+          if (!allianceMap.has(declaringAllianceId)) {
+            allianceMap.set(declaringAllianceId, {
+              allianceId: declaringAllianceId,
+              allianceName,
+              sentOffers: 0,
+              receivedOffers: 0
+            });
+          }
+          
+          const entry = allianceMap.get(declaringAllianceId)!;
+          entry.sentOffers++;
+          entry.receivedOffers++;
+        }
+        // Skip internal offers for other alliances (not relevant to current alliance)
+      } else {
+        // External offer: different alliances
+        // Determine the other alliance (not the current one)
+        const otherAllianceId = declaringAllianceId === allianceId 
+          ? receivingAllianceId 
+          : declaringAllianceId;
+        
+        // Get alliance name from the offer
+        const allianceName = declaringAllianceId === allianceId
+          ? offer.receivingAlliance || 'Unknown Alliance'
+          : offer.declaringAlliance || 'Unknown Alliance';
+
+        // Initialize or update the map entry
+        if (!allianceMap.has(otherAllianceId)) {
+          allianceMap.set(otherAllianceId, {
+            allianceId: otherAllianceId,
+            allianceName,
+            sentOffers: 0,
+            receivedOffers: 0
+          });
+        }
+
+        const entry = allianceMap.get(otherAllianceId)!;
+        
+        // Count sent/received
+        if (declaringAllianceId === allianceId) {
+          entry.sentOffers++;
+        } else {
+          entry.receivedOffers++;
+        }
+      }
+    }
+
+    // Convert to array and sort by total offers (descending)
+    return Array.from(allianceMap.values()).sort((a, b) => 
+      (b.sentOffers + b.receivedOffers) - (a.sentOffers + a.receivedOffers)
+    );
+  }
+
+  /**
    * Get aid recommendations for an alliance
    */
   static async getAidRecommendations(allianceId: number, crossAllianceEnabled: boolean = false) {

@@ -10,6 +10,9 @@ aidRoutes.get('/alliances/:allianceId/aid-slots', validateAllianceId, AidControl
 // Get alliance aid statistics
 aidRoutes.get('/alliances/:allianceId/aid-stats', validateAllianceId, AidController.getAllianceAidStats);
 
+// Get active aid offers grouped by alliance
+aidRoutes.get('/alliances/:allianceId/active-aid-by-alliance', validateAllianceId, AidController.getActiveAidOffersByAlliance);
+
 // Get aid recommendations for an alliance
 aidRoutes.get('/alliances/:allianceId/recommendations', validateAllianceId, AidController.getAidRecommendations);
 

@@ -73,6 +73,13 @@ interface AllianceAidStats {
   incomingSoldiers: number;
 }
 
+interface ActiveAidByAlliance {
+  allianceId: number;
+  allianceName: string;
+  sentOffers: number;
+  receivedOffers: number;
+}
+
 interface AidRecommendation {
   sender: {
     id: number;
@@ -145,14 +152,18 @@ const AidPage: React.FC = () => {
   const [aidSlots, setAidSlots] = useState<NationAidSlots[]>([]);
   const [allianceStats, setAllianceStats] = useState<AllianceStats | null>(null);
   const [allianceAidStats, setAllianceAidStats] = useState<AllianceAidStats[]>([]);
+  const [activeAidByAlliance, setActiveAidByAlliance] = useState<ActiveAidByAlliance[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expirationFilter, setExpirationFilter] = useState<string[]>(['empty', 'expired', 'today', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days']);
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [recommendations, setRecommendations] = useState<AidRecommendation[]>([]);
   const [availableSlots, setAvailableSlots] = useState<{ external?: Array<{ nation: { id: number; nationName: string; rulerName: string; inWarMode: boolean }; available: number }> } | null>(null);
   const [nationsConfig, setNationsConfig] = useState<NationConfig[]>([]);
   const [mismatchedOffers, setMismatchedOffers] = useState<MismatchedOffers | null>(null);
+  
+  // State for collapsible sections
+  const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
+  const [isActiveAidTableExpanded, setIsActiveAidTableExpanded] = useState(true);
   
   // Ref to track the last fetched allianceId to prevent duplicate requests
   const lastFetchedAllianceId = useRef<number | null>(null);
@@ -207,7 +218,7 @@ const AidPage: React.FC = () => {
       setError(null);
 
       // Fetch all data in parallel for better performance
-      const [aidSlotsData, statsData, aidStatsData] = await Promise.all([
+      const [aidSlotsData, statsData, aidStatsData, activeAidData] = await Promise.all([
         apiCallWithErrorHandling(API_ENDPOINTS.allianceAidSlots(id)).catch(err => {
           console.error('Failed to fetch aid slots:', err);
           return { success: false, aidSlots: [] };
@@ -218,6 +229,10 @@ const AidPage: React.FC = () => {
         }),
         apiCallWithErrorHandling(API_ENDPOINTS.allianceAidStats(id)).catch(err => {
           console.error('Failed to fetch alliance aid stats:', err);
+          return { success: false, allianceAidStats: [] };
+        }),
+        apiCallWithErrorHandling(API_ENDPOINTS.activeAidByAlliance(id)).catch(err => {
+          console.error('Failed to fetch active aid by alliance:', err);
           return { success: false, allianceAidStats: [] };
         }),
       ]);
@@ -246,6 +261,15 @@ const AidPage: React.FC = () => {
           setAllianceAidStats([]);
         } else {
           setAllianceAidStats([]);
+        }
+      }
+
+      // Process active aid by alliance
+      if (activeAidData.success) {
+        if (Array.isArray(activeAidData.allianceAidStats)) {
+          setActiveAidByAlliance(activeAidData.allianceAidStats);
+        } else {
+          setActiveAidByAlliance([]);
         }
       }
 
@@ -346,22 +370,6 @@ const AidPage: React.FC = () => {
   // Calculate equal width for each of the 6 aid slot columns
   // Nation column is 120px, so each slot gets: (100% - 120px) / 6
   const slotWidth = 'calc((100% - 120px) / 6)';
-
-  const getExpirationCategory = (days: number): string => {
-    if (days < 0) return 'expired';
-    if (days === 0) return 'today';
-    if (days === 1) return '1 day';
-    if (days === 2) return '2 days';
-    if (days === 3) return '3 days';
-    if (days === 4) return '4 days';
-    if (days === 5) return '5 days';
-    if (days === 6) return '6 days';
-    if (days === 7) return '7 days';
-    if (days === 8) return '8 days';
-    if (days === 9) return '9 days';
-    if (days === 10) return '10 days';
-    return 'expired';
-  };
 
   // Calculate missing slots for a nation
   const calculateMissingSlots = (nationId: number, nationAidSlots: NationAidSlots): Array<{ type: string; isOutgoing: boolean }> => {
@@ -714,27 +722,8 @@ const AidPage: React.FC = () => {
   }, [aidSlots, showRecommendations, recommendations, availableSlots]);
 
   const getFilteredAidSlots = (): NationAidSlots[] => {
-    if (expirationFilter.length === 0) return [];
-
-    const filtered = mergedSlots.filter(nationAidSlots => {
-      return nationAidSlots.aidSlots.some(slot => {
-        if (!slot.aidOffer) {
-          return expirationFilter.includes('empty');
-        }
-        
-        // Recommendations are always shown (they don't have expiration dates yet)
-        if (slot.aidOffer.aidId < 0) {
-          return true;
-        }
-        
-        const days = slot.aidOffer.daysUntilExpiration || 0;
-        const category = getExpirationCategory(days);
-        return expirationFilter.includes(category);
-      });
-    });
-
-    // Sort by nation strength (descending - highest first)
-    return filtered.sort((a, b) => (b.nation.strength || 0) - (a.nation.strength || 0));
+    // Return all merged slots, sorted by nation strength (descending - highest first)
+    return mergedSlots.sort((a, b) => (b.nation.strength || 0) - (a.nation.strength || 0));
   };
 
   const getActivityColor = (activity: string): string => {
@@ -802,21 +791,31 @@ const AidPage: React.FC = () => {
 
   return (
     <PageContainer className="p-5">
-      {/* Alliance Stats */}
+      {/* Alliance Stats - Collapsible */}
       {allianceStats && allianceStats.totalNations > 0 && (
         <div className="mb-5 p-4 bg-transparent rounded-lg border border-slate-300">
-          <h3>Alliance Statistics</h3>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
-            <div><strong>Total Nations:</strong> {allianceStats.totalNations}</div>
-            <div><strong>Sent Aid:</strong> {allianceStats.totalOutgoingAid}</div>
-            <div><strong>Received Aid:</strong> {allianceStats.totalIncomingAid}</div>
-            <div><strong>Money Out:</strong> ${formatNumber(allianceStats.totalMoneyOut)}</div>
-            <div><strong>Money In:</strong> ${formatNumber(allianceStats.totalMoneyIn)}</div>
-            <div><strong>Tech Out:</strong> {allianceStats.totalTechOut}</div>
-            <div><strong>Tech In:</strong> {allianceStats.totalTechIn}</div>
-            <div><strong>Soldiers Out:</strong> {formatNumber(allianceStats.totalSoldiersOut)}</div>
-            <div><strong>Soldiers In:</strong> {formatNumber(allianceStats.totalSoldiersIn)}</div>
+          <div 
+            className="flex items-center justify-between cursor-pointer"
+            onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
+          >
+            <h3 className="m-0">Alliance Statistics</h3>
+            <span className="text-gray-400 text-xl">
+              {isSummaryExpanded ? '▼' : '▶'}
+            </span>
           </div>
+          {isSummaryExpanded && (
+            <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
+              <div><strong>Total Nations:</strong> {allianceStats.totalNations}</div>
+              <div><strong>Sent Aid:</strong> {allianceStats.totalOutgoingAid}</div>
+              <div><strong>Received Aid:</strong> {allianceStats.totalIncomingAid}</div>
+              <div><strong>Money Out:</strong> ${formatNumber(allianceStats.totalMoneyOut)}</div>
+              <div><strong>Money In:</strong> ${formatNumber(allianceStats.totalMoneyIn)}</div>
+              <div><strong>Tech Out:</strong> {allianceStats.totalTechOut}</div>
+              <div><strong>Tech In:</strong> {allianceStats.totalTechIn}</div>
+              <div><strong>Soldiers Out:</strong> {formatNumber(allianceStats.totalSoldiersOut)}</div>
+              <div><strong>Soldiers In:</strong> {formatNumber(allianceStats.totalSoldiersIn)}</div>
+            </div>
+          )}
         </div>
       )}
 
@@ -865,6 +864,61 @@ const AidPage: React.FC = () => {
         </div>
       )}
 
+      {/* Active Aid Offers by Alliance - Collapsible */}
+      {activeAidByAlliance && activeAidByAlliance.length > 0 && (
+        <div className="mb-5 p-4 bg-transparent rounded-lg border border-slate-300">
+          <div 
+            className="flex items-center justify-between cursor-pointer"
+            onClick={() => setIsActiveAidTableExpanded(!isActiveAidTableExpanded)}
+          >
+            <h3 className="m-0">Active Aid Offers by Alliance</h3>
+            <span className="text-gray-400 text-xl">
+              {isActiveAidTableExpanded ? '▼' : '▶'}
+            </span>
+          </div>
+          {isActiveAidTableExpanded && (
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800">
+                <thead>
+                  <tr className="bg-gray-700">
+                    <th className="p-3 border border-gray-600 text-left bg-gray-700 text-white font-bold">
+                      Alliance
+                    </th>
+                    <th className="p-3 border border-gray-600 text-center bg-gray-700 text-white font-bold">
+                      Sent Offers
+                    </th>
+                    <th className="p-3 border border-gray-600 text-center bg-gray-700 text-white font-bold">
+                      Received Offers
+                    </th>
+                    <th className="p-3 border border-gray-600 text-center bg-gray-700 text-white font-bold">
+                      Total
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeAidByAlliance.map((stats) => (
+                    <tr key={stats.allianceId} className="bg-gray-800 hover:bg-gray-700">
+                      <td className="p-2 border border-gray-700 font-bold text-gray-200 bg-gray-800">
+                        {stats.allianceName}
+                      </td>
+                      <td className={`p-2 border border-gray-700 text-center text-gray-200 bg-gray-800 ${stats.sentOffers > 0 ? 'font-bold' : 'font-normal'}`}>
+                        {stats.sentOffers}
+                      </td>
+                      <td className={`p-2 border border-gray-700 text-center text-gray-200 bg-gray-800 ${stats.receivedOffers > 0 ? 'font-bold' : 'font-normal'}`}>
+                        {stats.receivedOffers}
+                      </td>
+                      <td className="p-2 border border-gray-700 text-center text-gray-200 bg-gray-800 font-bold">
+                        {stats.sentOffers + stats.receivedOffers}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Show Recommendations Checkbox */}
       <div className="mb-5">
         <label className="flex items-center cursor-pointer">
@@ -885,67 +939,6 @@ const AidPage: React.FC = () => {
             Recommendations are displayed with a dashed border and "RECOMMENDED" label. Missing slots show empty boxes with slot type labels. Mismatched offers (that don't match configured slots) are highlighted in red.
           </p>
         )}
-      </div>
-
-      {/* Expiration Filter */}
-      <div className="mb-5">
-        <div className="flex items-center mb-2">
-          <label className="mr-2.5 font-bold">
-            Filter by Aid Expiration:
-          </label>
-          <button
-            onClick={() => setExpirationFilter(['empty', 'expired', 'today', '1 day', '2 days', '3 days', '4 days', '5 days', '6 days', '7 days', '8 days', '9 days', '10 days'])}
-            className="px-2 py-1 bg-gray-800 border border-gray-600 rounded cursor-pointer text-xs text-gray-200 font-medium mr-2 hover:bg-gray-700"
-          >
-            Check All
-          </button>
-          <button
-            onClick={() => setExpirationFilter([])}
-            className="px-2 py-1 bg-gray-800 border border-gray-600 rounded cursor-pointer text-xs text-gray-200 font-medium hover:bg-gray-700"
-          >
-            Uncheck All
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {[
-            { value: 'empty', label: 'Empty', color: '#f8f9fa', textColor: '#333' },
-            { value: 'expired', label: 'Expired', color: '#ffebee', textColor: '#333' },
-            { value: 'today', label: 'Today', color: '#fff3cd', textColor: '#333' },
-            { value: '1 day', label: '1 Day', color: '#ffeaa7', textColor: '#333' },
-            { value: '2 days', label: '2 Days', color: '#ffeaa7', textColor: '#333' },
-            { value: '3 days', label: '3 Days', color: '#ffeaa7', textColor: '#333' },
-            { value: '4 days', label: '4 Days', color: '#d4edda', textColor: '#333' },
-            { value: '5 days', label: '5 Days', color: '#d4edda', textColor: '#333' },
-            { value: '6 days', label: '6 Days', color: '#d4edda', textColor: '#333' },
-            { value: '7 days', label: '7 Days', color: '#d4edda', textColor: '#333' },
-            { value: '8 days', label: '8 Days', color: '#d4edda', textColor: '#333' },
-            { value: '9 days', label: '9 Days', color: '#d4edda', textColor: '#333' },
-            { value: '10 days', label: '10 Days', color: '#d4edda', textColor: '#333' }
-          ].map(option => (
-            <label 
-              key={option.value}
-              className="flex items-center px-2 py-1 border border-slate-300 rounded cursor-pointer text-sm font-medium"
-              style={{ 
-                backgroundColor: expirationFilter.includes(option.value) ? option.color : '#f8f9fa',
-                color: option.textColor
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={expirationFilter.includes(option.value)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setExpirationFilter([...expirationFilter, option.value]);
-                  } else {
-                    setExpirationFilter(expirationFilter.filter(f => f !== option.value));
-                  }
-                }}
-                className="mr-1.5"
-              />
-              {option.label}
-            </label>
-          ))}
-        </div>
       </div>
 
       {/* Aid Slots Table */}
@@ -1274,10 +1267,7 @@ const AidPage: React.FC = () => {
 
       {getFilteredAidSlots().length === 0 && !loading && (
         <div className="text-center p-10 text-gray-600">
-          {expirationFilter.length > 0 
-            ? 'No nations match the selected expiration filter.' 
-            : 'No aid slot data found for this alliance.'
-          }
+          No aid slot data found for this alliance.
         </div>
       )}
     </PageContainer>

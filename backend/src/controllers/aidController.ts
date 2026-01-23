@@ -123,6 +123,38 @@ export class AidController {
   }
 
   /**
+   * Get active aid offers grouped by alliance
+   */
+  static async getActiveAidOffersByAlliance(req: Request, res: Response) {
+    try {
+      const allianceId = parseInt(req.params.allianceId);
+      
+      if (isNaN(allianceId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid alliance ID'
+        });
+      }
+
+      const stats = await AidService.getActiveAidOffersByAlliance(allianceId);
+
+      console.log(`[API] getActiveAidOffersByAlliance (allianceId: ${allianceId}): Returning ${stats.length} alliances`);
+
+      res.json({
+        success: true,
+        allianceId,
+        allianceAidStats: stats
+      });
+    } catch (error) {
+      console.error('Error fetching active aid offers by alliance:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  /**
    * Get aid recommendations for an alliance
    */
   static async getAidRecommendations(req: Request, res: Response) {
