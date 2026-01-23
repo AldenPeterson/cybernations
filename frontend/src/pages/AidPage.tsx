@@ -357,6 +357,15 @@ const AidPage: React.FC = () => {
     return parts.join(' / ') || 'Empty';
   };
 
+  // Decode HTML entities that come from the backend
+  // React will automatically escape HTML in JSX, so we just need to decode first
+  const decodeHtmlEntities = (text: string): string => {
+    if (!text) return '';
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = text;
+    return textarea.value;
+  };
+
   // Column and header classes (following DefendingWarsTable pattern)
   const columnClasses = {
     nation: 'p-2 border border-slate-300 min-w-[110px] max-w-[140px] w-[120px] sticky left-0 z-[100] shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]',
@@ -1224,13 +1233,13 @@ const AidPage: React.FC = () => {
                                       {formatAidValue(slot.aidOffer.money, slot.aidOffer.technology, slot.aidOffer.soldiers)}
                                     </span>
                                     {slot.aidOffer.reason && (
-                                      <span className="text-gray-600 ml-1"> - {slot.aidOffer.reason}</span>
+                                      <span className="text-gray-600 ml-1"> - {decodeHtmlEntities(slot.aidOffer.reason)}</span>
                                     )}
                                   </div>
                                 )}
                                 {isExternalSlot && (
                                   <div className="mb-1 text-[11px] text-purple-700 font-semibold">
-                                    {slot.aidOffer.reason}
+                                    {decodeHtmlEntities(slot.aidOffer.reason)}
                                   </div>
                                 )}
                                 {!isRecommendation && (
@@ -1544,13 +1553,13 @@ const AidPage: React.FC = () => {
                                         {formatAidValue(slot.aidOffer.money, slot.aidOffer.technology, slot.aidOffer.soldiers)}
                                       </span>
                                       {slot.aidOffer.reason && (
-                                        <span className="text-gray-600 ml-1"> - {slot.aidOffer.reason}</span>
+                                        <span className="text-gray-600 ml-1"> - {decodeHtmlEntities(slot.aidOffer.reason)}</span>
                                       )}
                                     </div>
                                   )}
                                   {isExternalSlot && (
                                     <div className="mb-1 text-xs text-purple-700 font-semibold">
-                                      {slot.aidOffer.reason}
+                                      {decodeHtmlEntities(slot.aidOffer.reason)}
                                     </div>
                                   )}
                                   {!isRecommendation && (
