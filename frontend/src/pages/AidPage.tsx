@@ -941,11 +941,13 @@ const AidPage: React.FC = () => {
         )}
       </div>
 
-      {/* Aid Slots Table */}
+      {/* Aid Slots Table - Desktop View */}
       {getFilteredAidSlots().length > 0 && (
         <div>
           <h2>Aid Slots by Nation</h2>
-          <div className="overflow-x-auto w-full max-w-none">
+          
+          {/* Desktop Table View - Hidden on mobile */}
+          <div className="hidden md:block overflow-x-auto w-full max-w-none">
             <table className="border-collapse border border-slate-300 text-sm w-full table-fixed">
               <thead>
                 <tr className="bg-gray-800 border-b-2 border-slate-500">
@@ -1261,6 +1263,283 @@ const AidPage: React.FC = () => {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View - Visible on mobile only */}
+          <div className="md:hidden space-y-4 mt-4">
+            {getFilteredAidSlots().map((nationAidSlots) => {
+              const nationConfig = showRecommendations 
+                ? nationsConfig.find(nc => nc.nation_id === nationAidSlots.nation.id)
+                : null;
+              
+              const countFilledSlots = (nationAidSlots: NationAidSlots) => {
+                const allianceNationIds = new Set(
+                  getFilteredAidSlots().map(nas => nas.nation.id)
+                );
+                
+                let filledSendCash = 0;
+                let filledSendTech = 0;
+                let filledGetCash = 0;
+                let filledGetTech = 0;
+                let filledExternal = 0;
+                
+                nationAidSlots.aidSlots.forEach(slot => {
+                  if (!slot.aidOffer || slot.aidOffer.aidId <= 0 || slot.aidOffer.aidId === -2) {
+                    return;
+                  }
+                  
+                  const otherPartyId = slot.isOutgoing 
+                    ? slot.aidOffer.receivingId
+                    : slot.aidOffer.declaringId;
+                  
+                  const isExternal = !allianceNationIds.has(otherPartyId);
+                  
+                  if (isExternal) {
+                    filledExternal++;
+                  } else {
+                    const isCash = slot.aidOffer.money > 0 && slot.aidOffer.technology === 0;
+                    const isTech = slot.aidOffer.technology > 0;
+                    
+                    if (slot.isOutgoing) {
+                      if (isCash) filledSendCash++;
+                      else if (isTech) filledSendTech++;
+                    } else {
+                      if (isCash) filledGetCash++;
+                      else if (isTech) filledGetTech++;
+                    }
+                  }
+                });
+                
+                return {
+                  sendCash: filledSendCash,
+                  sendTech: filledSendTech,
+                  getCash: filledGetCash,
+                  getTech: filledGetTech,
+                  external: filledExternal
+                };
+              };
+              
+              const filledSlots = nationConfig ? countFilledSlots(nationAidSlots) : null;
+              
+              return (
+                <div 
+                  key={nationAidSlots.nation.id}
+                  className="bg-gray-800 border border-gray-700 rounded-lg p-4"
+                  style={{ backgroundColor: getActivityColor(nationAidSlots.nation.activity) }}
+                >
+                  {/* Nation Header */}
+                  <div className="mb-3 pb-3 border-b border-gray-600">
+                    <div className="font-bold text-base">
+                      <a 
+                        href={`https://www.cybernations.net/search_aid.asp?search=${nationAidSlots.nation.id}&Extended=1`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:underline"
+                      >
+                        {nationAidSlots.nation.nationName}
+                      </a>
+                    </div>
+                    <div className="text-sm text-gray-400">{nationAidSlots.nation.rulerName}</div>
+                    <div 
+                      className="text-sm font-bold mt-1"
+                      style={{ color: getWarStatusColor(nationAidSlots.nation.inWarMode) }}
+                    >
+                      {getWarStatusIcon(nationAidSlots.nation.inWarMode)} {nationAidSlots.nation.inWarMode ? 'War Mode' : 'Peace Mode'}
+                    </div>
+                    {showRecommendations && nationConfig && filledSlots && (
+                      <div className="mt-2 pt-2 border-t border-gray-500 text-xs">
+                        <div className="grid grid-cols-2 gap-1">
+                          {nationConfig.slots.sendCash > 0 && (
+                            <div className="text-blue-300">💰 Send Cash: {filledSlots.sendCash}/{nationConfig.slots.sendCash}</div>
+                          )}
+                          {nationConfig.slots.sendTech > 0 && (
+                            <div className="text-blue-300">🔬 Send Tech: {filledSlots.sendTech}/{nationConfig.slots.sendTech}</div>
+                          )}
+                          {nationConfig.slots.getCash > 0 && (
+                            <div className="text-purple-300">💰 Get Cash: {filledSlots.getCash}/{nationConfig.slots.getCash}</div>
+                          )}
+                          {nationConfig.slots.getTech > 0 && (
+                            <div className="text-purple-300">🔬 Get Tech: {filledSlots.getTech}/{nationConfig.slots.getTech}</div>
+                          )}
+                          {nationConfig.slots.external > 0 && (
+                            <div className="text-gray-400">🌐 External: {filledSlots.external}/{nationConfig.slots.external}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Aid Slots */}
+                  <div className="space-y-2">
+                    {nationAidSlots.aidSlots.map((slot) => {
+                      const isExpired = slot.aidOffer ? slot.aidOffer.isExpired : false;
+                      const isRecommendation = slot.aidOffer && slot.aidOffer.aidId < 0;
+                      const isExternalSlot = slot.aidOffer && slot.aidOffer.aidId === -2;
+                      const isMissingSlot = slot.aidOffer && slot.aidOffer.aidId === -3;
+                      const isMismatched = slot.aidOffer && slot.aidOffer.aidId > 0 && isMismatchedOffer(slot.aidOffer, nationAidSlots.nation.id, slot.isOutgoing);
+                      
+                      const getSlotTypeLabel = (type?: string): string => {
+                        switch (type) {
+                          case 'sendCash': return '💰 Send Cash';
+                          case 'sendTech': return '🔬 Send Tech';
+                          case 'getCash': return '💰 Get Cash';
+                          case 'getTech': return '🔬 Get Tech';
+                          default: return 'Empty';
+                        }
+                      };
+
+                      let bgColor = '#374151'; // EMPTY_CELL_BG
+                      let borderStyle = 'solid';
+                      let borderWidth = '1px';
+                      let borderColor = 'inherit';
+
+                      if (isMissingSlot) {
+                        bgColor = '#fff9e6';
+                        borderStyle = 'dashed';
+                        borderWidth = '2px';
+                        borderColor = '#f59e0b';
+                      } else if (isMismatched) {
+                        bgColor = '#ffebee';
+                        borderWidth = '3px';
+                        borderColor = '#d32f2f';
+                      } else if (slot.aidOffer) {
+                        if (isExpired) {
+                          bgColor = '#ffebee';
+                        } else {
+                          bgColor = slot.isOutgoing ? '#e3f2fd' : '#f3e5f5';
+                        }
+                        if (isRecommendation) {
+                          borderStyle = 'dashed';
+                          borderWidth = '2px';
+                          borderColor = '#f59e0b';
+                        }
+                      }
+
+                      return (
+                        <div
+                          key={slot.slotNumber}
+                          className="p-3 rounded border"
+                          style={{
+                            backgroundColor: bgColor,
+                            borderStyle: borderStyle as any,
+                            borderWidth,
+                            borderColor
+                          }}
+                        >
+                          <div className="text-xs font-semibold mb-1 text-gray-400">
+                            Slot {slot.slotNumber} {slot.isOutgoing ? '(Outgoing)' : '(Incoming)'}
+                          </div>
+                          
+                          {slot.aidOffer ? (
+                            <div>
+                              {isMissingSlot ? (
+                                <div>
+                                  <div className="mb-1">
+                                    <span className="text-xs font-bold px-2 py-1 rounded border bg-amber-100 text-amber-800 border-amber-300">
+                                      MISSING SLOT
+                                    </span>
+                                  </div>
+                                  <div className="font-bold text-amber-700 text-sm">
+                                    {getSlotTypeLabel(slot.missingSlotType)}
+                                  </div>
+                                  {slot.missingSlotType && (
+                                    <div className="mt-1 text-xs">
+                                      <span className="text-green-900 font-bold bg-green-50 px-1 py-0.5 rounded">
+                                        {slot.missingSlotType === 'sendCash' || slot.missingSlotType === 'getCash'
+                                          ? formatAidValue(9000000, 0, 0)
+                                          : slot.missingSlotType === 'sendTech' || slot.missingSlotType === 'getTech'
+                                          ? formatAidValue(0, 100, 0)
+                                          : ''}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <>
+                                  {isMismatched && (
+                                    <div className="mb-1">
+                                      <span className="text-xs font-bold px-2 py-1 rounded border bg-red-100 text-red-800 border-red-300">
+                                        ⚠️ MISMATCHED
+                                      </span>
+                                    </div>
+                                  )}
+                                  {isRecommendation && (
+                                    <div className="mb-1">
+                                      <span className={`text-xs font-bold px-2 py-1 rounded border ${
+                                        isExternalSlot 
+                                          ? 'bg-purple-100 text-purple-800 border-purple-300' 
+                                          : 'bg-amber-100 text-amber-800 border-amber-300'
+                                      }`}>
+                                        {isExternalSlot ? 'EXTERNAL SLOT' : 'RECOMMENDED'}
+                                      </span>
+                                    </div>
+                                  )}
+                                  <div 
+                                    className="font-bold text-sm mb-1"
+                                    style={{ color: isExpired ? '#d32f2f' : (slot.isOutgoing ? '#1976d2' : '#7b1fa2') }}
+                                  >
+                                    {!isExternalSlot && (slot.isOutgoing ? '→ ' : '← ')}
+                                    {isExternalSlot ? (
+                                      <span>{slot.aidOffer.targetNation}</span>
+                                    ) : (
+                                      <>
+                                        <a 
+                                          href={`https://www.cybernations.net/search_aid.asp?search=${slot.aidOffer.targetId || 'undefined'}&Extended=1`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="hover:underline"
+                                          style={{ color: 'inherit' }}
+                                        >
+                                          {slot.aidOffer.targetNation}
+                                        </a>
+                                        <span className="text-gray-600 font-normal text-xs"> / {slot.aidOffer.targetRuler}</span>
+                                      </>
+                                    )}
+                                    {isExpired && <span className="text-red-600 text-xs ml-1">(EXPIRED)</span>}
+                                  </div>
+                                  {!isExternalSlot && (
+                                    <div className="mb-1 text-xs">
+                                      <span className="text-green-900 font-bold bg-green-50 px-1 py-0.5 rounded">
+                                        {formatAidValue(slot.aidOffer.money, slot.aidOffer.technology, slot.aidOffer.soldiers)}
+                                      </span>
+                                      {slot.aidOffer.reason && (
+                                        <span className="text-gray-600 ml-1"> - {slot.aidOffer.reason}</span>
+                                      )}
+                                    </div>
+                                  )}
+                                  {isExternalSlot && (
+                                    <div className="mb-1 text-xs text-purple-700 font-semibold">
+                                      {slot.aidOffer.reason}
+                                    </div>
+                                  )}
+                                  {!isRecommendation && (
+                                    <div className={`text-xs ${isExpired ? 'text-red-600 font-bold' : 'text-gray-600'}`}>
+                                      Expires: {slot.aidOffer.expirationDate} ({slot.aidOffer.daysUntilExpiration} days)
+                                    </div>
+                                  )}
+                                  {isRecommendation && !isExternalSlot && (
+                                    <div className="text-xs text-amber-700 font-semibold italic">
+                                      Pending recommendation
+                                    </div>
+                                  )}
+                                  {isExternalSlot && (
+                                    <div className="text-xs text-purple-700 font-semibold italic">
+                                      Available for external aid
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-gray-400 text-sm">Empty</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
