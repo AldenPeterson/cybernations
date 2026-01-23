@@ -591,19 +591,32 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
           data: { isActive: false } as any
         });
         
-        // Step 2: Batch verify nations exist
+        // Step 2: Batch verify nations exist and get their alliance IDs
         const nationIds = new Set<number>();
         for (const war of wars) {
           nationIds.add(war.declaringNationId);
           nationIds.add(war.receivingNationId);
         }
         
-        const existingNationIds = new Set(
-          (await prisma.nation.findMany({
-            where: { id: { in: Array.from(nationIds) } },
-            select: { id: true }
-          })).map((n: { id: number }) => n.id)
+        const nations = await prisma.nation.findMany({
+          where: { id: { in: Array.from(nationIds) } },
+          select: { id: true, allianceId: true }
+        });
+        
+        const existingNationIds = new Set(nations.map((n: { id: number }) => n.id));
+        const nationAllianceMap = new Map(
+          nations.map((n: { id: number; allianceId: number }) => [n.id, n.allianceId])
         );
+        
+        // Enrich alliance IDs from nations data (alliance IDs are not in CSV)
+        for (const war of wars) {
+          if (nationAllianceMap.has(war.declaringNationId)) {
+            war.declaringAllianceId = nationAllianceMap.get(war.declaringNationId)!;
+          }
+          if (nationAllianceMap.has(war.receivingNationId)) {
+            war.receivingAllianceId = nationAllianceMap.get(war.receivingNationId)!;
+          }
+        }
         
         // Filter valid wars (both nations must exist)
         const validWars = wars.filter(war =>
@@ -672,6 +685,8 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
                 warId: w.warId,
                 declaringNationId: w.declaringNationId,
                 receivingNationId: w.receivingNationId,
+                declaringAllianceId: (w as any).declaringAllianceId,
+                receivingAllianceId: (w as any).receivingAllianceId,
                 status: w.status,
                 date: w.date,
                 endDate: w.endDate,
@@ -693,6 +708,8 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
               return (
                 existing.declaringNationId !== newWar.declaringNationId ||
                 existing.receivingNationId !== newWar.receivingNationId ||
+                existing.declaringAllianceId !== newWar.declaringAllianceId ||
+                existing.receivingAllianceId !== newWar.receivingAllianceId ||
                 existing.status !== newWar.status ||
                 existing.date !== newWar.date ||
                 existing.endDate !== newWar.endDate ||

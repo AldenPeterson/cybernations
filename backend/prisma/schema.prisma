@@ -117,6 +117,8 @@ model War {
   warId               Int      @id @map("war_id")
   declaringNationId   Int      @map("declaring_nation_id")
   receivingNationId   Int      @map("receiving_nation_id")
+  declaringAllianceId Int?     @map("declaring_alliance_id")
+  receivingAllianceId Int?     @map("receiving_alliance_id")
   status              String
   date                String
   endDate             String   @map("end_date")
@@ -139,6 +141,8 @@ model War {
 
   @@index([declaringNationId])
   @@index([receivingNationId])
+  @@index([declaringAllianceId])
+  @@index([receivingAllianceId])
   @@index([status])
   @@index([isActive])
   @@index([lastSeenAt])

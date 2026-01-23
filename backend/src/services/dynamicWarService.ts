@@ -43,6 +43,8 @@ export class DynamicWarService {
       warId: warData.warId,
       declaringNationId: warData.declaringId,
       receivingNationId: warData.receivingId,
+      declaringAllianceId: declaringNation.allianceId,
+      receivingAllianceId: receivingNation.allianceId,
       status: warData.status,
       date: warData.date,
       endDate: warData.endDate,
