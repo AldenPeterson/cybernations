@@ -162,8 +162,9 @@ const AidPage: React.FC = () => {
   const [mismatchedOffers, setMismatchedOffers] = useState<MismatchedOffers | null>(null);
   
   // State for collapsible sections
-  const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
-  const [isActiveAidTableExpanded, setIsActiveAidTableExpanded] = useState(true);
+  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
+  const [isActiveAidTableExpanded, setIsActiveAidTableExpanded] = useState(false);
+  const [expandedNationCards, setExpandedNationCards] = useState<Set<number>>(new Set());
   
   // Ref to track the last fetched allianceId to prevent duplicate requests
   const lastFetchedAllianceId = useRef<number | null>(null);
@@ -1282,8 +1283,14 @@ const AidPage: React.FC = () => {
                 let filledGetCash = 0;
                 let filledGetTech = 0;
                 let filledExternal = 0;
+                let totalFilled = 0;
                 
                 nationAidSlots.aidSlots.forEach(slot => {
+                  // Count all filled slots (including recommendations and missing slots)
+                  if (slot.aidOffer && slot.aidOffer.aidId !== -2) {
+                    totalFilled++;
+                  }
+                  
                   if (!slot.aidOffer || slot.aidOffer.aidId <= 0 || slot.aidOffer.aidId === -2) {
                     return;
                   }
@@ -1315,62 +1322,96 @@ const AidPage: React.FC = () => {
                   sendTech: filledSendTech,
                   getCash: filledGetCash,
                   getTech: filledGetTech,
-                  external: filledExternal
+                  external: filledExternal,
+                  totalFilled
                 };
               };
               
-              const filledSlots = nationConfig ? countFilledSlots(nationAidSlots) : null;
+              const filledSlots = countFilledSlots(nationAidSlots);
+              const isExpanded = expandedNationCards.has(nationAidSlots.nation.id);
+              const totalSlots = nationAidSlots.aidSlots.length;
+              
+              const toggleExpanded = () => {
+                const newExpanded = new Set(expandedNationCards);
+                if (isExpanded) {
+                  newExpanded.delete(nationAidSlots.nation.id);
+                } else {
+                  newExpanded.add(nationAidSlots.nation.id);
+                }
+                setExpandedNationCards(newExpanded);
+              };
               
               return (
                 <div 
                   key={nationAidSlots.nation.id}
-                  className="bg-gray-800 border border-gray-700 rounded-lg p-4"
+                  className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden"
                   style={{ backgroundColor: getActivityColor(nationAidSlots.nation.activity) }}
                 >
-                  {/* Nation Header */}
-                  <div className="mb-3 pb-3 border-b border-gray-600">
-                    <div className="font-bold text-base">
-                      <a 
-                        href={`https://www.cybernations.net/search_aid.asp?search=${nationAidSlots.nation.id}&Extended=1`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:underline"
-                      >
-                        {nationAidSlots.nation.nationName}
-                      </a>
-                    </div>
-                    <div className="text-sm text-gray-400">{nationAidSlots.nation.rulerName}</div>
-                    <div 
-                      className="text-sm font-bold mt-1"
-                      style={{ color: getWarStatusColor(nationAidSlots.nation.inWarMode) }}
-                    >
-                      {getWarStatusIcon(nationAidSlots.nation.inWarMode)} {nationAidSlots.nation.inWarMode ? 'War Mode' : 'Peace Mode'}
-                    </div>
-                    {showRecommendations && nationConfig && filledSlots && (
-                      <div className="mt-2 pt-2 border-t border-gray-500 text-xs">
-                        <div className="grid grid-cols-2 gap-1">
-                          {nationConfig.slots.sendCash > 0 && (
-                            <div className="text-blue-300">💰 Send Cash: {filledSlots.sendCash}/{nationConfig.slots.sendCash}</div>
-                          )}
-                          {nationConfig.slots.sendTech > 0 && (
-                            <div className="text-blue-300">🔬 Send Tech: {filledSlots.sendTech}/{nationConfig.slots.sendTech}</div>
-                          )}
-                          {nationConfig.slots.getCash > 0 && (
-                            <div className="text-purple-300">💰 Get Cash: {filledSlots.getCash}/{nationConfig.slots.getCash}</div>
-                          )}
-                          {nationConfig.slots.getTech > 0 && (
-                            <div className="text-purple-300">🔬 Get Tech: {filledSlots.getTech}/{nationConfig.slots.getTech}</div>
-                          )}
-                          {nationConfig.slots.external > 0 && (
-                            <div className="text-gray-400">🌐 External: {filledSlots.external}/{nationConfig.slots.external}</div>
-                          )}
+                  {/* Nation Header - Clickable to expand/collapse */}
+                  <div 
+                    className="p-4 cursor-pointer border-b border-gray-600"
+                    onClick={toggleExpanded}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="font-bold text-base">
+                          <a 
+                            href={`https://www.cybernations.net/search_aid.asp?search=${nationAidSlots.nation.id}&Extended=1`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {nationAidSlots.nation.nationName}
+                          </a>
+                        </div>
+                        <div className="text-sm text-gray-400">{nationAidSlots.nation.rulerName}</div>
+                        <div 
+                          className="text-sm font-bold mt-1"
+                          style={{ color: getWarStatusColor(nationAidSlots.nation.inWarMode) }}
+                        >
+                          {getWarStatusIcon(nationAidSlots.nation.inWarMode)} {nationAidSlots.nation.inWarMode ? 'War Mode' : 'Peace Mode'}
+                        </div>
+                        {showRecommendations && nationConfig && (
+                          <div className="mt-2 pt-2 border-t border-gray-500 text-xs">
+                            <div className="grid grid-cols-2 gap-1">
+                              {nationConfig.slots.sendCash > 0 && (
+                                <div className="text-blue-300">💰 Send Cash: {filledSlots.sendCash}/{nationConfig.slots.sendCash}</div>
+                              )}
+                              {nationConfig.slots.sendTech > 0 && (
+                                <div className="text-blue-300">🔬 Send Tech: {filledSlots.sendTech}/{nationConfig.slots.sendTech}</div>
+                              )}
+                              {nationConfig.slots.getCash > 0 && (
+                                <div className="text-purple-300">💰 Get Cash: {filledSlots.getCash}/{nationConfig.slots.getCash}</div>
+                              )}
+                              {nationConfig.slots.getTech > 0 && (
+                                <div className="text-purple-300">🔬 Get Tech: {filledSlots.getTech}/{nationConfig.slots.getTech}</div>
+                              )}
+                              {nationConfig.slots.external > 0 && (
+                                <div className="text-gray-400">🌐 External: {filledSlots.external}/{nationConfig.slots.external}</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="ml-4 flex flex-col items-end">
+                        {/* Slot count summary - on the right */}
+                        <div className="text-base font-bold text-gray-900 mb-1">
+                          {filledSlots.totalFilled}/{totalSlots}
+                        </div>
+                        <div className="text-xs text-gray-700 font-medium">
+                          slots
+                        </div>
+                        <div className="mt-2 text-gray-600 text-xl">
+                          {isExpanded ? '▼' : '▶'}
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
 
-                  {/* Aid Slots */}
-                  <div className="space-y-2">
+                  {/* Aid Slots - Hidden by default, shown when expanded */}
+                  {isExpanded && (
+                    <div className="p-4 space-y-2">
                     {nationAidSlots.aidSlots.map((slot) => {
                       const isExpired = slot.aidOffer ? slot.aidOffer.isExpired : false;
                       const isRecommendation = slot.aidOffer && slot.aidOffer.aidId < 0;
@@ -1536,7 +1577,8 @@ const AidPage: React.FC = () => {
                         </div>
                       );
                     })}
-                  </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
