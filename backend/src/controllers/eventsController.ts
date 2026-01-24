@@ -52,6 +52,7 @@ export class EventsController {
       const offset = parseInt(req.query.offset as string) || 0;
       const nationId = req.query.nationId ? parseInt(req.query.nationId as string) : undefined;
       const allianceId = req.query.allianceId ? parseInt(req.query.allianceId as string) : undefined;
+      const minStrength = req.query.minStrength ? parseInt(req.query.minStrength as string) : undefined;
 
       // Build cache key from query parameters
       const cacheParams: any = {
@@ -61,6 +62,7 @@ export class EventsController {
         offset,
         nationId: nationId || 'all',
         allianceId: allianceId || 'all',
+        minStrength: minStrength || 'all',
       };
       const cacheKey = getCacheKey(cacheParams);
 
@@ -131,6 +133,7 @@ export class EventsController {
               rulerName: true,
               nationName: true,
               allianceId: true,
+              strength: true,
               alliance: {
                 select: {
                   id: true,
@@ -166,41 +169,93 @@ export class EventsController {
         });
       }
 
+      // Filter by minimum strength if specified
+      if (minStrength !== undefined && !isNaN(minStrength)) {
+        events = events.filter(event => {
+          // For nation events, check the nation's strength
+          if (event.nation && event.nation.strength !== null) {
+            return event.nation.strength >= minStrength;
+          }
+          // For alliance_change events, check strength from metadata
+          if (event.eventType === 'alliance_change' && event.metadata) {
+            const metadata = event.metadata as any;
+            const strength = metadata?.strength;
+            return strength !== undefined && strength >= minStrength;
+          }
+          // For other events without nation data, include them (shouldn't happen for nation events)
+          return true;
+        });
+      }
+
       // Apply final limit after filtering
       const paginatedEvents = events.slice(0, limit);
 
-      // Count total - for alliance filtering, we need to count all matching events
+      // Count total - for alliance filtering or strength filtering, we need to count all matching events
       let totalCount = 0;
-      if (allianceId && !isNaN(allianceId)) {
+      if (allianceId && !isNaN(allianceId) || (minStrength !== undefined && !isNaN(minStrength))) {
         // Fetch all matching events for accurate count (with reasonable limit)
+        const countWhere: any = { ...where };
+        if (allianceId && !isNaN(allianceId)) {
+          countWhere.OR = [
+            { allianceId: allianceId },
+            {
+              AND: [
+                { type: 'nation' },
+                { nation: { allianceId: allianceId } },
+              ],
+            },
+            { eventType: 'alliance_change' },
+          ];
+        }
+        
         const allEvents = await prisma.event.findMany({
-          where: {
-            ...where,
-            OR: [
-              { allianceId: allianceId },
-              {
-                AND: [
-                  { type: 'nation' },
-                  { nation: { allianceId: allianceId } },
-                ],
-              },
-              { eventType: 'alliance_change' },
-            ],
+          where: countWhere,
+          select: { 
+            id: true, 
+            eventType: true, 
+            metadata: true, 
+            nation: { 
+              select: { 
+                strength: true 
+              } 
+            } 
           },
-          select: { id: true, eventType: true, metadata: true },
           take: 10000, // Reasonable limit for counting
         });
         
+        // Filter in memory
+        let filtered = allEvents;
+        
         // Filter alliance_change events in memory
-        const filtered = allEvents.filter(event => {
-          if (event.eventType === 'alliance_change' && event.metadata) {
-            const metadata = event.metadata as any;
-            const oldAllianceId = metadata?.oldAllianceId;
-            const newAllianceId = metadata?.newAllianceId;
-            return oldAllianceId === allianceId || newAllianceId === allianceId;
-          }
-          return true;
-        });
+        if (allianceId && !isNaN(allianceId)) {
+          filtered = filtered.filter(event => {
+            if (event.eventType === 'alliance_change' && event.metadata) {
+              const metadata = event.metadata as any;
+              const oldAllianceId = metadata?.oldAllianceId;
+              const newAllianceId = metadata?.newAllianceId;
+              return oldAllianceId === allianceId || newAllianceId === allianceId;
+            }
+            return true;
+          });
+        }
+        
+        // Filter by minimum strength
+        if (minStrength !== undefined && !isNaN(minStrength)) {
+          filtered = filtered.filter(event => {
+            // For nation events, check the nation's strength
+            if (event.nation && event.nation.strength !== null) {
+              return event.nation.strength >= minStrength;
+            }
+            // For alliance_change events, check strength from metadata
+            if (event.eventType === 'alliance_change' && event.metadata) {
+              const metadata = event.metadata as any;
+              const strength = metadata?.strength;
+              return strength !== undefined && strength >= minStrength;
+            }
+            // For other events without nation data, include them
+            return true;
+          });
+        }
         
         totalCount = filtered.length;
       } else {

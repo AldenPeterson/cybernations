@@ -177,9 +177,8 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
             
             // Process events for new nations (> 1000 NS)
             // Batch verify which nations were actually created (createMany with skipDuplicates may skip some)
-            const newNationsOver1000 = newNations.filter(n => n.strength >= 1000);
-            if (newNationsOver1000.length > 0) {
-              const newNationIds = newNationsOver1000.map(n => n.id);
+            if (newNations.length > 0) {
+              const newNationIds = newNations.map(n => n.id);
               const actuallyCreatedNations = await prisma.nation.findMany({
                 where: { id: { in: newNationIds } },
                 select: { id: true },
@@ -188,7 +187,7 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
               
               // Process events in parallel batches
               const { detectNewNationEvent } = await import('./eventService.js');
-              const eventPromises = newNationsOver1000
+              const eventPromises = newNations
                 .filter(n => actuallyCreatedIds.has(n.id))
                 .map(nation => detectNewNationEvent(nation.id, nation.strength));
               

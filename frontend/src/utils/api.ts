@@ -87,7 +87,7 @@ export const API_ENDPOINTS = {
   aidEfficiency: '/api/aid-efficiency',
   nationAidEfficiency: (allianceId: number, startDate: string, endDate: string) => `/api/alliances/${allianceId}/nation-aid-efficiency?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`,
   allianceAidTotals: (startDate: string, endDate: string) => `/api/alliance-aid-totals?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`,
-  events: (params?: { type?: string; eventType?: string; limit?: number; offset?: number; nationId?: number; allianceId?: number }) => {
+  events: (params?: { type?: string; eventType?: string; limit?: number; offset?: number; nationId?: number; allianceId?: number; minStrength?: number }) => {
     const queryParams = new URLSearchParams();
     if (params?.type) queryParams.set('type', params.type);
     if (params?.eventType) queryParams.set('eventType', params.eventType);
@@ -95,6 +95,7 @@ export const API_ENDPOINTS = {
     if (params?.offset) queryParams.set('offset', params.offset.toString());
     if (params?.nationId) queryParams.set('nationId', params.nationId.toString());
     if (params?.allianceId) queryParams.set('allianceId', params.allianceId.toString());
+    if (params?.minStrength !== undefined) queryParams.set('minStrength', params.minStrength.toString());
     const query = queryParams.toString();
     return `/api/events${query ? `?${query}` : ''}`;
   },

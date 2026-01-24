@@ -12,14 +12,11 @@ export const NATION_EVENT_TYPES = {
 } as const;
 
 /**
- * Detect and create events for new nations (> 1000 NS)
+ * Detect and create events for new nations
  * Called when a nation is first created
+ * Tracks all nations regardless of strength
  */
 export async function detectNewNationEvent(nationId: number, strength: number): Promise<void> {
-  if (strength < MIN_NS_THRESHOLD) {
-    return; // Only track nations > 1000 NS
-  }
-
   try {
     // Check if this is truly the first time we're seeing this nation
     // by checking if there's already an event for this nation
@@ -67,14 +64,15 @@ export async function detectNewNationEvent(nationId: number, strength: number): 
 }
 
 /**
- * Detect and create events for nations that go inactive (> 1000 NS)
+ * Detect and create events for nations that go inactive
  * A nation is considered "inactive" when it no longer appears in the nation data file,
  * not based on the nation's activity status field.
  * Called when a nation is marked as inactive (isActive = false)
+ * Tracks all nations regardless of strength
  */
 export async function detectNationInactiveEvent(nationId: number): Promise<void> {
   try {
-    // Get the nation to check if it meets the NS threshold
+    // Get the nation
     // Note: "inactive" here means the nation is not in the current data file (isActive = false),
     // not based on the nation's activity status field
     const nation = await prisma.nation.findUnique({
@@ -82,8 +80,8 @@ export async function detectNationInactiveEvent(nationId: number): Promise<void>
       include: { alliance: true },
     });
 
-    if (!nation || nation.strength < MIN_NS_THRESHOLD) {
-      return; // Only track nations > 1000 NS
+    if (!nation) {
+      return;
     }
 
     // Only create an event if the nation was previously active (recently seen)
@@ -154,8 +152,9 @@ export async function detectNationInactiveEvent(nationId: number): Promise<void>
 }
 
 /**
- * Detect and create events for nations that change alliance (> 1000 NS)
+ * Detect and create events for nations that change alliance
  * Called when a nation's allianceId changes
+ * Tracks all nations regardless of strength
  */
 export async function detectAllianceChangeEvent(
   nationId: number,
@@ -168,14 +167,14 @@ export async function detectAllianceChangeEvent(
   }
 
   try {
-    // Get the nation to check if it meets the NS threshold
+    // Get the nation
     const nation = await prisma.nation.findUnique({
       where: { id: nationId },
       include: { alliance: true },
     });
 
-    if (!nation || nation.strength < MIN_NS_THRESHOLD) {
-      return; // Only track nations > 1000 NS
+    if (!nation) {
+      return;
     }
 
     // Get old and new alliance information
@@ -217,17 +216,15 @@ export async function detectAllianceChangeEvent(
  * A nation is considered "inactive" when it no longer appears in the nation data file.
  * This is called after marking all nations as inactive (isActive = false), before reactivating
  * those that appear in the current data file.
+ * Tracks all nations regardless of strength
  */
 export async function processInactiveNations(): Promise<void> {
   try {
-    // Find all nations that are inactive (not in current data file) and have strength > 1000 NS
+    // Find all nations that are inactive (not in current data file)
     // Note: isActive = false means the nation is not present in the current data file
     const inactiveNations = await prisma.nation.findMany({
       where: {
         isActive: false,
-        strength: {
-          gte: MIN_NS_THRESHOLD,
-        },
       },
       include: {
         alliance: true,

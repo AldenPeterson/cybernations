@@ -60,9 +60,12 @@ const EventsPage: React.FC = () => {
   const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(
     searchParams.get('allianceId') ? parseInt(searchParams.get('allianceId')!) : null
   );
+  const [minStrength, setMinStrength] = useState<number | null>(
+    searchParams.get('minStrength') ? parseInt(searchParams.get('minStrength')!) : 1000
+  );
   
   // Update URL when filters change
-  const updateUrlParams = (updates: { type?: FilterType; eventType?: EventTypeFilter; allianceId?: number | null; offset?: number }) => {
+  const updateUrlParams = (updates: { type?: FilterType; eventType?: EventTypeFilter; allianceId?: number | null; minStrength?: number | null; offset?: number }) => {
     const newParams = new URLSearchParams(searchParams);
     
     if (updates.type !== undefined) {
@@ -89,6 +92,15 @@ const EventsPage: React.FC = () => {
       }
     }
     
+    if (updates.minStrength !== undefined) {
+      // If minStrength is 1000 (the default), remove it from URL to keep URLs clean
+      if (updates.minStrength === null || updates.minStrength === 1000) {
+        newParams.delete('minStrength');
+      } else {
+        newParams.set('minStrength', updates.minStrength.toString());
+      }
+    }
+    
     if (updates.offset !== undefined) {
       if (updates.offset === 0) {
         newParams.delete('offset');
@@ -106,6 +118,7 @@ const EventsPage: React.FC = () => {
     const urlFilterType = getFilterFromUrl('type', 'all') as FilterType;
     const urlEventTypeFilter = getFilterFromUrl('eventType', 'all') as EventTypeFilter;
     const urlAllianceId = searchParams.get('allianceId') ? parseInt(searchParams.get('allianceId')!) : null;
+    const urlMinStrength = searchParams.get('minStrength') ? parseInt(searchParams.get('minStrength')!) : 1000;
     const urlOffset = parseInt(searchParams.get('offset') || '0');
     
     // Only update state if URL params differ from current state
@@ -117,6 +130,9 @@ const EventsPage: React.FC = () => {
     }
     if (urlAllianceId !== selectedAllianceId) {
       setSelectedAllianceId(urlAllianceId);
+    }
+    if (urlMinStrength !== minStrength) {
+      setMinStrength(urlMinStrength);
     }
     if (urlOffset !== offset) {
       setOffset(urlOffset);
@@ -148,6 +164,9 @@ const EventsPage: React.FC = () => {
           params.allianceId = selectedAllianceId;
         }
         
+        // Always include minStrength (defaults to 1000)
+        params.minStrength = minStrength ?? 1000;
+        
         const response = await apiCallWithErrorHandling(API_ENDPOINTS.events(params)) as EventsResponse;
         
         if (!cancelled) {
@@ -174,7 +193,7 @@ const EventsPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [limit, offset, filterType, eventTypeFilter, selectedAllianceId]);
+  }, [limit, offset, filterType, eventTypeFilter, selectedAllianceId, minStrength]);
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -365,6 +384,23 @@ const EventsPage: React.FC = () => {
                 </option>
               ))}
             </select>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-300">Min NS:</label>
+            <input
+              type="number"
+              value={minStrength ?? ''}
+              onChange={(e) => {
+                const value = e.target.value === '' ? 1000 : parseInt(e.target.value);
+                setMinStrength(value);
+                setOffset(0);
+                updateUrlParams({ minStrength: value, offset: 0 });
+              }}
+              placeholder="1000"
+              min="0"
+              className="px-3 py-1.5 bg-gray-800 text-white border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm w-24"
+            />
           </div>
         </div>
       </div>
