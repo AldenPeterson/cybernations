@@ -213,7 +213,7 @@ const EventsPage: React.FC = () => {
   const formatNSInDescription = (description: string): string => {
     // Match patterns like "1,234.56 NS" or "1234 NS" - any number before "NS"
     // This regex matches: digits (with optional commas), optional decimal point and digits, optional whitespace, then "NS"
-    return description.replace(/(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*NS/gi, (match, numStr) => {
+    return description.replace(/(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*NS/gi, (_match, numStr) => {
       // Remove commas, parse as number
       const num = parseFloat(numStr.replace(/,/g, ''));
       return `${formatNSValue(num)} NS`;
