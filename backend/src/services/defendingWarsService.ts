@@ -59,8 +59,9 @@ export class DefendingWarsService {
           { declaringNationId: { in: allianceNationIdList } },
           { receivingNationId: { in: allianceNationIdList } }
         ],
+        isActive: true,
         status: {
-          notIn: ['Ended', 'Expired', 'Peace']
+          notIn: ['Ended', 'Peace']
         }
       },
       include: {
@@ -326,8 +327,9 @@ export class DefendingWarsService {
     const warRecords = await prisma.war.findMany({
       where: {
         receivingNationId: { in: allianceNationIds },
+        isActive: true,
         status: {
-          notIn: ['Ended', 'Expired', 'Peace']
+          notIn: ['Ended', 'Peace']
         }
       },
       include: {
@@ -422,9 +424,10 @@ export class DefendingWarsService {
           { declaringNationId: { in: allianceNationIds } },
           { receivingNationId: { in: allianceNationIds } }
         ],
+        isActive: true,
         ...(includeExpired ? {} : {
           status: {
-            notIn: ['Ended', 'Expired', 'Peace']
+            notIn: ['Ended', 'Peace']
           }
         })
       },

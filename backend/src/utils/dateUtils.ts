@@ -31,7 +31,7 @@ export interface StaggeredStatus {
 
 /**
  * Parse a Central Time date string from the source data
- * @param dateString - Date string in format "M/D/YYYY H:MM:SS AM/PM" or "M/D/YYYY H:MM:SS"
+ * @param dateString - Date string in format "M/D/YYYY H:MM:SS AM/PM" or "M/D/YYYY H:MM:SS" or "M/D/YYYY"
  * @returns Date object representing the Central Time date
  */
 export function parseCentralTimeDate(dateString: string): Date {
@@ -41,13 +41,18 @@ export function parseCentralTimeDate(dateString: string): Date {
   }
 
   // Parse the date string which is in Central Time format
-  // Examples: "10/5/2025 5:18:15 PM" or "10/5/2025 17:18:15"
+  // Examples: "10/5/2025 5:18:15 PM" or "10/5/2025 17:18:15" or "10/5/2025"
   const parts = dateString.split(' ');
+  let datePart: string;
+  let timePart: string;
+  
   if (parts.length < 2) {
-    throw new Error(`Invalid date format: "${dateString}" - expected "M/D/YYYY H:MM:SS AM/PM" or "M/D/YYYY H:MM:SS"`);
+    // Date only, no time component - default to midnight (00:00:00)
+    datePart = parts[0];
+    timePart = '00:00:00';
+  } else {
+    [datePart, timePart] = parts;
   }
-
-  const [datePart, timePart] = parts;
   const dateComponents = datePart.split('/');
   if (dateComponents.length !== 3) {
     throw new Error(`Invalid date part: "${datePart}" - expected "M/D/YYYY"`);

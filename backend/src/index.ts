@@ -17,6 +17,8 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'https://cybernations-frontend.vercel.app',
+    'https://www.cybernations.net',
+    'https://cybernations.net',
     ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
   ],
   credentials: true

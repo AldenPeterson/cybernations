@@ -461,8 +461,11 @@ export async function loadDataFromFiles(checkForUpdates: boolean = true): Promis
       isExpired: a.isExpired ?? undefined,
     }));
 
-    // Load wars
+    // Load wars (only active wars from current CSV)
     const warRecords = await prisma.war.findMany({
+      where: {
+        isActive: true
+      },
       include: {
         declaringNation: {
           include: { alliance: true },

@@ -200,6 +200,26 @@ const EventsPage: React.FC = () => {
     return date.toLocaleString();
   };
 
+  // Helper function to format NS values - values >= 1000 shown as X.Xk format
+  const formatNSValue = (value: number): string => {
+    if (value >= 1000) {
+      const thousands = value / 1000;
+      return `${thousands.toFixed(1)}k`;
+    }
+    return value.toString();
+  };
+
+  // Helper function to format NS values in descriptions
+  const formatNSInDescription = (description: string): string => {
+    // Match patterns like "1,234.56 NS" or "1234 NS" - any number before "NS"
+    // This regex matches: digits (with optional commas), optional decimal point and digits, optional whitespace, then "NS"
+    return description.replace(/(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*NS/gi, (match, numStr) => {
+      // Remove commas, parse as number
+      const num = parseFloat(numStr.replace(/,/g, ''));
+      return `${formatNSValue(num)} NS`;
+    });
+  };
+
   const getEventTypeLabel = (eventType: string): string => {
     switch (eventType) {
       case 'new_nation':
@@ -246,7 +266,7 @@ const EventsPage: React.FC = () => {
             <span className="text-red-400 font-semibold">{oldAllianceName}</span>
             {' to '}
             <span className="text-green-400 font-semibold">{newAllianceName}</span>
-            {after !== newAllianceName ? ` ${after}` : ''}
+            {after !== newAllianceName ? ` ${formatNSInDescription(after)}` : ''}
           </>
         );
       }
@@ -269,7 +289,7 @@ const EventsPage: React.FC = () => {
             <>
               {before}
               <span className="text-green-400 font-semibold">{allianceName}</span>
-              {after}
+              {formatNSInDescription(after)}
             </>
           );
         }
@@ -293,14 +313,14 @@ const EventsPage: React.FC = () => {
             <>
               {before}
               <span className="text-red-400 font-semibold">{allianceName}</span>
-              {after}
+              {formatNSInDescription(after)}
             </>
           );
         }
       }
     }
     
-    return event.description;
+    return formatNSInDescription(event.description);
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -463,7 +483,7 @@ const EventsPage: React.FC = () => {
                         <div className="text-sm text-gray-400">
                           Changed from <span className="text-red-400 font-semibold">{event.metadata.oldAllianceName || 'Unknown'}</span> to <span className="text-green-400 font-semibold">{event.metadata.newAllianceName || 'Unknown'}</span>
                           {event.metadata.strength && (
-                            <span className="ml-2">({event.metadata.strength.toLocaleString()} NS)</span>
+                            <span className="ml-2">({formatNSValue(event.metadata.strength)} NS)</span>
                           )}
                         </div>
                       )}
