@@ -546,35 +546,61 @@ export async function importAidOffersFromCsv(filePath: string): Promise<{ import
  */
 export async function importWarsFromCsv(filePath: string): Promise<{ imported: number; updated: number }> {
   const wars: any[] = [];
+  let isFirstRow = true;
 
   return new Promise((resolve, reject) => {
     createReadStream(filePath)
       .pipe(csv({
         separator: '|',
-        headers: ['declaringId', 'declaringRuler', 'declaringNation', 'declaringAlliance', 'declaringAllianceId', 'declaringTeam', 'receivingId', 'receivingRuler', 'receivingNation', 'receivingAlliance', 'receivingAllianceId', 'receivingTeam', 'warStatus', 'beginDate', 'endDate', 'reason', 'warId', 'destruction', 'attackPercent', 'defendPercent']
+        skipLinesWithError: true
       }))
       .on('data', (row) => {
-        if (row.warId && row.declaringId && row.receivingId) {
-          const warId = parseInt(row.warId);
-          const declaringId = parseInt(row.declaringId);
-          const receivingId = parseInt(row.receivingId);
-          
+        // Skip the header row
+        if (isFirstRow) {
+          isFirstRow = false;
+          return;
+        }
+        
+        // Use the actual CSV header names (with spaces) - this matches the CSV file format
+        const warId = parseInt(row['War ID'] || '0');
+        const declaringId = parseInt(row['Declaring ID'] || '0');
+        const receivingId = parseInt(row['Receiving ID'] || '0');
+        
+        if (warId && declaringId && receivingId) {
           // Skip if any ID is invalid
           if (isNaN(warId) || isNaN(declaringId) || isNaN(receivingId)) {
             return;
           }
           
+          // Get the raw values using actual CSV header names
+          const destructionRaw = row['Destruction'] || null;
+          const attackPercentRaw = row['Attack Percent'] || null;
+          const defendPercentRaw = row['Defend Percent'] || null;
+          
+          // Parse destruction - remove commas and convert to string (it's stored as string in DB)
+          const destruction = destructionRaw !== null && destructionRaw !== undefined && destructionRaw !== '' 
+            ? String(destructionRaw).trim() 
+            : null;
+          
+          // Parse percentages - handle empty strings, null, or undefined
+          const attackPercent = attackPercentRaw !== null && attackPercentRaw !== undefined && attackPercentRaw !== '' 
+            ? (isNaN(parseFloat(String(attackPercentRaw))) ? null : parseFloat(String(attackPercentRaw))) 
+            : null;
+          const defendPercent = defendPercentRaw !== null && defendPercentRaw !== undefined && defendPercentRaw !== '' 
+            ? (isNaN(parseFloat(String(defendPercentRaw))) ? null : parseFloat(String(defendPercentRaw))) 
+            : null;
+          
           wars.push({
             warId,
             declaringNationId: declaringId,
             receivingNationId: receivingId,
-            status: row.warStatus || '',
-            date: row.beginDate || '',
-            endDate: row.endDate || '',
-            reason: row.reason || null,
-            destruction: row.destruction || null,
-            attackPercent: row.attackPercent ? (isNaN(parseFloat(row.attackPercent)) ? null : parseFloat(row.attackPercent)) : null,
-            defendPercent: row.defendPercent ? (isNaN(parseFloat(row.defendPercent)) ? null : parseFloat(row.defendPercent)) : null,
+            status: row['War Status'] || '',
+            date: row['Begin Date'] || '',
+            endDate: row['End Date'] || '',
+            reason: row['Reason'] || null,
+            destruction: destruction,
+            attackPercent: attackPercent,
+            defendPercent: defendPercent,
           });
         }
       })
@@ -704,7 +730,21 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
               if (!existing) return true; // Shouldn't happen, but include it
               
               // Compare all relevant fields
-              return (
+              const destructionChanged = existing.destruction !== newWar.destruction;
+              const attackPercentChanged = (
+                (existing.attackPercent !== null && newWar.attackPercent !== null && 
+                 Math.abs(existing.attackPercent - newWar.attackPercent) > 0.01) ||
+                (existing.attackPercent === null) !== (newWar.attackPercent === null)
+              );
+              const defendPercentChanged = (
+                (existing.defendPercent !== null && newWar.defendPercent !== null && 
+                 Math.abs(existing.defendPercent - newWar.defendPercent) > 0.01) ||
+                (existing.defendPercent === null) !== (newWar.defendPercent === null)
+              );
+              
+              // Only mark as changed if actual data changed (not just isActive flag)
+              // Note: isActive is handled separately - we always reactivate wars found in CSV
+              const hasDataChange = (
                 existing.declaringNationId !== newWar.declaringNationId ||
                 existing.receivingNationId !== newWar.receivingNationId ||
                 existing.declaringAllianceId !== newWar.declaringAllianceId ||
@@ -713,15 +753,13 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
                 existing.date !== newWar.date ||
                 existing.endDate !== newWar.endDate ||
                 existing.reason !== newWar.reason ||
-                existing.destruction !== newWar.destruction ||
-                (existing.attackPercent !== null && newWar.attackPercent !== null && 
-                 Math.abs(existing.attackPercent - newWar.attackPercent) > 0.01) ||
-                (existing.attackPercent === null) !== (newWar.attackPercent === null) ||
-                (existing.defendPercent !== null && newWar.defendPercent !== null && 
-                 Math.abs(existing.defendPercent - newWar.defendPercent) > 0.01) ||
-                (existing.defendPercent === null) !== (newWar.defendPercent === null) ||
-                !existing.isActive // Reactivate if it was inactive
+                destructionChanged ||
+                attackPercentChanged ||
+                defendPercentChanged
               );
+              
+              // Always update if data changed OR if war was inactive (needs reactivation)
+              return hasDataChange || !existing.isActive;
             });
             
             const unchangedCount = existingWars.length - changedWars.length;
@@ -738,10 +776,22 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
                 // Process each update in parallel (each update is atomic)
                 const batchPromises = batch.map(war => {
                   const existing = existingDataMap.get(war.warId)!;
+                  
+                  // Explicitly set all fields, including null values, to ensure Prisma updates them
                   return prisma.war.update({
                     where: { warId: war.warId },
                     data: {
-                      ...war,
+                      declaringNationId: war.declaringNationId,
+                      receivingNationId: war.receivingNationId,
+                      declaringAllianceId: war.declaringAllianceId,
+                      receivingAllianceId: war.receivingAllianceId,
+                      status: war.status,
+                      date: war.date,
+                      endDate: war.endDate,
+                      reason: war.reason,
+                      destruction: war.destruction, // Explicitly set, even if null
+                      attackPercent: war.attackPercent, // Explicitly set, even if null
+                      defendPercent: war.defendPercent, // Explicitly set, even if null
                       lastSeenAt: now,
                       isActive: true,
                       version: existing.version + 1

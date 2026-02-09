@@ -99,4 +99,7 @@ export const API_ENDPOINTS = {
     const query = queryParams.toString();
     return `/api/events${query ? `?${query}` : ''}`;
   },
+  warStatistics: '/api/war-statistics',
+  warStatisticsAllianceTotals: '/api/war-statistics/alliance-totals',
+  warStatisticsNationBreakdown: '/api/war-statistics/nation-breakdown',
 } as const;

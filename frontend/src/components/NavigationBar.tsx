@@ -108,6 +108,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         return 'Aid Slot Efficiency';
       case 'events':
         return 'Events';
+      case 'war-stats':
+        return 'War Stats';
       default:
         return 'CyberNations';
     }
@@ -256,6 +258,17 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             )}
           >
             Events
+          </Link>
+          <Link 
+            to={'/war-stats'}
+            className={clsx(
+              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
+              isActiveTab('war-stats') 
+                ? 'bg-primary text-white font-semibold shadow-md' 
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+            )}
+          >
+            War Stats
           </Link>
         </div>
 
@@ -429,6 +442,18 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
               )}
             >
               Events
+            </Link>
+            <Link 
+              to={'/war-stats'}
+              onClick={() => setMobileMenuOpen(false)}
+              className={clsx(
+                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
+                isActiveTab('war-stats') 
+                  ? 'bg-primary text-white font-semibold shadow-md' 
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              )}
+            >
+              War Stats
             </Link>
           </div>
         </div>

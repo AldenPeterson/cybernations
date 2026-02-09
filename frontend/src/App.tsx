@@ -13,6 +13,7 @@ import NuclearStatsPage from './pages/NuclearStatsPage'
 import AidEfficiencyPage from './pages/AidEfficiencyPage'
 import NationAidEfficiencyPage from './pages/NationAidEfficiencyPage'
 import EventsPage from './pages/EventsPage'
+import WarStatsPage from './pages/WarStatsPage'
 
 function App() {
   const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(null);
@@ -88,6 +89,7 @@ function App() {
         <Route path="/aid-efficiency" element={<AidEfficiencyPage />} />
         <Route path="/nation-aid-efficiency" element={<NationAidEfficiencyPage />} />
         <Route path="/events" element={<EventsPage />} />
+        <Route path="/war-stats" element={<WarStatsPage />} />
         {/* Shame offers doesn't need alliance ID */}
         <Route path="/shame-offers" element={<ShameOffersPage />} />
         

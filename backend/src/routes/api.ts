@@ -11,6 +11,7 @@ import staggerEligibilityRoutes from './staggerEligibilityRoutes.js';
 import { nuclearHitsRoutes } from './nuclearHitsRoutes.js';
 import { csvRoutes } from './csvRoutes.js';
 import { eventsRoutes } from './eventsRoutes.js';
+import { warStatisticsRoutes } from './warStatisticsRoutes.js';
 
 export const apiRoutes = Router();
 
@@ -37,6 +38,9 @@ apiRoutes.use('/', csvRoutes);
 
 // Events routes
 apiRoutes.use('/', eventsRoutes);
+
+// War statistics routes
+apiRoutes.use('/', warStatisticsRoutes);
 
 // Stats decode endpoint - extract zip files from raw_data folder
 apiRoutes.post('/stats/decode', StatsController.decodeStats);
