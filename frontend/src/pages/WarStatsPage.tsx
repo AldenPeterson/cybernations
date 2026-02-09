@@ -451,8 +451,8 @@ const WarStatsPage: React.FC = () => {
   return (
     <TableContainer>
       <div className={tableClasses.header}>
-        <h1 className={tableClasses.title}>War Stats</h1>
-        <p className={tableClasses.subtitle}>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-200 mb-2 tracking-tight">War Stats</h1>
+        <p className="mt-0 mb-3 md:mb-5 text-gray-400 text-sm md:text-base leading-relaxed">
           War statistics for wars declared after 2/5/2026. Shows total damages and net damage by alliance.
         </p>
       </div>
@@ -464,7 +464,7 @@ const WarStatsPage: React.FC = () => {
           value={allianceFilter}
           placeholder="Filter by alliance, nation, or ruler name"
           onChange={(e) => setAllianceFilter(e.target.value)}
-          className={tableClasses.filterInput}
+          className="px-3 md:px-4 py-2 md:py-3 border-2 border-gray-600 rounded-lg text-sm md:text-base font-medium min-w-[200px] bg-gray-800 text-gray-200 placeholder-gray-500 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 hover:border-gray-500 w-full md:w-auto"
         />
       </div>
 
@@ -477,23 +477,23 @@ const WarStatsPage: React.FC = () => {
         )}
         {!loading && !error && filteredAllianceTotals.length > 0 && (
           <div className="overflow-x-auto max-h-[65vh] overflow-y-auto">
-            <table className="w-full border-collapse relative">
+            <table className="w-full border-collapse relative min-w-[600px]">
               <thead className="bg-gray-800 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200 w-8 bg-gray-800"></th>
+                  <th className="px-2 md:px-4 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-200 w-6 md:w-8 bg-gray-800"></th>
                   {allianceTotalsColumns.map(col => (
                     <th
                       key={col.key}
-                      className={`px-4 py-3 text-sm font-semibold text-gray-200 cursor-pointer hover:bg-gray-700 bg-gray-800 ${
+                      className={`px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-semibold text-gray-200 cursor-pointer hover:bg-gray-700 bg-gray-800 ${
                         col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
                       }`}
                       style={{ width: col.width }}
                       onClick={() => handleSort(col.key as keyof AllianceTotal)}
                     >
-                      <div className="flex items-center justify-between">
-                        <span>{col.header}</span>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="truncate">{col.header}</span>
                         {sortColumn === col.key && (
-                          <span className="ml-1">
+                          <span className="text-xs flex-shrink-0">
                             {sortDirection === 'asc' ? '↑' : '↓'}
                           </span>
                         )}
@@ -524,9 +524,9 @@ const WarStatsPage: React.FC = () => {
                         className="hover:bg-gray-800/60 cursor-pointer"
                         onClick={() => toggleExpanded(row.alliance_id)}
                       >
-                        <td className="px-4 py-3">
+                        <td className="px-2 md:px-4 py-2 md:py-3">
                           {(filteredOpponentRows.length > 0 || hasDiscrepancy) && (
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 text-xs md:text-base">
                               {isExpanded ? '▼' : '▶'}
                             </span>
                           )}
@@ -534,7 +534,7 @@ const WarStatsPage: React.FC = () => {
                         {allianceTotalsColumns.map((col, colIndex) => (
                           <td
                             key={col.key}
-                            className={`px-4 py-3 text-sm ${
+                            className={`px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm ${
                               col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
                             }`}
                           >
@@ -558,29 +558,29 @@ const WarStatsPage: React.FC = () => {
                                     toggleOpponentExpanded(row.alliance_id, oppRow.opponent_alliance_id);
                                   }}
                                 >
-                                  <td className="px-4 py-3">
-                                    <span className="text-gray-500 ml-4">
+                                  <td className="px-2 md:px-4 py-2 md:py-3">
+                                    <span className="text-gray-500 ml-2 md:ml-4 text-xs md:text-base">
                                       {filteredNationRows.length > 0 ? (isOpponentExpanded ? '▼' : '▶') : '└'}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-3 text-sm text-left">
-                                    <span className="text-gray-400">{oppRow.opponent_alliance_name || 'Unknown'}</span>
+                                  <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-left">
+                                    <span className="text-gray-400 truncate block">{oppRow.opponent_alliance_name || 'Unknown'}</span>
                                   </td>
-                                  <td className="px-4 py-3 text-sm text-right">
+                                  <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right">
                                     {formatNumber(oppRow.damage_dealt)}
                                   </td>
-                                  <td className="px-4 py-3 text-sm text-right">
+                                  <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right">
                                     {formatNumber(oppRow.damage_received)}
                                   </td>
-                                  <td className="px-4 py-3 text-sm text-right">
+                                  <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right">
                                     <span className={oppRow.net_damage >= 0 ? 'text-green-400' : 'text-red-400'}>
                                       {formatNumber(oppRow.net_damage)}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-3 text-sm text-center">
+                                  <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-center">
                                     {oppRow.offensive_wars}
                                   </td>
-                                  <td className="px-4 py-3 text-sm text-center">
+                                  <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-center">
                                     {oppRow.defensive_wars}
                                   </td>
                                 </tr>
@@ -597,40 +597,40 @@ const WarStatsPage: React.FC = () => {
                                           toggleNationExpanded(row.alliance_id, oppRow.opponent_alliance_id, nationRow.nation_id);
                                         }}
                                       >
-                                        <td className="px-4 py-3">
-                                          <span className="text-gray-600 ml-8">
+                                        <td className="px-2 md:px-4 py-2 md:py-3">
+                                          <span className="text-gray-600 ml-4 md:ml-8 text-xs md:text-base">
                                             {warRows.length > 0 ? (isNationExpanded ? '▼' : '▶') : '└'}
                                           </span>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-left">
-                                          <div>
+                                        <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-left">
+                                          <div className="min-w-0">
                                             <a
                                               href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nationRow.nation_id}`}
                                               target="_blank"
                                               rel="noopener noreferrer"
-                                              className="text-primary no-underline font-bold hover:underline"
+                                              className="text-primary no-underline font-bold hover:underline truncate block"
                                               onClick={(e) => e.stopPropagation()}
                                             >
                                               {nationRow.nation_name}
                                             </a>
-                                            <div className="text-xs text-gray-500">{nationRow.ruler_name}</div>
+                                            <div className="text-[10px] md:text-xs text-gray-500 truncate">{nationRow.ruler_name}</div>
                                           </div>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-right">
+                                        <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right">
                                           {formatNumber(nationRow.damage_dealt)}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-right">
+                                        <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right">
                                           {formatNumber(nationRow.damage_received)}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-right">
+                                        <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right">
                                           <span className={nationRow.net_damage >= 0 ? 'text-green-400' : 'text-red-400'}>
                                             {formatNumber(nationRow.net_damage)}
                                           </span>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-center">
+                                        <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-center">
                                           {nationRow.offensive_wars}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-center">
+                                        <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-center">
                                           {nationRow.defensive_wars}
                                         </td>
                                       </tr>
@@ -639,42 +639,42 @@ const WarStatsPage: React.FC = () => {
                                           key={`war-${war.war_id}-${warIdx}`}
                                           className="bg-gray-900/70 hover:bg-gray-800/20"
                                         >
-                                          <td className="px-4 py-3">
-                                            <span className="text-gray-700 ml-12">└</span>
+                                          <td className="px-2 md:px-4 py-2 md:py-3">
+                                            <span className="text-gray-700 ml-6 md:ml-12 text-xs md:text-base">└</span>
                                           </td>
-                                          <td className="px-4 py-3 text-sm text-left">
-                                            <div>
+                                          <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-left">
+                                            <div className="min-w-0">
                                               <a
                                                 href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${war.opponent_nation_id}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-blue-400 no-underline hover:underline text-xs"
+                                                className="text-blue-400 no-underline hover:underline text-[10px] md:text-xs truncate block"
                                                 onClick={(e) => e.stopPropagation()}
                                               >
                                                 vs {war.opponent_nation_name}
                                               </a>
-                                              <div className="text-xs text-gray-600">
+                                              <div className="text-[9px] md:text-xs text-gray-600 truncate">
                                                 {war.opponent_ruler_name} • {war.war_type} • {war.status}
                                               </div>
                                             </div>
                                           </td>
-                                          <td className="px-4 py-3 text-sm text-right text-gray-300">
+                                          <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right text-gray-300">
                                             {formatNumber(war.damage_dealt)}
                                           </td>
-                                          <td className="px-4 py-3 text-sm text-right text-gray-300">
+                                          <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right text-gray-300">
                                             {formatNumber(war.damage_received)}
                                           </td>
-                                          <td className="px-4 py-3 text-sm text-right">
+                                          <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right">
                                             <span className={war.net_damage >= 0 ? 'text-green-400' : 'text-red-400'}>
                                               {formatNumber(war.net_damage)}
                                             </span>
                                           </td>
-                                          <td className="px-4 py-3 text-sm text-center text-gray-500" colSpan={2}>
+                                          <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-center text-gray-500" colSpan={2}>
                                             <a
                                               href={`https://www.cybernations.net/war_information.asp?ID=${war.war_id}`}
                                               target="_blank"
                                               rel="noopener noreferrer"
-                                              className="text-gray-500 hover:text-gray-300 text-xs no-underline hover:underline"
+                                              className="text-gray-500 hover:text-gray-300 text-[10px] md:text-xs no-underline hover:underline"
                                               onClick={(e) => e.stopPropagation()}
                                             >
                                               War #{war.war_id}
@@ -690,27 +690,27 @@ const WarStatsPage: React.FC = () => {
                           })}
                           {hasDiscrepancy && (
                             <tr className="bg-gray-900/40 hover:bg-gray-800/30">
-                              <td className="px-4 py-3">
-                                <span className="text-gray-500 ml-4">└</span>
+                              <td className="px-2 md:px-4 py-2 md:py-3">
+                                <span className="text-gray-500 ml-2 md:ml-4 text-xs md:text-base">└</span>
                               </td>
-                              <td className="px-4 py-3 text-sm text-left">
+                              <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-left">
                                 <span className="text-gray-400 italic">Unknown/No Alliance</span>
                               </td>
-                              <td className="px-4 py-3 text-sm text-right">
+                              <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right">
                                 {formatNumber(row.total_damage_dealt - breakdownSum.damage_dealt)}
                               </td>
-                              <td className="px-4 py-3 text-sm text-right">
+                              <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right">
                                 {formatNumber(row.total_damage_received - breakdownSum.damage_received)}
                               </td>
-                              <td className="px-4 py-3 text-sm text-right">
+                              <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right">
                                 <span className={(row.total_damage_dealt - breakdownSum.damage_dealt) - (row.total_damage_received - breakdownSum.damage_received) >= 0 ? 'text-green-400' : 'text-red-400'}>
                                   {formatNumber((row.total_damage_dealt - breakdownSum.damage_dealt) - (row.total_damage_received - breakdownSum.damage_received))}
                                 </span>
                               </td>
-                              <td className="px-4 py-3 text-sm text-center">
+                              <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-center">
                                 -
                               </td>
-                              <td className="px-4 py-3 text-sm text-center">
+                              <td className="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-center">
                                 -
                               </td>
                             </tr>

@@ -17,8 +17,8 @@ const TableContainer: React.FC<TableContainerProps> = ({
   className = '' 
 }) => {
   return (
-    <PageContainer className={clsx('p-8 w-full max-w-full overflow-x-auto', className)}>
-      <div className={tableClasses.card}>
+    <PageContainer className={clsx('p-4 md:p-8 w-full max-w-full overflow-x-auto', className)}>
+      <div className={clsx(tableClasses.card, 'p-4 md:p-8')}>
         {children}
       </div>
     </PageContainer>

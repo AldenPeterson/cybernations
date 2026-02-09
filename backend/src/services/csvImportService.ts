@@ -743,11 +743,10 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
               
               // Only mark as changed if actual data changed (not just isActive flag)
               // Note: isActive is handled separately - we always reactivate wars found in CSV
+              // Note: Alliance IDs are not compared here - they're only updated if null in the database
               const hasDataChange = (
                 existing.declaringNationId !== newWar.declaringNationId ||
                 existing.receivingNationId !== newWar.receivingNationId ||
-                existing.declaringAllianceId !== newWar.declaringAllianceId ||
-                existing.receivingAllianceId !== newWar.receivingAllianceId ||
                 existing.status !== newWar.status ||
                 existing.date !== newWar.date ||
                 existing.endDate !== newWar.endDate ||
@@ -777,13 +776,14 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
                   const existing = existingDataMap.get(war.warId)!;
                   
                   // Explicitly set all fields, including null values, to ensure Prisma updates them
+                  // Only update alliance IDs if they're currently null in the database
                   return prisma.war.update({
                     where: { warId: war.warId },
                     data: {
                       declaringNationId: war.declaringNationId,
                       receivingNationId: war.receivingNationId,
-                      declaringAllianceId: war.declaringAllianceId,
-                      receivingAllianceId: war.receivingAllianceId,
+                      ...(existing.declaringAllianceId === null && { declaringAllianceId: war.declaringAllianceId }),
+                      ...(existing.receivingAllianceId === null && { receivingAllianceId: war.receivingAllianceId }),
                       status: war.status,
                       date: war.date,
                       endDate: war.endDate,
