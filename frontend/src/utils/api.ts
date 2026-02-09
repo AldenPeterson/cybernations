@@ -99,7 +99,17 @@ export const API_ENDPOINTS = {
     const query = queryParams.toString();
     return `/api/events${query ? `?${query}` : ''}`;
   },
-  warStatistics: '/api/war-statistics',
-  warStatisticsAllianceTotals: '/api/war-statistics/alliance-totals',
-  warStatisticsNationBreakdown: '/api/war-statistics/nation-breakdown',
+  warStatisticsAllianceTotals: (filter?: string) => {
+    const query = filter ? `?filter=${encodeURIComponent(filter)}` : '';
+    return `/api/war-statistics/alliance-totals${query}`;
+  },
+  warStatisticsNationBreakdown: (filter?: string) => {
+    const query = filter ? `?filter=${encodeURIComponent(filter)}` : '';
+    return `/api/war-statistics/nation-breakdown${query}`;
+  },
+  warStatisticsWarRecords: (filter?: string) => {
+    const query = filter ? `?filter=${encodeURIComponent(filter)}` : '';
+    return `/api/war-statistics/war-records${query}`;
+  },
+  warStatisticsInvalidateCache: '/api/war-statistics/invalidate-cache',
 } as const;
