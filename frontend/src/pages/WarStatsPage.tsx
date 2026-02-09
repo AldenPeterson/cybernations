@@ -174,13 +174,24 @@ const WarStatsPage: React.FC = () => {
   ], [formatNumber]);
 
   // Optimized: Client-side filtering on pre-loaded data
+  // Now supports filtering by alliance name, nation name, or ruler name
   const filteredAllianceTotals = useMemo(() => {
     if (!debouncedFilter.trim()) return allianceTotals;
     const filter = debouncedFilter.trim().toLowerCase();
-    return allianceTotals.filter(row => 
-      row.alliance_name.toLowerCase().includes(filter)
-    );
-  }, [allianceTotals, debouncedFilter]);
+    return allianceTotals.filter(row => {
+      // Check if alliance name matches
+      if (row.alliance_name.toLowerCase().includes(filter)) {
+        return true;
+      }
+      // Check if any nation in this alliance matches
+      return nationBreakdown.some(nation => 
+        nation.alliance_id === row.alliance_id && (
+          nation.nation_name.toLowerCase().includes(filter) ||
+          nation.ruler_name.toLowerCase().includes(filter)
+        )
+      );
+    });
+  }, [allianceTotals, debouncedFilter, nationBreakdown]);
 
   // Optimized: More efficient opponent breakdown aggregation
   const opponentBreakdownByAlliance = useMemo(() => {
@@ -235,6 +246,94 @@ const WarStatsPage: React.FC = () => {
     
     return grouped;
   }, [nationBreakdown]);
+
+  // Optimized: Group nation breakdown by alliance and opponent (memoized)
+  const nationBreakdownByAllianceAndOpponent = useMemo(() => {
+    const grouped = new Map<string, NationBreakdown[]>();
+    nationBreakdown.forEach(row => {
+      const key = `${row.alliance_id}-${row.opponent_alliance_id || 'null'}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key)!.push(row);
+    });
+    // Sort each group by net damage descending
+    grouped.forEach((rows) => {
+      rows.sort((a, b) => b.net_damage - a.net_damage);
+    });
+    return grouped;
+  }, [nationBreakdown]);
+
+  // Auto-expand rows when filter matches nations/rulers
+  useEffect(() => {
+    if (!debouncedFilter.trim()) {
+      // Clear expansions when filter is cleared
+      setExpandedAlliances(new Set());
+      setExpandedOpponents(new Set());
+      return;
+    }
+
+    const filter = debouncedFilter.trim().toLowerCase();
+    const newExpandedAlliances = new Set<number>();
+    const newExpandedOpponents = new Set<string>();
+
+    // Find all matching nations and expand their alliance and opponent rows
+    nationBreakdown.forEach(nation => {
+      const matchesNation = nation.nation_name.toLowerCase().includes(filter);
+      const matchesRuler = nation.ruler_name.toLowerCase().includes(filter);
+      
+      if (matchesNation || matchesRuler) {
+        // Expand the alliance row
+        newExpandedAlliances.add(nation.alliance_id);
+        // Expand the opponent alliance row
+        const opponentKey = `${nation.alliance_id}-${nation.opponent_alliance_id || 'null'}`;
+        newExpandedOpponents.add(opponentKey);
+      }
+    });
+
+    // Only update if there are matches (to avoid collapsing everything on alliance name searches)
+    if (newExpandedAlliances.size > 0) {
+      setExpandedAlliances(newExpandedAlliances);
+      setExpandedOpponents(newExpandedOpponents);
+    }
+  }, [debouncedFilter, nationBreakdown]);
+
+  // Helper to check if filter is searching for nation/ruler (not alliance)
+  const isSearchingForNation = useCallback((allianceName: string): boolean => {
+    if (!debouncedFilter.trim()) return false;
+    const filter = debouncedFilter.trim().toLowerCase();
+    // If alliance name matches, show everything
+    if (allianceName.toLowerCase().includes(filter)) return false;
+    // Otherwise, we're filtering by nation/ruler
+    return true;
+  }, [debouncedFilter]);
+
+  // Filter opponent breakdown to only show matching opponents
+  const getFilteredOpponentBreakdown = useCallback((allianceId: number, allianceName: string, opponentRows: OpponentBreakdown[]): OpponentBreakdown[] => {
+    if (!isSearchingForNation(allianceName)) return opponentRows;
+    
+    const filter = debouncedFilter.trim().toLowerCase();
+    // Only show opponent alliances that have matching nations
+    return opponentRows.filter(oppRow => {
+      const opponentKey = `${allianceId}-${oppRow.opponent_alliance_id || 'null'}`;
+      const nations = nationBreakdownByAllianceAndOpponent.get(opponentKey) || [];
+      return nations.some(nation => 
+        nation.nation_name.toLowerCase().includes(filter) ||
+        nation.ruler_name.toLowerCase().includes(filter)
+      );
+    });
+  }, [isSearchingForNation, debouncedFilter, nationBreakdownByAllianceAndOpponent]);
+
+  // Filter nation breakdown to only show matching nations
+  const getFilteredNationBreakdown = useCallback((allianceName: string, nationRows: NationBreakdown[]): NationBreakdown[] => {
+    if (!isSearchingForNation(allianceName)) return nationRows;
+    
+    const filter = debouncedFilter.trim().toLowerCase();
+    return nationRows.filter(nation => 
+      nation.nation_name.toLowerCase().includes(filter) ||
+      nation.ruler_name.toLowerCase().includes(filter)
+    );
+  }, [isSearchingForNation, debouncedFilter]);
 
   const toggleExpanded = useCallback((allianceId: number) => {
     setExpandedAlliances(prev => {
@@ -294,23 +393,6 @@ const WarStatsPage: React.FC = () => {
     });
   }, []);
 
-  // Optimized: Group nation breakdown by alliance and opponent (memoized)
-  const nationBreakdownByAllianceAndOpponent = useMemo(() => {
-    const grouped = new Map<string, NationBreakdown[]>();
-    nationBreakdown.forEach(row => {
-      const key = `${row.alliance_id}-${row.opponent_alliance_id || 'null'}`;
-      if (!grouped.has(key)) {
-        grouped.set(key, []);
-      }
-      grouped.get(key)!.push(row);
-    });
-    // Sort each group by net damage descending
-    grouped.forEach((rows) => {
-      rows.sort((a, b) => b.net_damage - a.net_damage);
-    });
-    return grouped;
-  }, [nationBreakdown]);
-
   // Optimized: Group war records by nation (memoized)
   const warRecordsByNation = useMemo(() => {
     const grouped = new Map<string, WarRecord[]>();
@@ -342,7 +424,7 @@ const WarStatsPage: React.FC = () => {
         <input 
           type="text" 
           value={allianceFilter}
-          placeholder="Filter by alliance name"
+          placeholder="Filter by alliance, nation, or ruler name"
           onChange={(e) => setAllianceFilter(e.target.value)}
           className={tableClasses.filterInput}
         />
@@ -378,6 +460,7 @@ const WarStatsPage: React.FC = () => {
                 {filteredAllianceTotals.map(row => {
                   const isExpanded = expandedAlliances.has(row.alliance_id);
                   const opponentRows = opponentBreakdownByAlliance.get(row.alliance_id) || [];
+                  const filteredOpponentRows = getFilteredOpponentBreakdown(row.alliance_id, row.alliance_name, opponentRows);
                   
                   // Calculate sum of opponent breakdown to verify against totals
                   const breakdownSum = opponentRows.reduce((acc, opp) => ({
@@ -396,29 +479,30 @@ const WarStatsPage: React.FC = () => {
                         onClick={() => toggleExpanded(row.alliance_id)}
                       >
                         <td className="px-4 py-3">
-                          {(opponentRows.length > 0 || hasDiscrepancy) && (
+                          {(filteredOpponentRows.length > 0 || hasDiscrepancy) && (
                             <span className="text-gray-400">
                               {isExpanded ? '▼' : '▶'}
                             </span>
                           )}
                         </td>
-                        {allianceTotalsColumns.map(col => (
+                        {allianceTotalsColumns.map((col, colIndex) => (
                           <td
                             key={col.key}
                             className={`px-4 py-3 text-sm ${
                               col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
                             }`}
                           >
-                            {col.render ? col.render((row as any)[col.key], row) : String((row as any)[col.key] || '')}
+                            {col.render ? col.render((row as any)[col.key], row, colIndex) : String((row as any)[col.key] || '')}
                           </td>
                         ))}
                       </tr>
                       {isExpanded && (
                         <>
-                          {opponentRows.map((oppRow, idx) => {
+                          {filteredOpponentRows.map((oppRow, idx) => {
                             const opponentKey = `${row.alliance_id}-${oppRow.opponent_alliance_id || 'null'}`;
                             const isOpponentExpanded = expandedOpponents.has(opponentKey);
                             const nationRows = nationBreakdownByAllianceAndOpponent.get(opponentKey) || [];
+                            const filteredNationRows = getFilteredNationBreakdown(row.alliance_name, nationRows);
                             return (
                               <React.Fragment key={`opponent-${row.alliance_id}-${oppRow.opponent_alliance_id}-${idx}`}>
                                 <tr 
@@ -430,7 +514,7 @@ const WarStatsPage: React.FC = () => {
                                 >
                                   <td className="px-4 py-3">
                                     <span className="text-gray-500 ml-4">
-                                      {nationRows.length > 0 ? (isOpponentExpanded ? '▼' : '▶') : '└'}
+                                      {filteredNationRows.length > 0 ? (isOpponentExpanded ? '▼' : '▶') : '└'}
                                     </span>
                                   </td>
                                   <td className="px-4 py-3 text-sm text-left">
@@ -454,7 +538,7 @@ const WarStatsPage: React.FC = () => {
                                     {oppRow.defensive_wars}
                                   </td>
                                 </tr>
-                                {isOpponentExpanded && nationRows.length > 0 && nationRows.map((nationRow, nationIdx) => {
+                                {isOpponentExpanded && filteredNationRows.length > 0 && filteredNationRows.map((nationRow, nationIdx) => {
                                   const nationKey = `${row.alliance_id}-${oppRow.opponent_alliance_id || 'null'}-${nationRow.nation_id}`;
                                   const isNationExpanded = expandedNations.has(nationKey);
                                   const warRows = warRecordsByNation.get(nationKey) || [];

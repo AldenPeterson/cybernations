@@ -551,8 +551,7 @@ export async function importWarsFromCsv(filePath: string): Promise<{ imported: n
   return new Promise((resolve, reject) => {
     createReadStream(filePath)
       .pipe(csv({
-        separator: '|',
-        skipLinesWithError: true
+        separator: '|'
       }))
       .on('data', (row) => {
         // Skip the header row
