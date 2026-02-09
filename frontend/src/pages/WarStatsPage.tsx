@@ -469,22 +469,22 @@ const WarStatsPage: React.FC = () => {
       </div>
 
       {/* Alliance Totals View */}
-      <div className={tableClasses.tableWrapper}>
+      <div className="rounded-xl shadow-md bg-gray-800 w-full max-w-full">
         {loading && <div className="text-center py-8 text-gray-400">Loading...</div>}
         {error && <div className="text-center py-8 text-red-400">{error}</div>}
         {!loading && !error && filteredAllianceTotals.length === 0 && (
           <div className="text-center py-8 text-gray-400">No war statistics available</div>
         )}
         {!loading && !error && filteredAllianceTotals.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-800">
+          <div className="overflow-x-auto max-h-[65vh] overflow-y-auto">
+            <table className="w-full border-collapse relative">
+              <thead className="bg-gray-800 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200 w-8"></th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200 w-8 bg-gray-800"></th>
                   {allianceTotalsColumns.map(col => (
                     <th
                       key={col.key}
-                      className={`px-4 py-3 text-sm font-semibold text-gray-200 cursor-pointer hover:bg-gray-700 ${
+                      className={`px-4 py-3 text-sm font-semibold text-gray-200 cursor-pointer hover:bg-gray-700 bg-gray-800 ${
                         col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
                       }`}
                       style={{ width: col.width }}
