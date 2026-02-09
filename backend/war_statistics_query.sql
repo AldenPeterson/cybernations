@@ -1,9 +1,9 @@
 -- War Statistics Query
--- Shows total damages and net damage for wars declared in the last 15 days
+-- Shows total damages and net damage for wars declared after 2/5/2026
 -- Summarized by alliance with breakdown of nations and opponent alliances
 
 WITH recent_wars AS (
-    -- Filter wars declared in the last 15 days
+    -- Filter wars declared after 2/5/2026
     -- Parse the date field which is in format "MM/DD/YYYY HH:MM:SS AM/PM"
     SELECT 
         w.war_id,
@@ -60,11 +60,9 @@ WITH recent_wars AS (
     LEFT JOIN alliances da ON w.declaring_alliance_id = da.id
     LEFT JOIN alliances ra ON w.receiving_alliance_id = ra.id
     WHERE 
-        w.is_active = true
-        -- Parse date and filter for last 15 days
+        -- Parse date and filter for wars declared after 2/5/2026
         -- Date format: "MM/DD/YYYY HH:MM:SS AM/PM"
-        AND TO_DATE(SPLIT_PART(w.date, ' ', 1), 'MM/DD/YYYY') >= CURRENT_DATE - INTERVAL '15 days'
-        AND TO_DATE(SPLIT_PART(w.date, ' ', 1), 'MM/DD/YYYY') <= CURRENT_DATE
+        TO_DATE(SPLIT_PART(w.date, ' ', 1), 'MM/DD/YYYY') > TO_DATE('2/5/2026', 'MM/DD/YYYY')
 ),
 -- Calculate damage from declaring alliance perspective (attacking)
 -- attack_percent = damage received by attacker, defend_percent = damage dealt by attacker

@@ -329,7 +329,7 @@ const WarStatsPage: React.FC = () => {
       <div className={tableClasses.header}>
         <h1 className={tableClasses.title}>War Stats</h1>
         <p className={tableClasses.subtitle}>
-          War statistics for wars declared in the last 15 days. Shows total damages and net damage by alliance.
+          War statistics for wars declared after 2/5/2026. Shows total damages and net damage by alliance.
         </p>
       </div>
 

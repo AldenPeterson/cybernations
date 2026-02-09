@@ -13,12 +13,17 @@ export interface DynamicWarInput {
   defendPercent?: number;
 }
 
+export interface DynamicWarResult {
+  war: any;
+  wasNew: boolean;
+}
+
 export class DynamicWarService {
   /**
-   * Add or update a war in the War table (same logic as CSV import)
-   * This replaces the old dynamic wars table approach
+   * Add a war to the War table - only creates new wars, does not update existing ones
+   * This prevents overwriting accurate CSV data with potentially incomplete scraper data
    */
-  static async addDynamicWar(warData: DynamicWarInput): Promise<any> {
+  static async addDynamicWar(warData: DynamicWarInput): Promise<DynamicWarResult> {
     // Ensure nations exist
     const declaringNation = await prisma.nation.findUnique({
       where: { id: warData.declaringId },
@@ -36,10 +41,32 @@ export class DynamicWarService {
     // Check if war already exists
     const existingWar = await prisma.war.findUnique({
       where: { warId: warData.warId },
-      select: { warId: true, version: true },
+      select: { warId: true },
     });
 
-    const warDataToUpsert = {
+    // If war already exists, skip it - only create new wars
+    if (existingWar) {
+      console.log(`War ${warData.warId} already exists, skipping update`);
+      // Return the existing war without modification
+      const war = await prisma.war.findUnique({
+        where: { warId: warData.warId },
+        include: {
+          declaringNation: {
+            include: { alliance: true },
+          },
+          receivingNation: {
+            include: { alliance: true },
+          },
+        },
+      });
+      return {
+        war: this.mapToWarModel(war),
+        wasNew: false
+      };
+    }
+
+    // Create new war only if it doesn't exist
+    const warDataToCreate = {
       warId: warData.warId,
       declaringNationId: warData.declaringId,
       receivingNationId: warData.receivingId,
@@ -48,53 +75,33 @@ export class DynamicWarService {
       status: warData.status,
       date: warData.date,
       endDate: warData.endDate,
-      reason: warData.reason || null,
-      destruction: warData.destruction || null,
-      attackPercent: warData.attackPercent || null,
-      defendPercent: warData.defendPercent || null,
+      reason: warData.reason ?? null,
+      destruction: warData.destruction ?? null,
+      attackPercent: warData.attackPercent ?? null,
+      defendPercent: warData.defendPercent ?? null,
       lastSeenAt: now,
+      firstSeenAt: now,
       isActive: true,
+      version: 1,
     };
 
-    let war;
-    if (existingWar) {
-      // Update existing war
-      const currentVersion = existingWar.version || 1;
-      war = await prisma.war.update({
-        where: { warId: warData.warId },
-        data: {
-          ...warDataToUpsert,
-          version: currentVersion + 1,
+    const war = await prisma.war.create({
+      data: warDataToCreate,
+      include: {
+        declaringNation: {
+          include: { alliance: true },
         },
-        include: {
-          declaringNation: {
-            include: { alliance: true },
-          },
-          receivingNation: {
-            include: { alliance: true },
-          },
+        receivingNation: {
+          include: { alliance: true },
         },
-      });
-    } else {
-      // Create new war
-      war = await prisma.war.create({
-        data: {
-          ...warDataToUpsert,
-          firstSeenAt: now,
-          version: 1,
-        },
-        include: {
-          declaringNation: {
-            include: { alliance: true },
-          },
-          receivingNation: {
-            include: { alliance: true },
-          },
-        },
-      });
-    }
+      },
+    });
 
-    return this.mapToWarModel(war);
+    console.log(`Created new war ${war.warId}`);
+    return {
+      war: this.mapToWarModel(war),
+      wasNew: true
+    };
   }
 
   /**

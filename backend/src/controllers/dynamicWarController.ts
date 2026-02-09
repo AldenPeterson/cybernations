@@ -3,8 +3,8 @@ import { DynamicWarService } from '../services/dynamicWarService.js';
 
 export class DynamicWarController {
   /**
-   * Add or update wars in the War table (supports both single war and array of wars)
-   * This now updates the wars table directly, same as the CSV sync process
+   * Add wars to the War table (only creates new wars, does not update existing ones)
+   * This prevents overwriting accurate CSV data with potentially incomplete scraper data
    */
   static async addDynamicWar(req: Request, res: Response) {
     try {
@@ -18,7 +18,8 @@ export class DynamicWarController {
         });
       }
 
-      const results = [];
+      const newWars = [];
+      const skippedWars = [];
       const errors = [];
 
       for (let i = 0; i < warsToProcess.length; i++) {
@@ -76,12 +77,17 @@ export class DynamicWarController {
             endDate: endDate,
             reason: reason,
             destruction: destruction,
-            attackPercent: attackPercent ? parseFloat(attackPercent) : undefined,
-            defendPercent: defendPercent ? parseFloat(defendPercent) : undefined
+            attackPercent: attackPercent !== undefined && attackPercent !== null && attackPercent !== '' ? parseFloat(attackPercent) : undefined,
+            defendPercent: defendPercent !== undefined && defendPercent !== null && defendPercent !== '' ? parseFloat(defendPercent) : undefined
           };
 
-          const war = await DynamicWarService.addDynamicWar(processedWarData);
-          results.push(war);
+          const result = await DynamicWarService.addDynamicWar(processedWarData);
+          
+          if (result.wasNew) {
+            newWars.push(result.war);
+          } else {
+            skippedWars.push({ warId: processedWarData.warId, reason: 'Already exists' });
+          }
         } catch (error) {
           errors.push({
             index: i,
@@ -93,9 +99,12 @@ export class DynamicWarController {
 
       const response: any = {
         success: true,
-        processed: results.length,
         total: warsToProcess.length,
-        results: results
+        created: newWars.length,
+        skipped: skippedWars.length,
+        failed: errors.length,
+        newWars: newWars,
+        skippedWars: skippedWars
       };
 
       if (errors.length > 0) {
