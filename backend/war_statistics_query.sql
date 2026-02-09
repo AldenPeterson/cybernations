@@ -78,7 +78,8 @@ declaring_damage AS (
         receiving_alliance_id AS opponent_alliance_id,
         receiving_alliance_name AS opponent_alliance_name,
         SUM(declaring_damage_dealt) AS damage_dealt,
-        SUM(declaring_damage_received) AS damage_received
+        SUM(declaring_damage_received) AS damage_received,
+        COUNT(DISTINCT war_id) AS offensive_wars
     FROM recent_wars
     WHERE declaring_alliance_id IS NOT NULL
     GROUP BY 
@@ -102,7 +103,8 @@ receiving_damage AS (
         declaring_alliance_id AS opponent_alliance_id,
         declaring_alliance_name AS opponent_alliance_name,
         SUM(receiving_damage_dealt) AS damage_dealt,
-        SUM(receiving_damage_received) AS damage_received
+        SUM(receiving_damage_received) AS damage_received,
+        COUNT(DISTINCT war_id) AS defensive_wars
     FROM recent_wars
     WHERE receiving_alliance_id IS NOT NULL
     GROUP BY 
@@ -234,7 +236,9 @@ SELECT
     COALESCE(SUM(dd.damage_dealt), 0) + COALESCE(SUM(rd.damage_dealt), 0) AS damage_dealt,
     COALESCE(SUM(dd.damage_received), 0) + COALESCE(SUM(rd.damage_received), 0) AS damage_received,
     (COALESCE(SUM(dd.damage_dealt), 0) + COALESCE(SUM(rd.damage_dealt), 0)) - 
-    (COALESCE(SUM(dd.damage_received), 0) + COALESCE(SUM(rd.damage_received), 0)) AS net_damage
+    (COALESCE(SUM(dd.damage_received), 0) + COALESCE(SUM(rd.damage_received), 0)) AS net_damage,
+    COALESCE(SUM(dd.offensive_wars), 0) AS offensive_wars,
+    COALESCE(SUM(rd.defensive_wars), 0) AS defensive_wars
 FROM declaring_damage dd
 FULL OUTER JOIN receiving_damage rd 
     ON dd.alliance_id = rd.alliance_id

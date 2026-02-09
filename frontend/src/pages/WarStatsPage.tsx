@@ -214,6 +214,8 @@ const WarStatsPage: React.FC = () => {
       damage_received: number;
       net_damage: number;
       nations_involved: number;
+      offensive_wars: number;
+      defensive_wars: number;
     }>>();
     
     // Aggregate from nation breakdown by alliance_id and opponent_alliance_id
@@ -223,6 +225,8 @@ const WarStatsPage: React.FC = () => {
       opponent_alliance_name: string | null;
       damage_dealt: number;
       damage_received: number;
+      offensive_wars: number;
+      defensive_wars: number;
       nations: Set<number>;
     }>();
     
@@ -233,6 +237,8 @@ const WarStatsPage: React.FC = () => {
       if (existing) {
         existing.damage_dealt += row.damage_dealt;
         existing.damage_received += row.damage_received;
+        existing.offensive_wars += row.offensive_wars;
+        existing.defensive_wars += row.defensive_wars;
         existing.nations.add(row.nation_id);
       } else {
         aggregation.set(key, {
@@ -241,6 +247,8 @@ const WarStatsPage: React.FC = () => {
           opponent_alliance_name: row.opponent_alliance_name,
           damage_dealt: row.damage_dealt,
           damage_received: row.damage_received,
+          offensive_wars: row.offensive_wars,
+          defensive_wars: row.defensive_wars,
           nations: new Set([row.nation_id]),
         });
       }
@@ -258,6 +266,8 @@ const WarStatsPage: React.FC = () => {
         damage_received: value.damage_received,
         net_damage: value.damage_dealt - value.damage_received,
         nations_involved: value.nations.size,
+        offensive_wars: value.offensive_wars,
+        defensive_wars: value.defensive_wars,
       });
     });
     
@@ -436,10 +446,10 @@ const WarStatsPage: React.FC = () => {
                                   </span>
                                 </td>
                                 <td className="px-4 py-3 text-sm text-center">
-                                  -
+                                  {oppRow.offensive_wars}
                                 </td>
                                 <td className="px-4 py-3 text-sm text-center">
-                                  -
+                                  {oppRow.defensive_wars}
                                 </td>
                               </tr>
                               {isOpponentExpanded && nationRows.length > 0 && nationRows.map((nationRow, nationIdx) => (
