@@ -76,6 +76,10 @@ const WarStatsPage: React.FC = () => {
   const [expandedOpponents, setExpandedOpponents] = useState<Set<string>>(new Set());
   const [expandedNations, setExpandedNations] = useState<Set<string>>(new Set());
 
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<keyof AllianceTotal>('net_damage');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
   // Optimized: Debounced filter to reduce re-renders and API calls
   const [debouncedFilter, setDebouncedFilter] = useState<string>('');
 
@@ -176,22 +180,45 @@ const WarStatsPage: React.FC = () => {
   // Optimized: Client-side filtering on pre-loaded data
   // Now supports filtering by alliance name, nation name, or ruler name
   const filteredAllianceTotals = useMemo(() => {
-    if (!debouncedFilter.trim()) return allianceTotals;
-    const filter = debouncedFilter.trim().toLowerCase();
-    return allianceTotals.filter(row => {
-      // Check if alliance name matches
-      if (row.alliance_name.toLowerCase().includes(filter)) {
-        return true;
+    let filtered = allianceTotals;
+    
+    // Apply filter
+    if (debouncedFilter.trim()) {
+      const filter = debouncedFilter.trim().toLowerCase();
+      filtered = allianceTotals.filter(row => {
+        // Check if alliance name matches
+        if (row.alliance_name.toLowerCase().includes(filter)) {
+          return true;
+        }
+        // Check if any nation in this alliance matches
+        return nationBreakdown.some(nation => 
+          nation.alliance_id === row.alliance_id && (
+            nation.nation_name.toLowerCase().includes(filter) ||
+            nation.ruler_name.toLowerCase().includes(filter)
+          )
+        );
+      });
+    }
+    
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      const aVal = a[sortColumn];
+      const bVal = b[sortColumn];
+      
+      // Handle string vs number comparison
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        const comparison = aVal.localeCompare(bVal);
+        return sortDirection === 'asc' ? comparison : -comparison;
       }
-      // Check if any nation in this alliance matches
-      return nationBreakdown.some(nation => 
-        nation.alliance_id === row.alliance_id && (
-          nation.nation_name.toLowerCase().includes(filter) ||
-          nation.ruler_name.toLowerCase().includes(filter)
-        )
-      );
+      
+      // Handle numeric comparison
+      const aNum = Number(aVal);
+      const bNum = Number(bVal);
+      return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
     });
-  }, [allianceTotals, debouncedFilter, nationBreakdown]);
+    
+    return sorted;
+  }, [allianceTotals, debouncedFilter, nationBreakdown, sortColumn, sortDirection]);
 
   // Optimized: More efficient opponent breakdown aggregation
   const opponentBreakdownByAlliance = useMemo(() => {
@@ -393,6 +420,17 @@ const WarStatsPage: React.FC = () => {
     });
   }, []);
 
+  const handleSort = useCallback((columnKey: keyof AllianceTotal) => {
+    if (sortColumn === columnKey) {
+      // Toggle direction if same column
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column: default to descending for numbers, ascending for strings
+      setSortColumn(columnKey);
+      setSortDirection(columnKey === 'alliance_name' ? 'asc' : 'desc');
+    }
+  }, [sortColumn]);
+
   // Optimized: Group war records by nation (memoized)
   const warRecordsByNation = useMemo(() => {
     const grouped = new Map<string, WarRecord[]>();
@@ -446,12 +484,20 @@ const WarStatsPage: React.FC = () => {
                   {allianceTotalsColumns.map(col => (
                     <th
                       key={col.key}
-                      className={`px-4 py-3 text-sm font-semibold text-gray-200 ${
+                      className={`px-4 py-3 text-sm font-semibold text-gray-200 cursor-pointer hover:bg-gray-700 ${
                         col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
                       }`}
                       style={{ width: col.width }}
+                      onClick={() => handleSort(col.key as keyof AllianceTotal)}
                     >
-                      {col.header}
+                      <div className="flex items-center justify-between">
+                        <span>{col.header}</span>
+                        {sortColumn === col.key && (
+                          <span className="ml-1">
+                            {sortDirection === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
                     </th>
                   ))}
                 </tr>
