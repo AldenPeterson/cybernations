@@ -44,6 +44,8 @@ interface NationAidSlots {
     strength: number;
     activity: string;
     inWarMode: boolean;
+    technology?: string;
+    infrastructure?: string;
   };
   aidSlots: AidSlot[];
 }
@@ -1069,6 +1071,12 @@ const AidPage: React.FC = () => {
                           {nationAidSlots.nation.rulerName}
                         </small>
                         <br />
+                        <small className="text-gray-700 font-medium">
+                          NS: {formatNumber(nationAidSlots.nation.strength)}
+                          {nationAidSlots.nation.infrastructure && ` | Infra: ${nationAidSlots.nation.infrastructure}`}
+                          {nationAidSlots.nation.technology && ` | Tech: ${nationAidSlots.nation.technology}`}
+                        </small>
+                        <br />
                         <small 
                           className="font-bold"
                           style={{ color: getWarStatusColor(nationAidSlots.nation.inWarMode) }}
@@ -1375,6 +1383,11 @@ const AidPage: React.FC = () => {
                           </a>
                         </div>
                         <div className="text-sm text-gray-400">{nationAidSlots.nation.rulerName}</div>
+                        <div className="text-sm text-gray-300 mt-1">
+                          NS: {formatNumber(nationAidSlots.nation.strength)}
+                          {nationAidSlots.nation.infrastructure && ` | Infra: ${nationAidSlots.nation.infrastructure}`}
+                          {nationAidSlots.nation.technology && ` | Tech: ${nationAidSlots.nation.technology}`}
+                        </div>
                         <div 
                           className="text-sm font-bold mt-1"
                           style={{ color: getWarStatusColor(nationAidSlots.nation.inWarMode) }}

@@ -47,7 +47,9 @@ export class AidController {
             nationName: nationAidSlots.nation.nationName,
             strength: nationAidSlots.nation.strength,
             activity: nationAidSlots.nation.activity,
-            inWarMode: nationAidSlots.nation.inWarMode
+            inWarMode: nationAidSlots.nation.inWarMode,
+            technology: nationAidSlots.nation.technology,
+            infrastructure: nationAidSlots.nation.infrastructure
           },
           aidSlots: nationAidSlots.aidSlots.map(slot => ({
             slotNumber: slot.slotNumber,
