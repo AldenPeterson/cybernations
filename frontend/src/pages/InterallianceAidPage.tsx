@@ -336,8 +336,6 @@ const InterallianceAidPage: React.FC<InterallianceAidPageProps> = ({ selectedAll
 
   return (
     <PageContainer className="p-5">
-      <h1 className="text-2xl font-bold mb-6">Interalliance Aid</h1>
-
       {/* Alliance Selection */}
       <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
         <h3 className="text-lg font-semibold mb-4">Select Two Alliances</h3>
@@ -542,6 +540,146 @@ const InterallianceAidPage: React.FC<InterallianceAidPageProps> = ({ selectedAll
               </span>
             </h3>
             {renderOffersList(data.alliance2ToAlliance1, 'received')}
+          </div>
+
+          {/* Combined Per-Nation Summary */}
+          <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+            <h3 className="text-lg font-semibold mb-4">Nations Summary</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800">
+                <thead>
+                  <tr className="bg-gray-700">
+                    <th className="p-2 border border-gray-600 text-left text-white font-bold">Nation</th>
+                    <th className="p-2 border border-gray-600 text-left text-white font-bold">Alliance</th>
+                    <th className="p-2 border border-gray-600 text-center text-white font-bold" colSpan={2}>Sent</th>
+                    <th className="p-2 border border-gray-600 text-center text-white font-bold" colSpan={2}>Received</th>
+                    <th className="p-2 border border-gray-600 text-center text-white font-bold">Total</th>
+                  </tr>
+                  <tr className="bg-gray-700">
+                    <th className="p-2 border border-gray-600"></th>
+                    <th className="p-2 border border-gray-600"></th>
+                    <th className="p-2 border border-gray-600 text-center text-white text-xs">💰 Cash</th>
+                    <th className="p-2 border border-gray-600 text-center text-white text-xs">🔬 Tech</th>
+                    <th className="p-2 border border-gray-600 text-center text-white text-xs">💰 Cash</th>
+                    <th className="p-2 border border-gray-600 text-center text-white text-xs">🔬 Tech</th>
+                    <th className="p-2 border border-gray-600"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    // Aggregate offers by nation across all offers
+                    const nationStats = new Map<number, { 
+                      nationName: string; 
+                      nationId: number; 
+                      allianceName: string;
+                      cashSent: number; 
+                      techSent: number;
+                      cashReceived: number;
+                      techReceived: number;
+                    }>();
+                    
+                    // Process all offers to build complete statistics
+                    const allOffers = [...data.alliance1ToAlliance2, ...data.alliance2ToAlliance1];
+                    
+                    allOffers.forEach(offer => {
+                      // Track sender stats
+                      if (!nationStats.has(offer.senderId)) {
+                        nationStats.set(offer.senderId, {
+                          nationName: offer.senderNation,
+                          nationId: offer.senderId,
+                          allianceName: offer.senderId === offer.senderId ? 
+                            (data.alliance1ToAlliance2.some(o => o.senderId === offer.senderId) ? data.alliance1.name : data.alliance2.name) : '',
+                          cashSent: 0,
+                          techSent: 0,
+                          cashReceived: 0,
+                          techReceived: 0
+                        });
+                      }
+                      const senderStats = nationStats.get(offer.senderId)!;
+                      if (offer.type === 'cash') {
+                        senderStats.cashSent++;
+                      } else {
+                        senderStats.techSent++;
+                      }
+
+                      // Track receiver stats
+                      if (!nationStats.has(offer.recipientId)) {
+                        nationStats.set(offer.recipientId, {
+                          nationName: offer.recipientNation,
+                          nationId: offer.recipientId,
+                          allianceName: data.alliance1ToAlliance2.some(o => o.recipientId === offer.recipientId) ? data.alliance2.name : data.alliance1.name,
+                          cashSent: 0,
+                          techSent: 0,
+                          cashReceived: 0,
+                          techReceived: 0
+                        });
+                      }
+                      const receiverStats = nationStats.get(offer.recipientId)!;
+                      if (offer.type === 'cash') {
+                        receiverStats.cashReceived++;
+                      } else {
+                        receiverStats.techReceived++;
+                      }
+                    });
+
+                    const sortedNations = Array.from(nationStats.values()).sort((a, b) => {
+                      // Sort by total offers (sent + received), then by alliance name, then by nation name
+                      const totalA = a.cashSent + a.techSent + a.cashReceived + a.techReceived;
+                      const totalB = b.cashSent + b.techSent + b.cashReceived + b.techReceived;
+                      if (totalB !== totalA) return totalB - totalA;
+                      if (a.allianceName !== b.allianceName) return a.allianceName.localeCompare(b.allianceName);
+                      return a.nationName.localeCompare(b.nationName);
+                    });
+
+                    if (sortedNations.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={7} className="p-4 text-center text-gray-400">
+                            No offers found
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return sortedNations.map(nation => {
+                      const total = nation.cashSent + nation.techSent + nation.cashReceived + nation.techReceived;
+                      return (
+                        <tr key={nation.nationId} className="bg-gray-800 hover:bg-gray-700">
+                          <td className="p-2 border border-gray-700 text-gray-200">
+                            <a
+                              href={`https://www.cybernations.net/search_aid.asp?search=${nation.nationId}&Extended=1`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:underline"
+                            >
+                              {nation.nationName}
+                            </a>
+                          </td>
+                          <td className="p-2 border border-gray-700 text-gray-300 text-xs">
+                            {nation.allianceName}
+                          </td>
+                          <td className="p-2 border border-gray-700 text-center text-green-400 font-bold">
+                            {nation.cashSent || '-'}
+                          </td>
+                          <td className="p-2 border border-gray-700 text-center text-blue-400 font-bold">
+                            {nation.techSent || '-'}
+                          </td>
+                          <td className="p-2 border border-gray-700 text-center text-green-400 font-bold">
+                            {nation.cashReceived || '-'}
+                          </td>
+                          <td className="p-2 border border-gray-700 text-center text-blue-400 font-bold">
+                            {nation.techReceived || '-'}
+                          </td>
+                          <td className="p-2 border border-gray-700 text-center text-gray-200 font-bold">
+                            {total}
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       )}
