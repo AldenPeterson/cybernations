@@ -21,6 +21,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   // Define navigation structure
   const aidToolsItems = [
     { label: 'Aid', path: selectedAllianceId ? `/aid/${selectedAllianceId}` : '/aid' },
+    { label: 'Interalliance Aid', path: '/interalliance-aid' },
     { label: 'Nation Editor', path: selectedAllianceId ? `/nations/${selectedAllianceId}` : '/nations', devOnly: true },
   ];
 
@@ -85,6 +86,15 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         searchParams.delete('allianceId');
       }
       navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
+    } else if (tabName === 'interalliance-aid') {
+      // For interalliance-aid, update alliance1 parameter
+      const searchParams = new URLSearchParams(location.search);
+      if (allianceId) {
+        searchParams.set('alliance1', allianceId.toString());
+      } else {
+        searchParams.delete('alliance1');
+      }
+      navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
     }
   };
 
@@ -100,6 +110,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     switch(tabName) {
       case 'aid':
         return 'Aid Tools - Aid';
+      case 'interalliance-aid':
+        return 'Aid Tools - Interalliance Aid';
       case 'nations':
         return 'Aid Tools - Nation Editor';
       case 'wars':
@@ -130,7 +142,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     const pathParts = location.pathname.split('/');
     const tabName = pathParts[1];
     // Only these pages use the alliance selector
-    return ['aid', 'nations', 'wars', 'nation-aid-efficiency', 'events'].includes(tabName);
+    return ['aid', 'nations', 'wars', 'nation-aid-efficiency', 'events', 'interalliance-aid'].includes(tabName);
   };
 
   return (

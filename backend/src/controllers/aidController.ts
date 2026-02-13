@@ -322,4 +322,43 @@ export class AidController {
       });
     }
   }
+
+  /**
+   * Get interalliance aid data between two alliances
+   */
+  static async getInterallianceAid(req: Request, res: Response) {
+    try {
+      const alliance1Id = parseInt(req.params.alliance1Id);
+      const alliance2Id = parseInt(req.params.alliance2Id);
+      
+      if (isNaN(alliance1Id) || isNaN(alliance2Id)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid alliance IDs'
+        });
+      }
+
+      if (alliance1Id === alliance2Id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Alliance IDs must be different'
+        });
+      }
+
+      const result = await AidService.getInterallianceAid(alliance1Id, alliance2Id);
+
+      console.log(`[API] getInterallianceAid (alliance1: ${alliance1Id}, alliance2: ${alliance2Id}): ${result.totalOffers} total offers (${result.cashOffers} cash, ${result.techOffers} tech)`);
+
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      console.error('Error fetching interalliance aid:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
 }

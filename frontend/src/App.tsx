@@ -5,6 +5,7 @@ import AllianceRedirect from './components/AllianceRedirect'
 import { RecommendationsRedirect } from './components/LegacyRedirects'
 import GlobalWarsPage from './pages/GlobalWarsPage'
 import AidPage from './pages/AidPage'
+import InterallianceAidPage from './pages/InterallianceAidPage'
 import NationsPage from './pages/NationsPage'
 import DefendingWarsPage from './pages/DefendingWarsPage'
 import ShameOffersPage from './pages/ShameOffersPage'
@@ -36,18 +37,23 @@ function App() {
     } else if (!allianceIdParam && ['aid', 'nations', 'wars'].includes(tabName)) {
       // If we're on an alliance-specific page but no alliance ID in URL, clear selection
       setSelectedAllianceId(null);
-    } else if (tabName === 'nation-aid-efficiency' || tabName === 'events') {
-      // For nation-aid-efficiency and events, sync from query params
+    } else if (tabName === 'nation-aid-efficiency' || tabName === 'events' || tabName === 'interalliance-aid') {
+      // For nation-aid-efficiency, events, and interalliance-aid, sync from query params
       const searchParams = new URLSearchParams(location.search);
-      const allianceIdFromQuery = searchParams.get('allianceId');
+      const allianceIdFromQuery = searchParams.get('allianceId') || searchParams.get('alliance1');
       if (allianceIdFromQuery) {
         const allianceId = parseInt(allianceIdFromQuery);
         if (!isNaN(allianceId)) {
           setSelectedAllianceId(allianceId);
           hasInitializedNationAidEfficiency.current = true;
         }
+      } else if (selectedAllianceId && !hasInitializedNationAidEfficiency.current && tabName === 'interalliance-aid') {
+        // For interalliance-aid, if no alliance1 in URL but we have one selected, add it to URL
+        searchParams.set('alliance1', selectedAllianceId.toString());
+        navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
+        hasInitializedNationAidEfficiency.current = true;
       } else if (selectedAllianceId && !hasInitializedNationAidEfficiency.current) {
-        // If no allianceId in URL but we have one selected, add it to URL (only once on initial load)
+        // For other pages (nation-aid-efficiency, events), use allianceId param
         searchParams.set('allianceId', selectedAllianceId.toString());
         navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
         hasInitializedNationAidEfficiency.current = true;
@@ -72,6 +78,9 @@ function App() {
         {/* Alliance-specific routes */}
         <Route path="/aid/:allianceId" element={<AidPage />} />
         <Route path="/aid" element={<AllianceRedirect tabName="aid" />} />
+        
+        {/* Interalliance Aid - Top-level aid tool */}
+        <Route path="/interalliance-aid" element={<InterallianceAidPage />} />
         
         <Route path="/nations/:allianceId" element={<NationsPage />} />
         <Route path="/nations" element={<AllianceRedirect tabName="nations" />} />

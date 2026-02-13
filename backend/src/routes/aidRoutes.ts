@@ -25,5 +25,8 @@ aidRoutes.get('/alliances/:allianceId/nation-aid-efficiency', validateAllianceId
 // Get alliance aid totals aggregated by alliance over a date range
 aidRoutes.get('/alliance-aid-totals', AidController.getAllianceAidTotals);
 
+// Get interalliance aid data between two alliances
+aidRoutes.get('/interalliance-aid/:alliance1Id/:alliance2Id', AidController.getInterallianceAid);
+
 // Get small aid offers
 aidRoutes.get('/small-aid-offers', AidController.getSmallAidOffers);

@@ -381,6 +381,143 @@ export class AidService {
   }
 
   /**
+   * Get interalliance aid data between two alliances
+   */
+  static async getInterallianceAid(alliance1Id: number, alliance2Id: number): Promise<{
+    alliance1: { id: number; name: string };
+    alliance2: { id: number; name: string };
+    totalOffers: number;
+    cashOffers: number;
+    techOffers: number;
+    alliance1ToAlliance2: Array<{
+      senderId: number;
+      senderNation: string;
+      senderRuler: string;
+      recipientId: number;
+      recipientNation: string;
+      recipientRuler: string;
+      aidId: number;
+      money: number;
+      technology: number;
+      soldiers: number;
+      reason: string;
+      date: string;
+      status: string;
+      type: 'cash' | 'tech';
+    }>;
+    alliance2ToAlliance1: Array<{
+      senderId: number;
+      senderNation: string;
+      senderRuler: string;
+      recipientId: number;
+      recipientNation: string;
+      recipientRuler: string;
+      aidId: number;
+      money: number;
+      technology: number;
+      soldiers: number;
+      reason: string;
+      date: string;
+      status: string;
+      type: 'cash' | 'tech';
+    }>;
+  }> {
+    // Fetch both alliances' data and alliance names from database
+    const [alliance1Data, alliance2Data, alliance1Record, alliance2Record] = await Promise.all([
+      AllianceService.getAllianceData(alliance1Id),
+      AllianceService.getAllianceData(alliance2Id),
+      prisma.alliance.findUnique({ where: { id: alliance1Id }, select: { name: true } }),
+      prisma.alliance.findUnique({ where: { id: alliance2Id }, select: { name: true } })
+    ]);
+
+    // Get alliance names from database, fall back to data from nations if needed
+    const alliance1Name = alliance1Record?.name || alliance1Data.nations[0]?.alliance?.name || `Alliance ${alliance1Id}`;
+    const alliance2Name = alliance2Record?.name || alliance2Data.nations[0]?.alliance?.name || `Alliance ${alliance2Id}`;
+
+    // Get nation IDs for each alliance
+    const alliance1NationIds = new Set(alliance1Data.nations.map(n => n.id));
+    const alliance2NationIds = new Set(alliance2Data.nations.map(n => n.id));
+
+    // Combine all aid offers from both alliances and deduplicate by aidId
+    // An offer between alliance1 and alliance2 appears in BOTH datasets, so we need to dedupe
+    const allAidOffersMap = new Map<number, any>();
+    [...alliance1Data.aidOffers, ...alliance2Data.aidOffers].forEach(offer => {
+      allAidOffersMap.set(offer.aidId, offer);
+    });
+    const allAidOffers = Array.from(allAidOffersMap.values());
+
+    // Filter for active offers between the two alliances
+    const interallianceOffers = allAidOffers.filter(offer => {
+      if (this.isOfferExpired(offer)) {
+        return false;
+      }
+      
+      const declaringInAlliance1 = alliance1NationIds.has(offer.declaringId);
+      const receivingInAlliance1 = alliance1NationIds.has(offer.receivingId);
+      const declaringInAlliance2 = alliance2NationIds.has(offer.declaringId);
+      const receivingInAlliance2 = alliance2NationIds.has(offer.receivingId);
+
+      // Include offer if one party is in alliance1 and the other is in alliance2
+      return (declaringInAlliance1 && receivingInAlliance2) || (declaringInAlliance2 && receivingInAlliance1);
+    });
+
+    // Categorize offers by type (cash vs tech) and direction
+    const alliance1ToAlliance2: any[] = [];
+    const alliance2ToAlliance1: any[] = [];
+    let cashOffers = 0;
+    let techOffers = 0;
+
+    for (const offer of interallianceOffers) {
+      // Determine aid type: cash is 6M+ with no tech (100), tech is any offer with 100 tech
+      const isCashOffer = offer.money >= 6000000 && offer.technology < 100;
+      const isTechOffer = offer.technology >= 100;
+      
+      const aidType = isTechOffer ? 'tech' : 'cash';
+      
+      if (isCashOffer) {
+        cashOffers++;
+      }
+      if (isTechOffer) {
+        techOffers++;
+      }
+
+      const offerData = {
+        senderId: offer.declaringId,
+        senderNation: offer.declaringNation,
+        senderRuler: offer.declaringRuler,
+        recipientId: offer.receivingId,
+        recipientNation: offer.receivingNation,
+        recipientRuler: offer.receivingRuler,
+        aidId: offer.aidId,
+        money: offer.money,
+        technology: offer.technology,
+        soldiers: offer.soldiers,
+        reason: offer.reason,
+        date: offer.date,
+        status: offer.status,
+        type: aidType
+      };
+
+      // Categorize by direction
+      if (alliance1NationIds.has(offer.declaringId)) {
+        alliance1ToAlliance2.push(offerData);
+      } else {
+        alliance2ToAlliance1.push(offerData);
+      }
+    }
+
+    return {
+      alliance1: { id: alliance1Id, name: alliance1Name },
+      alliance2: { id: alliance2Id, name: alliance2Name },
+      totalOffers: interallianceOffers.length,
+      cashOffers,
+      techOffers,
+      alliance1ToAlliance2: alliance1ToAlliance2.sort((a, b) => a.senderNation.localeCompare(b.senderNation)),
+      alliance2ToAlliance1: alliance2ToAlliance1.sort((a, b) => a.senderNation.localeCompare(b.senderNation))
+    };
+  }
+
+  /**
    * Get aid recommendations for an alliance
    */
   static async getAidRecommendations(allianceId: number, crossAllianceEnabled: boolean = false) {

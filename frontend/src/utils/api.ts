@@ -112,4 +112,5 @@ export const API_ENDPOINTS = {
     return `/api/war-statistics/war-records${query}`;
   },
   warStatisticsInvalidateCache: '/api/war-statistics/invalidate-cache',
+  interallianceAid: (alliance1Id: number, alliance2Id: number) => `/api/interalliance-aid/${alliance1Id}/${alliance2Id}`,
 } as const;
