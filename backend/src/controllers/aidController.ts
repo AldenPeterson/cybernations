@@ -330,6 +330,8 @@ export class AidController {
     try {
       const alliance1Id = parseInt(req.params.alliance1Id);
       const alliance2Id = parseInt(req.params.alliance2Id);
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
       
       if (isNaN(alliance1Id) || isNaN(alliance2Id)) {
         return res.status(400).json({
@@ -345,9 +347,9 @@ export class AidController {
         });
       }
 
-      const result = await AidService.getInterallianceAid(alliance1Id, alliance2Id);
+      const result = await AidService.getInterallianceAid(alliance1Id, alliance2Id, startDate, endDate);
 
-      console.log(`[API] getInterallianceAid (alliance1: ${alliance1Id}, alliance2: ${alliance2Id}): ${result.totalOffers} total offers (${result.cashOffers} cash, ${result.techOffers} tech)`);
+      console.log(`[API] getInterallianceAid (alliance1: ${alliance1Id}, alliance2: ${alliance2Id}${startDate ? `, startDate: ${startDate}` : ''}${endDate ? `, endDate: ${endDate}` : ''}): ${result.totalOffers} total offers (${result.cashOffers} cash, ${result.techOffers} tech)`);
 
       res.json({
         success: true,

@@ -13,7 +13,7 @@ import { AllianceService } from './allianceService.js';
 import { AidOffer } from '../models/index.js';
 import { CategorizedNation, Nation } from '../models/Nation.js';
 import { prisma } from '../utils/prisma.js';
-import { isAidOfferExpired, calculateAidDateInfo, getAidDaysUntilExpiration } from '../utils/dateUtils.js';
+import { isAidOfferExpired, calculateAidDateInfo, getAidDaysUntilExpiration, parseCentralTimeDate } from '../utils/dateUtils.js';
 
 // Cache for alliance aid totals
 interface AllianceAidTotalsCache {
@@ -383,7 +383,12 @@ export class AidService {
   /**
    * Get interalliance aid data between two alliances
    */
-  static async getInterallianceAid(alliance1Id: number, alliance2Id: number): Promise<{
+  static async getInterallianceAid(
+    alliance1Id: number, 
+    alliance2Id: number,
+    startDate?: string,
+    endDate?: string
+  ): Promise<{
     alliance1: { id: number; name: string };
     alliance2: { id: number; name: string };
     totalOffers: number;
@@ -422,13 +427,86 @@ export class AidService {
       type: 'cash' | 'tech';
     }>;
   }> {
-    // Fetch both alliances' data and alliance names from database
-    const [alliance1Data, alliance2Data, alliance1Record, alliance2Record] = await Promise.all([
-      AllianceService.getAllianceData(alliance1Id),
-      AllianceService.getAllianceData(alliance2Id),
-      prisma.alliance.findUnique({ where: { id: alliance1Id }, select: { name: true } }),
-      prisma.alliance.findUnique({ where: { id: alliance2Id }, select: { name: true } })
-    ]);
+    // When date filtering is active, we need to fetch ALL offers (including expired)
+    // from the database directly, not use the pre-filtered alliance data
+    const isDateFiltering = !!(startDate && endDate);
+    
+    let alliance1Data, alliance2Data, alliance1Record, alliance2Record;
+    
+    if (isDateFiltering) {
+      // Fetch alliance info and ALL aid offers directly from database (including expired)
+      [alliance1Record, alliance2Record] = await Promise.all([
+        prisma.alliance.findUnique({ where: { id: alliance1Id }, select: { name: true } }),
+        prisma.alliance.findUnique({ where: { id: alliance2Id }, select: { name: true } })
+      ]);
+      
+      // Fetch nations for both alliances
+      const [nations1, nations2] = await Promise.all([
+        prisma.nation.findMany({
+          where: { allianceId: alliance1Id },
+          select: { id: true }
+        }),
+        prisma.nation.findMany({
+          where: { allianceId: alliance2Id },
+          select: { id: true }
+        })
+      ]);
+      
+      // Get nation IDs
+      const alliance1NationIds = nations1.map(n => n.id);
+      const alliance2NationIds = nations2.map(n => n.id);
+      const allNationIds = [...alliance1NationIds, ...alliance2NationIds];
+      
+      // Fetch ALL aid offers involving these nations (including expired ones)
+      const aidOfferRecords = await prisma.aidOffer.findMany({
+        where: {
+          OR: [
+            { declaringNationId: { in: allNationIds } },
+            { receivingNationId: { in: allNationIds } }
+          ]
+        },
+        include: {
+          declaringNation: {
+            include: { alliance: true }
+          },
+          receivingNation: {
+            include: { alliance: true }
+          }
+        }
+      });
+      
+      // Map to expected format
+      const allAidOffers = aidOfferRecords.map((a: any) => ({
+        aidId: a.aidId,
+        declaringId: a.declaringNationId,
+        declaringRuler: a.declaringNation.rulerName,
+        declaringNation: a.declaringNation.nationName,
+        declaringAlliance: a.declaringNation.alliance.name,
+        declaringAllianceId: a.declaringNation.allianceId,
+        receivingId: a.receivingNationId,
+        receivingRuler: a.receivingNation.rulerName,
+        receivingNation: a.receivingNation.nationName,
+        receivingAlliance: a.receivingNation.alliance.name,
+        receivingAllianceId: a.receivingNation.allianceId,
+        status: a.status,
+        money: a.money,
+        technology: a.technology,
+        soldiers: a.soldiers,
+        date: a.date,
+        reason: a.reason
+      }));
+      
+      alliance1Data = { nations: nations1.map(n => ({ id: n.id })), aidOffers: allAidOffers };
+      alliance2Data = { nations: nations2.map(n => ({ id: n.id })), aidOffers: allAidOffers };
+    } else {
+      // No date filtering: use pre-filtered data (active offers only)
+      [alliance1Data, alliance2Data, alliance1Record, alliance2Record] = await Promise.all([
+        AllianceService.getAllianceData(alliance1Id),
+        AllianceService.getAllianceData(alliance2Id),
+        prisma.alliance.findUnique({ where: { id: alliance1Id }, select: { name: true } }),
+        prisma.alliance.findUnique({ where: { id: alliance2Id }, select: { name: true } })
+      ]);
+    }
 
     // Get alliance names from database, fall back to data from nations if needed
     const alliance1Name = alliance1Record?.name || alliance1Data.nations[0]?.alliance?.name || `Alliance ${alliance1Id}`;
@@ -446,10 +524,41 @@ export class AidService {
     });
     const allAidOffers = Array.from(allAidOffersMap.values());
 
-    // Filter for active offers between the two alliances
+    // Parse date range if provided (dates are in MM/DD/YYYY format, Central Time)
+    let startDateTime: Date | null = null;
+    let endDateTime: Date | null = null;
+    
+    if (startDate && endDate) {
+      try {
+        // Start date at 12:00:00 AM Central Time
+        startDateTime = parseCentralTimeDate(`${startDate} 12:00:00 AM`);
+        
+        // End date at 11:59:59 PM Central Time
+        endDateTime = parseCentralTimeDate(`${endDate} 11:59:59 PM`);
+      } catch (error) {
+        console.warn('Failed to parse date range:', error);
+        // Continue without date filtering if parsing fails
+        startDateTime = null;
+        endDateTime = null;
+      }
+    }
+
+    // Filter for offers between the two alliances
     const interallianceOffers = allAidOffers.filter(offer => {
-      if (this.isOfferExpired(offer)) {
-        return false;
+      // When date filtering: include expired/cancelled offers if they were accepted
+      // When not date filtering: only include currently active offers
+      if (!isDateFiltering) {
+        if (this.isOfferExpired(offer)) {
+          return false;
+        }
+      } else {
+        // For date filtering: exclude offers that were never accepted (Pending or Cancelled before acceptance)
+        // Include: Active, Accepted, Expired (after being accepted)
+        const status = offer.status?.toLowerCase() || '';
+        if (status === 'cancelled' || status === 'pending') {
+          // Skip offers that were cancelled or never moved beyond pending
+          return false;
+        }
       }
       
       const declaringInAlliance1 = alliance1NationIds.has(offer.declaringId);
@@ -458,7 +567,28 @@ export class AidService {
       const receivingInAlliance2 = alliance2NationIds.has(offer.receivingId);
 
       // Include offer if one party is in alliance1 and the other is in alliance2
-      return (declaringInAlliance1 && receivingInAlliance2) || (declaringInAlliance2 && receivingInAlliance1);
+      const isBetweenAlliances = (declaringInAlliance1 && receivingInAlliance2) || (declaringInAlliance2 && receivingInAlliance1);
+      
+      if (!isBetweenAlliances) {
+        return false;
+      }
+      
+      // Apply date filtering if date range is specified
+      if (startDateTime && endDateTime && offer.date) {
+        try {
+          const offerDate = parseCentralTimeDate(offer.date);
+          
+          // Check if offer date is within range (inclusive)
+          if (offerDate < startDateTime || offerDate > endDateTime) {
+            return false;
+          }
+        } catch (error) {
+          // If we can't parse the offer date, include it anyway (don't filter out due to parse error)
+          console.warn(`Failed to parse offer date "${offer.date}":`, error);
+        }
+      }
+      
+      return true;
     });
 
     // Categorize offers by type (cash vs tech) and direction

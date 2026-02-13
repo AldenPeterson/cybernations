@@ -42,14 +42,18 @@ const InterallianceAidPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [alliance1Id, setAlliance1Id] = useState<number | null>(null);
   const [alliance2Id, setAlliance2Id] = useState<number | null>(null);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [data, setData] = useState<InterallianceData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize alliance IDs from URL parameters
+  // Initialize alliance IDs and dates from URL parameters
   useEffect(() => {
     const alliance1Param = searchParams.get('alliance1');
     const alliance2Param = searchParams.get('alliance2');
+    const startDateParam = searchParams.get('startDate');
+    const endDateParam = searchParams.get('endDate');
     
     if (alliance1Param) {
       const id = parseInt(alliance1Param);
@@ -63,6 +67,14 @@ const InterallianceAidPage: React.FC = () => {
       if (!isNaN(id)) {
         setAlliance2Id(id);
       }
+    }
+    
+    if (startDateParam) {
+      setStartDate(startDateParam);
+    }
+    
+    if (endDateParam) {
+      setEndDate(endDateParam);
     }
   }, []); // Only run on mount
 
@@ -89,6 +101,28 @@ const InterallianceAidPage: React.FC = () => {
     setSearchParams(newSearchParams, { replace: true });
   };
 
+  const updateStartDate = (date: string) => {
+    setStartDate(date);
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (date) {
+      newSearchParams.set('startDate', date);
+    } else {
+      newSearchParams.delete('startDate');
+    }
+    setSearchParams(newSearchParams, { replace: true });
+  };
+
+  const updateEndDate = (date: string) => {
+    setEndDate(date);
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (date) {
+      newSearchParams.set('endDate', date);
+    } else {
+      newSearchParams.delete('endDate');
+    }
+    setSearchParams(newSearchParams, { replace: true });
+  };
+
   // Fetch data when both alliances are selected
   useEffect(() => {
     if (alliance1Id && alliance2Id && alliance1Id !== alliance2Id) {
@@ -96,7 +130,7 @@ const InterallianceAidPage: React.FC = () => {
     } else {
       setData(null);
     }
-  }, [alliance1Id, alliance2Id]);
+  }, [alliance1Id, alliance2Id, startDate, endDate]);
 
   const fetchInterallianceData = async () => {
     if (!alliance1Id || !alliance2Id) return;
@@ -105,8 +139,22 @@ const InterallianceAidPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
+      // Convert dates from YYYY-MM-DD (HTML5 format) to MM/DD/YYYY (backend format)
+      let formattedStartDate: string | undefined = undefined;
+      let formattedEndDate: string | undefined = undefined;
+      
+      if (startDate) {
+        const [year, month, day] = startDate.split('-');
+        formattedStartDate = `${month}/${day}/${year}`;
+      }
+      
+      if (endDate) {
+        const [year, month, day] = endDate.split('-');
+        formattedEndDate = `${month}/${day}/${year}`;
+      }
+
       const result = await apiCallWithErrorHandling(
-        API_ENDPOINTS.interallianceAid(alliance1Id, alliance2Id)
+        API_ENDPOINTS.interallianceAid(alliance1Id, alliance2Id, formattedStartDate, formattedEndDate)
       );
 
       if (result.success) {
@@ -293,6 +341,51 @@ const InterallianceAidPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Date Range Selection */}
+      <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+        <h3 className="text-lg font-semibold mb-4">Date Range (Optional)</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Start Date
+              <span className="text-gray-400 text-xs ml-2">(12:00 AM Central Time)</span>
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => updateStartDate(e.target.value)}
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              End Date
+              <span className="text-gray-400 text-xs ml-2">(11:59 PM Central Time)</span>
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => updateEndDate(e.target.value)}
+              className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+            />
+          </div>
+        </div>
+        {startDate && endDate && (
+          <div className="mt-3 text-sm text-gray-400">
+            <span className="font-medium">Filter active:</span> Showing aid offers sent between {startDate} and {endDate} (Central Time)
+            <button
+              onClick={() => {
+                updateStartDate('');
+                updateEndDate('');
+              }}
+              className="ml-3 text-blue-400 hover:text-blue-300 underline"
+            >
+              Clear dates
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Loading State */}
       {loading && (
         <div className="text-center p-10 text-gray-400">
@@ -328,17 +421,60 @@ const InterallianceAidPage: React.FC = () => {
           <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
             <h3 className="text-lg font-semibold mb-4">Summary</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Total Offers */}
               <div className="text-center p-4 bg-gray-700 rounded">
-                <div className="text-3xl font-bold text-blue-400">{data.totalOffers}</div>
-                <div className="text-sm text-gray-400 mt-1">Total Aid Offers</div>
+                <div className="text-3xl font-bold text-blue-400 mb-2">{data.totalOffers}</div>
+                <div className="text-sm text-gray-400 mb-3">Total Aid Offers</div>
+                <div className="text-xs text-gray-300 space-y-1">
+                  <div className="flex justify-between items-center px-2">
+                    <span className="text-gray-400">{data.alliance1.name} →</span>
+                    <span className="font-bold">{data.alliance1ToAlliance2.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center px-2">
+                    <span className="text-gray-400">{data.alliance2.name} →</span>
+                    <span className="font-bold">{data.alliance2ToAlliance1.length}</span>
+                  </div>
+                </div>
               </div>
+
+              {/* Cash Offers */}
               <div className="text-center p-4 bg-gray-700 rounded">
-                <div className="text-3xl font-bold text-green-400">{data.cashOffers}</div>
-                <div className="text-sm text-gray-400 mt-1">💰 Cash Offers</div>
+                <div className="text-3xl font-bold text-green-400 mb-2">{data.cashOffers}</div>
+                <div className="text-sm text-gray-400 mb-3">💰 Cash Offers</div>
+                <div className="text-xs text-gray-300 space-y-1">
+                  <div className="flex justify-between items-center px-2">
+                    <span className="text-gray-400">{data.alliance1.name} →</span>
+                    <span className="font-bold">
+                      {data.alliance1ToAlliance2.filter(o => o.type === 'cash').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center px-2">
+                    <span className="text-gray-400">{data.alliance2.name} →</span>
+                    <span className="font-bold">
+                      {data.alliance2ToAlliance1.filter(o => o.type === 'cash').length}
+                    </span>
+                  </div>
+                </div>
               </div>
+
+              {/* Tech Offers */}
               <div className="text-center p-4 bg-gray-700 rounded">
-                <div className="text-3xl font-bold text-purple-400">{data.techOffers}</div>
-                <div className="text-sm text-gray-400 mt-1">🔬 Tech Offers</div>
+                <div className="text-3xl font-bold text-purple-400 mb-2">{data.techOffers}</div>
+                <div className="text-sm text-gray-400 mb-3">🔬 Tech Offers</div>
+                <div className="text-xs text-gray-300 space-y-1">
+                  <div className="flex justify-between items-center px-2">
+                    <span className="text-gray-400">{data.alliance1.name} →</span>
+                    <span className="font-bold">
+                      {data.alliance1ToAlliance2.filter(o => o.type === 'tech').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center px-2">
+                    <span className="text-gray-400">{data.alliance2.name} →</span>
+                    <span className="font-bold">
+                      {data.alliance2ToAlliance1.filter(o => o.type === 'tech').length}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
