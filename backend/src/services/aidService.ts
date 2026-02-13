@@ -429,7 +429,8 @@ export class AidService {
   }> {
     // When date filtering is active, we need to fetch ALL offers (including expired)
     // from the database directly, not use the pre-filtered alliance data
-    const isDateFiltering = !!(startDate && endDate);
+    // Only start date triggers date filtering; end date is optional for upper bound
+    const isDateFiltering = !!startDate;
     
     let alliance1Data, alliance2Data, alliance1Record, alliance2Record;
     
@@ -528,17 +529,22 @@ export class AidService {
     let startDateTime: Date | null = null;
     let endDateTime: Date | null = null;
     
-    if (startDate && endDate) {
+    if (startDate) {
       try {
         // Start date at 12:00:00 AM Central Time
         startDateTime = parseCentralTimeDate(`${startDate} 12:00:00 AM`);
-        
+      } catch (error) {
+        console.warn('Failed to parse start date:', error);
+        startDateTime = null;
+      }
+    }
+    
+    if (endDate) {
+      try {
         // End date at 11:59:59 PM Central Time
         endDateTime = parseCentralTimeDate(`${endDate} 11:59:59 PM`);
       } catch (error) {
-        console.warn('Failed to parse date range:', error);
-        // Continue without date filtering if parsing fails
-        startDateTime = null;
+        console.warn('Failed to parse end date:', error);
         endDateTime = null;
       }
     }
@@ -573,13 +579,17 @@ export class AidService {
         return false;
       }
       
-      // Apply date filtering if date range is specified
-      if (startDateTime && endDateTime && offer.date) {
+      // Apply date filtering if start date is specified (end date is optional)
+      if (startDateTime && offer.date) {
         try {
           const offerDate = parseCentralTimeDate(offer.date);
           
-          // Check if offer date is within range (inclusive)
-          if (offerDate < startDateTime || offerDate > endDateTime) {
+          // Check if offer date is >= startDate (required)
+          // and <= endDate (optional, only if provided)
+          if (offerDate < startDateTime) {
+            return false;
+          }
+          if (endDateTime && offerDate > endDateTime) {
             return false;
           }
         } catch (error) {

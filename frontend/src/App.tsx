@@ -80,7 +80,7 @@ function App() {
         <Route path="/aid" element={<AllianceRedirect tabName="aid" />} />
         
         {/* Interalliance Aid - Top-level aid tool */}
-        <Route path="/interalliance-aid" element={<InterallianceAidPage />} />
+        <Route path="/interalliance-aid" element={<InterallianceAidPage selectedAllianceId={selectedAllianceId} />} />
         
         <Route path="/nations/:allianceId" element={<NationsPage />} />
         <Route path="/nations" element={<AllianceRedirect tabName="nations" />} />

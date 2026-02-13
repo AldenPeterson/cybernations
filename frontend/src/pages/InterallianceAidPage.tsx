@@ -37,7 +37,11 @@ interface InterallianceData {
   alliance2ToAlliance1: AidOffer[];
 }
 
-const InterallianceAidPage: React.FC = () => {
+interface InterallianceAidPageProps {
+  selectedAllianceId?: number | null;
+}
+
+const InterallianceAidPage: React.FC<InterallianceAidPageProps> = ({ selectedAllianceId }) => {
   const { alliances, loading: alliancesLoading } = useAlliances();
   const [searchParams, setSearchParams] = useSearchParams();
   const [alliance1Id, setAlliance1Id] = useState<number | null>(null);
@@ -48,7 +52,7 @@ const InterallianceAidPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize alliance IDs and dates from URL parameters
+  // Initialize alliance IDs and dates from URL parameters or props
   useEffect(() => {
     const alliance1Param = searchParams.get('alliance1');
     const alliance2Param = searchParams.get('alliance2');
@@ -60,6 +64,13 @@ const InterallianceAidPage: React.FC = () => {
       if (!isNaN(id)) {
         setAlliance1Id(id);
       }
+    } else if (selectedAllianceId && !alliance1Id) {
+      // Default to selectedAllianceId if no URL param and nothing set yet
+      setAlliance1Id(selectedAllianceId);
+      // Also update URL to reflect the default
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.set('alliance1', selectedAllianceId.toString());
+      setSearchParams(newSearchParams, { replace: true });
     }
     
     if (alliance2Param) {
@@ -76,7 +87,7 @@ const InterallianceAidPage: React.FC = () => {
     if (endDateParam) {
       setEndDate(endDateParam);
     }
-  }, []); // Only run on mount
+  }, [selectedAllianceId, searchParams]); // Add selectedAllianceId to dependencies
 
   // Update URL when alliance selections change
   const updateAlliance1Id = (id: number | null) => {
@@ -120,6 +131,15 @@ const InterallianceAidPage: React.FC = () => {
     } else {
       newSearchParams.delete('endDate');
     }
+    setSearchParams(newSearchParams, { replace: true });
+  };
+
+  const clearDates = () => {
+    setStartDate('');
+    setEndDate('');
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete('startDate');
+    newSearchParams.delete('endDate');
     setSearchParams(newSearchParams, { replace: true });
   };
 
@@ -198,6 +218,7 @@ const InterallianceAidPage: React.FC = () => {
   const getStatusColor = (status: string): string => {
     const statusLower = status.toLowerCase();
     if (statusLower === 'pending') return 'bg-yellow-900 text-yellow-200';
+    if (statusLower === 'approved') return 'bg-purple-900 text-purple-200';
     if (statusLower === 'accepted') return 'bg-green-900 text-green-200';
     if (statusLower === 'active') return 'bg-blue-900 text-blue-200';
     if (statusLower === 'cancelled') return 'bg-red-900 text-red-200';
@@ -214,48 +235,63 @@ const InterallianceAidPage: React.FC = () => {
       );
     }
 
+    // Sort offers by date (most recent first)
+    const sortedOffers = [...offers].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+    });
+
     return (
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800">
+        <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800 table-fixed">
           <thead>
             <tr className="bg-gray-700">
-              <th className="p-3 border border-gray-600 text-left text-white font-bold">Sender</th>
-              <th className="p-3 border border-gray-600 text-left text-white font-bold">Recipient</th>
-              <th className="p-3 border border-gray-600 text-center text-white font-bold">Type</th>
-              <th className="p-3 border border-gray-600 text-center text-white font-bold">Aid Amount</th>
-              <th className="p-3 border border-gray-600 text-center text-white font-bold">Status</th>
-              <th className="p-3 border border-gray-600 text-left text-white font-bold">Reason</th>
-              <th className="p-3 border border-gray-600 text-center text-white font-bold">Date</th>
+              <th className="p-3 border border-gray-600 text-left text-white font-bold w-[16%]">Sender</th>
+              <th className="p-3 border border-gray-600 text-left text-white font-bold w-[16%]">Recipient</th>
+              <th className="p-3 border border-gray-600 text-center text-white font-bold w-[10%]">Type</th>
+              <th className="p-3 border border-gray-600 text-center text-white font-bold w-[12%]">Aid Amount</th>
+              <th className="p-3 border border-gray-600 text-center text-white font-bold w-[10%]">Status</th>
+              <th className="p-3 border border-gray-600 text-left text-white font-bold w-[24%]">Reason</th>
+              <th className="p-3 border border-gray-600 text-center text-white font-bold w-[12%]">Date</th>
             </tr>
           </thead>
           <tbody>
-            {offers.map((offer) => (
+            {sortedOffers.map((offer) => (
               <tr key={offer.aidId} className="bg-gray-800 hover:bg-gray-700">
-                <td className="p-2 border border-gray-700 text-gray-200">
-                  <a
-                    href={`https://www.cybernations.net/search_aid.asp?search=${offer.senderId}&Extended=1`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline font-bold"
-                  >
-                    {offer.senderNation}
-                  </a>
-                  <br />
-                  <span className="text-gray-400 text-xs">{offer.senderRuler}</span>
+                <td className="p-2 border border-gray-700 text-gray-200 w-[16%] overflow-hidden">
+                  <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                    <a
+                      href={`https://www.cybernations.net/search_aid.asp?search=${offer.senderId}&Extended=1`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:underline font-bold"
+                      title={offer.senderNation}
+                    >
+                      {offer.senderNation}
+                    </a>
+                  </div>
+                  <div className="text-gray-400 text-xs overflow-hidden text-ellipsis whitespace-nowrap" title={offer.senderRuler}>
+                    {offer.senderRuler}
+                  </div>
                 </td>
-                <td className="p-2 border border-gray-700 text-gray-200">
-                  <a
-                    href={`https://www.cybernations.net/search_aid.asp?search=${offer.recipientId}&Extended=1`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline font-bold"
-                  >
-                    {offer.recipientNation}
-                  </a>
-                  <br />
-                  <span className="text-gray-400 text-xs">{offer.recipientRuler}</span>
+                <td className="p-2 border border-gray-700 text-gray-200 w-[16%] overflow-hidden">
+                  <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                    <a
+                      href={`https://www.cybernations.net/search_aid.asp?search=${offer.recipientId}&Extended=1`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:underline font-bold"
+                      title={offer.recipientNation}
+                    >
+                      {offer.recipientNation}
+                    </a>
+                  </div>
+                  <div className="text-gray-400 text-xs overflow-hidden text-ellipsis whitespace-nowrap" title={offer.recipientRuler}>
+                    {offer.recipientRuler}
+                  </div>
                 </td>
-                <td className="p-2 border border-gray-700 text-center">
+                <td className="p-2 border border-gray-700 text-center w-[10%]">
                   <span
                     className={`px-2 py-1 rounded text-xs font-bold ${
                       offer.type === 'tech'
@@ -266,18 +302,20 @@ const InterallianceAidPage: React.FC = () => {
                     {offer.type === 'tech' ? '🔬 Tech' : '💰 Cash'}
                   </span>
                 </td>
-                <td className="p-2 border border-gray-700 text-center text-gray-200 font-bold">
+                <td className="p-2 border border-gray-700 text-center text-gray-200 font-bold w-[12%]">
                   {formatAidValue(offer.money, offer.technology, offer.soldiers)}
                 </td>
-                <td className="p-2 border border-gray-700 text-center">
+                <td className="p-2 border border-gray-700 text-center w-[10%]">
                   <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusColor(offer.status)}`}>
                     {offer.status}
                   </span>
                 </td>
-                <td className="p-2 border border-gray-700 text-gray-300 text-xs">
-                  {offer.reason || '-'}
+                <td className="p-2 border border-gray-700 text-gray-300 text-xs w-[24%]">
+                  <div className="line-clamp-2" title={offer.reason || '-'}>
+                    {offer.reason || '-'}
+                  </div>
                 </td>
-                <td className="p-2 border border-gray-700 text-center text-gray-400 text-xs">
+                <td className="p-2 border border-gray-700 text-center text-gray-400 text-xs w-[12%] whitespace-nowrap">
                   {offer.date}
                 </td>
               </tr>
@@ -343,7 +381,10 @@ const InterallianceAidPage: React.FC = () => {
 
       {/* Date Range Selection */}
       <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-        <h3 className="text-lg font-semibold mb-4">Date Range (Optional)</h3>
+        <h3 className="text-lg font-semibold mb-4">Date Filter (Optional)</h3>
+        <p className="text-sm text-gray-400 mb-3">
+          Filter offers by start date. End date is optional to set an upper bound.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">
@@ -359,7 +400,7 @@ const InterallianceAidPage: React.FC = () => {
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">
-              End Date
+              End Date (Optional)
               <span className="text-gray-400 text-xs ml-2">(11:59 PM Central Time)</span>
             </label>
             <input
@@ -370,14 +411,16 @@ const InterallianceAidPage: React.FC = () => {
             />
           </div>
         </div>
-        {startDate && endDate && (
+        {startDate && (
           <div className="mt-3 text-sm text-gray-400">
-            <span className="font-medium">Filter active:</span> Showing aid offers sent between {startDate} and {endDate} (Central Time)
+            <span className="font-medium">Filter active:</span>{' '}
+            {endDate 
+              ? `Showing aid offers sent between ${startDate} and ${endDate}`
+              : `Showing aid offers sent on or after ${startDate}`
+            }
+            {' (Central Time)'}
             <button
-              onClick={() => {
-                updateStartDate('');
-                updateEndDate('');
-              }}
+              onClick={clearDates}
               className="ml-3 text-blue-400 hover:text-blue-300 underline"
             >
               Clear dates
