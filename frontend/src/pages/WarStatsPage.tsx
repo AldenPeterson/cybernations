@@ -539,7 +539,6 @@ const WarStatsPage: React.FC = () => {
   return (
     <TableContainer>
       <div className={tableClasses.header}>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-200 mb-2 tracking-tight">War Stats</h1>
         <p className="mt-0 mb-3 md:mb-5 text-gray-400 text-sm md:text-base leading-relaxed">
           War statistics for wars declared after 2/5/2026. Shows total damages and net damage by alliance.
         </p>
