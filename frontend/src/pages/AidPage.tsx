@@ -4,6 +4,7 @@ import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import { useAlliances } from '../contexts/AlliancesContext';
 import PageContainer from '../components/PageContainer';
 import { EMPTY_CELL_BG } from '../styles/tableClasses';
+import RecommendationsPage from './RecommendationsPage';
 
 interface Alliance {
   id: number;
@@ -151,6 +152,9 @@ const AidPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { alliances, loading: alliancesLoading } = useAlliances();
   const [alliance, setAlliance] = useState<Alliance | null>(null);
+  
+  // Tab state - sync with URL parameter
+  const [activeTab, setActiveTab] = useState<'overview' | 'recommendations'>('overview');
   const [aidSlots, setAidSlots] = useState<NationAidSlots[]>([]);
   const [allianceStats, setAllianceStats] = useState<AllianceStats | null>(null);
   const [allianceAidStats, setAllianceAidStats] = useState<AllianceAidStats[]>([]);
@@ -197,6 +201,16 @@ const AidPage: React.FC = () => {
   useEffect(() => {
     setShowRecommendations(parseBooleanParam(searchParams.get('showRecommendations')));
   }, []); // Empty dependency array - only run on mount
+
+  // Initialize and sync active tab from URL parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'recommendations') {
+      setActiveTab('recommendations');
+    } else {
+      setActiveTab('overview');
+    }
+  }, [searchParams]);
 
   // Update alliance when alliances load or allianceId changes
   useEffect(() => {
@@ -803,6 +817,45 @@ const AidPage: React.FC = () => {
 
   return (
     <PageContainer className="p-5">
+      {/* Tabs */}
+      <div className="mb-6 border-b border-gray-700">
+        <div className="flex gap-4">
+          <button
+            onClick={() => {
+              setActiveTab('overview');
+              const newSearchParams = new URLSearchParams(searchParams);
+              newSearchParams.set('tab', 'overview');
+              setSearchParams(newSearchParams, { replace: true });
+            }}
+            className={`px-4 py-2 font-semibold transition-colors ${
+              activeTab === 'overview'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            Aid Overview
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('recommendations');
+              const newSearchParams = new URLSearchParams(searchParams);
+              newSearchParams.set('tab', 'recommendations');
+              setSearchParams(newSearchParams, { replace: true });
+            }}
+            className={`px-4 py-2 font-semibold transition-colors ${
+              activeTab === 'recommendations'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            Recommendations
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'overview' && (
+        <>
       {/* Alliance Stats - Collapsible */}
       {allianceStats && allianceStats.totalNations > 0 && (
         <div className="mb-5 p-4 bg-transparent rounded-lg border border-slate-300">
@@ -1612,6 +1665,12 @@ const AidPage: React.FC = () => {
         <div className="text-center p-10 text-gray-600">
           No aid slot data found for this alliance.
         </div>
+      )}
+        </>
+      )}
+      
+      {activeTab === 'recommendations' && allianceId && (
+        <RecommendationsPage />
       )}
     </PageContainer>
   );

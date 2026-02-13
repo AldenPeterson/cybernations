@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { useAlliances } from '../contexts/AlliancesContext';
+import NavigationDropdown, { MobileNavigationDropdown } from './NavigationDropdown';
 
 interface NavigationBarProps {
   selectedAllianceId: number | null;
@@ -17,6 +18,29 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Define navigation structure
+  const aidToolsItems = [
+    { label: 'Aid', path: selectedAllianceId ? `/aid/${selectedAllianceId}` : '/aid' },
+    { label: 'Nation Editor', path: selectedAllianceId ? `/nations/${selectedAllianceId}` : '/nations', devOnly: true },
+  ];
+
+  const warToolsItems = [
+    { label: 'Wars', path: selectedAllianceId ? `/wars/${selectedAllianceId}` : '/wars' },
+  ];
+
+  const statsItems = [
+    { label: 'Aid Efficiency', path: '/aid-efficiency' },
+    { label: 'Global Wars', path: '/global-wars' },
+    { label: 'Nation Aid Efficiency', path: '/nation-aid-efficiency' },
+    { label: 'Nuclear', path: '/nuclear-stats' },
+    { label: 'War', path: '/war-stats' },
+  ];
+
+  const utilitiesItems = [
+    { label: 'NS Comparisons', path: '/ns-comparisons' },
+    { label: 'Shame Offers', path: '/shame-offers' },
+  ];
+
   useEffect(() => {
     // Set Doombrella as default if it exists and no alliance is already selected
     // Only set default if we're not on an alliance-specific page (to avoid race condition with URL params)
@@ -24,7 +48,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       const pathParts = location.pathname.split('/');
       const tabName = pathParts[1];
       const allianceIdParam = pathParts[2];
-      const isOnAllianceSpecificPage = allianceIdParam && ['aid', 'recommendations', 'nations', 'wars'].includes(tabName);
+      const isOnAllianceSpecificPage = allianceIdParam && ['aid', 'nations', 'wars'].includes(tabName);
       
       const doombrella = alliances.find((alliance: any) => 
         alliance.name.toLowerCase().includes('doombrella')
@@ -48,12 +72,12 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     const pathParts = currentPath.split('/');
     const tabName = pathParts[1];
     
-    if (allianceId && tabName && ['aid', 'recommendations', 'nations', 'wars'].includes(tabName)) {
+    if (allianceId && tabName && ['aid', 'nations', 'wars'].includes(tabName)) {
       navigate(`/${tabName}/${allianceId}`);
     } else if (allianceId && tabName === 'aid') {
       navigate(`/${tabName}/${allianceId}`);
-    } else if (tabName === 'nation-aid-efficiency') {
-      // For nation-aid-efficiency page, update query parameter
+    } else if (tabName === 'nation-aid-efficiency' || tabName === 'events') {
+      // For nation-aid-efficiency and events pages, update query parameter
       const searchParams = new URLSearchParams(location.search);
       if (allianceId) {
         searchParams.set('allianceId', allianceId.toString());
@@ -69,50 +93,44 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     return pathParts[1] === tabName;
   };
 
-  const getTabLink = (tabName: string): string => {
-    if (tabName === 'shame-offers') {
-      return '/shame-offers';
-    }
-    
-    if (selectedAllianceId) {
-      return `/${tabName}/${selectedAllianceId}`;
-    }
-    
-    return `/${tabName}`;
-  };
-
   const getCurrentTabName = (): string => {
     const pathParts = location.pathname.split('/');
     const tabName = pathParts[1];
     
     switch(tabName) {
       case 'aid':
-        return 'Aid';
-      case 'ns-comparisons':
-        return 'NS Comparisons';
-      case 'recommendations':
-        return 'Aid Recommendations';
+        return 'Aid Tools - Aid';
       case 'nations':
-        return 'Nation Editor';
+        return 'Aid Tools - Nation Editor';
       case 'wars':
-        return 'Wars';
-      case 'global-wars':
-        return 'Global Wars';
+        return 'War Tools - Wars';
+      case 'ns-comparisons':
+        return 'Utilities - NS Comparisons';
       case 'shame-offers':
-        return 'Shame Offers';
+        return 'Utilities - Shame Offers';
+      case 'global-wars':
+        return 'Stats - Global Wars';
       case 'nuclear-stats':
-        return 'Nuclear Stats';
+        return 'Stats - Nuclear';
       case 'aid-efficiency':
-        return 'Aid Efficiency';
+        return 'Stats - Aid Efficiency';
       case 'nation-aid-efficiency':
-        return 'Aid Slot Efficiency';
+        return 'Stats - Nation Aid Efficiency';
+      case 'war-stats':
+        return 'Stats - War';
       case 'events':
         return 'Events';
-      case 'war-stats':
-        return 'War Stats';
       default:
         return 'CyberNations';
     }
+  };
+
+  // Check if current page uses alliance selector
+  const isAllianceRelevant = (): boolean => {
+    const pathParts = location.pathname.split('/');
+    const tabName = pathParts[1];
+    // Only these pages use the alliance selector
+    return ['aid', 'nations', 'wars', 'nation-aid-efficiency', 'events'].includes(tabName);
   };
 
   return (
@@ -135,121 +153,12 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
 
         {/* Desktop Navigation Links */}
         <div className="hidden lg:flex gap-1 items-center flex-1">
+          <NavigationDropdown label="Aid Tools" items={aidToolsItems} />
+          <NavigationDropdown label="War Tools" items={warToolsItems} />
+          <NavigationDropdown label="Stats" items={statsItems} />
+          <NavigationDropdown label="Utilities" items={utilitiesItems} />
           <Link 
-            to={getTabLink('aid')}
-            className={clsx(
-              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
-              isActiveTab('aid') 
-                ? 'bg-primary text-white font-semibold shadow-md' 
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            Aid
-          </Link>
-          <Link 
-            to={'/ns-comparisons'}
-            className={clsx(
-              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
-              isActiveTab('ns-comparisons') 
-                ? 'bg-primary text-white font-semibold shadow-md' 
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            NS Comparisons
-          </Link>
-          <Link 
-            to={getTabLink('recommendations')}
-            className={clsx(
-              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
-              isActiveTab('recommendations') 
-                ? 'bg-primary text-white font-semibold shadow-md' 
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            Aid Recommendations
-          </Link>
-          {/* Only show Nation Editor in development */}
-          {import.meta.env.DEV && (
-            <Link 
-              to={getTabLink('nations')}
-              className={clsx(
-                'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
-                isActiveTab('nations') 
-                  ? 'bg-primary text-white font-semibold shadow-md' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              Nation Editor
-            </Link>
-          )}
-          <Link 
-            to={getTabLink('wars')}
-            className={clsx(
-              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
-              isActiveTab('wars') 
-                ? 'bg-primary text-white font-semibold shadow-md' 
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            Wars
-          </Link>
-          <Link 
-            to={'/global-wars'}
-            className={clsx(
-              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
-              isActiveTab('global-wars') 
-                ? 'bg-primary text-white font-semibold shadow-md' 
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            Global Wars
-          </Link>
-          <Link 
-            to={getTabLink('shame-offers')}
-            className={clsx(
-              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
-              isActiveTab('shame-offers') 
-                ? 'bg-primary text-white font-semibold shadow-md' 
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            Shame Offers
-          </Link>
-          <Link 
-            to={'/nuclear-stats'}
-            className={clsx(
-              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
-              isActiveTab('nuclear-stats') 
-                ? 'bg-primary text-white font-semibold shadow-md' 
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            Nuclear Stats
-          </Link>
-          <Link 
-            to={'/aid-efficiency'}
-            className={clsx(
-              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
-              isActiveTab('aid-efficiency') 
-                ? 'bg-primary text-white font-semibold shadow-md' 
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            Aid Efficiency
-          </Link>
-          <Link 
-            to={'/nation-aid-efficiency'}
-            className={clsx(
-              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
-              isActiveTab('nation-aid-efficiency') 
-                ? 'bg-primary text-white font-semibold shadow-md' 
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            Nation Aid Efficiency
-          </Link>
-          <Link 
-            to={'/events'}
+            to="/events"
             className={clsx(
               'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
               isActiveTab('events') 
@@ -258,17 +167,6 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             )}
           >
             Events
-          </Link>
-          <Link 
-            to={'/war-stats'}
-            className={clsx(
-              'no-underline px-4 py-2.5 rounded-lg transition-all duration-200 font-medium text-sm whitespace-nowrap',
-              isActiveTab('war-stats') 
-                ? 'bg-primary text-white font-semibold shadow-md' 
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            )}
-          >
-            War Stats
           </Link>
         </div>
 
@@ -285,8 +183,12 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
           <select
             value={selectedAllianceId || ''}
             onChange={(e) => handleAllianceChange(e.target.value ? parseInt(e.target.value) : null)}
-            className="px-1.5 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2.5 text-xs sm:text-sm rounded-lg border-2 border-gray-600 w-[160px] sm:w-[200px] lg:min-w-[280px] bg-gray-800 font-medium text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 hover:border-gray-500"
-            disabled={loading}
+            className={`px-1.5 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2.5 text-xs sm:text-sm rounded-lg border-2 w-[160px] sm:w-[200px] lg:min-w-[280px] font-medium focus:outline-none transition-all duration-200 ${
+              isAllianceRelevant()
+                ? 'border-gray-600 bg-gray-800 text-gray-200 hover:border-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer'
+                : 'border-gray-700 bg-gray-900 text-gray-500 cursor-not-allowed opacity-60'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+            disabled={loading || !isAllianceRelevant()}
           >
             <option value="">Choose...</option>
             {alliances.map(alliance => (
@@ -308,131 +210,28 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-gray-700 bg-gray-900">
           <div className="px-4 py-2 flex flex-col gap-1">
+            <MobileNavigationDropdown 
+              label="Aid Tools" 
+              items={aidToolsItems}
+              onItemClick={() => setMobileMenuOpen(false)}
+            />
+            <MobileNavigationDropdown 
+              label="War Tools" 
+              items={warToolsItems}
+              onItemClick={() => setMobileMenuOpen(false)}
+            />
+            <MobileNavigationDropdown 
+              label="Stats" 
+              items={statsItems}
+              onItemClick={() => setMobileMenuOpen(false)}
+            />
+            <MobileNavigationDropdown 
+              label="Utilities" 
+              items={utilitiesItems}
+              onItemClick={() => setMobileMenuOpen(false)}
+            />
             <Link 
-              to={getTabLink('aid')}
-              onClick={() => setMobileMenuOpen(false)}
-              className={clsx(
-                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
-                isActiveTab('aid') 
-                  ? 'bg-primary text-white font-semibold shadow-md' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              Aid
-            </Link>
-            <Link 
-              to={'/ns-comparisons'}
-              onClick={() => setMobileMenuOpen(false)}
-              className={clsx(
-                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
-                isActiveTab('ns-comparisons') 
-                  ? 'bg-primary text-white font-semibold shadow-md' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              NS Comparisons
-            </Link>
-            <Link 
-              to={getTabLink('recommendations')}
-              onClick={() => setMobileMenuOpen(false)}
-              className={clsx(
-                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
-                isActiveTab('recommendations') 
-                  ? 'bg-primary text-white font-semibold shadow-md' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              Aid Recommendations
-            </Link>
-            {/* Only show Nation Editor in development */}
-            {import.meta.env.DEV && (
-              <Link 
-                to={getTabLink('nations')}
-                onClick={() => setMobileMenuOpen(false)}
-                className={clsx(
-                  'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
-                  isActiveTab('nations') 
-                    ? 'bg-primary text-white font-semibold shadow-md' 
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                )}
-              >
-                Nation Editor
-              </Link>
-            )}
-            <Link 
-              to={getTabLink('wars')}
-              onClick={() => setMobileMenuOpen(false)}
-              className={clsx(
-                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
-                isActiveTab('wars') 
-                  ? 'bg-primary text-white font-semibold shadow-md' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              Wars
-            </Link>
-            <Link 
-              to={'/global-wars'}
-              onClick={() => setMobileMenuOpen(false)}
-              className={clsx(
-                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
-                isActiveTab('global-wars') 
-                  ? 'bg-primary text-white font-semibold shadow-md' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              Global Wars
-            </Link>
-            <Link 
-              to={getTabLink('shame-offers')}
-              onClick={() => setMobileMenuOpen(false)}
-              className={clsx(
-                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
-                isActiveTab('shame-offers') 
-                  ? 'bg-primary text-white font-semibold shadow-md' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              Shame Offers
-            </Link>
-            <Link 
-              to={'/nuclear-stats'}
-              onClick={() => setMobileMenuOpen(false)}
-              className={clsx(
-                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
-                isActiveTab('nuclear-stats') 
-                  ? 'bg-primary text-white font-semibold shadow-md' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              Nuclear Stats
-            </Link>
-            <Link 
-              to={'/aid-efficiency'}
-              onClick={() => setMobileMenuOpen(false)}
-              className={clsx(
-                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
-                isActiveTab('aid-efficiency') 
-                  ? 'bg-primary text-white font-semibold shadow-md' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              Aid Efficiency
-            </Link>
-            <Link 
-              to={'/nation-aid-efficiency'}
-              onClick={() => setMobileMenuOpen(false)}
-              className={clsx(
-                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
-                isActiveTab('nation-aid-efficiency') 
-                  ? 'bg-primary text-white font-semibold shadow-md' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              Nation Aid Efficiency
-            </Link>
-            <Link 
-              to={'/events'}
+              to="/events"
               onClick={() => setMobileMenuOpen(false)}
               className={clsx(
                 'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
@@ -442,18 +241,6 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
               )}
             >
               Events
-            </Link>
-            <Link 
-              to={'/war-stats'}
-              onClick={() => setMobileMenuOpen(false)}
-              className={clsx(
-                'no-underline px-4 py-3 rounded-lg transition-all duration-200 font-medium text-sm',
-                isActiveTab('war-stats') 
-                  ? 'bg-primary text-white font-semibold shadow-md' 
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              War Stats
             </Link>
           </div>
         </div>

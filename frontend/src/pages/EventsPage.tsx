@@ -61,11 +61,14 @@ const EventsPage: React.FC = () => {
     searchParams.get('allianceId') ? parseInt(searchParams.get('allianceId')!) : null
   );
   const [minStrength, setMinStrength] = useState<number | null>(
-    searchParams.get('minStrength') ? parseInt(searchParams.get('minStrength')!) : 1000
+    searchParams.get('minStrength') ? parseInt(searchParams.get('minStrength')!) : 2000
+  );
+  const [showAllEvents, setShowAllEvents] = useState<boolean>(
+    searchParams.get('showAll') === 'true' || !searchParams.has('showAll') // Default to true
   );
   
   // Update URL when filters change
-  const updateUrlParams = (updates: { type?: FilterType; eventType?: EventTypeFilter; allianceId?: number | null; minStrength?: number | null; offset?: number }) => {
+  const updateUrlParams = (updates: { type?: FilterType; eventType?: EventTypeFilter; allianceId?: number | null; minStrength?: number | null; offset?: number; showAll?: boolean }) => {
     const newParams = new URLSearchParams(searchParams);
     
     if (updates.type !== undefined) {
@@ -93,11 +96,20 @@ const EventsPage: React.FC = () => {
     }
     
     if (updates.minStrength !== undefined) {
-      // If minStrength is 1000 (the default), remove it from URL to keep URLs clean
-      if (updates.minStrength === null || updates.minStrength === 1000) {
+      // If minStrength is 2000 (the default), remove it from URL to keep URLs clean
+      if (updates.minStrength === null || updates.minStrength === 2000) {
         newParams.delete('minStrength');
       } else {
         newParams.set('minStrength', updates.minStrength.toString());
+      }
+    }
+    
+    if (updates.showAll !== undefined) {
+      // Only add to URL if false (true is default)
+      if (updates.showAll === false) {
+        newParams.set('showAll', 'false');
+      } else {
+        newParams.delete('showAll');
       }
     }
     
@@ -118,8 +130,9 @@ const EventsPage: React.FC = () => {
     const urlFilterType = getFilterFromUrl('type', 'all') as FilterType;
     const urlEventTypeFilter = getFilterFromUrl('eventType', 'all') as EventTypeFilter;
     const urlAllianceId = searchParams.get('allianceId') ? parseInt(searchParams.get('allianceId')!) : null;
-    const urlMinStrength = searchParams.get('minStrength') ? parseInt(searchParams.get('minStrength')!) : 1000;
+    const urlMinStrength = searchParams.get('minStrength') ? parseInt(searchParams.get('minStrength')!) : 2000;
     const urlOffset = parseInt(searchParams.get('offset') || '0');
+    const urlShowAll = searchParams.get('showAll') === 'true' || !searchParams.has('showAll');
     
     // Only update state if URL params differ from current state
     if (urlFilterType !== filterType) {
@@ -136,6 +149,9 @@ const EventsPage: React.FC = () => {
     }
     if (urlOffset !== offset) {
       setOffset(urlOffset);
+    }
+    if (urlShowAll !== showAllEvents) {
+      setShowAllEvents(urlShowAll);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]); // Only run when searchParams change externally
@@ -160,12 +176,13 @@ const EventsPage: React.FC = () => {
           params.eventType = eventTypeFilter;
         }
         
-        if (selectedAllianceId !== null) {
+        // Only apply alliance filter if not showing all events
+        if (!showAllEvents && selectedAllianceId !== null) {
           params.allianceId = selectedAllianceId;
         }
         
-        // Always include minStrength (defaults to 1000)
-        params.minStrength = minStrength ?? 1000;
+        // Always include minStrength (defaults to 2000)
+        params.minStrength = minStrength ?? 2000;
         
         const response = await apiCallWithErrorHandling(API_ENDPOINTS.events(params)) as EventsResponse;
         
@@ -193,7 +210,7 @@ const EventsPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [limit, offset, filterType, eventTypeFilter, selectedAllianceId, minStrength]);
+  }, [limit, offset, filterType, eventTypeFilter, selectedAllianceId, minStrength, showAllEvents]);
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -345,8 +362,6 @@ const EventsPage: React.FC = () => {
   return (
     <PageContainer className="px-4 sm:px-6 lg:px-8">
       <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
-        <h1 className="text-xl sm:text-2xl font-bold text-white">Events</h1>
-        
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-300">Type:</label>
@@ -386,41 +401,37 @@ const EventsPage: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-300">Alliance:</label>
-            <select
-              value={selectedAllianceId || ''}
-              onChange={(e) => {
-                const newAllianceId = e.target.value ? parseInt(e.target.value) : null;
-                setSelectedAllianceId(newAllianceId);
-                setOffset(0);
-                updateUrlParams({ allianceId: newAllianceId, offset: 0 });
-              }}
-              className="px-3 py-1.5 bg-gray-800 text-white border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm min-w-[200px]"
-            >
-              <option value="">All Alliances</option>
-              {alliances.map(alliance => (
-                <option key={alliance.id} value={alliance.id}>
-                  {alliance.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="flex items-center gap-2">
             <label className="text-sm text-gray-300">Min NS:</label>
             <input
               type="number"
               value={minStrength ?? ''}
               onChange={(e) => {
-                const value = e.target.value === '' ? 1000 : parseInt(e.target.value);
+                const value = e.target.value === '' ? 2000 : parseInt(e.target.value);
                 setMinStrength(value);
                 setOffset(0);
                 updateUrlParams({ minStrength: value, offset: 0 });
               }}
-              placeholder="1000"
+              placeholder="2000"
               min="0"
               className="px-3 py-1.5 bg-gray-800 text-white border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm w-24"
             />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showAllEvents}
+                onChange={(e) => {
+                  const newValue = e.target.checked;
+                  setShowAllEvents(newValue);
+                  setOffset(0);
+                  updateUrlParams({ showAll: newValue, offset: 0 });
+                }}
+                className="w-4 h-4 text-primary bg-gray-800 border-gray-600 rounded focus:ring-2 focus:ring-primary/50"
+              />
+              Show All Events
+            </label>
           </div>
         </div>
       </div>

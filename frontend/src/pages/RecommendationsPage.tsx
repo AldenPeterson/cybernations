@@ -333,8 +333,6 @@ const RecommendationsPage: React.FC = () => {
 
   return (
     <PageContainer className="p-5">
-      <h1>{alliance.name} - Aid Recommendations</h1>
-
       {/* Slot Counts Summary */}
       {slotCounts && (
         <SlotCountsSummary 

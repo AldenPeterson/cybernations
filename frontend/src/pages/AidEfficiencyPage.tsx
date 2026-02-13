@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
-import { tableClasses } from '../styles/tableClasses';
 import TableContainer from '../components/TableContainer';
 
 interface AidEfficiencyDataPoint {
@@ -682,8 +681,6 @@ const AidEfficiencyPage: React.FC = () => {
 
   return (
     <TableContainer>
-      <h1 className={tableClasses.title}>Aid Efficiency</h1>
-      
       {/* Show loading/error states inside the container instead of early return */}
       {loading && (
         <div className="p-5 text-center">
