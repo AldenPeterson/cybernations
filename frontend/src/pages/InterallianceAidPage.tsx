@@ -243,86 +243,147 @@ const InterallianceAidPage: React.FC<InterallianceAidPageProps> = ({ selectedAll
     });
 
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800 table-fixed">
-          <thead>
-            <tr className="bg-gray-700">
-              <th className="p-3 border border-gray-600 text-left text-white font-bold w-[16%]">Sender</th>
-              <th className="p-3 border border-gray-600 text-left text-white font-bold w-[16%]">Recipient</th>
-              <th className="p-3 border border-gray-600 text-center text-white font-bold w-[10%]">Type</th>
-              <th className="p-3 border border-gray-600 text-center text-white font-bold w-[12%]">Aid Amount</th>
-              <th className="p-3 border border-gray-600 text-center text-white font-bold w-[10%]">Status</th>
-              <th className="p-3 border border-gray-600 text-left text-white font-bold w-[24%]">Reason</th>
-              <th className="p-3 border border-gray-600 text-center text-white font-bold w-[12%]">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedOffers.map((offer) => (
-              <tr key={offer.aidId} className="bg-gray-800 hover:bg-gray-700">
-                <td className="p-2 border border-gray-700 text-gray-200 w-[16%] overflow-hidden">
-                  <div className="overflow-hidden text-ellipsis whitespace-nowrap">
-                    <a
-                      href={`https://www.cybernations.net/search_aid.asp?search=${offer.senderId}&Extended=1`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-400 hover:underline font-bold"
-                      title={offer.senderNation}
+      <>
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800 table-fixed">
+            <thead>
+              <tr className="bg-gray-700">
+                <th className="p-3 border border-gray-600 text-left text-white font-bold w-[16%]">Sender</th>
+                <th className="p-3 border border-gray-600 text-left text-white font-bold w-[16%]">Recipient</th>
+                <th className="p-3 border border-gray-600 text-center text-white font-bold w-[10%]">Type</th>
+                <th className="p-3 border border-gray-600 text-center text-white font-bold w-[12%]">Aid Amount</th>
+                <th className="p-3 border border-gray-600 text-center text-white font-bold w-[10%]">Status</th>
+                <th className="p-3 border border-gray-600 text-left text-white font-bold w-[24%]">Reason</th>
+                <th className="p-3 border border-gray-600 text-center text-white font-bold w-[12%]">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedOffers.map((offer) => (
+                <tr key={offer.aidId} className="bg-gray-800 hover:bg-gray-700">
+                  <td className="p-2 border border-gray-700 text-gray-200 w-[16%] overflow-hidden">
+                    <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                      <a
+                        href={`https://www.cybernations.net/search_aid.asp?search=${offer.senderId}&Extended=1`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:underline font-bold"
+                        title={offer.senderNation}
+                      >
+                        {offer.senderNation}
+                      </a>
+                    </div>
+                    <div className="text-gray-400 text-xs overflow-hidden text-ellipsis whitespace-nowrap" title={offer.senderRuler}>
+                      {offer.senderRuler}
+                    </div>
+                  </td>
+                  <td className="p-2 border border-gray-700 text-gray-200 w-[16%] overflow-hidden">
+                    <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                      <a
+                        href={`https://www.cybernations.net/search_aid.asp?search=${offer.recipientId}&Extended=1`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:underline font-bold"
+                        title={offer.recipientNation}
+                      >
+                        {offer.recipientNation}
+                      </a>
+                    </div>
+                    <div className="text-gray-400 text-xs overflow-hidden text-ellipsis whitespace-nowrap" title={offer.recipientRuler}>
+                      {offer.recipientRuler}
+                    </div>
+                  </td>
+                  <td className="p-2 border border-gray-700 text-center w-[10%]">
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-bold ${
+                        offer.type === 'tech'
+                          ? 'bg-blue-900 text-blue-200'
+                          : 'bg-green-900 text-green-200'
+                      }`}
                     >
-                      {offer.senderNation}
-                    </a>
-                  </div>
-                  <div className="text-gray-400 text-xs overflow-hidden text-ellipsis whitespace-nowrap" title={offer.senderRuler}>
-                    {offer.senderRuler}
-                  </div>
-                </td>
-                <td className="p-2 border border-gray-700 text-gray-200 w-[16%] overflow-hidden">
-                  <div className="overflow-hidden text-ellipsis whitespace-nowrap">
-                    <a
-                      href={`https://www.cybernations.net/search_aid.asp?search=${offer.recipientId}&Extended=1`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-400 hover:underline font-bold"
-                      title={offer.recipientNation}
-                    >
-                      {offer.recipientNation}
-                    </a>
-                  </div>
-                  <div className="text-gray-400 text-xs overflow-hidden text-ellipsis whitespace-nowrap" title={offer.recipientRuler}>
-                    {offer.recipientRuler}
-                  </div>
-                </td>
-                <td className="p-2 border border-gray-700 text-center w-[10%]">
+                      {offer.type === 'tech' ? '🔬 Tech' : '💰 Cash'}
+                    </span>
+                  </td>
+                  <td className="p-2 border border-gray-700 text-center text-gray-200 font-bold w-[12%]">
+                    {formatAidValue(offer.money, offer.technology, offer.soldiers)}
+                  </td>
+                  <td className="p-2 border border-gray-700 text-center w-[10%]">
+                    <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusColor(offer.status)}`}>
+                      {offer.status}
+                    </span>
+                  </td>
+                  <td className="p-2 border border-gray-700 text-gray-300 text-xs w-[24%]">
+                    <div className="line-clamp-2" title={offer.reason || '-'}>
+                      {offer.reason || '-'}
+                    </div>
+                  </td>
+                  <td className="p-2 border border-gray-700 text-center text-gray-400 text-xs w-[12%] whitespace-nowrap">
+                    {offer.date}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-2">
+          {sortedOffers.map((offer) => (
+            <div key={offer.aidId} className="bg-gray-700 rounded p-2 border border-gray-600">
+              <div className="flex justify-between items-start gap-2 mb-1">
+                <div className="flex-1 min-w-0">
+                  <a
+                    href={`https://www.cybernations.net/search_aid.asp?search=${offer.senderId}&Extended=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline font-bold text-sm truncate block"
+                  >
+                    {offer.senderNation}
+                  </a>
+                  <div className="text-xs text-gray-400">→</div>
+                  <a
+                    href={`https://www.cybernations.net/search_aid.asp?search=${offer.recipientId}&Extended=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline text-sm truncate block"
+                  >
+                    {offer.recipientNation}
+                  </a>
+                </div>
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
                   <span
-                    className={`px-2 py-1 rounded text-xs font-bold ${
+                    className={`px-1.5 py-0.5 rounded text-xs font-bold ${
                       offer.type === 'tech'
                         ? 'bg-blue-900 text-blue-200'
                         : 'bg-green-900 text-green-200'
                     }`}
                   >
-                    {offer.type === 'tech' ? '🔬 Tech' : '💰 Cash'}
+                    {offer.type === 'tech' ? '🔬' : '💰'}
                   </span>
-                </td>
-                <td className="p-2 border border-gray-700 text-center text-gray-200 font-bold w-[12%]">
-                  {formatAidValue(offer.money, offer.technology, offer.soldiers)}
-                </td>
-                <td className="p-2 border border-gray-700 text-center w-[10%]">
-                  <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusColor(offer.status)}`}>
+                  <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${getStatusColor(offer.status)}`}>
                     {offer.status}
                   </span>
-                </td>
-                <td className="p-2 border border-gray-700 text-gray-300 text-xs w-[24%]">
-                  <div className="line-clamp-2" title={offer.reason || '-'}>
-                    {offer.reason || '-'}
-                  </div>
-                </td>
-                <td className="p-2 border border-gray-700 text-center text-gray-400 text-xs w-[12%] whitespace-nowrap">
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center text-xs">
+                <div className="font-bold text-gray-200">
+                  {formatAidValue(offer.money, offer.technology, offer.soldiers)}
+                </div>
+                <div className="text-gray-500">
                   {offer.date}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                </div>
+              </div>
+
+              {offer.reason && (
+                <div className="text-xs text-gray-400 mt-1 line-clamp-1">
+                  {offer.reason}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </>
     );
   };
 
@@ -545,7 +606,9 @@ const InterallianceAidPage: React.FC<InterallianceAidPageProps> = ({ selectedAll
           {/* Combined Per-Nation Summary */}
           <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
             <h3 className="text-lg font-semibold mb-4">Nations Summary</h3>
-            <div className="overflow-x-auto">
+            
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800">
                 <thead>
                   <tr className="bg-gray-700">
@@ -679,6 +742,119 @@ const InterallianceAidPage: React.FC<InterallianceAidPageProps> = ({ selectedAll
                   })()}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-2">
+              {(() => {
+                // Aggregate offers by nation across all offers (same logic as desktop)
+                const nationStats = new Map<number, { 
+                  nationName: string; 
+                  nationId: number; 
+                  allianceName: string;
+                  cashSent: number; 
+                  techSent: number;
+                  cashReceived: number;
+                  techReceived: number;
+                }>();
+                
+                const allOffers = [...data.alliance1ToAlliance2, ...data.alliance2ToAlliance1];
+                
+                allOffers.forEach(offer => {
+                  if (!nationStats.has(offer.senderId)) {
+                    nationStats.set(offer.senderId, {
+                      nationName: offer.senderNation,
+                      nationId: offer.senderId,
+                      allianceName: data.alliance1ToAlliance2.some(o => o.senderId === offer.senderId) ? data.alliance1.name : data.alliance2.name,
+                      cashSent: 0,
+                      techSent: 0,
+                      cashReceived: 0,
+                      techReceived: 0
+                    });
+                  }
+                  const senderStats = nationStats.get(offer.senderId)!;
+                  if (offer.type === 'cash') {
+                    senderStats.cashSent++;
+                  } else {
+                    senderStats.techSent++;
+                  }
+
+                  if (!nationStats.has(offer.recipientId)) {
+                    nationStats.set(offer.recipientId, {
+                      nationName: offer.recipientNation,
+                      nationId: offer.recipientId,
+                      allianceName: data.alliance1ToAlliance2.some(o => o.recipientId === offer.recipientId) ? data.alliance2.name : data.alliance1.name,
+                      cashSent: 0,
+                      techSent: 0,
+                      cashReceived: 0,
+                      techReceived: 0
+                    });
+                  }
+                  const receiverStats = nationStats.get(offer.recipientId)!;
+                  if (offer.type === 'cash') {
+                    receiverStats.cashReceived++;
+                  } else {
+                    receiverStats.techReceived++;
+                  }
+                });
+
+                const sortedNations = Array.from(nationStats.values()).sort((a, b) => {
+                  const totalA = a.cashSent + a.techSent + a.cashReceived + a.techReceived;
+                  const totalB = b.cashSent + b.techSent + b.cashReceived + b.techReceived;
+                  if (totalB !== totalA) return totalB - totalA;
+                  if (a.allianceName !== b.allianceName) return a.allianceName.localeCompare(b.allianceName);
+                  return a.nationName.localeCompare(b.nationName);
+                });
+
+                if (sortedNations.length === 0) {
+                  return (
+                    <div className="text-center text-gray-400 py-4">
+                      No offers found
+                    </div>
+                  );
+                }
+
+                return sortedNations.map(nation => {
+                  const total = nation.cashSent + nation.techSent + nation.cashReceived + nation.techReceived;
+                  return (
+                    <div key={nation.nationId} className="bg-gray-700 rounded p-2 border border-gray-600">
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex-1 min-w-0">
+                          <a
+                            href={`https://www.cybernations.net/search_aid.asp?search=${nation.nationId}&Extended=1`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:underline font-bold text-sm truncate block"
+                          >
+                            {nation.nationName}
+                          </a>
+                          <div className="text-xs text-gray-400 truncate">{nation.allianceName}</div>
+                        </div>
+                        <div className="text-base font-bold text-gray-200 ml-2">
+                          {total}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 text-xs">
+                        <div className="flex-1 bg-gray-800 rounded px-2 py-1">
+                          <div className="text-gray-400">Sent</div>
+                          <div className="flex justify-between">
+                            <span className="text-green-400">💰 {nation.cashSent || 0}</span>
+                            <span className="text-blue-400">🔬 {nation.techSent || 0}</span>
+                          </div>
+                        </div>
+                        <div className="flex-1 bg-gray-800 rounded px-2 py-1">
+                          <div className="text-gray-400">Rcvd</div>
+                          <div className="flex justify-between">
+                            <span className="text-green-400">💰 {nation.cashReceived || 0}</span>
+                            <span className="text-blue-400">🔬 {nation.techReceived || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         </>

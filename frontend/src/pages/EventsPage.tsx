@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import PageContainer from '../components/PageContainer';
-import { useAlliances } from '../contexts/AlliancesContext';
 
 type Event = {
   id: number;
@@ -41,7 +40,6 @@ type FilterType = 'all' | 'nation' | 'alliance';
 type EventTypeFilter = 'all' | 'new_nation' | 'nation_inactive' | 'alliance_change';
 
 const EventsPage: React.FC = () => {
-  const { alliances } = useAlliances();
   const [searchParams, setSearchParams] = useSearchParams();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
