@@ -555,8 +555,8 @@ const WarStatsPage: React.FC = () => {
         />
       </div>
 
-      {/* Alliance Totals View */}
-      <div className="rounded-xl shadow-md bg-gray-800 w-full max-w-full">
+      {/* Alliance Totals View - Desktop Table */}
+      <div className="hidden md:block rounded-xl shadow-md bg-gray-800 w-full max-w-full">
         {loading && <div className="text-center py-8 text-gray-400">Loading...</div>}
         {error && <div className="text-center py-8 text-red-400">{error}</div>}
         {!loading && !error && filteredAllianceTotals.length === 0 && (
@@ -809,6 +809,203 @@ const WarStatsPage: React.FC = () => {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+      </div>
+
+      {/* Alliance Totals View - Mobile Cards */}
+      <div className="md:hidden">
+        {loading && <div className="text-center py-8 text-gray-400">Loading...</div>}
+        {error && <div className="text-center py-8 text-red-400">{error}</div>}
+        {!loading && !error && filteredAllianceTotals.length === 0 && (
+          <div className="text-center py-8 text-gray-400">No war statistics available</div>
+        )}
+        {!loading && !error && filteredAllianceTotals.length > 0 && (
+          <div className="max-h-[65vh] overflow-y-auto space-y-2">
+            {filteredAllianceTotals.map(row => {
+              const isExpanded = expandedAlliances.has(row.alliance_id);
+              const opponentRows = opponentBreakdownByAlliance.get(row.alliance_id) || [];
+              const filteredOpponentRows = getFilteredOpponentBreakdown(row.alliance_id, row.alliance_name, opponentRows);
+              
+              const breakdownSum = opponentRows.reduce((acc, opp) => ({
+                damage_dealt: acc.damage_dealt + opp.damage_dealt,
+                damage_received: acc.damage_received + opp.damage_received,
+              }), { damage_dealt: 0, damage_received: 0 });
+              
+              const hasDiscrepancy = Math.abs(breakdownSum.damage_dealt - row.total_damage_dealt) > 0.01 ||
+                                   Math.abs(breakdownSum.damage_received - row.total_damage_received) > 0.01;
+              
+              return (
+                <div key={`mobile-${row.alliance_id}`} className="bg-gray-900/50 rounded-lg overflow-hidden">
+                  {/* Alliance Card */}
+                  <div
+                    className="p-3 cursor-pointer active:bg-gray-800/70"
+                    onClick={() => toggleExpanded(row.alliance_id)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {(filteredOpponentRows.length > 0 || hasDiscrepancy) && (
+                          <span className="text-gray-400 text-sm flex-shrink-0">
+                            {isExpanded ? '▼' : '▶'}
+                          </span>
+                        )}
+                        <h3 className="text-sm font-semibold text-gray-200 truncate">{row.alliance_name}</h3>
+                      </div>
+                      <div className={`text-base font-bold ml-2 flex-shrink-0 ${row.net_damage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {formatNumber(row.net_damage)}
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-gray-400 flex items-center gap-x-4">
+                      <span>Dealt: <span className="text-gray-300">{formatNumber(row.total_damage_dealt)}</span></span>
+                      <span>Received: <span className="text-gray-300">{formatNumber(row.total_damage_received)}</span></span>
+                    </div>
+                    <div className="text-xs text-gray-400 flex items-center gap-x-4 mt-1">
+                      <span>Off: <span className="text-gray-300">{row.offensive_wars}</span></span>
+                      <span>Def: <span className="text-gray-300">{row.defensive_wars}</span></span>
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="bg-gray-900/30 border-t border-gray-700/30">
+                      {filteredOpponentRows.map((oppRow, idx) => {
+                        const opponentKey = `${row.alliance_id}-${oppRow.opponent_alliance_id || 'null'}`;
+                        const isOpponentExpanded = expandedOpponents.has(opponentKey);
+                        const nationRows = nationBreakdownByAllianceAndOpponent.get(opponentKey) || [];
+                        const filteredNationRows = getFilteredNationBreakdown(row.alliance_name, nationRows);
+                        
+                        return (
+                          <div key={`mobile-opp-${opponentKey}-${idx}`}>
+                            {/* Opponent Card */}
+                            <div
+                              className="p-3 pl-8 cursor-pointer active:bg-gray-800/50 border-b border-gray-700/20 last:border-b-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleOpponentExpanded(row.alliance_id, oppRow.opponent_alliance_id);
+                              }}
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  <span className="text-gray-500 text-sm flex-shrink-0">
+                                    {filteredNationRows.length > 0 ? (isOpponentExpanded ? '▼' : '▶') : '└'}
+                                  </span>
+                                  <span className="text-xs text-gray-400 truncate">{oppRow.opponent_alliance_name || 'Unknown'}</span>
+                                </div>
+                                <div className={`text-sm font-semibold ml-2 flex-shrink-0 ${oppRow.net_damage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                  {formatNumber(oppRow.net_damage)}
+                                </div>
+                              </div>
+                              <div className="text-xs text-gray-500 flex items-center gap-x-3">
+                                <span>D: {formatNumber(oppRow.damage_dealt)}</span>
+                                <span>R: {formatNumber(oppRow.damage_received)}</span>
+                                <span>Off: {oppRow.offensive_wars}</span>
+                                <span>Def: {oppRow.defensive_wars}</span>
+                              </div>
+                            </div>
+
+                            {isOpponentExpanded && filteredNationRows.length > 0 && filteredNationRows.map((nationRow, nationIdx) => {
+                              const nationKey = `${row.alliance_id}-${oppRow.opponent_alliance_id || 'null'}-${nationRow.nation_id}`;
+                              const isNationExpanded = expandedNations.has(nationKey);
+                              const warRows = warRecordsByNation.get(nationKey) || [];
+                              
+                              return (
+                                <div key={`mobile-nation-${nationKey}-${nationIdx}`}>
+                                  {/* Nation Card */}
+                                  <div
+                                    className="p-3 pl-12 cursor-pointer active:bg-gray-800/40 border-b border-gray-700/20"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleNationExpanded(row.alliance_id, oppRow.opponent_alliance_id, nationRow.nation_id);
+                                    }}
+                                  >
+                                    <div className="flex items-center justify-between mb-1">
+                                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                                        <span className="text-gray-600 text-sm flex-shrink-0">
+                                          {warRows.length > 0 ? (isNationExpanded ? '▼' : '▶') : '└'}
+                                        </span>
+                                        <div className="min-w-0 flex-1">
+                                          <a
+                                            href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${nationRow.nation_id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-primary no-underline font-bold hover:underline truncate block text-xs"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            {nationRow.nation_name}
+                                          </a>
+                                          <div className="text-xs text-gray-500 truncate">{nationRow.ruler_name}</div>
+                                        </div>
+                                      </div>
+                                      <div className={`text-sm font-semibold ml-2 flex-shrink-0 ${nationRow.net_damage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                        {formatNumber(nationRow.net_damage)}
+                                      </div>
+                                    </div>
+                                    <div className="text-xs text-gray-500 flex items-center gap-x-3">
+                                      <span>D: {formatNumber(nationRow.damage_dealt)}</span>
+                                      <span>R: {formatNumber(nationRow.damage_received)}</span>
+                                      <span>Off: {nationRow.offensive_wars}</span>
+                                      <span>Def: {nationRow.defensive_wars}</span>
+                                    </div>
+                                  </div>
+
+                                  {isNationExpanded && warRows.length > 0 && warRows.map((war, warIdx) => (
+                                    <div
+                                      key={`mobile-war-${war.war_id}-${warIdx}`}
+                                      className="p-3 pl-16 bg-gray-900/70 border-b border-gray-700/20 last:border-b-0"
+                                    >
+                                      <div className="flex items-center justify-between mb-1">
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                          <span className="text-gray-700 text-sm flex-shrink-0">└</span>
+                                          <div className="min-w-0 flex-1">
+                                            <a
+                                              href={`https://www.cybernations.net/war_information.asp?ID=${war.war_id}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-blue-400 no-underline hover:underline text-xs truncate block"
+                                              onClick={(e) => e.stopPropagation()}
+                                            >
+                                              vs {war.opponent_nation_name}
+                                            </a>
+                                            <div className="text-xs text-gray-600 truncate">War #{war.war_id}</div>
+                                          </div>
+                                        </div>
+                                        <div className={`text-sm font-semibold ml-2 flex-shrink-0 ${war.net_damage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                          {formatNumber(war.net_damage)}
+                                        </div>
+                                      </div>
+                                      <div className="text-xs text-gray-600 flex items-center gap-x-3">
+                                        <span>D: {formatNumber(war.damage_dealt)}</span>
+                                        <span>R: {formatNumber(war.damage_received)}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+
+                      {/* Unknown/No Alliance row for mobile */}
+                      {hasDiscrepancy && (
+                        <div className="p-3 pl-8 border-b border-gray-700/20">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-xs text-gray-400 italic">Unknown/No Alliance</div>
+                            <div className={`text-sm font-semibold ${(row.total_damage_dealt - breakdownSum.damage_dealt) - (row.total_damage_received - breakdownSum.damage_received) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                              {formatNumber((row.total_damage_dealt - breakdownSum.damage_dealt) - (row.total_damage_received - breakdownSum.damage_received))}
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-400 flex items-center gap-x-3">
+                            <span>D: {formatNumber(row.total_damage_dealt - breakdownSum.damage_dealt)}</span>
+                            <span>R: {formatNumber(row.total_damage_received - breakdownSum.damage_received)}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
