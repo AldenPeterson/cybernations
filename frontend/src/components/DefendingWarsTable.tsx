@@ -691,7 +691,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   // Search filter: only show nations that:
   // 1) have a war (attacking or defending)
   // 2) are eligible for assignment (have recommendations)
-  // 3) match the search query (nation name, ruler name, or alliance - either the defending nation OR any assigned attacker)
+  // 3) match the search query (nation name, ruler name, or alliance - matches defending nation, assigned attackers, or any nation in war rows)
   if (searchQuery.trim()) {
     const lowerQuery = searchQuery.toLowerCase().trim();
     filteredNationWars = filteredNationWars.filter(nationWar => {
@@ -716,7 +716,21 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
         attacker.alliance?.toLowerCase().includes(lowerQuery)
       );
       
-      const matchesQuery = defendingMatches || assignmentMatches;
+      // Check if any nation in the attacking wars matches search query
+      const attackingWarMatches = nationWar.attackingWars.some(war => 
+        war.defendingNation.name.toLowerCase().includes(lowerQuery) ||
+        war.defendingNation.ruler.toLowerCase().includes(lowerQuery) ||
+        war.defendingNation.alliance.toLowerCase().includes(lowerQuery)
+      );
+      
+      // Check if any nation in the defending wars matches search query
+      const defendingWarMatches = nationWar.defendingWars.some(war => 
+        war.attackingNation.name.toLowerCase().includes(lowerQuery) ||
+        war.attackingNation.ruler.toLowerCase().includes(lowerQuery) ||
+        war.attackingNation.alliance.toLowerCase().includes(lowerQuery)
+      );
+      
+      const matchesQuery = defendingMatches || assignmentMatches || attackingWarMatches || defendingWarMatches;
       
       return hasWar && hasRecommendations && matchesQuery;
     });
@@ -1024,7 +1038,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
           <input
             type="text"
             value={searchQuery}
-            placeholder="Search by defending nation or assigned attacker (name, ruler, or alliance)"
+            placeholder="Search any nation in table (name, ruler, or alliance)"
             onChange={(e) => {
               setSearchQuery(e.target.value);
               updateUrlParams({ search: e.target.value || null });
