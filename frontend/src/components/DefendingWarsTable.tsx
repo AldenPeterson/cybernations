@@ -229,6 +229,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   const [staggerRecommendationsMap, setStaggerRecommendationsMap] = useState<Map<number, any[]>>(new Map());
   const [sellDownEnabled, setSellDownEnabled] = useState<boolean>(false);
   const [militaryNS, setMilitaryNS] = useState<number>(0);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Helper function to parse boolean from URL parameter
   const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
@@ -307,6 +308,10 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
       if (!isNaN(parsed) && parsed >= 0) {
         setMilitaryNS(parsed);
       }
+    }
+    const searchParam = searchParams.get('search');
+    if (searchParam) {
+      setSearchQuery(searchParam);
     }
   }, []); // Empty dependency array - only run on mount
 
@@ -683,6 +688,40 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
     });
   }
 
+  // Search filter: only show nations that:
+  // 1) have a war (attacking or defending)
+  // 2) are eligible for assignment (have recommendations)
+  // 3) match the search query (nation name, ruler name, or alliance - either the defending nation OR any assigned attacker)
+  if (searchQuery.trim()) {
+    const lowerQuery = searchQuery.toLowerCase().trim();
+    filteredNationWars = filteredNationWars.filter(nationWar => {
+      // Check if nation has at least one war
+      const hasWar = nationWar.attackingWars.length > 0 || nationWar.defendingWars.length > 0;
+      
+      // Check if nation is eligible for assignment (has recommendations)
+      const hasRecommendations = staggerRecommendationsMap.has(nationWar.nation.id) && 
+                                  (staggerRecommendationsMap.get(nationWar.nation.id)?.length ?? 0) > 0;
+      
+      // Check if defending nation matches search query
+      const defendingMatches = 
+        nationWar.nation.name.toLowerCase().includes(lowerQuery) ||
+        nationWar.nation.ruler.toLowerCase().includes(lowerQuery) ||
+        nationWar.nation.alliance.toLowerCase().includes(lowerQuery);
+      
+      // Check if any assigned attacker matches search query
+      const recommendations = staggerRecommendationsMap.get(nationWar.nation.id) || [];
+      const assignmentMatches = recommendations.some(attacker => 
+        attacker.name?.toLowerCase().includes(lowerQuery) ||
+        attacker.ruler?.toLowerCase().includes(lowerQuery) ||
+        attacker.alliance?.toLowerCase().includes(lowerQuery)
+      );
+      
+      const matchesQuery = defendingMatches || assignmentMatches;
+      
+      return hasWar && hasRecommendations && matchesQuery;
+    });
+  }
+
 
 
 
@@ -978,6 +1017,25 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
             </select>
             <span className="text-sm text-gray-200 font-medium">days</span>
           </div>
+        </div>
+
+        {/* Search Field */}
+        <div className="w-full">
+          <input
+            type="text"
+            value={searchQuery}
+            placeholder="Search by defending nation or assigned attacker (name, ruler, or alliance)"
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              updateUrlParams({ search: e.target.value || null });
+            }}
+            className="w-full px-3 md:px-4 py-2 md:py-3 border-2 border-gray-600 rounded-lg text-sm md:text-base font-medium bg-gray-800 text-gray-200 placeholder-gray-500 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 hover:border-gray-500"
+          />
+          {searchQuery && (
+            <p className="mt-1 text-xs text-gray-400">
+              Showing nations with wars AND eligible for assignment matching "{searchQuery}"
+            </p>
+          )}
         </div>
       </div>
 
