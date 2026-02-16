@@ -1,5 +1,4 @@
 import { 
-  loadDataFromFilesWithUpdate, 
   getAidSlotsForAlliance 
 } from './dataProcessingService.js';
 import { 
@@ -2201,50 +2200,108 @@ export class AidService {
 
   /**
    * Get small aid offers
+   * Optimized to query database directly instead of loading all data into memory
    */
   static async getSmallAidOffers() {
-    const { nations, aidOffers } = await loadDataFromFilesWithUpdate();
-    
-    // Filter for small aid offers (money < 1000000 and technology < 100, but must have some value)
-    // Also include offers with only soldiers (no money/tech) as these are also "shame offers"
-    const smallOffers = aidOffers.filter(offer => 
-      !this.isOfferExpired(offer) &&
-      ((offer.money < 1000000 && offer.technology < 100 && (offer.money > 0 || offer.technology > 0)) || 
-      (offer.technology == 0 && offer.money < 6000000 && offer.money > 0) ||
-      (offer.money == 0 && offer.technology == 0 && offer.soldiers > 0))
-    );
-
-    // Add alliance information to each offer
-    const offersWithAllianceInfo = smallOffers.map(offer => {
-      const declaringNation = nations.find(n => n.id === offer.declaringId);
-      const receivingNation = nations.find(n => n.id === offer.receivingId);
-      
-      return {
-        aidId: offer.aidId,
+    // Query database directly with filters
+    // Filter conditions:
+    // 1. Not expired (status != 'Expired' AND status != 'Cancelled' AND isExpired != true)
+    // 2. Small offers: (money < 1M AND tech < 100 AND (money > 0 OR tech > 0))
+    //    OR (tech == 0 AND money < 6M AND money > 0)
+    //    OR (money == 0 AND tech == 0 AND soldiers > 0)
+    // 3. Only active offers
+    const aidOfferRecords = await prisma.aidOffer.findMany({
+      where: {
+        isActive: true,
+        status: {
+          notIn: ['Expired', 'Cancelled']
+        },
+        isExpired: {
+          not: true
+        },
+        OR: [
+          // Small offers: money < 1M AND tech < 100 AND (money > 0 OR tech > 0)
+          {
+            AND: [
+              { money: { lt: 1000000 } },
+              { technology: { lt: 100 } },
+              {
+                OR: [
+                  { money: { gt: 0 } },
+                  { technology: { gt: 0 } }
+                ]
+              }
+            ]
+          },
+          // Tech == 0 AND money < 6M AND money > 0
+          {
+            AND: [
+              { technology: 0 },
+              { money: { lt: 6000000, gt: 0 } }
+            ]
+          },
+          // Only soldiers (money == 0 AND tech == 0 AND soldiers > 0)
+          {
+            AND: [
+              { money: 0 },
+              { technology: 0 },
+              { soldiers: { gt: 0 } }
+            ]
+          }
+        ]
+      },
+      include: {
         declaringNation: {
-          id: offer.declaringId,
-          name: offer.declaringNation,
-          ruler: offer.declaringRuler,
-          alliance: offer.declaringAlliance,
-          allianceId: offer.declaringAllianceId
+          include: { alliance: true }
         },
         receivingNation: {
-          id: offer.receivingId,
-          name: offer.receivingNation,
-          ruler: offer.receivingRuler,
-          alliance: offer.receivingAlliance,
-          allianceId: offer.receivingAllianceId
-        },
-        money: offer.money,
-        technology: offer.technology,
-        soldiers: offer.soldiers,
-        reason: offer.reason,
-        date: offer.date
-      };
+          include: { alliance: true }
+        }
+      },
+      orderBy: {
+        date: 'desc'
+      }
     });
 
-    // Sort by date (most recent first)
-    offersWithAllianceInfo.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Filter out date-based expired offers (this needs to be done in memory since
+    // the date parsing logic is complex)
+    const smallOffers = aidOfferRecords.filter(offer => {
+      // Check date-based expiration
+      if (offer.date) {
+        try {
+          if (isAidOfferExpired(offer.date)) {
+            return false;
+          }
+        } catch (error) {
+          // If we can't parse the date, include it
+        }
+      }
+      return true;
+    });
+
+    // Map to response format
+    const offersWithAllianceInfo = smallOffers.map(offer => ({
+      aidId: offer.aidId,
+      declaringNation: {
+        id: offer.declaringNationId,
+        name: offer.declaringNation.nationName,
+        ruler: offer.declaringNation.rulerName,
+        alliance: offer.declaringNation.alliance.name,
+        allianceId: offer.declaringNation.allianceId
+      },
+      receivingNation: {
+        id: offer.receivingNationId,
+        name: offer.receivingNation.nationName,
+        ruler: offer.receivingNation.rulerName,
+        alliance: offer.receivingNation.alliance.name,
+        allianceId: offer.receivingNation.allianceId
+      },
+      money: offer.money,
+      technology: offer.technology,
+      soldiers: offer.soldiers,
+      reason: offer.reason,
+      date: offer.date
+    }));
 
     return {
       smallAidOffers: offersWithAllianceInfo,
