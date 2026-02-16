@@ -36,15 +36,22 @@ interface AllianceCasualtiesResponse {
   data: AllianceCasualtyStat[];
 }
 
-const CasualtiesPage: React.FC = () => {
+interface CasualtiesPageProps {
+  selectedAllianceId: number | null;
+}
+
+const CasualtiesPage: React.FC<CasualtiesPageProps> = ({ selectedAllianceId }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<'top100' | 'alliance'>('top100');
+  const [activeTab, setActiveTab] = useState<'top100' | 'alliance' | 'alliance-filtered'>('top100');
   const [data, setData] = useState<CasualtyStat[]>([]);
   const [allianceData, setAllianceData] = useState<AllianceCasualtyStat[]>([]);
+  const [allianceMembersData, setAllianceMembersData] = useState<CasualtyStat[]>([]);
   const [loading, setLoading] = useState(false);
   const [allianceLoading, setAllianceLoading] = useState(false);
+  const [allianceMembersLoading, setAllianceMembersLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [allianceError, setAllianceError] = useState<string | null>(null);
+  const [allianceMembersError, setAllianceMembersError] = useState<string | null>(null);
   const [sortColumn, setSortColumn] = useState<keyof CasualtyStat>('total_casualties');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [allianceSortColumn, setAllianceSortColumn] = useState<keyof AllianceCasualtyStat>('total_casualties');
@@ -57,6 +64,8 @@ const CasualtiesPage: React.FC = () => {
     const tabParam = searchParams.get('tab');
     if (tabParam === 'alliance') {
       setActiveTab('alliance');
+    } else if (tabParam === 'alliance-filtered') {
+      setActiveTab('alliance-filtered');
     } else {
       setActiveTab('top100');
     }
@@ -99,6 +108,30 @@ const CasualtiesPage: React.FC = () => {
     };
     fetchAllianceData();
   }, []);
+
+  useEffect(() => {
+    const fetchAllianceMembersData = async () => {
+      if (!selectedAllianceId) {
+        setAllianceMembersData([]);
+        return;
+      }
+
+      try {
+        setAllianceMembersLoading(true);
+        setAllianceMembersError(null);
+
+        const response = await apiCallWithErrorHandling(API_ENDPOINTS.casualtiesAllianceMembers(selectedAllianceId));
+        const res: CasualtiesResponse = response;
+        setAllianceMembersData(res.data || []);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to load alliance members casualties stats';
+        setAllianceMembersError(msg);
+      } finally {
+        setAllianceMembersLoading(false);
+      }
+    };
+    fetchAllianceMembersData();
+  }, [selectedAllianceId]);
 
   const formatNumber = (num: number): string => {
     return new Intl.NumberFormat('en-US').format(num);
@@ -154,12 +187,17 @@ const CasualtiesPage: React.FC = () => {
   }, []);
 
   const sortedData = useMemo(() => {
+    // Use alliance members data if we're on the alliance-filtered tab, otherwise use top 100 data
+    const sourceData = activeTab === 'alliance-filtered' && selectedAllianceId
+      ? allianceMembersData
+      : data;
+    
     // Always calculate rank based on total_casualties to ensure it's always present
     // Sort by total_casualties first to get correct ranking
-    const sortedByTotal = [...data].sort((a, b) => b.total_casualties - a.total_casualties);
+    const sortedByTotal = [...sourceData].sort((a, b) => b.total_casualties - a.total_casualties);
     
     // Ensure rank is present - always recalculate to ensure it's correct
-    const dataWithRank = data.map((row) => {
+    const dataWithRank = sourceData.map((row) => {
       // Always calculate rank based on total_casualties position
       const rankIndex = sortedByTotal.findIndex(r => r.nation_id === row.nation_id);
       const calculatedRank = rankIndex >= 0 ? rankIndex + 1 : (row.rank || 0);
@@ -181,7 +219,7 @@ const CasualtiesPage: React.FC = () => {
     });
     
     return sorted;
-  }, [data, sortColumn, sortDirection]);
+  }, [data, allianceMembersData, sortColumn, sortDirection, activeTab, selectedAllianceId]);
 
   const sortedAllianceData = useMemo(() => {
     // Always calculate rank based on total_casualties to ensure it's always present
@@ -248,17 +286,46 @@ const CasualtiesPage: React.FC = () => {
           >
             Alliance Totals
           </button>
+          <button
+            onClick={() => {
+              setActiveTab('alliance-filtered');
+              const newSearchParams = new URLSearchParams(searchParams);
+              newSearchParams.set('tab', 'alliance-filtered');
+              setSearchParams(newSearchParams, { replace: true });
+            }}
+            className={`px-4 py-2 font-semibold transition-colors ${
+              activeTab === 'alliance-filtered'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+            disabled={!selectedAllianceId}
+          >
+            {selectedAllianceId ? 'Alliance Members' : 'Select Alliance'}
+          </button>
         </div>
       </div>
 
-      {activeTab === 'top100' && (
+      {(activeTab === 'top100' || activeTab === 'alliance-filtered') && (
         <>
-          {loading && <div className="text-center py-8 text-gray-400">Loading...</div>}
-          {error && <div className="text-center py-8 text-red-400">{error}</div>}
-          {!loading && !error && data.length === 0 && (
+          {(loading || (activeTab === 'alliance-filtered' && allianceMembersLoading)) && (
+            <div className="text-center py-8 text-gray-400">Loading...</div>
+          )}
+          {(error || (activeTab === 'alliance-filtered' && allianceMembersError)) && (
+            <div className="text-center py-8 text-red-400">
+              {activeTab === 'alliance-filtered' ? allianceMembersError : error}
+            </div>
+          )}
+          {activeTab === 'alliance-filtered' && !selectedAllianceId && (
+            <div className="text-center py-8 text-gray-400">Please select an alliance from the dropdown in the top right</div>
+          )}
+          {!loading && !error && sortedData.length === 0 && activeTab === 'top100' && (
             <div className="text-center py-8 text-gray-400">No casualties data available</div>
           )}
-          {!loading && !error && data.length > 0 && (
+          {!allianceMembersLoading && !allianceMembersError && sortedData.length === 0 && activeTab === 'alliance-filtered' && selectedAllianceId && (
+            <div className="text-center py-8 text-gray-400">No casualties data available for the selected alliance</div>
+          )}
+          {((!loading && !error && sortedData.length > 0 && activeTab === 'top100') || 
+            (!allianceMembersLoading && !allianceMembersError && sortedData.length > 0 && activeTab === 'alliance-filtered')) && (
             <>
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">

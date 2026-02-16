@@ -101,7 +101,7 @@ function App() {
         <Route path="/nation-aid-efficiency" element={<NationAidEfficiencyPage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/war-stats" element={<WarStatsPage />} />
-        <Route path="/casualties" element={<CasualtiesPage />} />
+        <Route path="/casualties" element={<CasualtiesPage selectedAllianceId={selectedAllianceId} />} />
         <Route path="/shame-offers" element={<ShameOffersPage />} />
         
         {/* Fallback */}

@@ -73,6 +73,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     const currentPath = location.pathname;
     const pathParts = currentPath.split('/');
     const tabName = pathParts[1];
+    const searchParams = new URLSearchParams(location.search);
     
     if (allianceId && tabName && ['aid', 'nations', 'wars'].includes(tabName)) {
       navigate(`/${tabName}/${allianceId}`);
@@ -80,7 +81,6 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       navigate(`/${tabName}/${allianceId}`);
     } else if (tabName === 'nation-aid-efficiency') {
       // For nation-aid-efficiency page, update query parameter
-      const searchParams = new URLSearchParams(location.search);
       if (allianceId) {
         searchParams.set('allianceId', allianceId.toString());
       } else {
@@ -89,13 +89,19 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
     } else if (tabName === 'interalliance-aid') {
       // For interalliance-aid, update alliance1 parameter
-      const searchParams = new URLSearchParams(location.search);
       if (allianceId) {
         searchParams.set('alliance1', allianceId.toString());
       } else {
         searchParams.delete('alliance1');
       }
       navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
+    } else if (tabName === 'casualties') {
+      // For casualties page, preserve the tab parameter if on alliance-filtered tab
+      const tabParam = searchParams.get('tab');
+      if (tabParam === 'alliance-filtered') {
+        // Keep the alliance-filtered tab active
+        navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
+      }
     }
   };
 
@@ -144,6 +150,14 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   const isAllianceRelevant = (): boolean => {
     const pathParts = location.pathname.split('/');
     const tabName = pathParts[1];
+    
+    // Check if we're on the casualties page with the alliance-filtered tab
+    if (tabName === 'casualties') {
+      const searchParams = new URLSearchParams(location.search);
+      const tabParam = searchParams.get('tab');
+      return tabParam === 'alliance-filtered';
+    }
+    
     // Only these pages use the alliance selector (events has its own filter, so excluded)
     return ['aid', 'nations', 'wars', 'nation-aid-efficiency', 'interalliance-aid'].includes(tabName);
   };

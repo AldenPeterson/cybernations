@@ -29,6 +29,62 @@ const ALLIANCE_CASUALTIES_CACHE_KEY = 'alliance_casualties_stats';
 const CASUALTIES_CACHE_TTL_MS = 60 * 60 * 1000; // 60 minutes
 
 /**
+ * Get all alliance members' casualty statistics
+ * Returns all active nations in the specified alliance, regardless of their global rank
+ * Results are cached per alliance for 60 minutes
+ */
+export async function getAllianceMembersCasualtiesStats(allianceId: number): Promise<CasualtyStat[]> {
+  const cacheKey = `alliance_${allianceId}_casualties_stats`;
+  
+  // Check cache first
+  const cached = warStatsCache.get<CasualtyStat[]>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  // Fetch ALL active nations in this alliance (not just those with casualties)
+  const nations = await prisma.nation.findMany({
+    where: {
+      isActive: true,
+      allianceId: allianceId
+    },
+    include: {
+      alliance: true
+    }
+  });
+
+  // Calculate total casualties and sort
+  const stats: CasualtyStat[] = nations
+    .map(nation => {
+      const attacking = nation.attackingCasualties ?? 0;
+      const defensive = nation.defensiveCasualties ?? 0;
+      const total = attacking + defensive;
+
+      return {
+        rank: 0, // Will be assigned after sorting
+        nation_id: nation.id,
+        nation_name: nation.nationName,
+        ruler_name: nation.rulerName,
+        alliance_id: nation.allianceId,
+        alliance_name: nation.alliance.name,
+        attacking_casualties: attacking,
+        defensive_casualties: defensive,
+        total_casualties: total
+      };
+    })
+    .sort((a, b) => b.total_casualties - a.total_casualties) // Sort by total casualties descending
+    .map((stat, index) => ({
+      ...stat,
+      rank: index + 1 // Assign rank 1-N based on total casualties within the alliance
+    }));
+
+  // Cache the results (60 minute TTL)
+  warStatsCache.set(cacheKey, stats, CASUALTIES_CACHE_TTL_MS);
+
+  return stats;
+}
+
+/**
  * Invalidate the casualties cache
  */
 export function invalidateCasualtiesCache(): void {

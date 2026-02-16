@@ -115,6 +115,7 @@ export const API_ENDPOINTS = {
   warStatisticsInvalidateCache: '/api/war-statistics/invalidate-cache',
   casualties: '/api/casualties',
   casualtiesAlliances: '/api/casualties/alliances',
+  casualtiesAllianceMembers: (allianceId: number) => `/api/casualties/alliance/${allianceId}`,
   interallianceAid: (alliance1Id: number, alliance2Id: number, startDate?: string, endDate?: string) => {
     let url = `/api/interalliance-aid/${alliance1Id}/${alliance2Id}`;
     const params = new URLSearchParams();
