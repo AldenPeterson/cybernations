@@ -5,7 +5,6 @@ import { AllianceService } from './allianceService.js';
 import { War } from '../models/index.js';
 import { calculateWarDateInfo, calculateStaggeredStatus, parseCentralTimeDate, formatCentralTimeDate, isWarExpired } from '../utils/dateUtils.js';
 import { readNuclearHits } from './nuclearHitsService.js';
-import { loadSpyglassData, getSpyglassDataForNation } from './spyglassService.js';
 
 export class DefendingWarsService {
   /**
@@ -41,8 +40,6 @@ export class DefendingWarsService {
       inWarMode: n.inWarMode,
       attackingCasualties: n.attackingCasualties ?? undefined,
       defensiveCasualties: n.defensiveCasualties ?? undefined,
-      warchest: n.warchest ?? undefined,
-      spyglassLastUpdated: n.spyglassLastUpdated ?? undefined,
       rank: n.rank ?? undefined,
     }));
     
@@ -129,8 +126,6 @@ export class DefendingWarsService {
       inWarMode: n.inWarMode,
       attackingCasualties: n.attackingCasualties ?? undefined,
       defensiveCasualties: n.defensiveCasualties ?? undefined,
-      warchest: n.warchest ?? undefined,
-      spyglassLastUpdated: n.spyglassLastUpdated ?? undefined,
       rank: n.rank ?? undefined,
     }));
     
@@ -140,9 +135,6 @@ export class DefendingWarsService {
     opposingNations.forEach(n => nationsMap.set(n.id, n));
     const nations = Array.from(nationsMap.values());
     const relevantWars = activeWars;
-
-    // Load spyglass data
-    const spyglassMap = loadSpyglassData();
 
     // Build latest nuked date map for defending nations from nuclear hits
     const nuclearStore = readNuclearHits();
@@ -179,7 +171,6 @@ export class DefendingWarsService {
         .filter(war => war.declaringId === nation.id)
         .map(war => {
           const defendingNation = nations.find(n => n.id === war.receivingId);
-          const spyglassData = defendingNation ? getSpyglassDataForNation(spyglassMap, defendingNation.rulerName, defendingNation.nationName) : undefined;
           const warDateInfo = calculateWarDateInfo(war.endDate);
           return {
             warId: war.warId,
@@ -194,9 +185,7 @@ export class DefendingWarsService {
               activity: defendingNation?.activity || '',
               inWarMode: defendingNation?.inWarMode || false,
               nuclearWeapons: defendingNation?.nuclearWeapons || 0,
-              governmentType: defendingNation?.governmentType || '',
-              warchest: spyglassData?.warchest,
-              spyglassLastUpdated: spyglassData?.daysOld
+              governmentType: defendingNation?.governmentType || ''
             },
             attackingNation: {
               id: war.declaringId,
@@ -222,7 +211,6 @@ export class DefendingWarsService {
         .filter(war => war.receivingId === nation.id)
         .map(war => {
           const attackingNation = nations.find(n => n.id === war.declaringId);
-          const spyglassData = attackingNation ? getSpyglassDataForNation(spyglassMap, attackingNation.rulerName, attackingNation.nationName) : undefined;
           const warDateInfo = calculateWarDateInfo(war.endDate);
           return {
             warId: war.warId,
@@ -250,9 +238,7 @@ export class DefendingWarsService {
               activity: attackingNation?.activity || '',
               inWarMode: attackingNation?.inWarMode || false,
               nuclearWeapons: attackingNation?.nuclearWeapons || 0,
-              governmentType: attackingNation?.governmentType || '',
-              warchest: spyglassData?.warchest,
-              spyglassLastUpdated: spyglassData?.daysOld
+              governmentType: attackingNation?.governmentType || ''
             },
             status: war.status,
             date: war.date,
@@ -263,9 +249,6 @@ export class DefendingWarsService {
 
       const sortedDefendingWars = defendingWars.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       const staggeredStatus = calculateStaggeredStatus(sortedDefendingWars);
-
-      // Get spyglass data for current nation
-      const nationSpyglassData = getSpyglassDataForNation(spyglassMap, nation.rulerName, nation.nationName);
 
       return {
         nation: {
@@ -280,9 +263,7 @@ export class DefendingWarsService {
           inWarMode: nation.inWarMode,
           nuclearWeapons: nation.nuclearWeapons,
           governmentType: nation.governmentType,
-          lastNukedDate: latestNukedDateByNationId.get(nation.id),
-          warchest: nationSpyglassData?.warchest,
-          spyglassLastUpdated: nationSpyglassData?.daysOld
+          lastNukedDate: latestNukedDateByNationId.get(nation.id)
         },
         attackingWars: attackingWars.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
         defendingWars: sortedDefendingWars,
