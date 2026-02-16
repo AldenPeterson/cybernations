@@ -13,6 +13,25 @@ import {
 import { Nation } from '../models/Nation.js';
 import { loadNationDiscordHandles } from '../utils/nationDiscordHandles.js';
 
+// Cache for alliance stats
+interface AllianceStatsCache {
+  data: {
+    totalNations: number;
+    totalOutgoingAid: number;
+    totalIncomingAid: number;
+    totalMoneyOut: number;
+    totalMoneyIn: number;
+    totalTechOut: number;
+    totalTechIn: number;
+    totalSoldiersOut: number;
+    totalSoldiersIn: number;
+  };
+  timestamp: number;
+}
+
+const allianceStatsCache = new Map<number, AllianceStatsCache>();
+const ALLIANCE_STATS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
+
 export class AllianceService {
   /**
    * Get alliance data by ID
@@ -123,6 +142,15 @@ export class AllianceService {
    * Get alliance statistics
    */
   static async getAllianceStats(allianceId: number) {
+    // Check cache first
+    const now = Date.now();
+    const cached = allianceStatsCache.get(allianceId);
+    
+    if (cached && (now - cached.timestamp) < ALLIANCE_STATS_CACHE_TTL_MS) {
+      console.log(`[Cache Hit] getAllianceStats for alliance ${allianceId}`);
+      return cached.data;
+    }
+
     const { prisma } = await import('../utils/prisma.js');
     
     // Query only nations in this alliance
@@ -203,7 +231,7 @@ export class AllianceService {
     const outgoingOffers = allianceAidOffers.filter(offer => allianceNationIds.includes(offer.declaringNationId));
     const incomingOffers = allianceAidOffers.filter(offer => allianceNationIds.includes(offer.receivingNationId));
 
-    return {
+    const result = {
       totalNations: allianceNationIds.length,
       totalOutgoingAid: outgoingOffers.length,
       totalIncomingAid: incomingOffers.length,
@@ -214,6 +242,22 @@ export class AllianceService {
       totalSoldiersOut: outgoingOffers.reduce((sum, offer) => sum + (offer.soldiers || 0), 0),
       totalSoldiersIn: incomingOffers.reduce((sum, offer) => sum + (offer.soldiers || 0), 0)
     };
+    
+    // Cache the result
+    allianceStatsCache.set(allianceId, {
+      data: result,
+      timestamp: now
+    });
+    
+    // Clean up old cache entries (older than 24 hours)
+    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    for (const [key, value] of allianceStatsCache.entries()) {
+      if (now - value.timestamp > maxAge) {
+        allianceStatsCache.delete(key);
+      }
+    }
+    
+    return result;
   }
 
   /**

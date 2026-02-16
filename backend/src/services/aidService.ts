@@ -9,7 +9,7 @@ import {
   getNationsThatShouldSendCash
 } from './nationCategorizationService.js';
 import { AllianceService } from './allianceService.js';
-import { AidOffer } from '../models/index.js';
+import { AidOffer, NationAidSlots } from '../models/index.js';
 import { CategorizedNation, Nation } from '../models/Nation.js';
 import { prisma } from '../utils/prisma.js';
 import { isAidOfferExpired, calculateAidDateInfo, getAidDaysUntilExpiration, parseCentralTimeDate } from '../utils/dateUtils.js';
@@ -35,8 +35,56 @@ interface AllianceAidTotalsCache {
   timestamp: number;
 }
 
+// Cache for aid slots
+interface AidSlotsCache {
+  data: NationAidSlots[];
+  timestamp: number;
+}
+
 const allianceAidTotalsCache = new Map<string, AllianceAidTotalsCache>();
 const ALLIANCE_AID_TOTALS_CACHE_TTL_MS = 3600000; // 1 hour cache TTL (historical data doesn't change)
+
+const aidSlotsCache = new Map<number, AidSlotsCache>();
+const AID_SLOTS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
+
+// Cache for alliance aid stats
+interface AllianceAidStatsCache {
+  data: {
+    totalNations: number;
+    totalOutgoingAid: number;
+    totalIncomingAid: number;
+    totalMoneyOut: number;
+    totalMoneyIn: number;
+    totalTechOut: number;
+    totalTechIn: number;
+    totalSoldiersOut: number;
+    totalSoldiersIn: number;
+    aidDirections: {
+      shouldGetCash: number;
+      shouldSendTechnology: number;
+      shouldGetTechnology: number;
+      shouldSendCash: number;
+    };
+  };
+  timestamp: number;
+}
+
+// Cache for active aid offers by alliance
+interface ActiveAidOffersByAllianceCache {
+  data: Array<{
+    allianceId: number;
+    allianceName: string;
+    sentOffers: number;
+    receivedOffers: number;
+  }>;
+  timestamp: number;
+}
+
+const allianceAidStatsCache = new Map<number, AllianceAidStatsCache>();
+const ALLIANCE_AID_STATS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
+
+const activeAidOffersByAllianceCache = new Map<number, ActiveAidOffersByAllianceCache>();
+const ACTIVE_AID_OFFERS_BY_ALLIANCE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache TTL
 
 export class AidService {
   /**
@@ -106,6 +154,15 @@ export class AidService {
    * Optimized to query database directly instead of loading all data
    */
   static async getAidSlots(allianceId: number) {
+    // Check cache first
+    const now = Date.now();
+    const cached = aidSlotsCache.get(allianceId);
+    
+    if (cached && (now - cached.timestamp) < AID_SLOTS_CACHE_TTL_MS) {
+      console.log(`[Cache Hit] getAidSlots for alliance ${allianceId}`);
+      return cached.data;
+    }
+
     const { prisma } = await import('../utils/prisma.js');
     
     // Query only nations in this alliance
@@ -218,13 +275,38 @@ export class AidService {
         return !isStatusExpired && !isDateExpired;
       });
     
-    return await getAidSlotsForAlliance(allianceId, nations, aidOffers);
+    const result = await getAidSlotsForAlliance(allianceId, nations, aidOffers);
+    
+    // Cache the result
+    aidSlotsCache.set(allianceId, {
+      data: result,
+      timestamp: now
+    });
+    
+    // Clean up old cache entries (older than 24 hours)
+    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    for (const [key, value] of aidSlotsCache.entries()) {
+      if (now - value.timestamp > maxAge) {
+        aidSlotsCache.delete(key);
+      }
+    }
+    
+    return result;
   }
 
   /**
    * Get alliance aid statistics
    */
   static async getAllianceAidStats(allianceId: number) {
+    // Check cache first
+    const now = Date.now();
+    const cached = allianceAidStatsCache.get(allianceId);
+    
+    if (cached && (now - cached.timestamp) < ALLIANCE_AID_STATS_CACHE_TTL_MS) {
+      console.log(`[Cache Hit] getAllianceAidStats for alliance ${allianceId}`);
+      return cached.data;
+    }
+
     const { nations, aidOffers, useJsonData } = await AllianceService.getAllianceData(allianceId);
     
     if (nations.length === 0) {
@@ -260,7 +342,7 @@ export class AidService {
     const nationsThatShouldGetTechnology = getNationsThatShouldGetTechnology(categorizedNations);
     const nationsThatShouldSendCash = getNationsThatShouldSendCash(categorizedNations);
 
-    return {
+    const result = {
       totalNations: nations.length,
       totalOutgoingAid: outgoingOffers.length,
       totalIncomingAid: incomingOffers.length,
@@ -277,6 +359,22 @@ export class AidService {
         shouldSendCash: nationsThatShouldSendCash.length
       }
     };
+    
+    // Cache the result
+    allianceAidStatsCache.set(allianceId, {
+      data: result,
+      timestamp: now
+    });
+    
+    // Clean up old cache entries (older than 24 hours)
+    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    for (const [key, value] of allianceAidStatsCache.entries()) {
+      if (now - value.timestamp > maxAge) {
+        allianceAidStatsCache.delete(key);
+      }
+    }
+    
+    return result;
   }
 
   /**
@@ -288,6 +386,15 @@ export class AidService {
     sentOffers: number;
     receivedOffers: number;
   }>> {
+    // Check cache first
+    const now = Date.now();
+    const cached = activeAidOffersByAllianceCache.get(allianceId);
+    
+    if (cached && (now - cached.timestamp) < ACTIVE_AID_OFFERS_BY_ALLIANCE_CACHE_TTL_MS) {
+      console.log(`[Cache Hit] getActiveAidOffersByAlliance for alliance ${allianceId}`);
+      return cached.data;
+    }
+
     const { nations, aidOffers } = await AllianceService.getAllianceData(allianceId);
     
     if (nations.length === 0) {
@@ -374,9 +481,25 @@ export class AidService {
     }
 
     // Convert to array and sort by total offers (descending)
-    return Array.from(allianceMap.values()).sort((a, b) => 
+    const result = Array.from(allianceMap.values()).sort((a, b) => 
       (b.sentOffers + b.receivedOffers) - (a.sentOffers + a.receivedOffers)
     );
+    
+    // Cache the result
+    activeAidOffersByAllianceCache.set(allianceId, {
+      data: result,
+      timestamp: now
+    });
+    
+    // Clean up old cache entries (older than 24 hours)
+    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    for (const [key, value] of activeAidOffersByAllianceCache.entries()) {
+      if (now - value.timestamp > maxAge) {
+        activeAidOffersByAllianceCache.delete(key);
+      }
+    }
+    
+    return result;
   }
 
   /**
