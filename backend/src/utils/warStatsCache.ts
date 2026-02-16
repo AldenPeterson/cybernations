@@ -118,6 +118,9 @@ export const CacheKeys = {
   // Cache keys for stagger eligibility granular caching
   nations: (allianceId: number) => `nations:${allianceId}`,
   
+  warsForAlliance: (allianceId: number) => 
+    `wars:${allianceId}`,
+  
   warsForAlliances: (allianceId1: number, allianceId2: number) => 
     `wars:${allianceId1}:${allianceId2}`,
 };

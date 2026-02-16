@@ -192,31 +192,28 @@ export class StaggerEligibilityService {
   }
 
   /**
-   * Get cached or query wars for nations from two alliances
+   * Get cached or query wars for nations in an alliance
    */
-  private static async getWarsForAlliances(
-    allianceId1: number,
-    allianceId2: number,
-    allNationIds: number[],
+  private static async getWarsForAlliance(
+    allianceId: number,
+    nationIds: number[],
     prisma: any
   ): Promise<any[]> {
-    // Sort alliance IDs for consistent cache key
-    const [id1, id2] = [allianceId1, allianceId2].sort((a, b) => a - b);
-    const cacheKey = CacheKeys.warsForAlliances(id1, id2);
+    const cacheKey = CacheKeys.warsForAlliance(allianceId);
     const cached = warStatsCache.get<any[]>(cacheKey);
     
     if (cached) {
-      console.log(`[StaggerEligibility] Returning cached wars for alliances ${id1} and ${id2} (${cached.length} wars)`);
+      console.log(`[StaggerEligibility] Returning cached wars for alliance ${allianceId} (${cached.length} wars)`);
       return cached;
     }
 
-    console.log(`[StaggerEligibility] Cache miss - querying database for wars between alliances ${id1} and ${id2}`);
-    // Query from database
+    console.log(`[StaggerEligibility] Cache miss - querying database for wars involving alliance ${allianceId}`);
+    // Query all wars for nations in this alliance (regardless of opponent)
     const warRecords = await prisma.war.findMany({
       where: {
         OR: [
-          { declaringNationId: { in: allNationIds } },
-          { receivingNationId: { in: allNationIds } }
+          { declaringNationId: { in: nationIds } },
+          { receivingNationId: { in: nationIds } }
         ],
         isActive: true,
         status: {
@@ -250,7 +247,7 @@ export class StaggerEligibilityService {
         endDate: war.endDate,
       }));
 
-    console.log(`[StaggerEligibility] Queried ${activeWars.length} active wars for alliances ${id1} and ${id2}, caching for 5 minutes`);
+    console.log(`[StaggerEligibility] Queried ${activeWars.length} active wars for alliance ${allianceId}, caching for 5 minutes`);
     // Cache for 5 minutes (wars change more frequently)
     warStatsCache.set(cacheKey, activeWars, 5 * 60 * 1000);
     
@@ -294,13 +291,18 @@ export class StaggerEligibilityService {
         return [];
       }
       
-      // Get wars from cache or database (cached per alliance pair)
-      const activeWars = await this.getWarsForAlliances(
-        attackingAllianceId,
-        defendingAllianceId,
-        allNationIds,
-        prisma
-      );
+      // Get wars from cache or database (cached per alliance)
+      const [attackingWars, defendingWars] = await Promise.all([
+        this.getWarsForAlliance(attackingAllianceId, attackingAllianceNations.map(n => n.id), prisma),
+        this.getWarsForAlliance(defendingAllianceId, defendingAllianceNations.map(n => n.id), prisma)
+      ]);
+      
+      // Merge and deduplicate wars (a war might appear in both if it's between these alliances)
+      const allWarsMap = new Map<number, any>();
+      [...attackingWars, ...defendingWars].forEach(war => {
+        allWarsMap.set(war.warId, war);
+      });
+      const activeWars = Array.from(allWarsMap.values());
       
       console.log(`Found ${activeWars.length} active wars involving these alliances`);
     
