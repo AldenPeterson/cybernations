@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getCasualtiesStats, invalidateCasualtiesCache } from '../services/casualtiesService.js';
+import { getCasualtiesStats, getAllianceCasualtiesStats, invalidateCasualtiesCache } from '../services/casualtiesService.js';
 
 export class CasualtiesController {
   /**
@@ -14,6 +14,25 @@ export class CasualtiesController {
       });
     } catch (error) {
       console.error('Error fetching casualties stats:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  /**
+   * Get alliance-level casualties statistics
+   */
+  static async getAllianceCasualtiesStats(_req: Request, res: Response) {
+    try {
+      const stats = await getAllianceCasualtiesStats();
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      console.error('Error fetching alliance casualties stats:', error);
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
