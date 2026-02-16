@@ -152,7 +152,7 @@ export async function getCasualtiesStats(): Promise<CasualtyStat[]> {
 
 /**
  * Get alliance-level casualties statistics
- * Aggregates all nations by alliance and calculates totals and averages
+ * Aggregates all nations by alliance and calculates totals and averages using database query
  * Results are cached for 60 minutes
  */
 export async function getAllianceCasualtiesStats(): Promise<AllianceCasualtyStat[]> {
@@ -162,82 +162,69 @@ export async function getAllianceCasualtiesStats(): Promise<AllianceCasualtyStat
     return cached;
   }
 
-  // Fetch ALL active nations (not just those with casualties) to count all members
-  const nations = await prisma.nation.findMany({
-    where: {
-      isActive: true
-    },
-    include: {
-      alliance: true
-    }
-  });
+  // Use SQL aggregation query for better performance
+  const sqlQuery = `
+    SELECT 
+      n.alliance_id,
+      a.name AS alliance_name,
+      COUNT(*) AS total_members,
+      COALESCE(SUM(n.attacking_casualties), 0)::bigint AS total_attacking_casualties,
+      COALESCE(SUM(n.defensive_casualties), 0)::bigint AS total_defensive_casualties,
+      (COALESCE(SUM(n.attacking_casualties), 0) + COALESCE(SUM(n.defensive_casualties), 0))::bigint AS total_casualties
+    FROM nations n
+    INNER JOIN alliances a ON n.alliance_id = a.id
+    WHERE n.is_active = true
+    GROUP BY n.alliance_id, a.name
+    HAVING COUNT(*) >= 10
+    ORDER BY total_casualties DESC
+  `;
 
-  // Aggregate by alliance
-  const allianceMap = new Map<number, {
-    alliance_id: number;
-    alliance_name: string;
-    total_attacking_casualties: number;
-    total_defensive_casualties: number;
-    total_members: number;
-  }>();
+  const startTime = Date.now();
 
-  nations.forEach(nation => {
-    const allianceId = nation.allianceId;
-    const allianceName = nation.alliance.name;
+  try {
+    const results = await prisma.$queryRawUnsafe<Array<{
+      alliance_id: bigint | number;
+      alliance_name: string;
+      total_members: bigint | number;
+      total_attacking_casualties: bigint | number;
+      total_defensive_casualties: bigint | number;
+      total_casualties: bigint | number;
+    }>>(sqlQuery);
 
-    if (!allianceMap.has(allianceId)) {
-      allianceMap.set(allianceId, {
-        alliance_id: allianceId,
-        alliance_name: allianceName,
-        total_attacking_casualties: 0,
-        total_defensive_casualties: 0,
-        total_members: 0,
-      });
-    }
+    const queryTime = Date.now() - startTime;
+    console.log(`[Query Performance] Alliance casualties stats: ${queryTime}ms, ${results.length} rows`);
 
-    const alliance = allianceMap.get(allianceId)!;
-    
-    // Count all members
-    alliance.total_members += 1;
-    
-    // Only add casualties from nations that have casualties
-    const attacking = nation.attackingCasualties ?? 0;
-    const defensive = nation.defensiveCasualties ?? 0;
-    alliance.total_attacking_casualties += attacking;
-    alliance.total_defensive_casualties += defensive;
-  });
-
-  // Convert to array and calculate totals and averages
-  // Only include alliances that match the dropdown criteria (at least 10 active members)
-  // This matches the filter used in AllianceController.getAlliances
-  const stats: AllianceCasualtyStat[] = Array.from(allianceMap.values())
-    .filter(alliance => alliance.total_members >= 10) // Only include alliances with at least 10 members (matching dropdown)
-    .map(alliance => {
-      const total_casualties = alliance.total_attacking_casualties + alliance.total_defensive_casualties;
-      const average_casualties_per_member = alliance.total_members > 0
-        ? total_casualties / alliance.total_members
+    // Convert BigInt values to numbers and calculate averages
+    const stats: AllianceCasualtyStat[] = results.map((row, index) => {
+      const total_members = Number(row.total_members);
+      const total_attacking_casualties = Number(row.total_attacking_casualties);
+      const total_defensive_casualties = Number(row.total_defensive_casualties);
+      const total_casualties = Number(row.total_casualties);
+      const average_casualties_per_member = total_members > 0
+        ? total_casualties / total_members
         : 0;
 
       return {
-        rank: 0, // Will be assigned after sorting
-        alliance_id: alliance.alliance_id,
-        alliance_name: alliance.alliance_name,
-        total_attacking_casualties: alliance.total_attacking_casualties,
-        total_defensive_casualties: alliance.total_defensive_casualties,
+        rank: index + 1, // Rank based on total casualties (already sorted by SQL)
+        alliance_id: Number(row.alliance_id),
+        alliance_name: row.alliance_name,
+        total_attacking_casualties,
+        total_defensive_casualties,
         total_casualties,
-        total_members: alliance.total_members,
+        total_members,
         average_casualties_per_member,
       };
-    })
-    .sort((a, b) => b.total_casualties - a.total_casualties) // Sort by total casualties descending
-    .map((stat, index) => ({
-      ...stat,
-      rank: index + 1 // Assign rank based on total casualties (this rank persists regardless of frontend sorting)
-    }));
+    });
 
-  // Cache the results (60 minute TTL)
-  warStatsCache.set(ALLIANCE_CASUALTIES_CACHE_KEY, stats, CASUALTIES_CACHE_TTL_MS);
+    // Cache the results (60 minute TTL)
+    warStatsCache.set(ALLIANCE_CASUALTIES_CACHE_KEY, stats, CASUALTIES_CACHE_TTL_MS);
 
-  return stats;
+    return stats;
+  } catch (error: any) {
+    console.error('SQL Query Error:', error);
+    console.error('Error message:', error?.message);
+    console.error('Error code:', error?.code);
+    throw error;
+  }
 }
 
