@@ -64,25 +64,116 @@ export async function readNuclearHits(): Promise<NuclearHitStore> {
 
 export async function writeNuclearHits(store: NuclearHitStore): Promise<boolean> {
   try {
-    // Upsert all records
+    const totalRecords = Object.keys(store).length;
+    const keys = Object.keys(store);
+    
+    // Single query to get existing records
+    const existingHits = await prisma.nuclearHit.findMany({
+      where: {
+        key: { in: keys }
+      },
+      select: {
+        key: true,
+        attackingNation: true,
+        defendingNation: true,
+        result: true,
+        sentAt: true,
+      }
+    });
+    
+    const existingMap = new Map(existingHits.map(hit => [hit.key, hit]));
+    
+    // Separate records into new, changed, and unchanged
+    const recordsToCreate: Array<{
+      key: string;
+      attackingNation: string;
+      defendingNation: string;
+      result: string | null;
+      sentAt: string;
+    }> = [];
+    
+    const recordsToUpdate: Array<{
+      key: string;
+      attackingNation: string;
+      defendingNation: string;
+      result: string | null;
+      sentAt: string;
+    }> = [];
+    
+    let unchangedRecords = 0;
+    
     for (const [key, record] of Object.entries(store)) {
-      await prisma.nuclearHit.upsert({
-        where: { key },
-        update: {
-          attackingNation: record.attackingNation,
-          defendingNation: record.defendingNation,
-          result: record.result || null,
-          sentAt: record.sentAt,
-        },
-        create: {
+      const existing = existingMap.get(key);
+      
+      if (!existing) {
+        // New record - batch create
+        recordsToCreate.push({
           key,
           attackingNation: record.attackingNation,
           defendingNation: record.defendingNation,
           result: record.result || null,
           sentAt: record.sentAt,
-        },
+        });
+      } else {
+        // Check if record has changed
+        const hasChanged = 
+          existing.attackingNation !== record.attackingNation ||
+          existing.defendingNation !== record.defendingNation ||
+          (existing.result || null) !== (record.result || null) ||
+          existing.sentAt !== record.sentAt;
+        
+        if (hasChanged) {
+          // Changed record - batch update
+          recordsToUpdate.push({
+            key,
+            attackingNation: record.attackingNation,
+            defendingNation: record.defendingNation,
+            result: record.result || null,
+            sentAt: record.sentAt,
+          });
+        } else {
+          unchangedRecords++;
+        }
+      }
+    }
+    
+    // Batch create all new records in a single query
+    if (recordsToCreate.length > 0) {
+      await prisma.nuclearHit.createMany({
+        data: recordsToCreate,
+        skipDuplicates: true,
       });
     }
+    
+    // Batch update changed records using Promise.all for parallelization
+    // Note: Prisma doesn't support batch updates with different values per record,
+    // so we parallelize individual updates
+    if (recordsToUpdate.length > 0) {
+      await Promise.all(
+        recordsToUpdate.map(record =>
+          prisma.nuclearHit.update({
+            where: { key: record.key },
+            data: {
+              attackingNation: record.attackingNation,
+              defendingNation: record.defendingNation,
+              result: record.result,
+              sentAt: record.sentAt,
+            },
+          })
+        )
+      );
+    }
+    
+    const newRecords = recordsToCreate.length;
+    const updatedRecords = recordsToUpdate.length;
+    const changedRecords = newRecords + updatedRecords;
+    
+    console.log(`[Nuclear Data] Processed ${totalRecords} nuclear hit records: ${newRecords} new, ${updatedRecords} updated, ${unchangedRecords} unchanged`);
+    
+    if (changedRecords > 0) {
+      console.log(`[Nuclear Data] Wrote ${changedRecords} changed nuclear hit records to database`);
+    }
+    
     return true;
   } catch (error) {
     console.error('Failed to write nuclear hits to database:', error);
@@ -95,28 +186,76 @@ export async function upsertNuclearReports(inputs: NuclearReportInput[]): Promis
     return { added: 0, skipped: 0, addedKeys: [] };
   }
 
-  const store = await readNuclearHits();
+  console.log(`[Nuclear Data] Processing ${inputs.length} nuclear report inputs`);
+  
+  // Normalize all inputs first
+  const normalizedInputs: Array<{ key: string; record: NuclearHitRecord }> = [];
+  for (const input of inputs) {
+    try {
+      const normalized = normalizeReport(input);
+      normalizedInputs.push(normalized);
+    } catch (_err) {
+      // Skip invalid entries
+    }
+  }
+
+  if (normalizedInputs.length === 0) {
+    return { added: 0, skipped: inputs.length, addedKeys: [] };
+  }
+
+  // Only fetch records for the keys we're actually processing
+  const keysToCheck = normalizedInputs.map(n => n.key);
+  const existingHits = await prisma.nuclearHit.findMany({
+    where: {
+      key: { in: keysToCheck }
+    },
+    select: {
+      key: true,
+    }
+  });
+
+  const existingKeys = new Set(existingHits.map(hit => hit.key));
+
+  // Separate new records from duplicates
+  const recordsToCreate: Array<{
+    key: string;
+    attackingNation: string;
+    defendingNation: string;
+    result: string | null;
+    sentAt: string;
+  }> = [];
+
   let added = 0;
   let skipped = 0;
   const addedKeys: string[] = [];
 
-  for (const input of inputs) {
-    try {
-      const { key, record } = normalizeReport(input);
-      if (store[key]) {
-        skipped += 1;
-        continue;
-      }
-      store[key] = record;
-      added += 1;
-      addedKeys.push(key);
-    } catch (_err) {
-      // Skip invalid entries; log minimally to avoid noisy output
+  for (const { key, record } of normalizedInputs) {
+    if (existingKeys.has(key)) {
       skipped += 1;
+      continue;
     }
+    
+    recordsToCreate.push({
+      key,
+      attackingNation: record.attackingNation,
+      defendingNation: record.defendingNation,
+      result: record.result || null,
+      sentAt: record.sentAt,
+    });
+    added += 1;
+    addedKeys.push(key);
   }
 
-  await writeNuclearHits(store);
+  // Batch create only the new records
+  if (recordsToCreate.length > 0) {
+    await prisma.nuclearHit.createMany({
+      data: recordsToCreate,
+      skipDuplicates: true,
+    });
+    console.log(`[Nuclear Data] Created ${recordsToCreate.length} new nuclear hit records`);
+  }
+
+  console.log(`[Nuclear Data] Processed reports: ${added} added, ${skipped} skipped (duplicates or invalid)`);
   return { added, skipped, addedKeys };
 }
 

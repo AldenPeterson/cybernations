@@ -3,14 +3,16 @@ import { NuclearReportInput, readNuclearHits, upsertNuclearReports, computeNucle
 import { loadDataFromFilesWithUpdate, createNationsDictionary } from '../services/dataProcessingService.js';
 
 export class NuclearHitsController {
-  static ingest = (req: Request, res: Response) => {
+  static ingest = async (req: Request, res: Response) => {
     const body = req.body;
     if (!Array.isArray(body)) {
       return res.status(400).json({ error: 'Expected an array of nuclear reports' });
     }
 
     const inputs: NuclearReportInput[] = body as NuclearReportInput[];
-    const result = upsertNuclearReports(inputs);
+    console.log(`[Nuclear Data] Ingest endpoint called with ${inputs.length} nuclear reports`);
+    const result = await upsertNuclearReports(inputs);
+    console.log(`[Nuclear Data] Ingest completed: added ${result.added} new reports, skipped ${result.skipped}`);
     return res.json(result);
   };
 
