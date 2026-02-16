@@ -12,6 +12,20 @@ export const NATION_EVENT_TYPES = {
 } as const;
 
 /**
+ * Top-level event type for stats events
+ */
+export const STATS_EVENT_TYPE = 'stats';
+
+/**
+ * Event types for stats events
+ */
+export const STATS_EVENT_TYPES = {
+  CASUALTY_RANKING_ENTERED: 'casualty_ranking_entered',
+  CASUALTY_RANKING_EXITED: 'casualty_ranking_exited',
+  CASUALTY_RANKING_CHANGED: 'casualty_ranking_changed',
+} as const;
+
+/**
  * Detect and create events for new nations
  * Called when a nation is first created
  * Tracks all nations regardless of strength

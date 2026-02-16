@@ -38,6 +38,28 @@ function App() {
     } else if (!allianceIdParam && ['aid', 'nations', 'wars'].includes(tabName)) {
       // If we're on an alliance-specific page but no alliance ID in URL, clear selection
       setSelectedAllianceId(null);
+    } else if (tabName === 'casualties') {
+      // For casualties page, sync from query params if on alliance-filtered tab
+      const searchParams = new URLSearchParams(location.search);
+      const tabParam = searchParams.get('tab');
+      if (tabParam === 'alliance-filtered') {
+        const allianceIdFromQuery = searchParams.get('allianceId');
+        if (allianceIdFromQuery) {
+          const allianceId = parseInt(allianceIdFromQuery);
+          if (!isNaN(allianceId)) {
+            setSelectedAllianceId(allianceId);
+            hasInitializedNationAidEfficiency.current = true;
+          }
+        } else if (selectedAllianceId && !hasInitializedNationAidEfficiency.current) {
+          // If on alliance-filtered tab but no allianceId in URL, add it
+          searchParams.set('allianceId', selectedAllianceId.toString());
+          navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
+          hasInitializedNationAidEfficiency.current = true;
+        }
+      } else {
+        // Reset flag when not on alliance-filtered tab
+        hasInitializedNationAidEfficiency.current = false;
+      }
     } else if (tabName === 'nation-aid-efficiency' || tabName === 'events' || tabName === 'interalliance-aid') {
       // For nation-aid-efficiency, events, and interalliance-aid, sync from query params
       const searchParams = new URLSearchParams(location.search);

@@ -291,6 +291,9 @@ const CasualtiesPage: React.FC<CasualtiesPageProps> = ({ selectedAllianceId }) =
               setActiveTab('alliance-filtered');
               const newSearchParams = new URLSearchParams(searchParams);
               newSearchParams.set('tab', 'alliance-filtered');
+              if (selectedAllianceId) {
+                newSearchParams.set('allianceId', selectedAllianceId.toString());
+              }
               setSearchParams(newSearchParams, { replace: true });
             }}
             className={`px-4 py-2 font-semibold transition-colors ${

@@ -292,6 +292,16 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
         const { processInactiveNations } = await import('./eventService.js');
         await processInactiveNations();
         
+        // Detect and create events for casualty ranking changes
+        console.log('Detecting casualty ranking changes...');
+        try {
+          const { detectCasualtyRankingChanges } = await import('./casualtiesService.js');
+          await detectCasualtyRankingChanges();
+        } catch (error: any) {
+          console.warn('Error detecting casualty ranking changes:', error.message);
+          // Don't fail the import if ranking detection fails
+        }
+        
         if (skipped > 0) {
           console.log(`Skipped ${skipped} nations due to errors`);
         }

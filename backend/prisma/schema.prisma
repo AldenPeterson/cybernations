@@ -52,6 +52,7 @@ model Nation {
   declaringWars                                          War[]          @relation("DeclaringNation")
   receivingWars                                          War[]          @relation("ReceivingNation")
   events                                                 Event[]
+  casualtyRankingSnapshots                               CasualtyRankingSnapshot[]
 
   @@index([allianceId])
   @@index([id])
@@ -242,4 +243,21 @@ model Event {
   @@index([allianceId])
   @@index([createdAt])
   @@map("events")
+}
+
+model CasualtyRankingSnapshot {
+  id                 Int      @id @default(autoincrement())
+  snapshotDate       DateTime @map("snapshot_date")
+  nationId            Int      @map("nation_id")
+  rank                Int
+  totalCasualties     Int      @map("total_casualties")
+  attackingCasualties Int      @map("attacking_casualties")
+  defensiveCasualties Int      @map("defensive_casualties")
+  createdAt           DateTime @default(now()) @map("created_at")
+  nation              Nation   @relation(fields: [nationId], references: [id], onDelete: Cascade)
+
+  @@index([snapshotDate])
+  @@index([nationId])
+  @@index([snapshotDate, rank])
+  @@map("casualty_ranking_snapshots")
 }

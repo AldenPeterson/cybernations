@@ -96,10 +96,14 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       }
       navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
     } else if (tabName === 'casualties') {
-      // For casualties page, preserve the tab parameter if on alliance-filtered tab
+      // For casualties page, update query parameter if on alliance-filtered tab
       const tabParam = searchParams.get('tab');
       if (tabParam === 'alliance-filtered') {
-        // Keep the alliance-filtered tab active
+        if (allianceId) {
+          searchParams.set('allianceId', allianceId.toString());
+        } else {
+          searchParams.delete('allianceId');
+        }
         navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
       }
     }
