@@ -53,6 +53,7 @@ export class EventsController {
       const nationId = req.query.nationId ? parseInt(req.query.nationId as string) : undefined;
       const allianceId = req.query.allianceId ? parseInt(req.query.allianceId as string) : undefined;
       const minStrength = req.query.minStrength ? parseInt(req.query.minStrength as string) : undefined;
+      const search = req.query.search as string | undefined;
 
       // Build cache key from query parameters
       const cacheParams: any = {
@@ -63,6 +64,7 @@ export class EventsController {
         nationId: nationId || 'all',
         allianceId: allianceId || 'all',
         minStrength: minStrength || 'all',
+        search: search || 'all',
       };
       const cacheKey = getCacheKey(cacheParams);
 
@@ -120,6 +122,43 @@ export class EventsController {
             { eventType: 'alliance_change' },
           ],
         };
+      }
+      
+      // Add search filter for ruler name and nation name
+      // Apply search filter after alliance filter to combine them properly
+      // Require at least 3 characters for search
+      if (search && search.trim().length >= 3) {
+        const searchTerm = search.trim();
+        const searchCondition = {
+          nationId: { not: null }, // Only search events with a nation
+          OR: [
+            {
+              nation: {
+                rulerName: { contains: searchTerm, mode: 'insensitive' },
+              },
+            },
+            {
+              nation: {
+                nationName: { contains: searchTerm, mode: 'insensitive' },
+              },
+            },
+          ],
+        };
+        
+        // Combine search with existing where conditions
+        // If finalWhere has an OR (from alliance filter), wrap both in an AND
+        if (finalWhere.OR) {
+          finalWhere = {
+            AND: [
+              finalWhere,
+              searchCondition,
+            ],
+          };
+        } else if (finalWhere.AND) {
+          finalWhere.AND.push(searchCondition);
+        } else {
+          finalWhere.AND = [searchCondition];
+        }
       }
 
       // Fetch events - fetch more if alliance filtering to account for in-memory filtering
@@ -190,11 +229,12 @@ export class EventsController {
       // Apply final limit after filtering
       const paginatedEvents = events.slice(0, limit);
 
-      // Count total - for alliance filtering or strength filtering, we need to count all matching events
+      // Count total - for alliance filtering, strength filtering, or search filtering, we need to count all matching events
       let totalCount = 0;
-      if (allianceId && !isNaN(allianceId) || (minStrength !== undefined && !isNaN(minStrength))) {
+      if (allianceId && !isNaN(allianceId) || (minStrength !== undefined && !isNaN(minStrength)) || (search && search.trim().length >= 3)) {
         // Fetch all matching events for accurate count (with reasonable limit)
-        const countWhere: any = { ...where };
+        // Build countWhere the same way as finalWhere
+        let countWhere: any = { ...where };
         if (allianceId && !isNaN(allianceId)) {
           countWhere.OR = [
             { allianceId: allianceId },
@@ -208,6 +248,40 @@ export class EventsController {
           ];
         }
         
+        // Apply search filter to countWhere the same way as finalWhere
+        // Require at least 3 characters for search
+        if (search && search.trim().length >= 3) {
+          const searchTerm = search.trim();
+          const searchCondition = {
+            nationId: { not: null },
+            OR: [
+              {
+                nation: {
+                  rulerName: { contains: searchTerm, mode: 'insensitive' },
+                },
+              },
+              {
+                nation: {
+                  nationName: { contains: searchTerm, mode: 'insensitive' },
+                },
+              },
+            ],
+          };
+          
+          if (countWhere.OR) {
+            countWhere = {
+              AND: [
+                countWhere,
+                searchCondition,
+              ],
+            };
+          } else if (countWhere.AND) {
+            countWhere.AND.push(searchCondition);
+          } else {
+            countWhere.AND = [searchCondition];
+          }
+        }
+        
         const allEvents = await prisma.event.findMany({
           where: countWhere,
           select: { 
@@ -216,7 +290,9 @@ export class EventsController {
             metadata: true, 
             nation: { 
               select: { 
-                strength: true 
+                strength: true,
+                rulerName: true,
+                nationName: true,
               } 
             } 
           },
@@ -254,6 +330,17 @@ export class EventsController {
             }
             // For other events without nation data, include them
             return true;
+          });
+        }
+        
+        // Filter by search if specified (require at least 3 characters)
+        if (search && search.trim().length >= 3) {
+          const searchTerm = search.trim().toLowerCase();
+          filtered = filtered.filter(event => {
+            if (!event.nation) return false;
+            const rulerName = event.nation.rulerName?.toLowerCase() || '';
+            const nationName = event.nation.nationName?.toLowerCase() || '';
+            return rulerName.includes(searchTerm) || nationName.includes(searchTerm);
           });
         }
         

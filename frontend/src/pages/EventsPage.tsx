@@ -2,6 +2,24 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import PageContainer from '../components/PageContainer';
+import { useAlliances } from '../contexts/AlliancesContext';
+
+// Custom hook for debouncing values
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 type Event = {
   id: number;
@@ -41,6 +59,7 @@ type EventTypeFilter = 'all' | 'new_nation' | 'nation_inactive' | 'alliance_chan
 
 const EventsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { alliances = [] } = useAlliances();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,12 +80,15 @@ const EventsPage: React.FC = () => {
   const [minStrength, setMinStrength] = useState<number | null>(
     searchParams.get('minStrength') ? parseInt(searchParams.get('minStrength')!) : 2000
   );
-  const [showAllEvents, setShowAllEvents] = useState<boolean>(
-    searchParams.get('showAll') === 'true' || !searchParams.has('showAll') // Default to true
+  const [searchQuery, setSearchQuery] = useState<string>(
+    searchParams.get('search') || ''
   );
   
+  // Debounce search query with 300ms delay
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  
   // Update URL when filters change
-  const updateUrlParams = (updates: { type?: FilterType; eventType?: EventTypeFilter; allianceId?: number | null; minStrength?: number | null; offset?: number; showAll?: boolean }) => {
+  const updateUrlParams = (updates: { type?: FilterType; eventType?: EventTypeFilter; allianceId?: number | null; minStrength?: number | null; offset?: number; search?: string }) => {
     const newParams = new URLSearchParams(searchParams);
     
     if (updates.type !== undefined) {
@@ -102,20 +124,19 @@ const EventsPage: React.FC = () => {
       }
     }
     
-    if (updates.showAll !== undefined) {
-      // Only add to URL if false (true is default)
-      if (updates.showAll === false) {
-        newParams.set('showAll', 'false');
-      } else {
-        newParams.delete('showAll');
-      }
-    }
-    
     if (updates.offset !== undefined) {
       if (updates.offset === 0) {
         newParams.delete('offset');
       } else {
         newParams.set('offset', updates.offset.toString());
+      }
+    }
+    
+    if (updates.search !== undefined) {
+      if (updates.search === '') {
+        newParams.delete('search');
+      } else {
+        newParams.set('search', updates.search);
       }
     }
     
@@ -130,7 +151,7 @@ const EventsPage: React.FC = () => {
     const urlAllianceId = searchParams.get('allianceId') ? parseInt(searchParams.get('allianceId')!) : null;
     const urlMinStrength = searchParams.get('minStrength') ? parseInt(searchParams.get('minStrength')!) : 2000;
     const urlOffset = parseInt(searchParams.get('offset') || '0');
-    const urlShowAll = searchParams.get('showAll') === 'true' || !searchParams.has('showAll');
+    const urlSearch = searchParams.get('search') || '';
     
     // Only update state if URL params differ from current state
     if (urlFilterType !== filterType) {
@@ -148,8 +169,8 @@ const EventsPage: React.FC = () => {
     if (urlOffset !== offset) {
       setOffset(urlOffset);
     }
-    if (urlShowAll !== showAllEvents) {
-      setShowAllEvents(urlShowAll);
+    if (urlSearch !== searchQuery) {
+      setSearchQuery(urlSearch);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]); // Only run when searchParams change externally
@@ -174,13 +195,18 @@ const EventsPage: React.FC = () => {
           params.eventType = eventTypeFilter;
         }
         
-        // Only apply alliance filter if not showing all events
-        if (!showAllEvents && selectedAllianceId !== null) {
+        // Apply alliance filter if selected
+        if (selectedAllianceId !== null) {
           params.allianceId = selectedAllianceId;
         }
         
         // Always include minStrength (defaults to 2000)
         params.minStrength = minStrength ?? 2000;
+        
+        // Include search query if provided and at least 3 characters
+        if (debouncedSearchQuery.trim().length >= 3) {
+          params.search = debouncedSearchQuery.trim();
+        }
         
         const response = await apiCallWithErrorHandling(API_ENDPOINTS.events(params)) as EventsResponse;
         
@@ -208,7 +234,7 @@ const EventsPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [limit, offset, filterType, eventTypeFilter, selectedAllianceId, minStrength, showAllEvents]);
+  }, [limit, offset, filterType, eventTypeFilter, selectedAllianceId, minStrength, debouncedSearchQuery]);
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -416,20 +442,40 @@ const EventsPage: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showAllEvents}
-                onChange={(e) => {
-                  const newValue = e.target.checked;
-                  setShowAllEvents(newValue);
-                  setOffset(0);
-                  updateUrlParams({ showAll: newValue, offset: 0 });
-                }}
-                className="w-4 h-4 text-primary bg-gray-800 border-gray-600 rounded focus:ring-2 focus:ring-primary/50"
-              />
-              Show All Events
-            </label>
+            <label className="text-sm text-gray-300">Search:</label>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                const newSearch = e.target.value;
+                setSearchQuery(newSearch);
+                setOffset(0);
+                updateUrlParams({ search: newSearch, offset: 0 });
+              }}
+              placeholder="Ruler or nation name (min 3 chars)..."
+              className="px-3 py-1.5 bg-gray-800 text-white border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm w-48"
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-300">Alliance:</label>
+            <select
+              value={selectedAllianceId || ''}
+              onChange={(e) => {
+                const newAllianceId = e.target.value === '' ? null : parseInt(e.target.value);
+                setSelectedAllianceId(newAllianceId);
+                setOffset(0);
+                updateUrlParams({ allianceId: newAllianceId, offset: 0 });
+              }}
+              className="px-3 py-1.5 bg-gray-800 text-white border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+            >
+              <option value="">All</option>
+              {alliances.map(alliance => (
+                <option key={alliance.id} value={alliance.id}>
+                  {alliance.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>

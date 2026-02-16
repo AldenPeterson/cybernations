@@ -80,3 +80,4 @@ GROUP BY alliance1_id, alliance2_id, alliance1_name, alliance2_name
 HAVING SUM(damage) > 0
 ORDER BY SUM(damage) DESC;
 
+

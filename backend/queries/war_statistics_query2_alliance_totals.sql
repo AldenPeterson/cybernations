@@ -74,3 +74,4 @@ WHERE (COALESCE(dt.total_damage_dealt, 0) + COALESCE(rt.total_damage_dealt, 0)) 
 ORDER BY ((COALESCE(dt.total_damage_dealt, 0) + COALESCE(rt.total_damage_dealt, 0)) - 
     (COALESCE(dt.total_damage_received, 0) + COALESCE(rt.total_damage_received, 0))) DESC;
 
+

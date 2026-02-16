@@ -77,8 +77,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       navigate(`/${tabName}/${allianceId}`);
     } else if (allianceId && tabName === 'aid') {
       navigate(`/${tabName}/${allianceId}`);
-    } else if (tabName === 'nation-aid-efficiency' || tabName === 'events') {
-      // For nation-aid-efficiency and events pages, update query parameter
+    } else if (tabName === 'nation-aid-efficiency') {
+      // For nation-aid-efficiency page, update query parameter
       const searchParams = new URLSearchParams(location.search);
       if (allianceId) {
         searchParams.set('allianceId', allianceId.toString());
@@ -141,8 +141,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   const isAllianceRelevant = (): boolean => {
     const pathParts = location.pathname.split('/');
     const tabName = pathParts[1];
-    // Only these pages use the alliance selector
-    return ['aid', 'nations', 'wars', 'nation-aid-efficiency', 'events', 'interalliance-aid'].includes(tabName);
+    // Only these pages use the alliance selector (events has its own filter, so excluded)
+    return ['aid', 'nations', 'wars', 'nation-aid-efficiency', 'interalliance-aid'].includes(tabName);
   };
 
   return (
