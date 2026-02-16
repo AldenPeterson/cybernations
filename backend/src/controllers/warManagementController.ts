@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { DefendingWarsService } from '../services/defendingWarsService.js';
+import { WarManagementService } from '../services/warManagementService.js';
 
-export class DefendingWarsController {
+export class WarManagementController {
   /**
    * Get wars organized by nation for a specific alliance
    */
@@ -18,7 +18,7 @@ export class DefendingWarsController {
         });
       }
 
-      const nationWars = await DefendingWarsService.getNationWars(allianceId, includePeaceMode, needsStagger);
+      const nationWars = await WarManagementService.getNationWars(allianceId, includePeaceMode, needsStagger);
       
       // Count nations and wars
       const nationCount = nationWars.length;
@@ -57,7 +57,7 @@ export class DefendingWarsController {
         });
       }
 
-      const defendingWars = await DefendingWarsService.getDefendingWars(allianceId);
+      const defendingWars = await WarManagementService.getDefendingWars(allianceId);
       
       console.log(`[API] getDefendingWars (allianceId: ${allianceId}): Returning ${defendingWars.length} defending wars`);
       
@@ -90,7 +90,7 @@ export class DefendingWarsController {
         });
       }
 
-      const stats = await DefendingWarsService.getDefendingWarsStats(allianceId, includeExpired);
+      const stats = await WarManagementService.getDefendingWarsStats(allianceId, includeExpired);
 
       console.log(`[API] getDefendingWarsStats (allianceId: ${allianceId}, includeExpired: ${includeExpired}): ${stats.totalDefendingWars} defending wars, ${stats.totalAttackingWars} attacking wars, ${stats.totalActiveWars} total active wars`);
 
@@ -124,7 +124,7 @@ export class DefendingWarsController {
         });
       }
 
-      const stats = await DefendingWarsService.getDefendingWarsStats(allianceId, includeExpired);
+      const stats = await WarManagementService.getDefendingWarsStats(allianceId, includeExpired);
 
       // Merge attacking/defending counts by opposing alliance
       const byAllianceMap = new Map<number, { allianceId: number; allianceName: string; attacking: number; defending: number; total: number }>();

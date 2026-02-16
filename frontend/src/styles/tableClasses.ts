@@ -77,8 +77,8 @@ export const tableClasses = {
   errorText: 'text-gray-400 m-0 mb-5',
   retryButton: 'bg-secondary text-white border-none rounded-lg px-5 py-2.5 cursor-pointer text-sm font-semibold hover:bg-blue-600 transition-colors',
 
-  // DefendingWarsTable specific column classes
-  defendingWarsColumns: {
+  // WarManagementTable specific column classes
+  warManagementColumns: {
     nation: 'p-[2px] md:p-0.5 border border-gray-600 bg-gray-700 min-w-[100px] md:min-w-[150px] max-w-[130px] md:max-w-[200px] w-[100px] md:w-[150px] sticky left-0 z-[100] shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]',
     nukes: 'p-[2px] md:p-0.5 border border-gray-600 text-center bg-gray-700 min-w-[32px] md:min-w-[40px] max-w-[40px] md:max-w-[50px] w-[35px] md:w-[45px]',
     lastNuked: 'p-[2px] md:p-0.5 px-0.5 md:px-1 border border-gray-600 text-center bg-gray-800 min-w-[38px] md:min-w-[50px] max-w-[45px] md:max-w-[60px] w-[40px] md:w-[55px]',
@@ -88,8 +88,8 @@ export const tableClasses = {
     assignments: 'px-0.5 md:px-1.5 py-0.5 md:py-1 border border-gray-600 text-center bg-gray-800 text-left'
   },
 
-  // DefendingWarsTable header classes
-  defendingWarsHeaders: {
+  // WarManagementTable header classes
+  warManagementHeaders: {
     default: 'px-0.5 md:px-1.5 py-1 md:py-2 border border-gray-600 text-left text-white font-bold text-[8px] md:text-sm',
     center: 'px-0.5 md:px-1.5 py-1 md:py-2 border border-gray-600 text-center text-white font-bold text-[8px] md:text-sm'
   },

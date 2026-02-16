@@ -7,7 +7,7 @@ import GlobalWarsPage from './pages/GlobalWarsPage'
 import AidPage from './pages/AidPage'
 import InterallianceAidPage from './pages/InterallianceAidPage'
 import NationsPage from './pages/NationsPage'
-import DefendingWarsPage from './pages/DefendingWarsPage'
+import WarManagementPage from './pages/WarManagementPage'
 import ShameOffersPage from './pages/ShameOffersPage'
 import NSComparisonsPage from './pages/NSComparisonsPage.tsx'
 import NuclearStatsPage from './pages/NuclearStatsPage'
@@ -108,7 +108,7 @@ function App() {
         <Route path="/nations/:allianceId" element={<NationsPage />} />
         <Route path="/nations" element={<AllianceRedirect tabName="nations" />} />
         
-        <Route path="/wars/:allianceId" element={<DefendingWarsPage />} />
+        <Route path="/wars/:allianceId" element={<WarManagementPage />} />
         <Route path="/wars" element={<AllianceRedirect tabName="wars" />} />
         
         {/* Legacy redirects - redirect old recommendations URLs to aid with tab parameter */}

@@ -196,11 +196,11 @@ interface NationWars {
   };
 }
 
-interface DefendingWarsTableProps {
+interface WarManagementTableProps {
   allianceId: number;
 }
 
-const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) => {
+const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [allNationWars, setAllNationWars] = useState<NationWars[]>([]);
   const [loading, setLoading] = useState(false);
@@ -325,8 +325,8 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   }, [alliances, allianceId, setAssignAllianceIdsOnly]); // Remove searchParams from dependencies
 
   // Use column and header classes from tableClasses
-  const columnClasses = tableClasses.defendingWarsColumns;
-  const headerClasses = tableClasses.defendingWarsHeaders;
+  const columnClasses = tableClasses.warManagementColumns;
+  const headerClasses = tableClasses.warManagementHeaders;
 
   useEffect(() => {
     if (allianceId) {
@@ -1222,4 +1222,4 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   );
 };
 
-export default DefendingWarsTable;
+export default WarManagementTable;

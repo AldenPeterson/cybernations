@@ -382,7 +382,7 @@ const AidPage: React.FC = () => {
     return textarea.value;
   };
 
-  // Column and header classes (following DefendingWarsTable pattern)
+  // Column and header classes (following WarManagementTable pattern)
   const columnClasses = {
     nation: 'p-2 border border-slate-300 min-w-[110px] max-w-[140px] w-[120px] sticky left-0 z-[100] shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]',
     aidSlot: 'p-2 border border-slate-300 text-center'

@@ -5,7 +5,7 @@ import { CronController } from '../controllers/cronController.js';
 import { AidEfficiencyController } from '../controllers/aidEfficiencyController.js';
 import { aidRoutes } from './aidRoutes.js';
 import { nationEditorRoutes } from './nationEditorRoutes.js';
-import { defendingWarsRoutes } from './defendingWarsRoutes.js';
+import { warManagementRoutes } from './warManagementRoutes.js';
 import { dynamicWarRoutes } from './dynamicWarRoutes.js';
 import staggerEligibilityRoutes from './staggerEligibilityRoutes.js';
 import { nuclearHitsRoutes } from './nuclearHitsRoutes.js';
@@ -22,8 +22,8 @@ apiRoutes.use('/', aidRoutes);
 // Use nation editor routes
 apiRoutes.use('/', nationEditorRoutes);
 
-// Use defending wars routes
-apiRoutes.use('/', defendingWarsRoutes);
+// Use war management routes
+apiRoutes.use('/', warManagementRoutes);
 
 // Use dynamic wars routes
 apiRoutes.use('/', dynamicWarRoutes);

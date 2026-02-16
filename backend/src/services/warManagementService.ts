@@ -6,7 +6,7 @@ import { War } from '../models/index.js';
 import { calculateWarDateInfo, calculateStaggeredStatus, parseCentralTimeDate, formatCentralTimeDate, isWarExpired } from '../utils/dateUtils.js';
 import { readNuclearHits } from './nuclearHitsService.js';
 
-export class DefendingWarsService {
+export class WarManagementService {
   /**
    * Get wars organized by nation for a specific alliance
    */

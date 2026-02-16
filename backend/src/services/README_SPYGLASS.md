@@ -20,7 +20,7 @@ Updated `Nation` interface to include:
 - `spyglassLastUpdated?: number` - How many days old the spy data is
 
 ### Integration
-The `defendingWarsService.ts` now:
+The `warManagementService.ts` now:
 1. Loads spyglass data on each request
 2. Matches nations by ruler + nation name (case-insensitive)
 3. Adds warchest info to:
@@ -29,7 +29,7 @@ The `defendingWarsService.ts` now:
    - Defending nations (in war records)
 
 ### Frontend Display
-The `DefendingWarsTable` component displays warchest information:
+The `WarManagementTable` component displays warchest information:
 - **Main nation column**: Shows warchest and days old below the NS/Tech info
 - **War columns**: Shows warchest for attacking/defending nations if available
 - **Format**: Uses green text for warchest amount (e.g., $19.1B) with gray "(4d)" for days old
