@@ -121,9 +121,15 @@ const CasualtiesPage: React.FC = () => {
               <thead>
                 <tr className="bg-gray-700">
                   <th 
-                    className="p-3 border border-gray-600 text-center text-white font-bold"
+                    className="p-3 border border-gray-600 text-center text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                    onClick={() => handleSort('rank')}
                   >
-                    Rank
+                    <div className="flex items-center justify-center gap-2">
+                      Rank
+                      <span className="text-xs text-gray-400">
+                        {sortColumn === 'rank' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                      </span>
+                    </div>
                   </th>
                   <th 
                     className="p-3 border border-gray-600 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
