@@ -54,8 +54,8 @@ type EventsResponse = {
   offset: number;
 };
 
-type FilterType = 'all' | 'nation' | 'alliance';
-type EventTypeFilter = 'all' | 'new_nation' | 'nation_inactive' | 'alliance_change';
+type FilterType = 'all' | 'nation' | 'alliance' | 'stats';
+type EventTypeFilter = 'all' | 'new_nation' | 'nation_inactive' | 'alliance_change' | 'casualty_ranking_entered' | 'casualty_ranking_exited' | 'casualty_ranking_changed';
 
 const EventsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -86,6 +86,30 @@ const EventsPage: React.FC = () => {
   
   // Debounce search query with 300ms delay
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Get valid event types based on the selected filter type
+  const getValidEventTypes = (type: FilterType): EventTypeFilter[] => {
+    switch (type) {
+      case 'nation':
+        return ['all', 'new_nation', 'nation_inactive', 'alliance_change'];
+      case 'stats':
+        return ['all', 'casualty_ranking_entered', 'casualty_ranking_exited', 'casualty_ranking_changed'];
+      case 'alliance':
+        return ['all']; // Alliance events would go here if we add them
+      case 'all':
+      default:
+        return ['all', 'new_nation', 'nation_inactive', 'alliance_change', 'casualty_ranking_entered', 'casualty_ranking_exited', 'casualty_ranking_changed'];
+    }
+  };
+
+  // Reset eventTypeFilter if it's invalid for the current filterType
+  useEffect(() => {
+    const validEventTypes = getValidEventTypes(filterType);
+    if (eventTypeFilter !== 'all' && !validEventTypes.includes(eventTypeFilter)) {
+      setEventTypeFilter('all');
+      updateUrlParams({ eventType: 'all', offset: 0 });
+    }
+  }, [filterType]); // eslint-disable-line react-hooks/exhaustive-deps
   
   // Update URL when filters change
   const updateUrlParams = (updates: { type?: FilterType; eventType?: EventTypeFilter; allianceId?: number | null; minStrength?: number | null; offset?: number; search?: string }) => {
@@ -269,6 +293,12 @@ const EventsPage: React.FC = () => {
         return 'Nation Inactive';
       case 'alliance_change':
         return 'Alliance Change';
+      case 'casualty_ranking_entered':
+        return 'Casualty Ranking Entered';
+      case 'casualty_ranking_exited':
+        return 'Casualty Ranking Exited';
+      case 'casualty_ranking_changed':
+        return 'Casualty Ranking Changed';
       default:
         return eventType;
     }
@@ -282,6 +312,12 @@ const EventsPage: React.FC = () => {
         return 'bg-red-600';
       case 'alliance_change':
         return 'bg-blue-600';
+      case 'casualty_ranking_entered':
+        return 'bg-purple-600';
+      case 'casualty_ranking_exited':
+        return 'bg-orange-600';
+      case 'casualty_ranking_changed':
+        return 'bg-yellow-600';
       default:
         return 'bg-gray-600';
     }
@@ -402,6 +438,7 @@ const EventsPage: React.FC = () => {
               <option value="all">All</option>
               <option value="nation">Nation</option>
               <option value="alliance">Alliance</option>
+              <option value="stats">Stats</option>
             </select>
           </div>
           
@@ -417,10 +454,11 @@ const EventsPage: React.FC = () => {
               }}
               className="px-3 py-1.5 bg-gray-800 text-white border border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
             >
-              <option value="all">All</option>
-              <option value="new_nation">New Nation</option>
-              <option value="nation_inactive">Nation Inactive</option>
-              <option value="alliance_change">Alliance Change</option>
+              {getValidEventTypes(filterType).map((eventType) => (
+                <option key={eventType} value={eventType}>
+                  {eventType === 'all' ? 'All' : getEventTypeLabel(eventType)}
+                </option>
+              ))}
             </select>
           </div>
           

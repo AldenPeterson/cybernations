@@ -191,20 +191,9 @@ const CasualtiesPage: React.FC<CasualtiesPageProps> = ({ selectedAllianceId }) =
     const sourceData = activeTab === 'alliance-filtered' && selectedAllianceId
       ? allianceMembersData
       : data;
-    
-    // Always calculate rank based on total_casualties to ensure it's always present
-    // Sort by total_casualties first to get correct ranking
-    const sortedByTotal = [...sourceData].sort((a, b) => b.total_casualties - a.total_casualties);
-    
-    // Ensure rank is present - always recalculate to ensure it's correct
-    const dataWithRank = sourceData.map((row) => {
-      // Always calculate rank based on total_casualties position
-      const rankIndex = sortedByTotal.findIndex(r => r.nation_id === row.nation_id);
-      const calculatedRank = rankIndex >= 0 ? rankIndex + 1 : (row.rank || 0);
-      return { ...row, rank: calculatedRank };
-    });
 
-    const sorted = [...dataWithRank].sort((a, b) => {
+    // Sort by the selected column
+    const sorted = [...sourceData].sort((a, b) => {
       const aVal = a[sortColumn];
       const bVal = b[sortColumn];
       
@@ -218,23 +207,18 @@ const CasualtiesPage: React.FC<CasualtiesPageProps> = ({ selectedAllianceId }) =
       return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
     });
     
-    return sorted;
+    // Recalculate rank based on current sorted position (rank 1 = top row)
+    const sortedWithRank = sorted.map((row, index) => ({
+      ...row,
+      rank: index + 1
+    }));
+    
+    return sortedWithRank;
   }, [data, allianceMembersData, sortColumn, sortDirection, activeTab, selectedAllianceId]);
 
   const sortedAllianceData = useMemo(() => {
-    // Always calculate rank based on total_casualties to ensure it's always present
-    // Sort by total_casualties first to get correct ranking
-    const sortedByTotal = [...allianceData].sort((a, b) => b.total_casualties - a.total_casualties);
-    
-    // Ensure rank is present - always recalculate to ensure it's correct
-    const dataWithRank = allianceData.map((row) => {
-      // Always calculate rank based on total_casualties position
-      const rankIndex = sortedByTotal.findIndex(r => r.alliance_id === row.alliance_id);
-      const calculatedRank = rankIndex >= 0 ? rankIndex + 1 : (row.rank || 0);
-      return { ...row, rank: calculatedRank };
-    });
-
-    const sorted = [...dataWithRank].sort((a, b) => {
+    // Sort by the selected column
+    const sorted = [...allianceData].sort((a, b) => {
       const aVal = a[allianceSortColumn];
       const bVal = b[allianceSortColumn];
       
@@ -248,7 +232,13 @@ const CasualtiesPage: React.FC<CasualtiesPageProps> = ({ selectedAllianceId }) =
       return allianceSortDirection === 'asc' ? aNum - bNum : bNum - aNum;
     });
     
-    return sorted;
+    // Recalculate rank based on current sorted position (rank 1 = top row)
+    const sortedWithRank = sorted.map((row, index) => ({
+      ...row,
+      rank: index + 1
+    }));
+    
+    return sortedWithRank;
   }, [allianceData, allianceSortColumn, allianceSortDirection]);
 
   return (
