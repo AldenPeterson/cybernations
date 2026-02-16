@@ -114,5 +114,11 @@ export const CacheKeys = {
     filter ? `war_records:${filter.toLowerCase()}` : 'war_records',
   
   opponentBreakdown: () => 'opponent_breakdown',
+  
+  // Cache keys for stagger eligibility granular caching
+  nations: (allianceId: number) => `nations:${allianceId}`,
+  
+  warsForAlliances: (allianceId1: number, allianceId2: number) => 
+    `wars:${allianceId1}:${allianceId2}`,
 };
 

@@ -1,8 +1,6 @@
-import { 
-  loadDataFromFilesWithUpdate
-} from './dataProcessingService.js';
 import { Nation, War } from '../models/index.js';
 import { isWarExpired } from '../utils/dateUtils.js';
+import { warStatsCache, CacheKeys } from '../utils/warStatsCache.js';
 
 export interface StaggerEligibilityData {
   defendingNation: {
@@ -143,6 +141,123 @@ export class StaggerEligibilityService {
   }
 
   /**
+   * Get cached or query nations for an alliance
+   */
+  private static async getNationsForAlliance(
+    allianceId: number,
+    prisma: any
+  ): Promise<any[]> {
+    const cacheKey = CacheKeys.nations(allianceId);
+    const cached = warStatsCache.get<any[]>(cacheKey);
+    
+    if (cached) {
+      console.log(`[StaggerEligibility] Returning cached nations for alliance ${allianceId} (${cached.length} nations)`);
+      return cached;
+    }
+
+    console.log(`[StaggerEligibility] Cache miss - querying database for nations in alliance ${allianceId}`);
+    // Query from database
+    const nationRecords = await prisma.nation.findMany({
+      where: { 
+        allianceId,
+        isActive: true
+      },
+      include: { alliance: true }
+    });
+
+    // Map to expected format
+    const nations = nationRecords.map((n: any) => ({
+      id: n.id,
+      rulerName: n.rulerName,
+      nationName: n.nationName,
+      alliance: n.alliance.name,
+      allianceId: n.allianceId,
+      team: n.team,
+      strength: n.strength,
+      activity: n.activity,
+      technology: n.technology,
+      infrastructure: n.infrastructure,
+      land: n.land,
+      nuclearWeapons: n.nuclearWeapons,
+      governmentType: n.governmentType,
+      inWarMode: n.inWarMode,
+      rank: n.rank ?? undefined,
+    }));
+
+    console.log(`[StaggerEligibility] Queried ${nations.length} nations for alliance ${allianceId}, caching for 10 minutes`);
+    // Cache for 10 minutes (nations change less frequently)
+    warStatsCache.set(cacheKey, nations, 10 * 60 * 1000);
+    
+    return nations;
+  }
+
+  /**
+   * Get cached or query wars for nations from two alliances
+   */
+  private static async getWarsForAlliances(
+    allianceId1: number,
+    allianceId2: number,
+    allNationIds: number[],
+    prisma: any
+  ): Promise<any[]> {
+    // Sort alliance IDs for consistent cache key
+    const [id1, id2] = [allianceId1, allianceId2].sort((a, b) => a - b);
+    const cacheKey = CacheKeys.warsForAlliances(id1, id2);
+    const cached = warStatsCache.get<any[]>(cacheKey);
+    
+    if (cached) {
+      console.log(`[StaggerEligibility] Returning cached wars for alliances ${id1} and ${id2} (${cached.length} wars)`);
+      return cached;
+    }
+
+    console.log(`[StaggerEligibility] Cache miss - querying database for wars between alliances ${id1} and ${id2}`);
+    // Query from database
+    const warRecords = await prisma.war.findMany({
+      where: {
+        OR: [
+          { declaringNationId: { in: allNationIds } },
+          { receivingNationId: { in: allNationIds } }
+        ],
+        isActive: true,
+        status: {
+          notIn: ['Ended', 'Peace']
+        }
+      },
+      include: {
+        declaringNation: { include: { alliance: true } },
+        receivingNation: { include: { alliance: true } }
+      }
+    });
+
+    // Filter out expired wars by date and map to expected format
+    const activeWars = warRecords
+      .filter((war: any) => {
+        if (war.status.toLowerCase() === 'ended' || war.status.toLowerCase() === 'expired') {
+          return false;
+        }
+        try {
+          return !isWarExpired(war.endDate);
+        } catch (error) {
+          console.warn(`Failed to parse end date for war ${war.warId}: ${error}`);
+          return false;
+        }
+      })
+      .map((war: any) => ({
+        warId: war.warId,
+        declaringId: war.declaringNationId,
+        receivingId: war.receivingNationId,
+        status: war.status,
+        endDate: war.endDate,
+      }));
+
+    console.log(`[StaggerEligibility] Queried ${activeWars.length} active wars for alliances ${id1} and ${id2}, caching for 5 minutes`);
+    // Cache for 5 minutes (wars change more frequently)
+    warStatsCache.set(cacheKey, activeWars, 5 * 60 * 1000);
+    
+    return activeWars;
+  }
+
+  /**
    * Get stagger eligibility data for attacking alliance vs defending alliance
    */
   static async getStaggerEligibility(
@@ -158,40 +273,57 @@ export class StaggerEligibilityService {
     console.log(`StaggerEligibilityService called with hideAnarchy=${hideAnarchy}, hidePeaceMode=${hidePeaceMode}, hideNonPriority=${hideNonPriority}, includeFullTargets=${includeFullTargets}, sellDownEnabled=${sellDownEnabled}, militaryNS=${militaryNS}`);
     
     try {
-      const { nations, wars } = await loadDataFromFilesWithUpdate();
-      console.log(`Loaded ${nations.length} nations and ${wars.length} wars`);
+      const { prisma } = await import('../utils/prisma.js');
       
-    
-      // Get nations from both alliances
-      const attackingAllianceNations = nations.filter(nation => nation.allianceId === attackingAllianceId);
-      const defendingAllianceNations = nations.filter(nation => nation.allianceId === defendingAllianceId);
+      // Get nations from cache or database (cached per alliance)
+      const [attackingAllianceNations, defendingAllianceNations] = await Promise.all([
+        this.getNationsForAlliance(attackingAllianceId, prisma),
+        this.getNationsForAlliance(defendingAllianceId, prisma)
+      ]);
+      
       console.log(`Found ${attackingAllianceNations.length} attacking nations and ${defendingAllianceNations.length} defending nations`);
-    
-    // Get active wars to calculate current war counts and open slots
-    const activeWars = wars.filter(war => {
-      // Filter by status first
-      if (war.status.toLowerCase() === 'ended' || war.status.toLowerCase() === 'expired') {
-        return false;
+      
+      // Get all nation IDs from both alliances
+      const allNationIds = [
+        ...attackingAllianceNations.map(n => n.id),
+        ...defendingAllianceNations.map(n => n.id)
+      ];
+      
+      if (allNationIds.length === 0) {
+        console.log('No nations found in either alliance');
+        return [];
       }
       
-      // Also filter by date - check if the war has expired based on its end date
-      try {
-        return !isWarExpired(war.endDate);
-      } catch (error) {
-        // If we can't parse the date, exclude the war to be safe
-        console.warn(`Failed to parse end date for war ${war.warId}: ${error}`);
-        return false;
-      }
-    });
+      // Get wars from cache or database (cached per alliance pair)
+      const activeWars = await this.getWarsForAlliances(
+        attackingAllianceId,
+        defendingAllianceId,
+        allNationIds,
+        prisma
+      );
+      
+      console.log(`Found ${activeWars.length} active wars involving these alliances`);
     
-    // Calculate war counts for each nation
-    const nationWarCounts = new Map<number, { attacking: number; defending: number }>();
-    
-    nations.forEach(nation => {
-      const attackingWars = activeWars.filter(war => war.declaringId === nation.id).length;
-      const defendingWars = activeWars.filter(war => war.receivingId === nation.id).length;
-      nationWarCounts.set(nation.id, { attacking: attackingWars, defending: defendingWars });
-    });
+      // Calculate war counts for each nation (only for nations in the two alliances)
+      const nationWarCounts = new Map<number, { attacking: number; defending: number }>();
+      
+      // Initialize counts for all nations in both alliances
+      [...attackingAllianceNations, ...defendingAllianceNations].forEach(nation => {
+        nationWarCounts.set(nation.id, { attacking: 0, defending: 0 });
+      });
+      
+      // Count wars for each nation
+      activeWars.forEach(war => {
+        const declaringCount = nationWarCounts.get(war.declaringId);
+        if (declaringCount) {
+          declaringCount.attacking++;
+        }
+        
+        const receivingCount = nationWarCounts.get(war.receivingId);
+        if (receivingCount) {
+          receivingCount.defending++;
+        }
+      });
     
     // For each defending alliance nation, find eligible attackers
     const staggerData: StaggerEligibilityData[] = [];
@@ -247,7 +379,9 @@ export class StaggerEligibilityService {
           // Check 3: Can they sell down (if sell-down toggle is enabled)?
           let canSellDown = false;
           if (sellDownEnabled) {
-            canSellDown = this.canSellDownToTarget(attacker, defendingNation, militaryNS, nations);
+            // Pass all nations from both alliances for rank calculation
+            const allNations = [...attackingAllianceNations, ...defendingAllianceNations];
+            canSellDown = this.canSellDownToTarget(attacker, defendingNation, militaryNS, allNations);
             console.log(`Sell-down result for ${attacker.name}: ${canSellDown}`);
           }
           
