@@ -15,6 +15,7 @@ import AidEfficiencyPage from './pages/AidEfficiencyPage'
 import NationAidEfficiencyPage from './pages/NationAidEfficiencyPage'
 import EventsPage from './pages/EventsPage'
 import WarStatsPage from './pages/WarStatsPage'
+import CasualtiesPage from './pages/CasualtiesPage'
 
 function App() {
   const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(null);
@@ -100,6 +101,7 @@ function App() {
         <Route path="/nation-aid-efficiency" element={<NationAidEfficiencyPage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/war-stats" element={<WarStatsPage />} />
+        <Route path="/casualties" element={<CasualtiesPage />} />
         <Route path="/shame-offers" element={<ShameOffersPage />} />
         
         {/* Fallback */}

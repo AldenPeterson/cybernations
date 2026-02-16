@@ -12,6 +12,7 @@ import { nuclearHitsRoutes } from './nuclearHitsRoutes.js';
 import { csvRoutes } from './csvRoutes.js';
 import { eventsRoutes } from './eventsRoutes.js';
 import { warStatisticsRoutes } from './warStatisticsRoutes.js';
+import { casualtiesRoutes } from './casualtiesRoutes.js';
 
 export const apiRoutes = Router();
 
@@ -41,6 +42,9 @@ apiRoutes.use('/', eventsRoutes);
 
 // War statistics routes
 apiRoutes.use('/', warStatisticsRoutes);
+
+// Casualties routes
+apiRoutes.use('/', casualtiesRoutes);
 
 // Stats decode endpoint - extract zip files from raw_data folder
 apiRoutes.post('/stats/decode', StatsController.decodeStats);

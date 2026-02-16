@@ -31,6 +31,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
 
   const statsItems = [
     { label: 'Aid Efficiency', path: '/aid-efficiency' },
+    { label: 'Casualties', path: '/casualties' },
     { label: 'Damage', path: '/war-stats' },
     { label: 'Global Wars', path: '/global-wars' },
     { label: 'Nation Aid Efficiency', path: '/nation-aid-efficiency' },
@@ -130,6 +131,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         return 'Stats - Nation Aid Efficiency';
       case 'war-stats':
         return 'Stats - Damage';
+      case 'casualties':
+        return 'Stats - Casualties';
       case 'events':
         return 'Events';
       default:
