@@ -137,7 +137,7 @@ export class DefendingWarsService {
     const relevantWars = activeWars;
 
     // Build latest nuked date map for defending nations from nuclear hits
-    const nuclearStore = readNuclearHits();
+    const nuclearStore = await readNuclearHits();
     const latestNukedDateByNationId = new Map<number, string>(); // formatted date MM/DD/YYYY (Central)
     for (const record of Object.values(nuclearStore)) {
       // Only count successful nuclear hits

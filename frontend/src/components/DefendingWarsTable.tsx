@@ -547,18 +547,38 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
   // Apply client-side filtering
   let filteredNationWars = allNationWars;
 
+  // Filter to hide nations in peace mode if showPMNations is false
+  // This must run FIRST before other filters that check inWarMode
+  if (!showPMNations) {
+    filteredNationWars = filteredNationWars.filter(nationWar => {
+      return nationWar.nation.inWarMode;
+    });
+  }
+
   // Filter to only show nations that need stagger if needsStagger is true
+  // When showPMNations is true, always show PM nations; otherwise only show war mode nations that need stagger
   if (needsStagger) {
-    filteredNationWars = filteredNationWars.filter(nationWar => 
-      nationWar.nation.inWarMode && nationWar.staggeredStatus.status !== 'staggered'
-    );
+    filteredNationWars = filteredNationWars.filter(nationWar => {
+      // If showPMNations is true and this is a PM nation, always show it
+      if (showPMNations && !nationWar.nation.inWarMode) {
+        return true;
+      }
+      // Otherwise, only show war mode nations that need stagger
+      return nationWar.nation.inWarMode && nationWar.staggeredStatus.status !== 'staggered';
+    });
   }
 
   // Filter to only show nations that need staggers if staggerOnly is true (for target assignment)
+  // When showPMNations is true, always show PM nations; otherwise only show war mode nations that need stagger
   if (staggerOnly && assignAllianceIds.length > 0) {
-    filteredNationWars = filteredNationWars.filter(nationWar => 
-      nationWar.nation.inWarMode && nationWar.staggeredStatus.status !== 'staggered'
-    );
+    filteredNationWars = filteredNationWars.filter(nationWar => {
+      // If showPMNations is true and this is a PM nation, always show it
+      if (showPMNations && !nationWar.nation.inWarMode) {
+        return true;
+      }
+      // Otherwise, only show war mode nations that need stagger
+      return nationWar.nation.inWarMode && nationWar.staggeredStatus.status !== 'staggered';
+    });
   }
 
   // Filter to hide non-priority nations if hideNonPriority is true
@@ -633,13 +653,6 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
         console.error('Error in blown staggers filter:', err);
         return false;
       }
-    });
-  }
-
-  // Filter to hide nations in peace mode if showPMNations is false
-  if (!showPMNations) {
-    filteredNationWars = filteredNationWars.filter(nationWar => {
-      return nationWar.nation.inWarMode;
     });
   }
 
@@ -1071,7 +1084,7 @@ const DefendingWarsTable: React.FC<DefendingWarsTableProps> = ({ allianceId }) =
                       className={columnClasses.lastNuked}
                       style={{ backgroundColor: getLastNukedCellColor(nationWar.nation.lastNukedDate) }}
                     >
-                      <div className="text-[11px] text-gray-200">
+                      <div className={`text-[11px] font-semibold ${nationWar.nation.lastNukedDate ? 'text-gray-800' : 'text-gray-200'}`}>
                         {formatLastNukedDisplay(nationWar.nation.lastNukedDate)}
                       </div>
                     </td>
