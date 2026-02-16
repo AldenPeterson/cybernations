@@ -23,6 +23,7 @@ interface SmallAidOffer {
   soldiers: number;
   reason: string;
   date: string;
+  status: string;
 }
 
 const AidDashboard: React.FC = () => {
@@ -70,6 +71,17 @@ const AidDashboard: React.FC = () => {
     return parts.join(' / ') || 'Empty';
   };
 
+  const getStatusColor = (status: string): string => {
+    const statusLower = status.toLowerCase();
+    if (statusLower === 'pending') return 'bg-yellow-900 text-yellow-200';
+    if (statusLower === 'approved') return 'bg-purple-900 text-purple-200';
+    if (statusLower === 'accepted') return 'bg-green-900 text-green-200';
+    if (statusLower === 'active') return 'bg-blue-900 text-blue-200';
+    if (statusLower === 'cancelled') return 'bg-red-900 text-red-200';
+    if (statusLower === 'expired') return 'bg-gray-700 text-gray-300';
+    return 'bg-gray-800 text-gray-300';
+  };
+
   if (loading) {
     return <div className={tableClasses.loadingContainer}><div className={tableClasses.loadingText}>Loading small aid offers...</div></div>;
   }
@@ -95,6 +107,7 @@ const AidDashboard: React.FC = () => {
                 <th className="p-3 border border-gray-600 text-left text-white font-bold">Recipient</th>
                 <th className="p-3 border border-gray-600 text-left text-white font-bold">Recipient Alliance</th>
                 <th className="p-3 border border-gray-600 text-center text-white font-bold">Aid Value</th>
+                <th className="p-3 border border-gray-600 text-center text-white font-bold">Status</th>
                 <th className="p-3 border border-gray-600 text-left text-white font-bold">Reason</th>
                 <th className="p-3 border border-gray-600 text-center text-white font-bold">Date</th>
                 </tr>
@@ -135,6 +148,11 @@ const AidDashboard: React.FC = () => {
                   <td className="p-2.5 border border-gray-600 text-center">
                     <span className="text-green-300 font-bold bg-green-900/30 px-2 py-1 rounded">
                       {formatAidValue(offer.money, offer.technology, offer.soldiers)}
+                    </span>
+                  </td>
+                  <td className="p-2.5 border border-gray-600 text-center">
+                    <span className={`font-bold px-2 py-1 rounded text-xs ${getStatusColor(offer.status || 'Unknown')}`}>
+                      {offer.status || 'Unknown'}
                     </span>
                   </td>
                   <td className="p-2.5 border border-gray-600 text-xs text-gray-200">

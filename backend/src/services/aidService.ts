@@ -2300,8 +2300,26 @@ export class AidService {
       technology: offer.technology,
       soldiers: offer.soldiers,
       reason: offer.reason,
-      date: offer.date
+      date: offer.date,
+      status: offer.status
     }));
+
+    // Sort by date descending (most recent first)
+    // Parse dates properly since they're stored as strings
+    offersWithAllianceInfo.sort((a, b) => {
+      try {
+        const dateA = parseCentralTimeDate(a.date);
+        const dateB = parseCentralTimeDate(b.date);
+        return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+      } catch (error) {
+        // If date parsing fails, put those items at the end
+        if (!a.date && !b.date) return 0;
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        // Fallback to string comparison if parsing fails
+        return b.date.localeCompare(a.date);
+      }
+    });
 
     return {
       smallAidOffers: offersWithAllianceInfo,
