@@ -105,9 +105,7 @@ const CasualtiesPage: React.FC = () => {
   return (
     <TableContainer>
       <div className={tableClasses.header}>
-        <p className="mt-0 mb-3 md:mb-5 text-gray-400 text-sm md:text-base leading-relaxed">
-          Top 100 nations by total casualties (offensive and defensive combined).
-        </p>
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Casualty (top 100)</h1>
       </div>
 
       {loading && <div className="text-center py-8 text-gray-400">Loading...</div>}
@@ -118,126 +116,108 @@ const CasualtiesPage: React.FC = () => {
       {!loading && !error && data.length > 0 && (
         <>
           {/* Desktop Table View */}
-          <div className="hidden md:block rounded-xl shadow-md bg-gray-800 w-full max-w-full overflow-x-auto">
-            <table className="w-full border-collapse min-w-[600px]">
-            <thead className="bg-gray-800 sticky top-0 z-10">
-              <tr>
-                <th
-                  className="px-2 py-1 text-center text-xs font-semibold text-gray-200 bg-gray-800"
-                  style={{ width: '5%' }}
-                >
-                  <span className="truncate">Rank</span>
-                </th>
-                <th
-                  className="px-2 py-1 text-left text-xs font-semibold text-gray-200 cursor-pointer hover:bg-gray-700 bg-gray-800"
-                  style={{ width: '22%' }}
-                  onClick={() => handleSort('nation_name')}
-                >
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="truncate">Nation</span>
-                    {sortColumn === 'nation_name' && (
-                      <span className="text-xs flex-shrink-0">
-                        {sortDirection === 'asc' ? '↑' : '↓'}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-700 text-sm bg-gray-800">
+              <thead>
+                <tr className="bg-gray-700">
+                  <th 
+                    className="p-3 border border-gray-600 text-center text-white font-bold"
+                  >
+                    Rank
+                  </th>
+                  <th 
+                    className="p-3 border border-gray-600 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                    onClick={() => handleSort('nation_name')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Nation
+                      <span className="text-xs text-gray-400">
+                        {sortColumn === 'nation_name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                       </span>
-                    )}
-                  </div>
-                </th>
-                <th
-                  className="px-2 py-1 text-left text-xs font-semibold text-gray-200 cursor-pointer hover:bg-gray-700 bg-gray-800"
-                  style={{ width: '18%' }}
-                  onClick={() => handleSort('alliance_name')}
-                >
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="truncate">Alliance</span>
-                    {sortColumn === 'alliance_name' && (
-                      <span className="text-xs flex-shrink-0">
-                        {sortDirection === 'asc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </div>
-                </th>
-                <th
-                  className="px-2 py-1 text-right text-xs font-semibold text-gray-200 cursor-pointer hover:bg-gray-700 bg-gray-800"
-                  style={{ width: '18%' }}
-                  onClick={() => handleSort('attacking_casualties')}
-                >
-                  <div className="flex items-center justify-end gap-1">
-                    <span className="truncate">Offensive Casualties</span>
-                    {sortColumn === 'attacking_casualties' && (
-                      <span className="text-xs flex-shrink-0">
-                        {sortDirection === 'asc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </div>
-                </th>
-                <th
-                  className="px-2 py-1 text-right text-xs font-semibold text-gray-200 cursor-pointer hover:bg-gray-700 bg-gray-800"
-                  style={{ width: '18%' }}
-                  onClick={() => handleSort('defensive_casualties')}
-                >
-                  <div className="flex items-center justify-end gap-1">
-                    <span className="truncate">Defensive Casualties</span>
-                    {sortColumn === 'defensive_casualties' && (
-                      <span className="text-xs flex-shrink-0">
-                        {sortDirection === 'asc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </div>
-                </th>
-                <th
-                  className="px-2 py-1 text-right text-xs font-semibold text-gray-200 cursor-pointer hover:bg-gray-700 bg-gray-800"
-                  style={{ width: '19%' }}
-                  onClick={() => handleSort('total_casualties')}
-                >
-                  <div className="flex items-center justify-end gap-1">
-                    <span className="truncate">Total Casualties</span>
-                    {sortColumn === 'total_casualties' && (
-                      <span className="text-xs flex-shrink-0">
-                        {sortDirection === 'asc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {sortedData.map((row) => (
-                <tr key={row.nation_id} className="hover:bg-gray-800/60">
-                  <td className="px-2 py-1 text-xs text-center font-semibold text-gray-300">
-                    {row.rank}
-                  </td>
-                  <td className="px-2 py-1 text-xs text-left">
-                    <div>
-                      <a
-                        href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${row.nation_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary no-underline font-bold hover:underline"
-                      >
-                        {row.nation_name}
-                      </a>
-                      <div className="text-[10px] text-gray-400 leading-tight">{row.ruler_name}</div>
                     </div>
-                  </td>
-                  <td className="px-2 py-1 text-xs text-left">
-                    {row.alliance_name}
-                  </td>
-                  <td className="px-2 py-1 text-xs text-right">
-                    {formatNumber(row.attacking_casualties)}
-                  </td>
-                  <td className="px-2 py-1 text-xs text-right">
-                    {formatNumber(row.defensive_casualties)}
-                  </td>
-                  <td className="px-2 py-1 text-xs text-right">
-                    <span className="font-semibold text-primary">
-                      {formatNumber(row.total_casualties)}
-                    </span>
-                  </td>
+                  </th>
+                  <th 
+                    className="p-3 border border-gray-600 text-left text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                    onClick={() => handleSort('alliance_name')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Alliance
+                      <span className="text-xs text-gray-400">
+                        {sortColumn === 'alliance_name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                      </span>
+                    </div>
+                  </th>
+                  <th 
+                    className="p-3 border border-gray-600 text-right text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                    onClick={() => handleSort('attacking_casualties')}
+                  >
+                    <div className="flex items-center justify-end gap-2">
+                      Offensive Casualties
+                      <span className="text-xs text-gray-400">
+                        {sortColumn === 'attacking_casualties' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                      </span>
+                    </div>
+                  </th>
+                  <th 
+                    className="p-3 border border-gray-600 text-right text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                    onClick={() => handleSort('defensive_casualties')}
+                  >
+                    <div className="flex items-center justify-end gap-2">
+                      Defensive Casualties
+                      <span className="text-xs text-gray-400">
+                        {sortColumn === 'defensive_casualties' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                      </span>
+                    </div>
+                  </th>
+                  <th 
+                    className="p-3 border border-gray-600 text-right text-white font-bold cursor-pointer hover:bg-gray-600 transition-colors select-none"
+                    onClick={() => handleSort('total_casualties')}
+                  >
+                    <div className="flex items-center justify-end gap-2">
+                      Total Casualties
+                      <span className="text-xs text-gray-400">
+                        {sortColumn === 'total_casualties' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                      </span>
+                    </div>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {sortedData.map((row) => (
+                  <tr key={row.nation_id} className="bg-gray-800 hover:bg-gray-700">
+                    <td className="p-2 border border-gray-700 text-center font-semibold text-gray-200">
+                      {row.rank}
+                    </td>
+                    <td className="p-2 border border-gray-700 font-bold text-gray-200">
+                      <div>
+                        <a
+                          href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${row.nation_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary no-underline hover:underline"
+                        >
+                          {row.nation_name}
+                        </a>
+                        <div className="text-xs text-gray-400">{row.ruler_name}</div>
+                      </div>
+                    </td>
+                    <td className="p-2 border border-gray-700 text-gray-200">
+                      {row.alliance_name}
+                    </td>
+                    <td className="p-2 border border-gray-700 text-right text-gray-200">
+                      {formatNumber(row.attacking_casualties)}
+                    </td>
+                    <td className="p-2 border border-gray-700 text-right text-gray-200">
+                      {formatNumber(row.defensive_casualties)}
+                    </td>
+                    <td className="p-2 border border-gray-700 text-right font-semibold text-primary">
+                      {formatNumber(row.total_casualties)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
         {/* Mobile Card View */}
         <div className="md:hidden">
