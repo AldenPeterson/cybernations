@@ -138,7 +138,7 @@ export const createNationTableColumns = ({
         placeholder="Enter notes..."
       />
     ),
-    size: 300,
+    size: 400,
     enableSorting: false,
   }),
 
@@ -166,16 +166,18 @@ export const createNationTableColumns = ({
       </div>
     ),
     cell: ({ getValue, row }) => (
-      <div className="text-center">
+      <div className="text-center flex justify-center">
         <EditableNumberInput
           value={getValue()}
           onChange={(value) => handleSlotChange(row.original.nation_id, 'send_priority', value)}
           min={undefined}
           max={undefined}
+          className="w-[55px]"
         />
       </div>
     ),
-    size: 65,
+    size: 50,
+    maxSize: 50,
     enableSorting: true,
   }),
 
@@ -188,16 +190,18 @@ export const createNationTableColumns = ({
       </div>
     ),
     cell: ({ getValue, row }) => (
-      <div className="text-center">
+      <div className="text-center flex justify-center">
         <EditableNumberInput
           value={getValue()}
           onChange={(value) => handleSlotChange(row.original.nation_id, 'receive_priority', value)}
           min={undefined}
           max={undefined}
+          className="w-[55px]"
         />
       </div>
     ),
-    size: 65,
+    size: 50,
+    maxSize: 50,
     enableSorting: true,
   }),
 

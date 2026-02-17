@@ -1,13 +1,24 @@
 import { Request, Response } from 'express';
 import { AllianceService } from '../services/allianceService.js';
 import { updateDiscordHandle, getDiscordHandle } from '../utils/nationDiscordHandles.js';
+import { getUserRole, isAllianceManager } from '../services/authService.js';
+import { UserRole } from '@prisma/client';
 
 export class NationEditorController {
   /**
    * Get nations configuration for an alliance
+   * Requires: User must be authenticated and be an admin or alliance manager for this alliance
    */
   static async getNationsConfig(req: Request, res: Response) {
     try {
+      // Defense in depth: Verify user has permission (middleware should have already checked, but verify again)
+      if (!req.session.userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Authentication required'
+        });
+      }
+
       const allianceId = parseInt(req.params.allianceId);
       
       if (isNaN(allianceId)) {
@@ -15,6 +26,20 @@ export class NationEditorController {
           success: false,
           error: 'Invalid alliance ID'
         });
+      }
+
+      // Verify user can manage this alliance (defense in depth)
+      const userId = req.session.userId;
+      const userRole = await getUserRole(userId);
+      
+      if (userRole !== UserRole.ADMIN) {
+        const canManage = await isAllianceManager(userId, allianceId);
+        if (!canManage) {
+          return res.status(403).json({
+            success: false,
+            error: 'You do not have permission to manage this alliance'
+          });
+        }
       }
 
       const config = await AllianceService.getNationsConfig(allianceId);
@@ -38,9 +63,18 @@ export class NationEditorController {
 
   /**
    * Update a specific nation's data in alliance files
+   * Requires: User must be authenticated and be an admin or alliance manager for this alliance
    */
   static async updateNation(req: Request, res: Response) {
     try {
+      // Defense in depth: Verify user has permission (middleware should have already checked, but verify again)
+      if (!req.session.userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Authentication required'
+        });
+      }
+
       console.log('updateNation called with:', req.params.allianceId, req.params.nationId, req.body);
       const allianceId = parseInt(req.params.allianceId);
       const nationId = parseInt(req.params.nationId);
@@ -50,6 +84,20 @@ export class NationEditorController {
           success: false,
           error: 'Invalid alliance ID or nation ID'
         });
+      }
+
+      // Verify user can manage this alliance (defense in depth)
+      const userId = req.session.userId;
+      const userRole = await getUserRole(userId);
+      
+      if (userRole !== UserRole.ADMIN) {
+        const canManage = await isAllianceManager(userId, allianceId);
+        if (!canManage) {
+          return res.status(403).json({
+            success: false,
+            error: 'You do not have permission to manage this alliance'
+          });
+        }
       }
 
       const { discord_handle, has_dra, notes, slots } = req.body;
