@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import NationEditor from '../components/NationEditor';
 import PageContainer from '../components/PageContainer';
 import { useAuth, UserRole } from '../contexts/AuthContext';
-import { getApiBaseUrl } from '../utils/api';
 
 const NationsPage: React.FC = () => {
   const { allianceId } = useParams<{ allianceId: string }>();

@@ -316,22 +316,6 @@ const AidPage: React.FC = () => {
     }
   }, []);
 
-  const fetchNationsConfig = useCallback(async (id: number) => {
-    try {
-      const configData = await apiCallWithErrorHandling(API_ENDPOINTS.nationsConfig(id));
-      
-      if (configData.success && configData.nations) {
-        setNationsConfig(configData.nations.map((n: any) => ({
-          nation_id: n.nation_id,
-          slots: n.slots
-        })));
-      }
-    } catch (err) {
-      console.error('Failed to fetch nations config:', err);
-      setNationsConfig([]);
-    }
-  }, []);
-
   useEffect(() => {
     const parsedAllianceId = allianceId ? parseInt(allianceId) : null;
     
