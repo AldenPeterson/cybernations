@@ -157,6 +157,7 @@ authRoutes.get('/google/callback', async (req: Request, res: Response) => {
       googleId: user.googleId,
     });
 
+    
     // For now, skip regeneration to test if that's the issue
     // TODO: Re-enable regeneration once we confirm session persistence works
     const oldSessionId = req.sessionID;
