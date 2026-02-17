@@ -5,13 +5,9 @@ import { UserRole } from '@prisma/client';
 
 export const userRoutes = Router();
 
-// All user routes require authentication and ADMIN role
-userRoutes.use(requireAuth);
-userRoutes.use(requireRole([UserRole.ADMIN]));
-
 // Get all users
-userRoutes.get('/users', UserController.getAllUsers);
+userRoutes.get('/users', requireAuth, requireRole([UserRole.ADMIN]),UserController.getAllUsers);
 
 // Update a user
-userRoutes.put('/users/:id', UserController.updateUser);
+userRoutes.put('/users/:id', requireAuth, requireRole([UserRole.ADMIN]), UserController.updateUser);
 

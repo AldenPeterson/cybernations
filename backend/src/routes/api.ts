@@ -64,6 +64,8 @@ apiRoutes.use('/', userRoutes);
 // Warchest submission routes (authenticated users only)
 apiRoutes.use('/', warchestSubmissionRoutes);
 
+
+
 // Stats decode endpoint - extract zip files from raw_data folder
 apiRoutes.post('/stats/decode', StatsController.decodeStats);
 
