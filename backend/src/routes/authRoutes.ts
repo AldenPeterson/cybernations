@@ -201,10 +201,25 @@ authRoutes.get('/google/callback', async (req: Request, res: Response) => {
 });
 
 /**
- * Logout - destroys session
+ * Logout - destroys session and clears session cookie
  */
 authRoutes.post('/logout', (req: Request, res: Response) => {
+  // Get cookie information before destroying the session
+  const sessionCookieName = req.session.cookie.name || 'connect.sid';
+  const cookieOptions = {
+    path: req.session.cookie.path || '/',
+    domain: req.session.cookie.domain,
+    secure: req.session.cookie.secure || false,
+    sameSite: req.session.cookie.sameSite as boolean | 'lax' | 'strict' | 'none' | undefined,
+    httpOnly: req.session.cookie.httpOnly || true,
+  };
+
   req.session.destroy((err) => {
+    // Clear the session cookie from the client
+    // This must be done even if destroy had an error to ensure cookie is cleared
+    res.clearCookie(sessionCookieName, cookieOptions);
+  
+
     if (err) {
       console.error('Error destroying session:', err);
       return res.status(500).json({
