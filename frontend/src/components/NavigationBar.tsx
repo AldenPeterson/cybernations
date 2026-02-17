@@ -32,8 +32,6 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   const aidToolsItems = [
     { label: 'Aid', path: selectedAllianceId ? `/aid/${selectedAllianceId}` : '/aid' },
     { label: 'Interalliance Aid', path: '/interalliance-aid' },
-    // Only show Nation Editor if user can manage nations
-    ...(canManageNations ? [{ label: 'Nation Editor', path: selectedAllianceId ? `/nations/${selectedAllianceId}` : '/nations', devOnly: true }] : []),
   ];
 
   const warToolsItems = [
@@ -56,6 +54,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
 
   const adminItems = [
     { label: 'User Management', path: '/admin/users' },
+    // Only show Alliance Manager if user can manage nations
+    ...(canManageNations ? [{ label: 'Alliance Manager', path: selectedAllianceId ? `/nations/${selectedAllianceId}` : '/nations', devOnly: true }] : []),
   ];
 
   useEffect(() => {
@@ -90,7 +90,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         pageTitle = 'Aid Tools - Interalliance Aid';
         break;
       case 'nations':
-        pageTitle = 'Aid Tools - Nation Editor';
+        pageTitle = 'Admin - Alliance Manager';
         break;
       case 'wars':
         pageTitle = 'War Tools - Wars';
@@ -194,7 +194,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       case 'interalliance-aid':
         return 'Aid Tools - Interalliance Aid';
       case 'nations':
-        return 'Aid Tools - Nation Editor';
+        return 'Admin - Alliance Manager';
       case 'wars':
         return 'War Tools - Wars';
       case 'ns-comparisons':

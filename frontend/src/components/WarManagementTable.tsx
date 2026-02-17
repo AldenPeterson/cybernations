@@ -394,6 +394,23 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
 
 
 
+  // Helper function to parse date string and return timestamp for sorting
+  const parseDateForSorting = (dateStr: string): number => {
+    if (!dateStr) return 0;
+    // Extract date part if there's a time component (e.g., "MM/DD/YYYY HH:MM:SS AM")
+    const datePart = dateStr.split(' ')[0];
+    // Parse MM/DD/YYYY format
+    const parts = datePart.split('/');
+    if (parts.length === 3) {
+      const month = parseInt(parts[0], 10) - 1; // Month is 0-indexed
+      const day = parseInt(parts[1], 10);
+      const year = parseInt(parts[2], 10);
+      return new Date(year, month, day).getTime();
+    }
+    // Fallback to standard Date parsing
+    return new Date(dateStr).getTime();
+  };
+
   const fetchNationWars = async () => {
     try {
       setLoading(true);
@@ -402,7 +419,30 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
       const data = await response.json();
       
       if (data.success) {
-        setAllNationWars(data.nationWars);
+        // Sort wars by end date (oldest first) for each nation
+        const sortedNationWars = data.nationWars.map((nationWar: NationWars) => {
+          // Sort attacking wars by end date (oldest first)
+          const sortedAttackingWars = [...nationWar.attackingWars].sort((a, b) => {
+            const dateA = parseDateForSorting(a.endDate);
+            const dateB = parseDateForSorting(b.endDate);
+            return dateA - dateB;
+          });
+          
+          // Sort defending wars by end date (oldest first)
+          const sortedDefendingWars = [...nationWar.defendingWars].sort((a, b) => {
+            const dateA = parseDateForSorting(a.endDate);
+            const dateB = parseDateForSorting(b.endDate);
+            return dateA - dateB;
+          });
+          
+          return {
+            ...nationWar,
+            attackingWars: sortedAttackingWars,
+            defendingWars: sortedDefendingWars,
+          };
+        });
+        
+        setAllNationWars(sortedNationWars);
       } else {
         setError(data.error);
       }

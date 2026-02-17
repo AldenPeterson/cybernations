@@ -180,7 +180,7 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       
       // Handle authentication/authorization errors
       if (response.status === 401) {
-        setError('Authentication required. Please log in to access the Nation Editor.');
+        setError('Authentication required. Please log in to access the Alliance Manager.');
         return;
       }
       if (response.status === 403) {

@@ -266,41 +266,17 @@ const WarStatsPage: React.FC = () => {
       });
     });
     
-    // Sort each group by the same column and direction as the main table
+    // Sort each group alphabetically by opponent alliance name
     grouped.forEach((rows) => {
       rows.sort((a, b) => {
-        // Map alliance column names to opponent breakdown column names
-        let aVal: any, bVal: any;
-        if (sortColumn === 'alliance_name') {
-          aVal = a.opponent_alliance_name || '';
-          bVal = b.opponent_alliance_name || '';
-        } else if (sortColumn === 'total_damage_dealt') {
-          aVal = a.damage_dealt;
-          bVal = b.damage_dealt;
-        } else if (sortColumn === 'total_damage_received') {
-          aVal = a.damage_received;
-          bVal = b.damage_received;
-        } else {
-          // net_damage, offensive_wars, defensive_wars map directly
-          aVal = a[sortColumn as keyof OpponentBreakdown];
-          bVal = b[sortColumn as keyof OpponentBreakdown];
-        }
-        
-        // Handle string vs number comparison
-        if (typeof aVal === 'string' && typeof bVal === 'string') {
-          const comparison = aVal.localeCompare(bVal);
-          return sortDirection === 'asc' ? comparison : -comparison;
-        }
-        
-        // Handle numeric comparison
-        const aNum = Number(aVal);
-        const bNum = Number(bVal);
-        return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+        const aName = (a.opponent_alliance_name || '').toLowerCase();
+        const bName = (b.opponent_alliance_name || '').toLowerCase();
+        return aName.localeCompare(bName);
       });
     });
     
     return grouped;
-  }, [nationBreakdown, sortColumn, sortDirection]);
+  }, [nationBreakdown]);
 
   // Optimized: Group nation breakdown by alliance and opponent (memoized)
   const nationBreakdownByAllianceAndOpponent = useMemo(() => {
@@ -312,40 +288,16 @@ const WarStatsPage: React.FC = () => {
       }
       grouped.get(key)!.push(row);
     });
-    // Sort each group by the same column and direction as the main table
+    // Sort each group alphabetically by nation name
     grouped.forEach((rows) => {
       rows.sort((a, b) => {
-        // Map alliance column names to nation breakdown column names
-        let aVal: any, bVal: any;
-        if (sortColumn === 'alliance_name') {
-          aVal = a.nation_name || '';
-          bVal = b.nation_name || '';
-        } else if (sortColumn === 'total_damage_dealt') {
-          aVal = a.damage_dealt;
-          bVal = b.damage_dealt;
-        } else if (sortColumn === 'total_damage_received') {
-          aVal = a.damage_received;
-          bVal = b.damage_received;
-        } else {
-          // net_damage, offensive_wars, defensive_wars map directly
-          aVal = a[sortColumn as keyof NationBreakdown];
-          bVal = b[sortColumn as keyof NationBreakdown];
-        }
-        
-        // Handle string vs number comparison
-        if (typeof aVal === 'string' && typeof bVal === 'string') {
-          const comparison = aVal.localeCompare(bVal);
-          return sortDirection === 'asc' ? comparison : -comparison;
-        }
-        
-        // Handle numeric comparison
-        const aNum = Number(aVal);
-        const bNum = Number(bVal);
-        return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+        const aName = (a.nation_name || '').toLowerCase();
+        const bName = (b.nation_name || '').toLowerCase();
+        return aName.localeCompare(bName);
       });
     });
     return grouped;
-  }, [nationBreakdown, sortColumn, sortDirection]);
+  }, [nationBreakdown]);
 
   // Auto-expand rows when filter matches nations/rulers
   useEffect(() => {
@@ -487,6 +439,23 @@ const WarStatsPage: React.FC = () => {
     }
   }, [sortColumn]);
 
+  // Helper function to parse date string (handles MM/DD/YYYY format)
+  const parseDateString = useCallback((dateStr: string): number => {
+    if (!dateStr) return 0;
+    // Extract date part if there's a time component (e.g., "MM/DD/YYYY HH:MM:SS AM")
+    const datePart = dateStr.split(' ')[0];
+    // Parse MM/DD/YYYY format
+    const parts = datePart.split('/');
+    if (parts.length === 3) {
+      const month = parseInt(parts[0], 10) - 1; // Month is 0-indexed
+      const day = parseInt(parts[1], 10);
+      const year = parseInt(parts[2], 10);
+      return new Date(year, month, day).getTime();
+    }
+    // Fallback to standard Date parsing
+    return new Date(dateStr).getTime();
+  }, []);
+
   // Optimized: Group war records by nation (memoized)
   const warRecordsByNation = useMemo(() => {
     const grouped = new Map<string, WarRecord[]>();
@@ -497,44 +466,31 @@ const WarStatsPage: React.FC = () => {
       }
       grouped.get(key)!.push(war);
     });
-    // Sort each group by the same column and direction as the main table
+    // Sort each group: separate by war type, then sort by end_date (oldest/earliest expiration first) within each type
     grouped.forEach((wars) => {
-      wars.sort((a, b) => {
-        // Map alliance column names to war record column names
-        let aVal: any, bVal: any;
-        if (sortColumn === 'alliance_name') {
-          aVal = a.opponent_nation_name || '';
-          bVal = b.opponent_nation_name || '';
-        } else if (sortColumn === 'total_damage_dealt') {
-          aVal = a.damage_dealt;
-          bVal = b.damage_dealt;
-        } else if (sortColumn === 'total_damage_received') {
-          aVal = a.damage_received;
-          bVal = b.damage_received;
-        } else if (sortColumn === 'net_damage') {
-          aVal = a.net_damage;
-          bVal = b.net_damage;
-        } else {
-          // offensive_wars and defensive_wars don't apply to individual wars
-          // Default to net_damage for these
-          aVal = a.net_damage;
-          bVal = b.net_damage;
-        }
-        
-        // Handle string vs number comparison
-        if (typeof aVal === 'string' && typeof bVal === 'string') {
-          const comparison = aVal.localeCompare(bVal);
-          return sortDirection === 'asc' ? comparison : -comparison;
-        }
-        
-        // Handle numeric comparison
-        const aNum = Number(aVal);
-        const bNum = Number(bVal);
-        return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+      // Separate into offensive and defensive wars
+      const offensiveWars = wars.filter(w => w.war_type === 'offensive');
+      const defensiveWars = wars.filter(w => w.war_type === 'defensive');
+      
+      // Sort each group by end_date (earliest expiration first = oldest wars first)
+      offensiveWars.sort((a, b) => {
+        const dateA = parseDateString(a.end_date);
+        const dateB = parseDateString(b.end_date);
+        return dateA - dateB;
       });
+      
+      defensiveWars.sort((a, b) => {
+        const dateA = parseDateString(a.end_date);
+        const dateB = parseDateString(b.end_date);
+        return dateA - dateB;
+      });
+      
+      // Combine: offensive wars first, then defensive wars
+      wars.length = 0;
+      wars.push(...offensiveWars, ...defensiveWars);
     });
     return grouped;
-  }, [warRecords, sortColumn, sortDirection]);
+  }, [warRecords, parseDateString]);
 
   return (
     <TableContainer>

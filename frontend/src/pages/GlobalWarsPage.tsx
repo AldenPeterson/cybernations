@@ -367,7 +367,13 @@ const GlobalWarsPage: React.FC = () => {
                                 </tr>
                               </thead>
                               <tbody>
-                                {(includeExpired ? r.allCounts : r.activeCounts)!.byAlliance.map(item => (
+                                {[...(includeExpired ? r.allCounts : r.activeCounts)!.byAlliance]
+                                  .sort((a, b) => {
+                                    const aName = (a.allianceName || '').toLowerCase();
+                                    const bName = (b.allianceName || '').toLowerCase();
+                                    return aName.localeCompare(bName);
+                                  })
+                                  .map(item => (
                                   <tr key={item.allianceId} className="hover:bg-gray-900/60">
                                     <td className="px-2 py-2 text-sm text-gray-200">{item.allianceName}</td>
                                     <td className="px-2 py-2 text-sm text-right text-gray-200">{

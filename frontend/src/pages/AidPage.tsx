@@ -397,6 +397,24 @@ const AidPage: React.FC = () => {
   // Nation column is 120px, so each slot gets: (100% - 120px) / 6
   const slotWidth = 'calc((100% - 120px) / 6)';
 
+  // Sort allianceAidStats alphabetically by alliance name
+  const sortedAllianceAidStats = useMemo(() => {
+    return [...allianceAidStats].sort((a, b) => {
+      const aName = (a.allianceName || '').toLowerCase();
+      const bName = (b.allianceName || '').toLowerCase();
+      return aName.localeCompare(bName);
+    });
+  }, [allianceAidStats]);
+
+  // Sort activeAidByAlliance alphabetically by alliance name
+  const sortedActiveAidByAlliance = useMemo(() => {
+    return [...activeAidByAlliance].sort((a, b) => {
+      const aName = (a.allianceName || '').toLowerCase();
+      const bName = (b.allianceName || '').toLowerCase();
+      return aName.localeCompare(bName);
+    });
+  }, [activeAidByAlliance]);
+
   // Calculate missing slots for a nation
   const calculateMissingSlots = (nationId: number, nationAidSlots: NationAidSlots): Array<{ type: string; isOutgoing: boolean }> => {
     if (!showRecommendations) return [];
@@ -907,7 +925,7 @@ const AidPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {allianceAidStats?.map((stats) => (
+                {sortedAllianceAidStats?.map((stats) => (
                   <tr key={stats.allianceId} className="bg-gray-800 hover:bg-gray-700">
                     <td className="p-2 border border-gray-700 font-bold text-gray-200 bg-gray-800">
                       {stats.allianceName}
@@ -961,7 +979,7 @@ const AidPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {activeAidByAlliance.map((stats) => (
+                  {sortedActiveAidByAlliance.map((stats) => (
                     <tr key={stats.allianceId} className="bg-gray-800 hover:bg-gray-700">
                       <td className="p-2 border border-gray-700 font-bold text-gray-200 bg-gray-800">
                         {stats.allianceName}

@@ -64,7 +64,7 @@ const NationsPage: React.FC = () => {
         <div className="max-w-md mx-auto">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Authentication Required</h2>
           <p className="text-gray-400 mb-6">
-            You must be logged in to access the Nation Editor.
+            You must be logged in to access the Alliance Manager.
           </p>
           <button
             onClick={() => window.location.href = '/api/auth/google'}
@@ -98,7 +98,7 @@ const NationsPage: React.FC = () => {
   if (!allianceId) {
     return (
       <PageContainer className="text-center p-10 text-gray-400">
-        Please select an alliance to use the Nation Editor.
+        Please select an alliance to use the Alliance Manager.
       </PageContainer>
     );
   }
