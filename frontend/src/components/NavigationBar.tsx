@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { useAlliances } from '../contexts/AlliancesContext';
+import { useAuth, UserRole } from '../contexts/AuthContext';
+import LoginButton from './LoginButton';
 import NavigationDropdown, { MobileNavigationDropdown } from './NavigationDropdown';
+import UpdateRulerNameModal from './UpdateRulerNameModal';
 
 interface NavigationBarProps {
   selectedAllianceId: number | null;
@@ -14,7 +17,9 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   setSelectedAllianceId 
 }) => {
   const { alliances, loading, error } = useAlliances();
+  const { isAuthenticated, user, logout, isLoading: authLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showRulerNameModal, setShowRulerNameModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -43,6 +48,10 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     { label: 'Shame Offers', path: '/shame-offers' },
   ];
 
+  const adminItems = [
+    { label: 'User Management', path: '/admin/users' },
+  ];
+
   useEffect(() => {
     // Set Doombrella as default if it exists and no alliance is already selected
     // Only set default if we're not on an alliance-specific page (to avoid race condition with URL params)
@@ -63,7 +72,62 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
 
   // Update document title
   useEffect(() => {
-    document.title = 'Doomation';
+    const pathParts = location.pathname.split('/');
+    const tabName = pathParts[1];
+    
+    let pageTitle: string;
+    switch(tabName) {
+      case 'aid':
+        pageTitle = 'Aid Tools - Aid';
+        break;
+      case 'interalliance-aid':
+        pageTitle = 'Aid Tools - Interalliance Aid';
+        break;
+      case 'nations':
+        pageTitle = 'Aid Tools - Nation Editor';
+        break;
+      case 'wars':
+        pageTitle = 'War Tools - Wars';
+        break;
+      case 'ns-comparisons':
+        pageTitle = 'Utilities - NS Comparisons';
+        break;
+      case 'shame-offers':
+        pageTitle = 'Utilities - Shame Offers';
+        break;
+      case 'global-wars':
+        pageTitle = 'Stats - Global Wars';
+        break;
+      case 'nuclear-stats':
+        pageTitle = 'Stats - Nuclear';
+        break;
+      case 'aid-efficiency':
+        pageTitle = 'Stats - Aid Efficiency';
+        break;
+      case 'nation-aid-efficiency':
+        pageTitle = 'Stats - Nation Aid Efficiency';
+        break;
+      case 'war-stats':
+        pageTitle = 'Stats - Damage';
+        break;
+      case 'casualties':
+        pageTitle = 'Stats - Casualties';
+        break;
+      case 'events':
+        pageTitle = 'Events';
+        break;
+      case 'admin':
+        pageTitle = 'Admin - User Management';
+        break;
+      default:
+        pageTitle = 'CyberNations';
+    }
+    
+    if (pageTitle === 'CyberNations') {
+      document.title = 'Doomation';
+    } else {
+      document.title = `${pageTitle} | Doomation`;
+    }
   }, [location.pathname]);
 
   const handleAllianceChange = (allianceId: number | null) => {
@@ -145,6 +209,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         return 'Stats - Casualties';
       case 'events':
         return 'Events';
+      case 'admin':
+        return 'Admin - User Management';
       default:
         return 'CyberNations';
     }
@@ -201,6 +267,9 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
           >
             Events
           </Link>
+          {isAuthenticated && user?.role === UserRole.ADMIN && (
+            <NavigationDropdown label="Admin" items={adminItems} />
+          )}
         </div>
 
         {/* Mobile: Show current tab name - with flex-shrink to allow alliance selector space */}
@@ -208,7 +277,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
           {getCurrentTabName()}
         </div>
 
-        {/* Alliance Selector - flex-shrink-0 ensures it never shrinks */}
+        {/* Alliance Selector and Auth - flex-shrink-0 ensures it never shrinks */}
         <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
           <label className="hidden md:block font-semibold text-xs lg:text-sm text-gray-300 whitespace-nowrap">
             Alliance:
@@ -236,6 +305,32 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
           {error && (
             <span className="hidden md:inline text-xs text-error font-medium">Error</span>
           )}
+          
+          {/* Auth Section */}
+          <div className="flex items-center gap-2 ml-2">
+            {authLoading ? (
+              // Show nothing or a loading indicator while checking auth state
+              <span className="hidden lg:inline text-xs text-gray-500">Loading...</span>
+            ) : isAuthenticated ? (
+              <>
+                <button
+                  onClick={() => setShowRulerNameModal(true)}
+                  className="hidden lg:inline text-xs text-gray-300 hover:text-white cursor-pointer transition-colors underline decoration-dotted underline-offset-2"
+                  title="Click to update your ruler name"
+                >
+                  {user?.rulerName || user?.email || 'Set Ruler Name'}
+                </button>
+                <button
+                  onClick={logout}
+                  className="px-3 py-1.5 text-xs sm:text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <LoginButton />
+            )}
+          </div>
         </div>
       </div>
 
@@ -275,8 +370,23 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             >
               Events
             </Link>
+            {isAuthenticated && user?.role === UserRole.ADMIN && (
+              <MobileNavigationDropdown 
+                label="Admin" 
+                items={adminItems}
+                onItemClick={() => setMobileMenuOpen(false)}
+              />
+            )}
           </div>
         </div>
+      )}
+
+      {/* Update Ruler Name Modal */}
+      {isAuthenticated && (
+        <UpdateRulerNameModal
+          isOpen={showRulerNameModal}
+          onClose={() => setShowRulerNameModal(false)}
+        />
       )}
     </nav>
   );

@@ -8,4 +8,10 @@ export const nationEditorRoutes = Router();
 nationEditorRoutes.get('/alliances/:allianceId/nations-config', validateAllianceId, NationEditorController.getNationsConfig);
 
 // Update a specific nation's data in alliance files
-nationEditorRoutes.put('/alliances/:allianceId/nations/:nationId', validateAllianceId, validateNationId, validateSlots, NationEditorController.updateNation);
+nationEditorRoutes.put(
+  '/alliances/:allianceId/nations/:nationId',
+  validateAllianceId,
+  validateNationId,
+  validateSlots,
+  NationEditorController.updateNation
+);

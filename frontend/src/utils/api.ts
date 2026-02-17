@@ -18,6 +18,7 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}): Prom
   
   return fetch(url, {
     ...options,
+    credentials: 'include', // Always include cookies
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -43,9 +44,19 @@ export const safeJsonParse = async (response: Response): Promise<any> => {
 
 // Helper function to make API calls with better error handling
 export const apiCallWithErrorHandling = async (endpoint: string, options: RequestInit = {}): Promise<any> => {
-  const response = await apiCall(endpoint, options);
+  const response = await apiCall(endpoint, {
+    ...options,
+    credentials: 'include', // Always include cookies
+  });
   
   if (!response.ok) {
+    // Handle 401 (Unauthorized) - user needs to login
+    if (response.status === 401) {
+      // Clear any auth state if needed
+      // The AuthContext will handle redirecting to login
+      throw new Error('Authentication required');
+    }
+    
     // Try to parse error message from response
     const text = await response.text();
     if (text.trim()) {
@@ -124,4 +135,12 @@ export const API_ENDPOINTS = {
     const query = params.toString();
     return query ? `${url}?${query}` : url;
   },
+  // Auth endpoints
+  authMe: '/api/auth/me',
+  authLogout: '/api/auth/logout',
+  authVerify: '/api/auth/verify',
+  authGoogle: '/api/auth/google',
+  // User management endpoints (ADMIN only)
+  users: '/api/users',
+  updateUser: (id: number) => `/api/users/${id}`,
 } as const;

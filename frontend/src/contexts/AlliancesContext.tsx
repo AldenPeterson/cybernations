@@ -43,6 +43,17 @@ export function AlliancesProvider({ children }: { children: ReactNode }) {
     loadingPromise = (async () => {
       try {
         const response = await apiCall(API_ENDPOINTS.alliances);
+        
+        // Check if response is ok before parsing
+        if (!response.ok) {
+          // Handle 401 (Unauthorized) - but this route shouldn't require auth
+          if (response.status === 401) {
+            const errorData = await response.json().catch(() => ({ error: 'Authentication required' }));
+            throw new Error(errorData.error || 'Authentication required');
+          }
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
         
         if (data.success) {

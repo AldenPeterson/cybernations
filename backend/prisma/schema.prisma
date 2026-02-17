@@ -15,6 +15,7 @@ model Alliance {
   crossAllianceAidTargets CrossAllianceAid[] @relation("TargetAlliance")
   nations                 Nation[]
   events                  Event[]
+  managers                UserAllianceManager[]
 
   @@map("alliances")
 }
@@ -260,4 +261,36 @@ model CasualtyRankingSnapshot {
   @@index([nationId])
   @@index([snapshotDate, rank])
   @@map("casualty_ranking_snapshots")
+}
+
+enum UserRole {
+  ADMIN
+  ALLIANCE_MANAGER
+  USER
+}
+
+model User {
+  id               Int                  @id @default(autoincrement())
+  googleId         String               @unique @map("google_id")
+  email            String               @unique
+  rulerName        String?              @unique @map("ruler_name")
+  role             UserRole             @default(USER)
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+  managedAlliances UserAllianceManager[]
+
+  @@map("users")
+}
+
+model UserAllianceManager {
+  userId     Int      @map("user_id")
+  allianceId Int      @map("alliance_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alliance   Alliance @relation(fields: [allianceId], references: [id], onDelete: Cascade)
+
+  @@id([userId, allianceId])
+  @@index([userId])
+  @@index([allianceId])
+  @@map("user_alliance_managers")
 }

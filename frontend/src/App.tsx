@@ -16,12 +16,34 @@ import NationAidEfficiencyPage from './pages/NationAidEfficiencyPage'
 import EventsPage from './pages/EventsPage'
 import WarStatsPage from './pages/WarStatsPage'
 import CasualtiesPage from './pages/CasualtiesPage'
+import AdminPage from './pages/AdminPage'
+import UpdateRulerNamePage from './pages/UpdateRulerNamePage'
+import { useAuth } from './contexts/AuthContext'
 
 function App() {
   const [selectedAllianceId, setSelectedAllianceId] = useState<number | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const hasInitializedNationAidEfficiency = useRef(false);
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  // Redirect authenticated users without rulerName to update page
+  useEffect(() => {
+    // Don't redirect if still loading auth state
+    if (isLoading) {
+      return;
+    }
+
+    // Don't redirect if already on the update-rulername page
+    if (location.pathname === '/update-rulername') {
+      return;
+    }
+
+    // If user is authenticated but doesn't have a rulerName, redirect to update page
+    if (isAuthenticated && user && !user.rulerName) {
+      navigate('/update-rulername', { replace: true });
+    }
+  }, [isAuthenticated, user, isLoading, location.pathname, navigate]);
 
   // Sync selectedAllianceId with URL parameters
   useEffect(() => {
@@ -125,6 +147,13 @@ function App() {
         <Route path="/war-stats" element={<WarStatsPage />} />
         <Route path="/casualties" element={<CasualtiesPage selectedAllianceId={selectedAllianceId} />} />
         <Route path="/shame-offers" element={<ShameOffersPage />} />
+        
+        {/* Admin routes */}
+        <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
+        <Route path="/admin/users" element={<AdminPage />} />
+        
+        {/* Ruler name update page */}
+        <Route path="/update-rulername" element={<UpdateRulerNamePage />} />
         
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/aid" replace />} />
