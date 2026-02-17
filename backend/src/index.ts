@@ -4,17 +4,12 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
-import { pool } from './utils/prisma.js';
 import { apiRoutes } from './routes/api.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { pool } from './utils/prisma.js';
 
 // Load environment variables
 dotenv.config();
-
-// Validate required environment variables
-if (!process.env.SESSION_SECRET) {
-  throw new Error('SESSION_SECRET environment variable is required');
-}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -32,25 +27,33 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configure session store
+// Session configuration
 const PgSession = connectPgSimple(session);
+const sessionSecret = process.env.SESSION_SECRET || 'development-session-secret-change-me';
+const sessionName = process.env.SESSION_NAME || 'sessionId';
+const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE || '604800000', 10); // 7 days
+const cookieSecure = process.env.COOKIE_SECURE === 'true';
 
-// Session middleware
-app.use(session({
-  store: new PgSession({
-    pool: pool,
-    tableName: 'user_sessions',
-  }),
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
-    httpOnly: true,
-    maxAge: parseInt(process.env.SESSION_MAX_AGE || '604800000', 10), // 7 days default
-    sameSite: 'lax',
-  },
-}));
+app.use(
+  session({
+    store: new PgSession({
+      pool,
+      // Use a dedicated table name for sessions; will be auto-created if missing
+      tableName: 'user_sessions',
+      createTableIfMissing: true,
+    }),
+    secret: sessionSecret,
+    name: sessionName,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: sessionMaxAge,
+      httpOnly: true,
+      secure: cookieSecure,
+      sameSite: cookieSecure ? 'none' : 'lax',
+    },
+  })
+);
 
 // Routes
 app.use('/api', apiRoutes);
