@@ -347,14 +347,13 @@ const AidPage: React.FC = () => {
   useEffect(() => {
     if (showRecommendations && allianceId) {
       fetchRecommendations(parseInt(allianceId));
-      fetchNationsConfig(parseInt(allianceId));
     } else {
       setRecommendations([]);
       setAvailableSlots(null);
       setNationsConfig([]);
       setMismatchedOffers(null);
     }
-  }, [showRecommendations, allianceId, fetchRecommendations, fetchNationsConfig]);
+  }, [showRecommendations, allianceId, fetchRecommendations]);
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {

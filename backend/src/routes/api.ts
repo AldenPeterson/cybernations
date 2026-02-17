@@ -16,14 +16,17 @@ import { casualtiesRoutes } from './casualtiesRoutes.js';
 import { userRoutes } from './userRoutes.js';
 import { warchestSubmissionRoutes } from './warchestSubmissionRoutes.js';
 import { authRoutes } from './authRoutes.js';
+import { validateAllianceId } from '../middleware/validation.js';
 
 export const apiRoutes = Router();
 
 // Auth routes (public - no authentication required for login)
 apiRoutes.use('/auth', authRoutes);
 
-// Dashboard API endpoints - register public routes first
+// Dashboard API endpoints - register public routes first (no authentication required)
 apiRoutes.get('/alliances', AllianceController.getAlliances);
+apiRoutes.get('/alliances/:allianceId/stats', validateAllianceId, AllianceController.getAllianceStats);
+apiRoutes.get('/alliances/:allianceId/nuclear-stats', validateAllianceId, AllianceController.getNuclearWeaponStats);
 
 // Use aid routes
 apiRoutes.use('/', aidRoutes);
@@ -64,9 +67,7 @@ apiRoutes.use('/', warchestSubmissionRoutes);
 // Stats decode endpoint - extract zip files from raw_data folder
 apiRoutes.post('/stats/decode', StatsController.decodeStats);
 
-// Dashboard API endpoints (alliances route registered above)
-apiRoutes.get('/alliances/:allianceId/stats', AllianceController.getAllianceStats);
-apiRoutes.get('/alliances/:allianceId/nuclear-stats', AllianceController.getNuclearWeaponStats);
+// Sync alliances endpoint
 apiRoutes.post('/sync/alliances', AllianceController.syncAlliances);
 
 // Aid efficiency endpoint
