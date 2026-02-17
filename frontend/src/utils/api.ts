@@ -127,6 +127,10 @@ export const API_ENDPOINTS = {
   casualties: '/api/casualties',
   casualtiesAlliances: '/api/casualties/alliances',
   casualtiesAllianceMembers: (allianceId: number) => `/api/casualties/alliance/${allianceId}`,
+  warchestSubmissions: (nationId?: number) => {
+    const query = nationId ? `?nationId=${nationId}` : '';
+    return `/api/warchest-submissions${query}`;
+  },
   interallianceAid: (alliance1Id: number, alliance2Id: number, startDate?: string, endDate?: string) => {
     let url = `/api/interalliance-aid/${alliance1Id}/${alliance2Id}`;
     const params = new URLSearchParams();

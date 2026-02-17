@@ -18,6 +18,7 @@ import WarStatsPage from './pages/WarStatsPage'
 import CasualtiesPage from './pages/CasualtiesPage'
 import AdminPage from './pages/AdminPage'
 import UpdateRulerNamePage from './pages/UpdateRulerNamePage'
+import WarchestSubmissionPage from './pages/WarchestSubmissionPage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -132,6 +133,9 @@ function App() {
         
         <Route path="/wars/:allianceId" element={<WarManagementPage />} />
         <Route path="/wars" element={<AllianceRedirect tabName="wars" />} />
+        
+        {/* Warchest Submission - authenticated users only */}
+        <Route path="/warchest-submission" element={<WarchestSubmissionPage />} />
         
         {/* Legacy redirects - redirect old recommendations URLs to aid with tab parameter */}
         <Route path="/recommendations/:allianceId" element={<RecommendationsRedirect />} />

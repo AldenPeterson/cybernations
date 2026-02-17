@@ -165,6 +165,42 @@ export class WarManagementService {
     
     const allianceNationIds = new Set(allianceNations.map(nation => nation.id));
 
+    // Build warchest data map - get most recent submission and count for each nation
+    const warchestDataByNationId = new Map<number, { amount: number; date: Date; count: number }>();
+    const warchestSubmissions = await prisma.warchestSubmission.findMany({
+      where: {
+        nationId: { in: Array.from(allianceNationIds) }
+      },
+      orderBy: {
+        capturedAt: 'desc'
+      }
+    });
+    
+    // Count total submissions per nation
+    const warchestCountByNationId = new Map<number, number>();
+    warchestSubmissions.forEach(submission => {
+      if (submission.nationId) {
+        warchestCountByNationId.set(
+          submission.nationId,
+          (warchestCountByNationId.get(submission.nationId) || 0) + 1
+        );
+      }
+    });
+    
+    // Get most recent submission per nation
+    warchestSubmissions.forEach(submission => {
+      if (submission.nationId) {
+        const existing = warchestDataByNationId.get(submission.nationId);
+        if (!existing || submission.capturedAt > existing.date) {
+          warchestDataByNationId.set(submission.nationId, {
+            amount: submission.totalMoney,
+            date: submission.capturedAt,
+            count: warchestCountByNationId.get(submission.nationId) || 0
+          });
+        }
+      }
+    });
+
     // Organize wars by nation
     const nationWars = allianceNations.map(nation => {
       const attackingWars = relevantWars
@@ -250,6 +286,7 @@ export class WarManagementService {
       const sortedDefendingWars = defendingWars.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       const staggeredStatus = calculateStaggeredStatus(sortedDefendingWars);
 
+      const warchestData = warchestDataByNationId.get(nation.id);
       return {
         nation: {
           id: nation.id,
@@ -263,7 +300,12 @@ export class WarManagementService {
           inWarMode: nation.inWarMode,
           nuclearWeapons: nation.nuclearWeapons,
           governmentType: nation.governmentType,
-          lastNukedDate: latestNukedDateByNationId.get(nation.id)
+          lastNukedDate: latestNukedDateByNationId.get(nation.id),
+          warchest: warchestData ? {
+            amount: warchestData.amount,
+            date: warchestData.date.toISOString(),
+            count: warchestData.count
+          } : undefined
         },
         attackingWars: attackingWars.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
         defendingWars: sortedDefendingWars,

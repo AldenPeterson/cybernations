@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { apiCallWithErrorHandling } from '../utils/api.js';
+import { apiCallWithErrorHandling, getApiBaseUrl } from '../utils/api.js';
 
 export const UserRole = {
   ADMIN: 'ADMIN',
@@ -74,7 +74,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = () => {
     // Redirect to backend OAuth endpoint
-    window.location.href = '/api/auth/google';
+    const backendUrl = getApiBaseUrl();
+    window.location.href = `${backendUrl}/api/auth/google`;
   };
 
   const logout = async () => {

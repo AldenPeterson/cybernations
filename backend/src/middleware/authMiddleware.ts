@@ -1,158 +1,118 @@
 import { Request, Response, NextFunction } from 'express';
-import {
-  getUserRole,
-  isAllianceManager,
-  getManagedAlliances,
-} from '../services/authService.js';
+import { getUserRole, isAllianceManager } from '../services/authService.js';
 import { UserRole } from '@prisma/client';
 
-// Extend Express Request type to include session
-declare module 'express-session' {
-  interface SessionData {
-    userId?: number;
-    oauthState?: string;
-  }
-}
-
 /**
- * Ensure user is authenticated
+ * Middleware to require that the user is authenticated.
+ * Checks if req.session.userId exists.
  */
-export function requireAuth(
+export const requireAuth = (
   req: Request,
   res: Response,
   next: NextFunction
-) {
+) => {
   if (!req.session.userId) {
     return res.status(401).json({
       success: false,
-      error: 'Authentication required',
+      error: 'Authentication required'
     });
   }
   next();
-}
+};
 
 /**
- * Ensure user has one of the specified roles
+ * Middleware to require that the user has one of the specified roles.
+ * Must be used after requireAuth middleware to ensure req.session.userId exists.
+ * 
+ * @param allowedRoles - Array of UserRole values that are allowed to access the route
  */
-export function requireRole(roles: UserRole[]) {
+export const requireRole = (allowedRoles: UserRole[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.session.userId) {
-      return res.status(401).json({
-        success: false,
-        error: 'Authentication required',
-      });
-    }
-
     try {
-      const userRole = await getUserRole(req.session.userId!);
-      if (!roles.includes(userRole)) {
-        return res.status(403).json({
+      // This should never happen if requireAuth is used first, but check anyway
+      if (!req.session.userId) {
+        return res.status(401).json({
           success: false,
-          error: 'Insufficient permissions',
-        });
-      }
-      next();
-    } catch (error) {
-      console.error('Error checking user role:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-      });
-    }
-  };
-}
-
-/**
- * Ensure user is manager of specific alliance
- * Admins can manage all alliances
- */
-export function requireAllianceManager(allianceId: number | string) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.session.userId) {
-      return res.status(401).json({
-        success: false,
-        error: 'Authentication required',
-      });
-    }
-
-    try {
-      const userId = req.session.userId!;
-      const allianceIdNum = typeof allianceId === 'string' ? parseInt(allianceId, 10) : allianceId;
-
-      if (isNaN(allianceIdNum)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid alliance ID',
+          error: 'Authentication required'
         });
       }
 
-      // Check if user is admin (admins can manage all alliances)
+      const userId = req.session.userId;
       const userRole = await getUserRole(userId);
-      if (userRole === UserRole.ADMIN) {
-        return next();
-      }
 
-      // Check if user manages this alliance
-      const isManager = await isAllianceManager(userId, allianceIdNum);
-      if (!isManager) {
+      if (!allowedRoles.includes(userRole)) {
         return res.status(403).json({
           success: false,
-          error: 'You do not have permission to manage this alliance',
+          error: 'Insufficient permissions'
         });
       }
 
       next();
     } catch (error) {
-      console.error('Error checking alliance manager status:', error);
-      return res.status(500).json({
+      console.error('Error in requireRole middleware:', error);
+      res.status(500).json({
         success: false,
-        error: 'Internal server error',
+        error: 'Internal server error during authorization check'
       });
     }
   };
-}
+};
 
 /**
- * Helper to get alliance ID from request params or body
+ * Middleware to require that the user is authenticated and is either:
+ * - An ADMIN, or
+ * - An alliance manager for the alliance specified in req.params.allianceId
+ * 
+ * This middleware should be used after validateAllianceId middleware
+ * to ensure allianceId is already validated.
  */
-export function getAllianceIdFromRequest(req: Request): number | null {
-  // Try params first (e.g., /api/alliances/:allianceId/...)
-  if (req.params.allianceId) {
-    const id = parseInt(req.params.allianceId, 10);
-    if (!isNaN(id)) return id;
-  }
-
-  // Try body
-  if (req.body.allianceId) {
-    const id = parseInt(req.body.allianceId, 10);
-    if (!isNaN(id)) return id;
-  }
-
-  // Try query
-  if (req.query.allianceId) {
-    const id = parseInt(req.query.allianceId as string, 10);
-    if (!isNaN(id)) return id;
-  }
-
-  return null;
-}
-
-/**
- * Middleware that extracts allianceId from request and checks manager status
- */
-export function requireAllianceManagerFromRequest(
+export const requireAllianceManagerFromRequest = async (
   req: Request,
   res: Response,
   next: NextFunction
-) {
-  const allianceId = getAllianceIdFromRequest(req);
-  if (!allianceId) {
-    return res.status(400).json({
+) => {
+  try {
+    // Check if user is authenticated
+    if (!req.session.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
+
+    const userId = req.session.userId;
+    const allianceId = parseInt(req.params.allianceId);
+
+    // Validate allianceId (should already be validated by validateAllianceId middleware, but double-check)
+    if (isNaN(allianceId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid alliance ID'
+      });
+    }
+
+    // Check if user is an admin
+    const userRole = await getUserRole(userId);
+    if (userRole === UserRole.ADMIN) {
+      return next();
+    }
+
+    // Check if user is an alliance manager for this alliance
+    const canManage = await isAllianceManager(userId, allianceId);
+    if (!canManage) {
+      return res.status(403).json({
+        success: false,
+        error: 'You do not have permission to manage this alliance'
+      });
+    }
+
+    // User has permission, continue
+    next();
+  } catch (error) {
+    console.error('Error in requireAllianceManagerFromRequest middleware:', error);
+    res.status(500).json({
       success: false,
-      error: 'Alliance ID is required',
+      error: 'Internal server error during authorization check'
     });
   }
-
-  return requireAllianceManager(allianceId)(req, res, next);
-}
-
+};

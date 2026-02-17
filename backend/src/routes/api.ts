@@ -14,8 +14,13 @@ import { eventsRoutes } from './eventsRoutes.js';
 import { warStatisticsRoutes } from './warStatisticsRoutes.js';
 import { casualtiesRoutes } from './casualtiesRoutes.js';
 import { userRoutes } from './userRoutes.js';
+import { warchestSubmissionRoutes } from './warchestSubmissionRoutes.js';
+import { authRoutes } from './authRoutes.js';
 
 export const apiRoutes = Router();
+
+// Auth routes (public - no authentication required for login)
+apiRoutes.use('/auth', authRoutes);
 
 // Dashboard API endpoints - register public routes first
 apiRoutes.get('/alliances', AllianceController.getAlliances);
@@ -52,6 +57,9 @@ apiRoutes.use('/', casualtiesRoutes);
 
 // User management routes (ADMIN only)
 apiRoutes.use('/', userRoutes);
+
+// Warchest submission routes (authenticated users only)
+apiRoutes.use('/', warchestSubmissionRoutes);
 
 // Stats decode endpoint - extract zip files from raw_data folder
 apiRoutes.post('/stats/decode', StatsController.decodeStats);

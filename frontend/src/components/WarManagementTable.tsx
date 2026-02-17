@@ -4,6 +4,7 @@ import WarStatusBadge from './WarStatusBadge';
 import FilterCheckbox from './FilterCheckbox';
 import NSPercentageBadge from './NSPercentageBadge';
 import AllianceMultiSelect from './AllianceMultiSelect';
+import WarchestHistoryDialog from './WarchestHistoryDialog';
 import { apiCall, API_ENDPOINTS } from '../utils/api';
 import { tableClasses, EMPTY_CELL_BG } from '../styles/tableClasses';
 import { useAlliances } from '../contexts/AlliancesContext';
@@ -187,6 +188,11 @@ interface NationWars {
     nuclearWeapons: number;
     governmentType: string;
     lastNukedDate?: string;
+    warchest?: {
+      amount: number;
+      date: string;
+      count: number;
+    };
   };
   attackingWars: War[];
   defendingWars: War[];
@@ -224,6 +230,17 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   const [sellDownEnabled, setSellDownEnabled] = useState<boolean>(false);
   const [militaryNS, setMilitaryNS] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [warchestHistoryDialog, setWarchestHistoryDialog] = useState<{
+    isOpen: boolean;
+    nationId: number;
+    nationName: string;
+    rulerName: string;
+  }>({
+    isOpen: false,
+    nationId: 0,
+    nationName: '',
+    rulerName: ''
+  });
 
   // Helper function to parse boolean from URL parameter
   const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
@@ -473,6 +490,26 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     return tech.toFixed(0);
   };
 
+  const formatMoney = (amount: number): string => {
+    if (amount >= 1000000000) {
+      return `$${(amount / 1000000000).toFixed(2)}B`;
+    } else if (amount >= 1000000) {
+      return `$${(amount / 1000000).toFixed(2)}M`;
+    } else if (amount >= 1000) {
+      return `$${(amount / 1000).toFixed(2)}K`;
+    }
+    return `$${amount.toFixed(2)}`;
+  };
+
+  const formatWarchestDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   const renderCondensedWarStats = (strength: number, technology: string, nuclearWeapons: number) => {
     const techValue = formatTechnology(technology).replace(/K/g, 'k');
     const nukesBackground = getNuclearWeaponsColor(nuclearWeapons);
@@ -555,6 +592,29 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     const mm = String(parsed.m).padStart(2, '0');
     const dd = String(parsed.d).padStart(2, '0');
     return `${mm}/${dd}`;
+  };
+
+  const getWarchestCellColor = (warchestDate?: string): string => {
+    if (!warchestDate) return EMPTY_CELL_BG;
+    try {
+      const warchestDateObj = new Date(warchestDate);
+      if (isNaN(warchestDateObj.getTime())) return EMPTY_CELL_BG;
+      
+      const today = getCentralTodayYMD();
+      const todayUtc = Date.UTC(today.y, today.m - 1, today.d);
+      const warchestUtc = Date.UTC(
+        warchestDateObj.getFullYear(),
+        warchestDateObj.getMonth(),
+        warchestDateObj.getDate()
+      );
+      const diffDays = Math.floor((todayUtc - warchestUtc) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 7) return '#e8f5e8'; // green: < 7 days
+      if (diffDays >= 7 && diffDays < 14) return '#fffde7'; // yellow: 7-14 days
+      return '#ffebee'; // red: >= 14 days
+    } catch (err) {
+      return EMPTY_CELL_BG;
+    }
   };
 
   const shouldBeInPeaceMode = (nuclearWeapons: number, governmentType: string, attackingWars: War[], defendingWars: War[]): boolean => {
@@ -1070,6 +1130,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
               <thead>
                 <tr className="bg-gray-800">
                   <th className={`${headerClasses.default} sticky left-0 z-[200] bg-gray-800 shadow-[2px_0_8px_-2px_rgba(0,0,0,0.3),1px_0_0_0_#999]`}>Nation</th>
+                  <th className={headerClasses.center}>Warchest</th>
                   <th className={headerClasses.center}>Nukes</th>
                   <th className={headerClasses.center}>Last Nuked</th>
                   <th className={headerClasses.center}>Attacking War 1</th>
@@ -1109,6 +1170,40 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
                         <br />
                         <WarStatusBadge inWarMode={nationWar.nation.inWarMode} />
                       </div>
+                    </td>
+                    {/* Warchest Column */}
+                    <td 
+                      className={columnClasses.warchest}
+                      style={{ backgroundColor: getWarchestCellColor(nationWar.nation.warchest?.date) }}
+                    >
+                      {nationWar.nation.warchest ? (
+                        <div className="text-[9px] md:text-[11px]">
+                          <div 
+                            className={nationWar.nation.warchest.count > 1 
+                              ? 'text-gray-800 font-semibold cursor-pointer hover:underline' 
+                              : 'text-gray-800 font-semibold'
+                            }
+                            onClick={() => {
+                              if (nationWar.nation.warchest && nationWar.nation.warchest.count > 1) {
+                                setWarchestHistoryDialog({
+                                  isOpen: true,
+                                  nationId: nationWar.nation.id,
+                                  nationName: nationWar.nation.name,
+                                  rulerName: nationWar.nation.ruler
+                                });
+                              }
+                            }}
+                            title={nationWar.nation.warchest.count > 1 ? `Click to view ${nationWar.nation.warchest.count} warchest entries` : undefined}
+                          >
+                            {formatMoney(nationWar.nation.warchest.amount)}
+                          </div>
+                          <div className="text-gray-600 text-[8px] md:text-[9px] mt-0.5">
+                            {formatWarchestDate(nationWar.nation.warchest.date)}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-[10px]">—</span>
+                      )}
                     </td>
                     {/* Nuclear Weapons Column */}
                     <td 
@@ -1258,6 +1353,15 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
           No results found with current filters.
         </div>
       )}
+
+      {/* Warchest History Dialog */}
+      <WarchestHistoryDialog
+        isOpen={warchestHistoryDialog.isOpen}
+        onClose={() => setWarchestHistoryDialog({ isOpen: false, nationId: 0, nationName: '', rulerName: '' })}
+        nationId={warchestHistoryDialog.nationId}
+        nationName={warchestHistoryDialog.nationName}
+        rulerName={warchestHistoryDialog.rulerName}
+      />
     </div>
   );
 };

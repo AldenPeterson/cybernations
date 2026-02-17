@@ -54,6 +54,7 @@ model Nation {
   receivingWars                                          War[]          @relation("ReceivingNation")
   events                                                 Event[]
   casualtyRankingSnapshots                               CasualtyRankingSnapshot[]
+  warchestSubmissions                                    WarchestSubmission[]
 
   @@index([allianceId])
   @@index([id])
@@ -294,4 +295,19 @@ model UserAllianceManager {
   @@index([userId])
   @@index([allianceId])
   @@map("user_alliance_managers")
+}
+
+model WarchestSubmission {
+  id          Int      @id @default(autoincrement())
+  nationId    Int?     @map("nation_id")
+  nationName  String   @map("nation_name")
+  totalMoney  Float    @map("total_money")
+  capturedAt  DateTime @map("captured_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  nation      Nation?  @relation(fields: [nationId], references: [id], onDelete: SetNull)
+
+  @@index([nationId])
+  @@index([nationName])
+  @@index([capturedAt])
+  @@map("warchest_submissions")
 }
