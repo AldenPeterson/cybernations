@@ -7,6 +7,7 @@ import connectPgSimple from 'connect-pg-simple';
 import { apiRoutes } from './routes/api.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { pool } from './utils/prisma.js';
+import { getCookieConfig } from './utils/cookieConfig.js';
 
 // Load environment variables
 dotenv.config();
@@ -35,16 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 const PgSession = connectPgSimple(session);
 const sessionSecret = process.env.SESSION_SECRET || 'development-session-secret-change-me';
 const sessionName = process.env.SESSION_NAME || 'sessionId';
-const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE || '604800000', 10); // 7 days
-const cookieSecure = process.env.COOKIE_SECURE === 'true';
-
-// Debug logging for cookie configuration
-console.log('🔐 Cookie configuration:', {
-  COOKIE_SECURE_env: process.env.COOKIE_SECURE,
-  cookieSecure_value: cookieSecure,
-  cookieSecure_type: typeof cookieSecure,
-  NODE_ENV: process.env.NODE_ENV,
-});
+const cookieConfig = getCookieConfig();
 
 app.use(
   session({
@@ -58,12 +50,7 @@ app.use(
     name: sessionName,
     resave: false,
     saveUninitialized: false,
-    cookie: {
-      maxAge: sessionMaxAge,
-      httpOnly: true,
-      secure: cookieSecure,
-      sameSite: cookieSecure ? 'none' : 'lax',
-    },
+    cookie: cookieConfig,
   })
 );
 
@@ -79,10 +66,7 @@ app.get('/health', (req, res) => {
 app.get('/debug/cookie-config', (req, res) => {
   res.json({
     COOKIE_SECURE_env: process.env.COOKIE_SECURE,
-    cookieSecure_value: cookieSecure,
-    cookieSecure_type: typeof cookieSecure,
-    expectedSecure: cookieSecure,
-    expectedSameSite: cookieSecure ? 'none' : 'lax',
+    cookieConfig,
     NODE_ENV: process.env.NODE_ENV,
   });
 });

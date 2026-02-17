@@ -14,12 +14,6 @@ export interface GoogleProfile {
  */
 export async function findOrCreateUser(profile: GoogleProfile) {
   const { sub: googleId, email } = profile;
-  
-  // rulerName is manually set, not from Google OAuth
-  console.log('findOrCreateUser called with:', {
-    googleId,
-    email,
-  });
 
   // Try to find existing user
   let user;
@@ -28,26 +22,13 @@ export async function findOrCreateUser(profile: GoogleProfile) {
       where: { googleId },
     });
   } catch (error: any) {
-    console.error('Prisma findUnique error details:', {
-      error: error.message,
-      code: error.code,
-      meta: error.meta,
-      stack: error.stack,
-      googleId,
-    });
-    // Log the actual query if available
-    if (error.meta?.query) {
-      console.error('Failed query:', error.meta.query);
-    }
+    console.error('Error finding user by googleId:', error.message);
     throw error;
   }
-  
-  console.log('User lookup result:', user ? { id: user.id, email: user.email } : 'not found');
 
   // If user doesn't exist, create new one
   if (!user) {
     try {
-      console.log('Creating new user...');
       user = await prisma.user.create({
         data: {
           googleId,
@@ -56,17 +37,14 @@ export async function findOrCreateUser(profile: GoogleProfile) {
           role: UserRole.USER,
         },
       });
-      console.log('User created successfully:', { id: user.id, email: user.email });
     } catch (error) {
       console.error('Error creating user:', error);
       // If creation fails due to unique constraint (email or rulerName), try to find by email
       if (error instanceof Error && error.message.includes('Unique constraint')) {
-        console.log('Unique constraint violation, trying to find by email...');
         user = await prisma.user.findUnique({
           where: { email },
         });
         if (user) {
-          console.log('Found existing user by email:', { id: user.id });
           // Update googleId if it was missing
           if (!user.googleId) {
             user = await prisma.user.update({

@@ -3,6 +3,7 @@ import { findOrCreateUser, getManagedAlliances } from '../services/authService.j
 import { getAuthUrl, generateState, getTokens, getUserInfo } from '../config/googleOAuth.js';
 import { prisma } from '../utils/prisma.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
+import { getClearCookieOptions } from '../utils/cookieConfig.js';
 
 export const authRoutes = Router();
 
@@ -17,45 +18,9 @@ authRoutes.get('/google', (req: Request, res: Response) => {
     // Store state in session
     req.session.oauthState = state;
     
-    // Ensure cookie attributes are set correctly for cross-site requests
-    const cookieSecure = process.env.COOKIE_SECURE === 'true';
-    req.session.cookie.secure = cookieSecure;
-    req.session.cookie.sameSite = cookieSecure ? 'none' : 'lax';
-    // Don't set domain explicitly - let express-session use default (exact domain match)
-    // This ensures the cookie works for the backend domain
-    
-    console.log('OAuth initiation:', {
-      sessionId: req.sessionID,
-      state: state.substring(0, 8) + '...', // Log first 8 chars for debugging
-      hasOAuthState: !!req.session.oauthState,
-      cookieSecure: req.session.cookie.secure,
-      cookieSameSite: req.session.cookie.sameSite,
-      cookieDomain: req.session.cookie.domain,
-      cookiePath: req.session.cookie.path,
-    });
-    
-    // Save session before redirect to ensure it's persisted
-    req.session.save((err) => {
-      if (err) {
-        console.error('Error saving session during OAuth initiation:', err);
-        return res.status(500).json({
-          success: false,
-          error: 'Failed to initiate authentication',
-        });
-      }
-      
-      // Log Set-Cookie header that will be sent
-      const setCookieHeader = res.getHeader('Set-Cookie');
-      console.log('Set-Cookie header:', setCookieHeader);
-      
-      // Generate OAuth URL with state
-      const authUrl = getAuthUrl(state);
-      
-      console.log('Session saved, redirecting to Google OAuth');
-      
-      // Redirect to Google
-      res.redirect(authUrl);
-    });
+    // Generate OAuth URL with state and redirect
+    const authUrl = getAuthUrl(state);
+    res.redirect(authUrl);
   } catch (error) {
     console.error('Error initiating OAuth flow:', error);
     res.status(500).json({
@@ -72,16 +37,6 @@ authRoutes.get('/google/callback', async (req: Request, res: Response) => {
   try {
     const { code, state } = req.query;
 
-    // Log incoming request details
-    console.log('OAuth callback received:', {
-      sessionId: req.sessionID,
-      hasCookies: !!req.headers.cookie,
-      cookieHeader: req.headers.cookie ? req.headers.cookie.substring(0, 50) + '...' : 'none',
-      sessionKeys: Object.keys(req.session),
-      cookieSecure: req.session.cookie?.secure,
-      cookieSameSite: req.session.cookie?.sameSite,
-    });
-
     // Verify state parameter
     if (!state) {
       console.error('OAuth callback missing state parameter');
@@ -93,34 +48,15 @@ authRoutes.get('/google/callback', async (req: Request, res: Response) => {
 
     // Check if session has oauthState
     if (!req.session.oauthState) {
-      console.error('OAuth callback: Session missing oauthState', {
-        sessionId: req.sessionID,
-        hasSession: !!req.session,
-        sessionKeys: Object.keys(req.session),
-        cookies: req.headers.cookie,
-        sessionCookie: req.session.cookie,
-        sessionStore: req.sessionStore ? 'present' : 'missing',
-      });
-      
-      // If this is a fresh session (no session data at all), it might be a cookie mismatch
-      // This can happen when switching from MemoryStore to PostgreSQL store
-      if (Object.keys(req.session).length === 0) {
-        console.error('OAuth callback: Empty session detected - possible cookie mismatch from store migration');
-      }
-      
+      console.error('OAuth callback: Session missing oauthState');
       return res.status(400).json({
         success: false,
         error: 'Session expired or invalid. Please try logging in again.',
-        hint: 'If you just switched to database sessions, please clear your cookies and try again.',
       });
     }
 
     if (state !== req.session.oauthState) {
-      console.error('OAuth callback: State mismatch', {
-        receivedState: state,
-        expectedState: req.session.oauthState,
-        sessionId: req.sessionID,
-      });
+      console.error('OAuth callback: State mismatch');
       return res.status(400).json({
         success: false,
         error: 'Invalid state parameter. Please try logging in again.',
@@ -135,94 +71,25 @@ authRoutes.get('/google/callback', async (req: Request, res: Response) => {
     }
 
     // Exchange code for tokens
-    console.log('Exchanging code for tokens...');
     const tokens = await getTokens(code);
-    console.log('Got tokens, has id_token:', !!tokens.id_token);
 
     // Get user info from Google
-    console.log('Getting user info from Google...');
     const googleProfile = await getUserInfo(tokens);
-    console.log('Got Google profile:', {
-      sub: googleProfile.sub,
-      email: googleProfile.email,
-      name: googleProfile.name,
-    });
 
     // Find or create user in database
-    console.log('Finding or creating user in database...');
     const user = await findOrCreateUser(googleProfile);
-    console.log('User found/created:', {
-      id: user.id,
-      email: user.email,
-      googleId: user.googleId,
-    });
 
-    
-    // For now, skip regeneration to test if that's the issue
-    // TODO: Re-enable regeneration once we confirm session persistence works
-    const oldSessionId = req.sessionID;
-    console.log('Before setting userId - sessionId:', oldSessionId);
-    
-    // Store user ID directly in session (without regeneration for testing)
+    // Store user ID in session
     req.session.userId = user.id;
-    console.log('Set userId in session:', user.id);
-    console.log('Session immediately after setting:', {
-      sessionId: req.sessionID,
-      userId: req.session.userId,
-      hasUserId: 'userId' in req.session,
-      allKeys: Object.keys(req.session),
-    });
-    
-    // Alternative: Try regenerating AFTER setting userId to see if that helps
-    // Actually, let's try without regeneration first to isolate the issue
 
     // Clear OAuth state
     delete req.session.oauthState;
-
-    // Ensure cookie attributes are set correctly (preserve secure and sameSite from session config)
-    const cookieSecure = process.env.COOKIE_SECURE === 'true';
-    req.session.cookie.maxAge = parseInt(process.env.SESSION_MAX_AGE || '604800000', 10);
-    req.session.cookie.secure = cookieSecure;
-    req.session.cookie.sameSite = cookieSecure ? 'none' : 'lax';
-    
-    // Save session explicitly
-    await new Promise<void>((resolve, reject) => {
-      req.session.save((err) => {
-        if (err) {
-          console.error('Error saving session:', err);
-          reject(err);
-        } else {
-          console.log('Session saved - cookie attributes:', {
-            sessionId: req.sessionID,
-            userId: req.session.userId,
-            cookieSecure: req.session.cookie.secure,
-            cookieSameSite: req.session.cookie.sameSite,
-            cookieMaxAge: req.session.cookie.maxAge,
-            cookieHttpOnly: req.session.cookie.httpOnly,
-          });
-          resolve();
-        }
-      });
-    });
-    
-    // One more verification before redirect
-    if (!req.session.userId) {
-      console.error('WARNING: userId is missing from session after save!');
-      console.error('Session object:', JSON.stringify(req.session, null, 2));
-    } else {
-      console.log('✓ userId confirmed in session before redirect:', req.session.userId);
-    }
 
     // Redirect to frontend with success
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     res.redirect(`${frontendUrl}?auth=success`);
   } catch (error) {
     console.error('Error in OAuth callback:', error);
-    console.error('Error details:', {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : undefined,
-    });
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     res.redirect(`${frontendUrl}?auth=error&message=${encodeURIComponent(error instanceof Error ? error.message : 'Unknown error')}`);
   }
@@ -232,22 +99,12 @@ authRoutes.get('/google/callback', async (req: Request, res: Response) => {
  * Logout - destroys session and clears session cookie
  */
 authRoutes.post('/logout', (req: Request, res: Response) => {
-  // Get cookie information before destroying the session
-  // Default session cookie name is 'connect.sid' (express-session default)
-  const sessionCookieName = 'connect.sid';
-  const cookieOptions = {
-    path: req.session.cookie.path || '/',
-    domain: req.session.cookie.domain,
-    secure: typeof req.session.cookie.secure === 'boolean' ? req.session.cookie.secure : false,
-    sameSite: req.session.cookie.sameSite as boolean | 'lax' | 'strict' | 'none' | undefined,
-    httpOnly: req.session.cookie.httpOnly || true,
-  };
+  const sessionCookieName = process.env.SESSION_NAME || 'sessionId';
+  const cookieOptions = getClearCookieOptions();
 
   req.session.destroy((err) => {
     // Clear the session cookie from the client
-    // This must be done even if destroy had an error to ensure cookie is cleared
     res.clearCookie(sessionCookieName, cookieOptions);
-  
 
     if (err) {
       console.error('Error destroying session:', err);

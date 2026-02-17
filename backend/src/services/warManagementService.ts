@@ -178,7 +178,7 @@ export class WarManagementService {
     
     // Count total submissions per nation
     const warchestCountByNationId = new Map<number, number>();
-    warchestSubmissions.forEach(submission => {
+    warchestSubmissions.forEach((submission: { nationId: number | null }) => {
       if (submission.nationId) {
         warchestCountByNationId.set(
           submission.nationId,
@@ -188,7 +188,7 @@ export class WarManagementService {
     });
     
     // Get most recent submission per nation
-    warchestSubmissions.forEach(submission => {
+    warchestSubmissions.forEach((submission: { nationId: number | null; capturedAt: Date; totalMoney: number }) => {
       if (submission.nationId) {
         const existing = warchestDataByNationId.get(submission.nationId);
         if (!existing || submission.capturedAt > existing.date) {
