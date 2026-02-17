@@ -304,6 +304,7 @@ const AdminPage: React.FC = () => {
                             >
                               <option value={UserRole.USER}>USER</option>
                               <option value={UserRole.ALLIANCE_MANAGER}>ALLIANCE_MANAGER</option>
+                              <option value={UserRole.WAR_MANAGER}>WAR_MANAGER</option>
                               <option value={UserRole.ADMIN}>ADMIN</option>
                             </select>
                           ) : (
@@ -313,6 +314,8 @@ const AdminPage: React.FC = () => {
                                   ? 'bg-red-900/50 text-red-200'
                                   : user.role === UserRole.ALLIANCE_MANAGER
                                   ? 'bg-blue-900/50 text-blue-200'
+                                  : user.role === UserRole.WAR_MANAGER
+                                  ? 'bg-orange-900/50 text-orange-200'
                                   : 'bg-gray-700 text-gray-300'
                               }`}
                             >

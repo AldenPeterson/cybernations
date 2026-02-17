@@ -23,11 +23,17 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Check if user can manage nations (admin or has manageable alliances)
+  const canManageNations = isAuthenticated && user && (
+    user.role === UserRole.ADMIN || user.managedAllianceIds.length > 0
+  );
+
   // Define navigation structure
   const aidToolsItems = [
     { label: 'Aid', path: selectedAllianceId ? `/aid/${selectedAllianceId}` : '/aid' },
     { label: 'Interalliance Aid', path: '/interalliance-aid' },
-    { label: 'Nation Editor', path: selectedAllianceId ? `/nations/${selectedAllianceId}` : '/nations', devOnly: true },
+    // Only show Nation Editor if user can manage nations
+    ...(canManageNations ? [{ label: 'Nation Editor', path: selectedAllianceId ? `/nations/${selectedAllianceId}` : '/nations', devOnly: true }] : []),
   ];
 
   const warToolsItems = [
@@ -232,6 +238,31 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     return ['aid', 'nations', 'wars', 'nation-aid-efficiency', 'interalliance-aid'].includes(tabName);
   };
 
+  // Check if we're on the nations page
+  const isOnNationsPage = (): boolean => {
+    const pathParts = location.pathname.split('/');
+    return pathParts[1] === 'nations';
+  };
+
+  // Get filtered alliances based on current page and user permissions
+  const getFilteredAlliances = () => {
+    // If on nations page, filter to only show manageable alliances
+    if (isOnNationsPage() && isAuthenticated && user) {
+      const isAdmin = user.role === UserRole.ADMIN;
+      if (isAdmin) {
+        // Admins can see all alliances
+        return alliances;
+      } else {
+        // Non-admins can only see alliances they manage
+        return alliances.filter(alliance => user.managedAllianceIds.includes(alliance.id));
+      }
+    }
+    // For other pages, show all alliances
+    return alliances;
+  };
+
+  const filteredAlliances = getFilteredAlliances();
+
   return (
     <nav className="fixed top-0 left-0 right-0 bg-gray-900 border-b-2 border-gray-700 z-[1000] font-sans shadow-lg shadow-gray-900/50">
       <div className="px-2 sm:px-4 py-3 flex justify-between items-center gap-2">
@@ -293,7 +324,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             disabled={loading || !isAllianceRelevant()}
           >
             <option value="">Choose...</option>
-            {alliances.map(alliance => (
+            {filteredAlliances.map(alliance => (
               <option key={alliance.id} value={alliance.id}>
                 {alliance.name} ({alliance.nationCount})
               </option>

@@ -5,6 +5,7 @@ import { apiCallWithErrorHandling } from '../utils/api.js';
 export enum UserRole {
   ADMIN = 'ADMIN',
   ALLIANCE_MANAGER = 'ALLIANCE_MANAGER',
+  WAR_MANAGER = 'WAR_MANAGER',
   USER = 'USER',
 }
 

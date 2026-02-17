@@ -177,6 +177,21 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
       setError('');
       
       const response = await apiCall(API_ENDPOINTS.nationsConfig(allianceId));
+      
+      // Handle authentication/authorization errors
+      if (response.status === 401) {
+        setError('Authentication required. Please log in to access the Nation Editor.');
+        return;
+      }
+      if (response.status === 403) {
+        setError('You do not have permission to manage this alliance.');
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
       
       if (!data.success) {
@@ -212,6 +227,20 @@ export default function NationEditor({ allianceId }: NationEditorProps) {
         method: 'PUT',
         body: JSON.stringify(updates),
       });
+      
+      // Handle authentication/authorization errors
+      if (response.status === 401) {
+        alert('Authentication required. Please log in to update nations.');
+        return;
+      }
+      if (response.status === 403) {
+        alert('You do not have permission to manage this alliance.');
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       
       const data = await response.json();
       

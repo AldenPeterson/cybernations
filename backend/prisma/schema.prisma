@@ -266,6 +266,7 @@ model CasualtyRankingSnapshot {
 enum UserRole {
   ADMIN
   ALLIANCE_MANAGER
+  WAR_MANAGER
   USER
 }
 
