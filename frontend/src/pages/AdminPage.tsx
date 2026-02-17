@@ -15,11 +15,6 @@ interface User {
   managedAllianceIds: number[];
 }
 
-interface UsersResponse {
-  success: boolean;
-  users: User[];
-}
-
 const AdminPage: React.FC = () => {
   const { user: currentUser, isAuthenticated } = useAuth();
   const { alliances } = useAlliances();

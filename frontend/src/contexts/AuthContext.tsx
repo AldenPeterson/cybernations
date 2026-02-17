@@ -1,13 +1,15 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { apiCallWithErrorHandling } from '../utils/api.js';
 
-export enum UserRole {
-  ADMIN = 'ADMIN',
-  ALLIANCE_MANAGER = 'ALLIANCE_MANAGER',
-  WAR_MANAGER = 'WAR_MANAGER',
-  USER = 'USER',
-}
+export const UserRole = {
+  ADMIN: 'ADMIN',
+  ALLIANCE_MANAGER: 'ALLIANCE_MANAGER',
+  WAR_MANAGER: 'WAR_MANAGER',
+  USER: 'USER',
+} as const;
+
+export type UserRole = typeof UserRole[keyof typeof UserRole];
 
 export interface User {
   id: number;
