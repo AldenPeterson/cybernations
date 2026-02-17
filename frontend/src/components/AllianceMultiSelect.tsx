@@ -115,9 +115,11 @@ const AllianceMultiSelect: React.FC<AllianceMultiSelectProps> = ({
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
       <style>{cssStyle}</style>
-      <label className="text-sm font-semibold text-gray-300 whitespace-nowrap">
-        {label}:
-      </label>
+      {label && (
+        <label className="text-sm font-semibold text-gray-300 whitespace-nowrap">
+          {label}:
+        </label>
+      )}
       <div className="flex flex-col gap-2 w-full sm:min-w-[280px]">
         <select
           className="alliance-multiselect px-3.5 py-2.5 border-2 border-blue-500 rounded-md font-sans text-sm sm:text-[15px] font-medium w-full min-h-[100px] shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed disabled:opacity-60"

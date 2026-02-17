@@ -244,6 +244,9 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   const [isLegendExpanded, setIsLegendExpanded] = useState<boolean>(false);
   const [isTargetAssignmentExpanded, setIsTargetAssignmentExpanded] = useState<boolean>(true);
   const [isDefendingNationsExpanded, setIsDefendingNationsExpanded] = useState<boolean>(true);
+  const [isAdditionalAlliancesExpanded, setIsAdditionalAlliancesExpanded] = useState<boolean>(true);
+  const [additionalAllianceIds, setAdditionalAllianceIds] = useState<number[]>([]);
+  const [additionalNationWars, setAdditionalNationWars] = useState<NationWars[]>([]);
 
   // Helper function to parse boolean from URL parameter
   const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
@@ -344,6 +347,35 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     setAssignAllianceIdsOnly(validAllianceIds);
   }, [alliances, allianceId, setAssignAllianceIdsOnly]); // Remove searchParams from dependencies
 
+  // Initialize additional alliances from URL (when alliances load or allianceId changes)
+  useEffect(() => {
+    const additionalAllianceIdsParam = parseNumberArrayParam(searchParams.get('additionalAlliances'));
+    
+    // Only filter alliances if we have alliances loaded, otherwise keep the URL params as-is
+    const validAllianceIds = alliances.length > 0 
+      ? additionalAllianceIdsParam.filter(id => 
+          alliances.some(alliance => alliance.id === id && alliance.id !== allianceId)
+        )
+      : additionalAllianceIdsParam; // Keep URL params during initial load
+    
+    setAdditionalAllianceIds(validAllianceIds);
+    
+    // Update URL if we filtered out invalid alliances
+    if (alliances.length > 0 && validAllianceIds.length !== additionalAllianceIdsParam.length) {
+      updateUrlParams({ 
+        additionalAlliances: validAllianceIds.length > 0 ? validAllianceIds.join(',') : null 
+      });
+    }
+  }, [alliances, allianceId, updateUrlParams]);
+
+  // Handler for additional alliance selection changes (with URL update)
+  const handleAdditionalAllianceChange = useCallback((selectedIds: number[]) => {
+    setAdditionalAllianceIds(selectedIds);
+    updateUrlParams({ 
+      additionalAlliances: selectedIds.length > 0 ? selectedIds.join(',') : null 
+    });
+  }, [updateUrlParams]);
+
   // Use column and header classes from tableClasses
   const columnClasses = tableClasses.warManagementColumns;
   const headerClasses = tableClasses.warManagementHeaders;
@@ -412,8 +444,6 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     fetchAllStaggerRecommendations();
   }, [assignAllianceIds, allianceId, sellDownEnabled, militaryNS]);
 
-
-
   // Helper function to parse date string and return timestamp for sorting
   const parseDateForSorting = (dateStr: string): number => {
     if (!dateStr) return 0;
@@ -473,6 +503,64 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     }
   };
 
+  // Fetch nation wars for additional alliances
+  const fetchAdditionalAllianceNationWars = useCallback(async () => {
+    if (additionalAllianceIds.length === 0) {
+      setAdditionalNationWars([]);
+      return;
+    }
+
+    try {
+      const allAdditionalNationWars: NationWars[] = [];
+      
+      // Fetch nation wars for each additional alliance
+      for (const additionalAllianceId of additionalAllianceIds) {
+        try {
+          const response = await apiCall(`${API_ENDPOINTS.nationWars(additionalAllianceId)}?includePeaceMode=true&needsStagger=false`);
+          const data = await response.json();
+          
+          if (data.success && data.nationWars) {
+            // Sort wars by end date (oldest first) for each nation
+            const sortedNationWars = data.nationWars.map((nationWar: NationWars) => {
+              // Sort attacking wars by end date (oldest first)
+              const sortedAttackingWars = [...nationWar.attackingWars].sort((a, b) => {
+                const dateA = parseDateForSorting(a.endDate);
+                const dateB = parseDateForSorting(b.endDate);
+                return dateA - dateB;
+              });
+              
+              // Sort defending wars by end date (oldest first)
+              const sortedDefendingWars = [...nationWar.defendingWars].sort((a, b) => {
+                const dateA = parseDateForSorting(a.endDate);
+                const dateB = parseDateForSorting(b.endDate);
+                return dateA - dateB;
+              });
+              
+              return {
+                ...nationWar,
+                attackingWars: sortedAttackingWars,
+                defendingWars: sortedDefendingWars,
+              };
+            });
+            
+            allAdditionalNationWars.push(...sortedNationWars);
+          }
+        } catch (err) {
+          console.error(`Failed to fetch nation wars for alliance ${additionalAllianceId}:`, err);
+        }
+      }
+      
+      setAdditionalNationWars(allAdditionalNationWars);
+    } catch (err) {
+      console.error('Failed to fetch additional alliance nation wars:', err);
+      setAdditionalNationWars([]);
+    }
+  }, [additionalAllianceIds, parseDateForSorting]);
+
+  // Fetch nation wars for additional alliances when they change
+  useEffect(() => {
+    fetchAdditionalAllianceNationWars();
+  }, [fetchAdditionalAllianceNationWars]);
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
@@ -648,7 +736,8 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   };
 
   // Apply client-side filtering
-  let filteredNationWars = allNationWars;
+  // Merge additional alliance nation wars with main alliance nation wars
+  let filteredNationWars = [...allNationWars, ...additionalNationWars];
 
   // Filter to hide nations in peace mode if showPMNations is false
   // This must run FIRST before other filters that check inWarMode
@@ -826,9 +915,12 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     });
   }
 
-
-
-
+  // Sort all nations by strength (descending - highest first) when multiple alliances are selected
+  if (additionalAllianceIds.length > 0) {
+    filteredNationWars = [...filteredNationWars].sort((a, b) => {
+      return b.nation.strength - a.nation.strength;
+    });
+  }
 
   // Show loading indicator without hiding the entire interface
   if (loading && allNationWars.length === 0) {
@@ -842,12 +934,12 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   return (
     <div className="w-full max-w-none">
       {/* Color Legend */}
-      <div className="mb-5 mx-5 bg-black border border-gray-700 rounded-lg text-xs">
+      <div className="mb-5 mx-5 bg-gray-800 border border-gray-700 rounded-lg text-xs">
         <button
           onClick={() => setIsLegendExpanded(!isLegendExpanded)}
-          className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-900 transition-colors rounded-t-lg"
+          className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-700 transition-colors rounded-t-lg"
         >
-          <h4 className="m-0 text-sm font-bold text-white">
+          <h4 className="m-0 text-sm font-bold text-gray-200">
             Color Legend
           </h4>
           <span className="text-gray-400 text-lg">
@@ -859,80 +951,107 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
             <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
           {/* War Expiration Colors */}
           <div>
-            <strong className="text-white text-xs">War Expiration:</strong>
+            <strong className="text-gray-200 text-xs">War Expiration:</strong>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffebee' }}></div>
-              <span className="text-[11px] text-white">Expires today/tomorrow</span>
+              <span className="text-[11px] text-gray-200">Expires today/tomorrow</span>
             </div>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fff3e0' }}></div>
-              <span className="text-[11px] text-white">Expires in 2 days</span>
+              <span className="text-[11px] text-gray-200">Expires in 2 days</span>
             </div>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fffde7' }}></div>
-              <span className="text-[11px] text-white">Expires in 3 days</span>
+              <span className="text-[11px] text-gray-200">Expires in 3 days</span>
             </div>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
-              <span className="text-[11px] text-white">Expires in 4+ days</span>
+              <span className="text-[11px] text-gray-200">Expires in 4+ days</span>
             </div>
           </div>
 
           {/* Activity Colors */}
           <div>
-            <strong className="text-white text-xs">Activity Status:</strong>
+            <strong className="text-gray-200 text-xs">Activity Status:</strong>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#d4edda' }}></div>
-              <span className="text-[11px] text-white">Active last 3 days</span>
+              <span className="text-[11px] text-gray-200">Active last 3 days</span>
             </div>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fff3cd' }}></div>
-              <span className="text-[11px] text-white">Active this week</span>
+              <span className="text-[11px] text-gray-200">Active this week</span>
             </div>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffeaa7' }}></div>
-              <span className="text-[11px] text-white">Active last week</span>
+              <span className="text-[11px] text-gray-200">Active last week</span>
             </div>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#f8d7da' }}></div>
-              <span className="text-[11px] text-white">Inactive 3+ weeks</span>
+              <span className="text-[11px] text-gray-200">Inactive 3+ weeks</span>
             </div>
           </div>
 
           {/* Nuclear Weapons Colors */}
           <div>
-            <strong className="text-white text-xs">Nuclear Weapons:</strong>
+            <strong className="text-gray-200 text-xs">Nuclear Weapons:</strong>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffebee' }}></div>
-              <span className="text-[11px] text-white">&lt; 10 nukes</span>
+              <span className="text-[11px] text-gray-200">&lt; 10 nukes</span>
             </div>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#fffde7' }}></div>
-              <span className="text-[11px] text-white">10-18 nukes</span>
+              <span className="text-[11px] text-gray-200">10-18 nukes</span>
             </div>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
-              <span className="text-[11px] text-white">&gt; 18 nukes</span>
+              <span className="text-[11px] text-gray-200">&gt; 18 nukes</span>
             </div>
           </div>
 
           {/* Other Colors */}
           <div>
-            <strong className="text-white text-xs">Other Indicators:</strong>
+            <strong className="text-gray-200 text-xs">Other Indicators:</strong>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#d32f2f' }}></div>
-              <span className="text-[11px] text-white">Nation in anarchy (red text)</span>
+              <span className="text-[11px] text-gray-200">Nation in anarchy (red text)</span>
             </div>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#e8f5e8' }}></div>
-              <span className="text-[11px] text-white">Staggered wars</span>
+              <span className="text-[11px] text-gray-200">Staggered wars</span>
             </div>
             <div className="flex items-center my-0.5">
               <div className="w-[18px] h-[18px] border border-gray-600 mr-2" style={{ backgroundColor: '#ffebee' }}></div>
-              <span className="text-[11px] text-white">Should be in Peace Mode</span>
+              <span className="text-[11px] text-gray-200">Should be in Peace Mode</span>
             </div>
           </div>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Additional Target Alliances Section */}
+      <div className="mb-5 mx-5 bg-gray-800 border border-gray-700 rounded-lg">
+        <button
+          onClick={() => setIsAdditionalAlliancesExpanded(!isAdditionalAlliancesExpanded)}
+          className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-700 transition-colors rounded-t-lg"
+        >
+          <h4 className="m-0 text-sm font-bold text-gray-200">
+            Additional Target Alliances
+          </h4>
+          <span className="text-gray-400 text-lg">
+            {isAdditionalAlliancesExpanded ? '▼' : '▶'}
+          </span>
+        </button>
+        {isAdditionalAlliancesExpanded && (
+          <div className="p-4 pt-0">
+            <AllianceMultiSelect
+              label=""
+              alliances={alliances}
+              selectedAllianceIds={additionalAllianceIds}
+              excludedAllianceId={allianceId}
+              onChange={handleAdditionalAllianceChange}
+              placeholder="Select alliances to add as additional targets"
+            />
           </div>
         )}
       </div>
@@ -1207,6 +1326,14 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
                             {nationWar.nation.ruler} / {nationWar.nation.name}
                           </a>
                         </strong>
+                        {additionalAllianceIds.length > 0 && (
+                          <>
+                            <br />
+                            <span className="text-[10px] text-gray-500 font-semibold">
+                              {nationWar.nation.alliance}
+                            </span>
+                          </>
+                        )}
                         <br />
                         <span className={`text-[10px] ${nationWar.nation.governmentType.toLowerCase() === 'anarchy' ? 'text-red-400 font-bold' : 'text-gray-400 font-normal'}`}>
                           {formatNumber(nationWar.nation.strength)} NS / {formatTechnology(nationWar.nation.technology)} Tech
