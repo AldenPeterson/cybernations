@@ -15,6 +15,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// In production behind a proxy (e.g. Vercel, Render, Railway, etc.),
+// trust the first proxy so that req.secure is correctly set for HTTPS requests.
+// This is required for secure cookies (cookie.secure = true) to be set correctly.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Middleware
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
