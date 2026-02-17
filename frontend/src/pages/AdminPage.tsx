@@ -16,7 +16,7 @@ interface User {
 }
 
 const AdminPage: React.FC = () => {
-  const { user: currentUser, isAuthenticated } = useAuth();
+  const { user: currentUser, isAuthenticated, isLoading: authLoading } = useAuth();
   const { alliances } = useAlliances();
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
@@ -30,10 +30,15 @@ const AdminPage: React.FC = () => {
 
   // Check if user is authenticated and is ADMIN
   useEffect(() => {
+    // Wait for auth to load before redirecting
+    if (authLoading) {
+      return;
+    }
+
     if (!isAuthenticated || currentUser?.role !== UserRole.ADMIN) {
       navigate('/aid');
     }
-  }, [isAuthenticated, currentUser, navigate]);
+  }, [isAuthenticated, currentUser, navigate, authLoading]);
 
   // Fetch users
   useEffect(() => {
@@ -221,6 +226,17 @@ const AdminPage: React.FC = () => {
   const filteredAlliances = alliances.filter((alliance) =>
     alliance.name.toLowerCase().includes(allianceSearchQuery.toLowerCase())
   );
+
+  // Show loading state while auth is being checked
+  if (authLoading) {
+    return (
+      <PageContainer>
+        <div className="text-center p-10 text-gray-600 mt-20">
+          Loading...
+        </div>
+      </PageContainer>
+    );
+  }
 
   if (!isAuthenticated || currentUser?.role !== UserRole.ADMIN) {
     return null;
