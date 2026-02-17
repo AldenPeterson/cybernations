@@ -241,6 +241,9 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     nationName: '',
     rulerName: ''
   });
+  const [isLegendExpanded, setIsLegendExpanded] = useState<boolean>(false);
+  const [isTargetAssignmentExpanded, setIsTargetAssignmentExpanded] = useState<boolean>(true);
+  const [isDefendingNationsExpanded, setIsDefendingNationsExpanded] = useState<boolean>(true);
 
   // Helper function to parse boolean from URL parameter
   const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
@@ -839,11 +842,21 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   return (
     <div className="w-full max-w-none">
       {/* Color Legend */}
-      <div className="mb-5 mx-5 p-4 bg-black border border-gray-700 rounded-lg text-xs">
-        <h4 className="m-0 mb-3 text-sm font-bold text-white">
-          Color Legend
-        </h4>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
+      <div className="mb-5 mx-5 bg-black border border-gray-700 rounded-lg text-xs">
+        <button
+          onClick={() => setIsLegendExpanded(!isLegendExpanded)}
+          className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-900 transition-colors rounded-t-lg"
+        >
+          <h4 className="m-0 text-sm font-bold text-white">
+            Color Legend
+          </h4>
+          <span className="text-gray-400 text-lg">
+            {isLegendExpanded ? '▼' : '▶'}
+          </span>
+        </button>
+        {isLegendExpanded && (
+          <div className="p-4 pt-0">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
           {/* War Expiration Colors */}
           <div>
             <strong className="text-white text-xs">War Expiration:</strong>
@@ -919,17 +932,29 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
               <span className="text-[11px] text-white">Should be in Peace Mode</span>
             </div>
           </div>
-        </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filter Controls - positioned above table */}
       <div className="mb-4 mx-5 flex flex-col gap-4">
         {/* Target Assignment Controls Section */}
-        <div className="p-4 bg-gray-800 border border-gray-700 rounded-lg">
-          <h4 className="m-0 mb-3 text-sm font-bold text-gray-200">
-            Target Assignment Configuration
-          </h4>
-          <div className="flex flex-col lg:flex-row lg:justify-between items-stretch lg:items-center gap-3">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg">
+          <button
+            onClick={() => setIsTargetAssignmentExpanded(!isTargetAssignmentExpanded)}
+            className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-700 transition-colors rounded-t-lg"
+          >
+            <h4 className="m-0 text-sm font-bold text-gray-200">
+              Target Assignment Configuration
+            </h4>
+            <span className="text-gray-400 text-lg">
+              {isTargetAssignmentExpanded ? '▼' : '▶'}
+            </span>
+          </button>
+          {isTargetAssignmentExpanded && (
+            <div className="p-4 pt-0">
+              <div className="flex flex-col lg:flex-row lg:justify-between items-stretch lg:items-center gap-3">
             {/* Assign Alliances Multi-Select */}
             <AllianceMultiSelect
               label="Assign Alliances"
@@ -1023,11 +1048,27 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
                 </div>
               </div>
             </div>
-          </div>
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Defending Nations Filter Section */}
-        <div className="flex flex-wrap justify-start lg:justify-end items-center gap-2.5">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg">
+          <button
+            onClick={() => setIsDefendingNationsExpanded(!isDefendingNationsExpanded)}
+            className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-700 transition-colors rounded-t-lg"
+          >
+            <h4 className="m-0 text-sm font-bold text-gray-200">
+              Defending Nations Filters
+            </h4>
+            <span className="text-gray-400 text-lg">
+              {isDefendingNationsExpanded ? '▼' : '▶'}
+            </span>
+          </button>
+          {isDefendingNationsExpanded && (
+            <div className="p-4 pt-0">
+              <div className="flex flex-wrap justify-start lg:justify-end items-center gap-2.5">
           <FilterCheckbox
             label="Needs Stagger?"
             checked={needsStagger}
@@ -1101,6 +1142,9 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
             </select>
             <span className="text-sm text-gray-200 font-medium">days</span>
           </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Search Field */}
