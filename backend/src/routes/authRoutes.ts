@@ -153,8 +153,11 @@ authRoutes.get('/google/callback', async (req: Request, res: Response) => {
     // Clear OAuth state
     delete req.session.oauthState;
 
-    // Mark session as modified to ensure it gets saved
+    // Ensure cookie attributes are set correctly (preserve secure and sameSite from session config)
+    const cookieSecure = process.env.COOKIE_SECURE === 'true';
     req.session.cookie.maxAge = parseInt(process.env.SESSION_MAX_AGE || '604800000', 10);
+    req.session.cookie.secure = cookieSecure;
+    req.session.cookie.sameSite = cookieSecure ? 'none' : 'lax';
     
     // Save session explicitly
     await new Promise<void>((resolve, reject) => {
@@ -163,14 +166,13 @@ authRoutes.get('/google/callback', async (req: Request, res: Response) => {
           console.error('Error saving session:', err);
           reject(err);
         } else {
-          console.log('Session saved - verifying data is still there:');
-          console.log({
+          console.log('Session saved - cookie attributes:', {
             sessionId: req.sessionID,
             userId: req.session.userId,
-            userIdType: typeof req.session.userId,
-            userIdValue: req.session.userId,
-            allSessionKeys: Object.keys(req.session),
-            sessionCookie: req.session.cookie,
+            cookieSecure: req.session.cookie.secure,
+            cookieSameSite: req.session.cookie.sameSite,
+            cookieMaxAge: req.session.cookie.maxAge,
+            cookieHttpOnly: req.session.cookie.httpOnly,
           });
           resolve();
         }

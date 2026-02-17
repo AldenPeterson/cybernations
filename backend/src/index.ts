@@ -34,6 +34,14 @@ const sessionName = process.env.SESSION_NAME || 'sessionId';
 const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE || '604800000', 10); // 7 days
 const cookieSecure = process.env.COOKIE_SECURE === 'true';
 
+// Debug logging for cookie configuration
+console.log('🔐 Cookie configuration:', {
+  COOKIE_SECURE_env: process.env.COOKIE_SECURE,
+  cookieSecure_value: cookieSecure,
+  cookieSecure_type: typeof cookieSecure,
+  NODE_ENV: process.env.NODE_ENV,
+});
+
 app.use(
   session({
     store: new PgSession({
@@ -61,6 +69,18 @@ app.use('/api', apiRoutes);
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Debug endpoint to check cookie configuration (remove in production if needed)
+app.get('/debug/cookie-config', (req, res) => {
+  res.json({
+    COOKIE_SECURE_env: process.env.COOKIE_SECURE,
+    cookieSecure_value: cookieSecure,
+    cookieSecure_type: typeof cookieSecure,
+    expectedSecure: cookieSecure,
+    expectedSameSite: cookieSecure ? 'none' : 'lax',
+    NODE_ENV: process.env.NODE_ENV,
+  });
 });
 
 // Error handling middleware

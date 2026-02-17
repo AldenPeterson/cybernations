@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import { apiCallWithErrorHandling } from '../utils/api';
 import PageContainer from '../components/PageContainer';
 
@@ -23,8 +21,6 @@ interface WarchestSubmission {
 }
 
 const WarchestSubmissionPage: React.FC = () => {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const navigate = useNavigate();
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,19 +28,13 @@ const WarchestSubmissionPage: React.FC = () => {
   const [submissions, setSubmissions] = useState<WarchestSubmission[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      navigate('/aid');
-    }
-  }, [isAuthenticated, authLoading, navigate]);
-
   // Load submissions on mount
   useEffect(() => {
-    if (isAuthenticated) {
-      loadSubmissions();
-    }
-  }, [isAuthenticated]);
+    loadSubmissions();
+    // We intentionally do not include loadSubmissions in the dependency array
+    // to avoid reloading unnecessarily.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadSubmissions = async () => {
     setLoadingSubmissions(true);
@@ -100,11 +90,6 @@ const WarchestSubmissionPage: React.FC = () => {
       setSubmitting(false);
     }
   };
-
-  // Don't render if not authenticated (will redirect)
-  if (authLoading || !isAuthenticated) {
-    return null;
-  }
 
   const formatMoney = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
