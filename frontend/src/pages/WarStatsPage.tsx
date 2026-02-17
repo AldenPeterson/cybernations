@@ -288,12 +288,10 @@ const WarStatsPage: React.FC = () => {
       }
       grouped.get(key)!.push(row);
     });
-    // Sort each group alphabetically by nation name
+    // Sort each group by net damage (descending)
     grouped.forEach((rows) => {
       rows.sort((a, b) => {
-        const aName = (a.nation_name || '').toLowerCase();
-        const bName = (b.nation_name || '').toLowerCase();
-        return aName.localeCompare(bName);
+        return b.net_damage - a.net_damage;
       });
     });
     return grouped;
