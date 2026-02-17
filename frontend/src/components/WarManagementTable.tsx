@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import WarStatusBadge from './WarStatusBadge';
 import FilterCheckbox from './FilterCheckbox';
@@ -227,6 +227,8 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   const { alliances } = useAlliances();
   const [assignAllianceIds, setAssignAllianceIds] = useState<number[]>([]);
   const [staggerRecommendationsMap, setStaggerRecommendationsMap] = useState<Map<number, any[]>>(new Map());
+  const fetchingStaggerRecommendationsRef = useRef(false);
+  const lastStaggerFetchKeyRef = useRef<string>('');
   const [sellDownEnabled, setSellDownEnabled] = useState<boolean>(false);
   const [militaryNS, setMilitaryNS] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -247,6 +249,10 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   const [isAdditionalAlliancesExpanded, setIsAdditionalAlliancesExpanded] = useState<boolean>(true);
   const [additionalAllianceIds, setAdditionalAllianceIds] = useState<number[]>([]);
   const [additionalNationWars, setAdditionalNationWars] = useState<NationWars[]>([]);
+  const hasInitializedAdditionalAlliances = useRef(false);
+  const previousAllianceIdRef = useRef<number | undefined>(allianceId);
+  const fetchingAdditionalAlliancesRef = useRef<Set<number>>(new Set());
+  const lastFetchedAdditionalAlliancesRef = useRef<string>('');
 
   // Helper function to parse boolean from URL parameter
   const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
@@ -347,26 +353,54 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     setAssignAllianceIdsOnly(validAllianceIds);
   }, [alliances, allianceId, setAssignAllianceIdsOnly]); // Remove searchParams from dependencies
 
-  // Initialize additional alliances from URL (when alliances load or allianceId changes)
+  // Initialize additional alliances from URL on mount (read immediately)
   useEffect(() => {
     const additionalAllianceIdsParam = parseNumberArrayParam(searchParams.get('additionalAlliances'));
-    
-    // Only filter alliances if we have alliances loaded, otherwise keep the URL params as-is
-    const validAllianceIds = alliances.length > 0 
-      ? additionalAllianceIdsParam.filter(id => 
-          alliances.some(alliance => alliance.id === id && alliance.id !== allianceId)
-        )
-      : additionalAllianceIdsParam; // Keep URL params during initial load
-    
-    setAdditionalAllianceIds(validAllianceIds);
-    
-    // Update URL if we filtered out invalid alliances
-    if (alliances.length > 0 && validAllianceIds.length !== additionalAllianceIdsParam.length) {
-      updateUrlParams({ 
-        additionalAlliances: validAllianceIds.length > 0 ? validAllianceIds.join(',') : null 
-      });
+    if (additionalAllianceIdsParam.length > 0) {
+      setAdditionalAllianceIds(additionalAllianceIdsParam);
     }
-  }, [alliances, allianceId, updateUrlParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount - searchParams read is intentional
+
+  // Re-read additional alliances from URL when allianceId changes
+  useEffect(() => {
+    if (previousAllianceIdRef.current !== allianceId) {
+      hasInitializedAdditionalAlliances.current = false;
+      previousAllianceIdRef.current = allianceId;
+      // Re-read from URL when allianceId changes
+      const additionalAllianceIdsParam = parseNumberArrayParam(searchParams.get('additionalAlliances'));
+      setAdditionalAllianceIds(additionalAllianceIdsParam);
+    }
+  }, [allianceId, searchParams]);
+
+  // Validate and filter additional alliances when alliances load
+  useEffect(() => {
+    // Skip if already validated
+    if (hasInitializedAdditionalAlliances.current) {
+      return;
+    }
+    
+    // Filter out the current alliance and duplicates
+    // Don't filter out alliances that aren't in the context - they might be valid but just not loaded yet
+    setAdditionalAllianceIds(prev => {
+      // Remove duplicates and the current alliance ID
+      const validAllianceIds = prev.filter((id, index) => 
+        id !== allianceId && prev.indexOf(id) === index
+      );
+      
+      hasInitializedAdditionalAlliances.current = true;
+      
+      // Update URL if we filtered out invalid alliances (only update if different)
+      if (validAllianceIds.length !== prev.length) {
+        const newUrlValue = validAllianceIds.length > 0 ? validAllianceIds.join(',') : null;
+        updateUrlParams({ 
+          additionalAlliances: newUrlValue 
+        });
+      }
+      
+      return validAllianceIds;
+    });
+  }, [allianceId, updateUrlParams]);
 
   // Handler for additional alliance selection changes (with URL update)
   const handleAdditionalAllianceChange = useCallback((selectedIds: number[]) => {
@@ -391,35 +425,53 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     const fetchAllStaggerRecommendations = async () => {
       if (assignAllianceIds.length === 0) {
         setStaggerRecommendationsMap(new Map());
+        lastStaggerFetchKeyRef.current = '';
+        fetchingStaggerRecommendationsRef.current = false;
         return;
       }
+
+      // Get all defending alliances (primary + additional target alliances)
+      const defendingAllianceIds = [allianceId, ...additionalAllianceIds];
+
+      // Create a stable key for the current fetch parameters
+      const fetchKey = `${allianceId}-${[...additionalAllianceIds].sort().join(',')}-${[...assignAllianceIds].sort().join(',')}-${sellDownEnabled}-${militaryNS}`;
+      
+      // Skip if we're already fetching or have already fetched with these exact parameters
+      if (fetchingStaggerRecommendationsRef.current || fetchKey === lastStaggerFetchKeyRef.current) {
+        return;
+      }
+
+      fetchingStaggerRecommendationsRef.current = true;
+      lastStaggerFetchKeyRef.current = fetchKey;
 
       try {
         const newMap = new Map<number, any[]>();
 
-        // Fetch stagger eligibility data for each assign alliance
+        // Fetch stagger eligibility data for each combination of assign alliance and defending alliance
         for (const assignAllianceId of assignAllianceIds) {
-          try {
-            const url = `${API_ENDPOINTS.staggerEligibility}/${assignAllianceId}/${allianceId}?hideAnarchy=true&hidePeaceMode=false&hideNonPriority=false&includeFullTargets=true&sellDownEnabled=${sellDownEnabled}&militaryNS=${militaryNS}`;
-            const response = await apiCall(url);
-            const data = await response.json();
+          for (const defendingAllianceId of defendingAllianceIds) {
+            try {
+              const url = `${API_ENDPOINTS.staggerEligibility}/${assignAllianceId}/${defendingAllianceId}?hideAnarchy=true&hidePeaceMode=false&hideNonPriority=false&includeFullTargets=true&sellDownEnabled=${sellDownEnabled}&militaryNS=${militaryNS}`;
+              const response = await apiCall(url);
+              const data = await response.json();
 
-            if (data.success && data.staggerData) {
-              // Store recommendations for each defending nation
-              data.staggerData.forEach((item: any) => {
-                const defendingNationId = item.defendingNation.id;
-                const existingRecs = newMap.get(defendingNationId) || [];
-                
-                // Add eligible attackers for this nation
-                if (item.eligibleAttackers) {
-                  existingRecs.push(...item.eligibleAttackers);
-                }
-                
-                newMap.set(defendingNationId, existingRecs);
-              });
+              if (data.success && data.staggerData) {
+                // Store recommendations for each defending nation
+                data.staggerData.forEach((item: any) => {
+                  const defendingNationId = item.defendingNation.id;
+                  const existingRecs = newMap.get(defendingNationId) || [];
+                  
+                  // Add eligible attackers for this nation
+                  if (item.eligibleAttackers) {
+                    existingRecs.push(...item.eligibleAttackers);
+                  }
+                  
+                  newMap.set(defendingNationId, existingRecs);
+                });
+              }
+            } catch (err) {
+              console.error(`Failed to fetch stagger recommendations for assign alliance ${assignAllianceId} vs defending alliance ${defendingAllianceId}:`, err);
             }
-          } catch (err) {
-            console.error(`Failed to fetch stagger recommendations for alliance ${assignAllianceId}:`, err);
           }
         }
 
@@ -435,17 +487,19 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
         });
 
         setStaggerRecommendationsMap(newMap);
+        fetchingStaggerRecommendationsRef.current = false;
       } catch (err) {
         console.error('Failed to fetch stagger recommendations:', err);
         setStaggerRecommendationsMap(new Map());
+        fetchingStaggerRecommendationsRef.current = false;
       }
     };
 
     fetchAllStaggerRecommendations();
-  }, [assignAllianceIds, allianceId, sellDownEnabled, militaryNS]);
+  }, [assignAllianceIds, allianceId, additionalAllianceIds, sellDownEnabled, militaryNS]);
 
   // Helper function to parse date string and return timestamp for sorting
-  const parseDateForSorting = (dateStr: string): number => {
+  const parseDateForSorting = useCallback((dateStr: string): number => {
     if (!dateStr) return 0;
     // Extract date part if there's a time component (e.g., "MM/DD/YYYY HH:MM:SS AM")
     const datePart = dateStr.split(' ')[0];
@@ -459,7 +513,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     }
     // Fallback to standard Date parsing
     return new Date(dateStr).getTime();
-  };
+  }, []);
 
   const fetchNationWars = async () => {
     try {
@@ -503,64 +557,124 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     }
   };
 
-  // Fetch nation wars for additional alliances
-  const fetchAdditionalAllianceNationWars = useCallback(async () => {
+  // Fetch nation wars for additional alliances when they change
+  useEffect(() => {
     if (additionalAllianceIds.length === 0) {
       setAdditionalNationWars([]);
+      lastFetchedAdditionalAlliancesRef.current = '';
+      fetchingAdditionalAlliancesRef.current.clear();
       return;
     }
 
-    try {
-      const allAdditionalNationWars: NationWars[] = [];
-      
-      // Fetch nation wars for each additional alliance
-      for (const additionalAllianceId of additionalAllianceIds) {
-        try {
-          const response = await apiCall(`${API_ENDPOINTS.nationWars(additionalAllianceId)}?includePeaceMode=true&needsStagger=false`);
-          const data = await response.json();
-          
-          if (data.success && data.nationWars) {
-            // Sort wars by end date (oldest first) for each nation
-            const sortedNationWars = data.nationWars.map((nationWar: NationWars) => {
-              // Sort attacking wars by end date (oldest first)
-              const sortedAttackingWars = [...nationWar.attackingWars].sort((a, b) => {
-                const dateA = parseDateForSorting(a.endDate);
-                const dateB = parseDateForSorting(b.endDate);
-                return dateA - dateB;
-              });
-              
-              // Sort defending wars by end date (oldest first)
-              const sortedDefendingWars = [...nationWar.defendingWars].sort((a, b) => {
-                const dateA = parseDateForSorting(a.endDate);
-                const dateB = parseDateForSorting(b.endDate);
-                return dateA - dateB;
-              });
-              
-              return {
-                ...nationWar,
-                attackingWars: sortedAttackingWars,
-                defendingWars: sortedDefendingWars,
-              };
-            });
-            
-            allAdditionalNationWars.push(...sortedNationWars);
-          }
-        } catch (err) {
-          console.error(`Failed to fetch nation wars for alliance ${additionalAllianceId}:`, err);
-        }
-      }
-      
-      setAdditionalNationWars(allAdditionalNationWars);
-    } catch (err) {
-      console.error('Failed to fetch additional alliance nation wars:', err);
-      setAdditionalNationWars([]);
+    // Create a stable key for the current set of alliance IDs
+    const allianceIdsKey = [...additionalAllianceIds].sort().join(',');
+    
+    // Skip if we're already fetching or have already fetched this exact set
+    if (allianceIdsKey === lastFetchedAdditionalAlliancesRef.current) {
+      return;
     }
-  }, [additionalAllianceIds, parseDateForSorting]);
+    
+    // Check if any of these alliances are currently being fetched
+    const isCurrentlyFetching = additionalAllianceIds.some(id => 
+      fetchingAdditionalAlliancesRef.current.has(id)
+    );
+    
+    if (isCurrentlyFetching) {
+      return;
+    }
 
-  // Fetch nation wars for additional alliances when they change
-  useEffect(() => {
-    fetchAdditionalAllianceNationWars();
-  }, [fetchAdditionalAllianceNationWars]);
+    // Mark all alliances as being fetched
+    additionalAllianceIds.forEach(id => {
+      fetchingAdditionalAlliancesRef.current.add(id);
+    });
+    lastFetchedAdditionalAlliancesRef.current = allianceIdsKey;
+
+    let isCancelled = false;
+
+    const fetchData = async () => {
+      try {
+        const allAdditionalNationWars: NationWars[] = [];
+        
+        // Fetch nation wars for each additional alliance
+        for (const additionalAllianceId of additionalAllianceIds) {
+          if (isCancelled) {
+            fetchingAdditionalAlliancesRef.current.delete(additionalAllianceId);
+            return;
+          }
+          
+          try {
+            const response = await apiCall(`${API_ENDPOINTS.nationWars(additionalAllianceId)}?includePeaceMode=true&needsStagger=false`);
+            const data = await response.json();
+            
+            if (isCancelled) {
+              fetchingAdditionalAlliancesRef.current.delete(additionalAllianceId);
+              return;
+            }
+            
+            if (data.success && data.nationWars) {
+              // Sort wars by end date (oldest first) for each nation
+              const sortedNationWars = data.nationWars.map((nationWar: NationWars) => {
+                // Sort attacking wars by end date (oldest first)
+                const sortedAttackingWars = [...nationWar.attackingWars].sort((a, b) => {
+                  const dateA = parseDateForSorting(a.endDate);
+                  const dateB = parseDateForSorting(b.endDate);
+                  return dateA - dateB;
+                });
+                
+                // Sort defending wars by end date (oldest first)
+                const sortedDefendingWars = [...nationWar.defendingWars].sort((a, b) => {
+                  const dateA = parseDateForSorting(a.endDate);
+                  const dateB = parseDateForSorting(b.endDate);
+                  return dateA - dateB;
+                });
+                
+                return {
+                  ...nationWar,
+                  attackingWars: sortedAttackingWars,
+                  defendingWars: sortedDefendingWars,
+                };
+              });
+              
+              allAdditionalNationWars.push(...sortedNationWars);
+            }
+            
+            fetchingAdditionalAlliancesRef.current.delete(additionalAllianceId);
+          } catch (err) {
+            fetchingAdditionalAlliancesRef.current.delete(additionalAllianceId);
+            console.error(`Failed to fetch nation wars for alliance ${additionalAllianceId}:`, err);
+          }
+        }
+        
+        if (!isCancelled) {
+          setAdditionalNationWars(allAdditionalNationWars);
+        } else {
+          // Clean up any remaining fetch markers
+          additionalAllianceIds.forEach(id => {
+            fetchingAdditionalAlliancesRef.current.delete(id);
+          });
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          console.error('Failed to fetch additional alliance nation wars:', err);
+          setAdditionalNationWars([]);
+        }
+        // Clean up fetch markers
+        additionalAllianceIds.forEach(id => {
+          fetchingAdditionalAlliancesRef.current.delete(id);
+        });
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isCancelled = true;
+      // Clean up fetch markers on unmount/cancel
+      additionalAllianceIds.forEach(id => {
+        fetchingAdditionalAlliancesRef.current.delete(id);
+      });
+    };
+  }, [additionalAllianceIds, parseDateForSorting]);
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
@@ -643,7 +757,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     return '#e8f5e8'; // Light green for above 18
   };
 
-  const getCentralTodayYMD = (): { y: number; m: number; d: number } => {
+  const getCentralTodayYMD = useCallback((): { y: number; m: number; d: number } => {
     const centralNowStr = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
     const centralNow = new Date(centralNowStr);
     return {
@@ -651,9 +765,9 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
       m: centralNow.getMonth() + 1,
       d: centralNow.getDate()
     };
-  };
+  }, []);
 
-  const parseMmDdYyyy = (dateStr: string): { y: number; m: number; d: number } | null => {
+  const parseMmDdYyyy = useCallback((dateStr: string): { y: number; m: number; d: number } | null => {
     if (!dateStr) return null;
     const parts = dateStr.split('/');
     if (parts.length !== 3) return null;
@@ -662,7 +776,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     const y = parseInt(parts[2], 10);
     if (!m || !d || !y) return null;
     return { y, m, d };
-  };
+  }, []);
 
   const getLastNukedCellColor = (lastNukedDate?: string): string => {
     if (!lastNukedDate) return EMPTY_CELL_BG;
@@ -714,7 +828,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
            defendingWars.length === 0);
   };
 
-  const isPriorityNation = (nationWar: NationWars): boolean => {
+  const isPriorityNation = useCallback((nationWar: NationWars): boolean => {
     const defendingNation = nationWar.nation;
     const defendingWars = nationWar.defendingWars;
     
@@ -733,194 +847,217 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     }
     
     return false;
-  };
+  }, []);
 
-  // Apply client-side filtering
-  // Merge additional alliance nation wars with main alliance nation wars
-  let filteredNationWars = [...allNationWars, ...additionalNationWars];
+  // Apply client-side filtering with memoization for performance
+  const filteredNationWars = useMemo(() => {
+    // Merge additional alliance nation wars with main alliance nation wars
+    let filtered = [...allNationWars, ...additionalNationWars];
 
-  // Filter to hide nations in peace mode if showPMNations is false
-  // This must run FIRST before other filters that check inWarMode
-  if (!showPMNations) {
-    filteredNationWars = filteredNationWars.filter(nationWar => {
-      return nationWar.nation.inWarMode;
-    });
-  }
-
-  // Filter to only show nations that need stagger if needsStagger is true
-  // When showPMNations is true, always show PM nations; otherwise only show war mode nations that need stagger
-  if (needsStagger) {
-    filteredNationWars = filteredNationWars.filter(nationWar => {
-      // If showPMNations is true and this is a PM nation, always show it
-      if (showPMNations && !nationWar.nation.inWarMode) {
-        return true;
-      }
-      // Otherwise, only show war mode nations that need stagger
-      return nationWar.nation.inWarMode && nationWar.staggeredStatus.status !== 'staggered';
-    });
-  }
-
-  // Filter to only show nations that need staggers if staggerOnly is true (for target assignment)
-  // When showPMNations is true, always show PM nations; otherwise only show war mode nations that need stagger
-  if (staggerOnly && assignAllianceIds.length > 0) {
-    filteredNationWars = filteredNationWars.filter(nationWar => {
-      // If showPMNations is true and this is a PM nation, always show it
-      if (showPMNations && !nationWar.nation.inWarMode) {
-        return true;
-      }
-      // Otherwise, only show war mode nations that need stagger
-      return nationWar.nation.inWarMode && nationWar.staggeredStatus.status !== 'staggered';
-    });
-  }
-
-  // Filter to hide non-priority nations if hideNonPriority is true
-  if (hideNonPriority) {
-    filteredNationWars = filteredNationWars.filter(isPriorityNation);
-  }
-
-  // Filter to show only nations that need a nuke (no nuke today or yesterday)
-  if (needsNuke) {
-    filteredNationWars = filteredNationWars.filter(nationWar => {
-      const last = nationWar.nation.lastNukedDate;
-      if (!last) return true;
-      const parsed = parseMmDdYyyy(last);
-      if (!parsed) return true;
-      const today = getCentralTodayYMD();
-      const todayUtc = Date.UTC(today.y, today.m - 1, today.d);
-      const lastUtc = Date.UTC(parsed.y, parsed.m - 1, parsed.d);
-      const diffDays = Math.floor((todayUtc - lastUtc) / (1000 * 60 * 60 * 24));
-      return diffDays >= 2; // keep if 2+ days ago
-    });
-  }
-
-  // Filter to show only urgent targets (newest war expires in 0 or 1 days, or no defending wars)
-  if (urgentTargets) {
-    filteredNationWars = filteredNationWars.filter(nationWar => {
-      // Show nations with no defending wars as urgent targets
-      if (nationWar.defendingWars.length === 0) return true;
-      
-      // Find the newest war (most recently started) by finding the one with most days until expiration
-      const newestWar = nationWar.defendingWars.reduce((newest, current) => {
-        const newestDays = newest.daysUntilExpiration ?? 0;
-        const currentDays = current.daysUntilExpiration ?? 0;
-        return currentDays > newestDays ? current : newest;
+    // Filter to hide nations in peace mode if showPMNations is false
+    // This must run FIRST before other filters that check inWarMode
+    if (!showPMNations) {
+      filtered = filtered.filter(nationWar => {
+        return nationWar.nation.inWarMode;
       });
-      
-      // Check if newest war expires in 0 or 1 days (today or tomorrow)
-      const daysUntilExpiration = newestWar.daysUntilExpiration;
-      return daysUntilExpiration === 0 || daysUntilExpiration === 1;
-    });
-  }
+    }
 
-  // Filter to show only blown staggers (3 defending wars ending on same date, no attacking wars after)
-  if (blownStaggers) {
-    filteredNationWars = filteredNationWars.filter(nationWar => {
-      try {
-        // Must have exactly 3 defending wars
-        if (nationWar.defendingWars.length !== 3) return false;
+    // Filter to only show nations that need stagger if needsStagger is true
+    // When showPMNations is true, always show PM nations; otherwise only show war mode nations that need stagger
+    if (needsStagger) {
+      filtered = filtered.filter(nationWar => {
+        // If showPMNations is true and this is a PM nation, always show it
+        if (showPMNations && !nationWar.nation.inWarMode) {
+          return true;
+        }
+        // Otherwise, only show war mode nations that need stagger
+        return nationWar.nation.inWarMode && nationWar.staggeredStatus.status !== 'staggered';
+      });
+    }
+
+    // Filter to only show nations that need staggers if staggerOnly is true (for target assignment)
+    // When showPMNations is true, always show PM nations; otherwise only show war mode nations that need stagger
+    if (staggerOnly && assignAllianceIds.length > 0) {
+      filtered = filtered.filter(nationWar => {
+        // If showPMNations is true and this is a PM nation, always show it
+        if (showPMNations && !nationWar.nation.inWarMode) {
+          return true;
+        }
+        // Otherwise, only show war mode nations that need stagger
+        return nationWar.nation.inWarMode && nationWar.staggeredStatus.status !== 'staggered';
+      });
+    }
+
+    // Filter to hide non-priority nations if hideNonPriority is true
+    if (hideNonPriority) {
+      filtered = filtered.filter(isPriorityNation);
+    }
+
+    // Filter to show only nations that need a nuke (no nuke today or yesterday)
+    if (needsNuke) {
+      filtered = filtered.filter(nationWar => {
+        const last = nationWar.nation.lastNukedDate;
+        if (!last) return true;
+        const parsed = parseMmDdYyyy(last);
+        if (!parsed) return true;
+        const today = getCentralTodayYMD();
+        const todayUtc = Date.UTC(today.y, today.m - 1, today.d);
+        const lastUtc = Date.UTC(parsed.y, parsed.m - 1, parsed.d);
+        const diffDays = Math.floor((todayUtc - lastUtc) / (1000 * 60 * 60 * 24));
+        return diffDays >= 2; // keep if 2+ days ago
+      });
+    }
+
+    // Filter to show only urgent targets (newest war expires in 0 or 1 days, or no defending wars)
+    if (urgentTargets) {
+      filtered = filtered.filter(nationWar => {
+        // Show nations with no defending wars as urgent targets
+        if (nationWar.defendingWars.length === 0) return true;
         
-        // Check if all 3 defending wars have the same end date (compare the formatted date string or raw date)
-        const firstEndDate = nationWar.defendingWars[0].formattedEndDate || nationWar.defendingWars[0].endDate;
-        const allSameDate = nationWar.defendingWars.every(war => {
-          const warDate = war.formattedEndDate || war.endDate;
-          return warDate === firstEndDate;
+        // Find the newest war (most recently started) by finding the one with most days until expiration
+        const newestWar = nationWar.defendingWars.reduce((newest, current) => {
+          const newestDays = newest.daysUntilExpiration ?? 0;
+          const currentDays = current.daysUntilExpiration ?? 0;
+          return currentDays > newestDays ? current : newest;
         });
         
-        if (!allSameDate) return false;
-        
-        // Check if there are any attacking wars ending after this date
-        if (nationWar.attackingWars.length === 0) return true; // No attacking wars, so blown stagger
-        
-        // Get the daysUntilExpiration for the defending wars (all should be the same)
-        const defendingDaysUntilExpiration = nationWar.defendingWars[0].daysUntilExpiration ?? 0;
-        
-        // Check if any attacking war expires later than the defending wars
-        const hasAttackingWarsAfter = nationWar.attackingWars.some(war => {
-          const attackingDaysUntilExpiration = war.daysUntilExpiration ?? 0;
-          return attackingDaysUntilExpiration > defendingDaysUntilExpiration;
-        });
-        
-        return !hasAttackingWarsAfter; // Show if no attacking wars end after defending wars
-      } catch (err) {
-        console.error('Error in blown staggers filter:', err);
-        return false;
-      }
-    });
-  }
-
-  // Filter to show only nations where all wars end within X days
-  if (allWarsEndingInDays) {
-    filteredNationWars = filteredNationWars.filter(nationWar => {
-      // Get all wars (attacking + defending)
-      const allWars = [...nationWar.attackingWars, ...nationWar.defendingWars];
-      
-      // If no wars, exclude this nation
-      if (allWars.length === 0) {
-        return false;
-      }
-      
-      // Check if ALL wars end within the specified number of days
-      return allWars.every(war => {
-        const daysUntilExpiration = war.daysUntilExpiration ?? 0;
-        return daysUntilExpiration <= warsEndingInDays;
+        // Check if newest war expires in 0 or 1 days (today or tomorrow)
+        const daysUntilExpiration = newestWar.daysUntilExpiration;
+        return daysUntilExpiration === 0 || daysUntilExpiration === 1;
       });
-    });
-  }
+    }
 
-  // Search filter: only show nations that:
-  // 1) have a war (attacking or defending)
-  // 2) are eligible for assignment (have recommendations)
-  // 3) match the search query (nation name, ruler name, or alliance - matches defending nation, assigned attackers, or any nation in war rows)
-  if (searchQuery.trim()) {
-    const lowerQuery = searchQuery.toLowerCase().trim();
-    filteredNationWars = filteredNationWars.filter(nationWar => {
-      // Check if nation has at least one war
-      const hasWar = nationWar.attackingWars.length > 0 || nationWar.defendingWars.length > 0;
-      
-      // Check if nation is eligible for assignment (has recommendations)
-      const hasRecommendations = staggerRecommendationsMap.has(nationWar.nation.id) && 
-                                  (staggerRecommendationsMap.get(nationWar.nation.id)?.length ?? 0) > 0;
-      
-      // Check if defending nation matches search query
-      const defendingMatches = 
-        nationWar.nation.name.toLowerCase().includes(lowerQuery) ||
-        nationWar.nation.ruler.toLowerCase().includes(lowerQuery) ||
-        nationWar.nation.alliance.toLowerCase().includes(lowerQuery);
-      
-      // Check if any assigned attacker matches search query
-      const recommendations = staggerRecommendationsMap.get(nationWar.nation.id) || [];
-      const assignmentMatches = recommendations.some(attacker => 
-        attacker.name?.toLowerCase().includes(lowerQuery) ||
-        attacker.ruler?.toLowerCase().includes(lowerQuery) ||
-        attacker.alliance?.toLowerCase().includes(lowerQuery)
-      );
-      
-      // Check if any nation in the attacking wars matches search query
-      const attackingWarMatches = nationWar.attackingWars.some(war => 
-        war.defendingNation.name.toLowerCase().includes(lowerQuery) ||
-        war.defendingNation.ruler.toLowerCase().includes(lowerQuery) ||
-        war.defendingNation.alliance.toLowerCase().includes(lowerQuery)
-      );
-      
-      // Check if any nation in the defending wars matches search query
-      const defendingWarMatches = nationWar.defendingWars.some(war => 
-        war.attackingNation.name.toLowerCase().includes(lowerQuery) ||
-        war.attackingNation.ruler.toLowerCase().includes(lowerQuery) ||
-        war.attackingNation.alliance.toLowerCase().includes(lowerQuery)
-      );
-      
-      const matchesQuery = defendingMatches || assignmentMatches || attackingWarMatches || defendingWarMatches;
-      
-      return hasWar && hasRecommendations && matchesQuery;
-    });
-  }
+    // Filter to show only blown staggers (3 defending wars ending on same date, no attacking wars after)
+    if (blownStaggers) {
+      filtered = filtered.filter(nationWar => {
+        try {
+          // Must have exactly 3 defending wars
+          if (nationWar.defendingWars.length !== 3) return false;
+          
+          // Check if all 3 defending wars have the same end date (compare the formatted date string or raw date)
+          const firstEndDate = nationWar.defendingWars[0].formattedEndDate || nationWar.defendingWars[0].endDate;
+          const allSameDate = nationWar.defendingWars.every(war => {
+            const warDate = war.formattedEndDate || war.endDate;
+            return warDate === firstEndDate;
+          });
+          
+          if (!allSameDate) return false;
+          
+          // Check if there are any attacking wars ending after this date
+          if (nationWar.attackingWars.length === 0) return true; // No attacking wars, so blown stagger
+          
+          // Get the daysUntilExpiration for the defending wars (all should be the same)
+          const defendingDaysUntilExpiration = nationWar.defendingWars[0].daysUntilExpiration ?? 0;
+          
+          // Check if any attacking war expires later than the defending wars
+          const hasAttackingWarsAfter = nationWar.attackingWars.some(war => {
+            const attackingDaysUntilExpiration = war.daysUntilExpiration ?? 0;
+            return attackingDaysUntilExpiration > defendingDaysUntilExpiration;
+          });
+          
+          return !hasAttackingWarsAfter; // Show if no attacking wars end after defending wars
+        } catch (err) {
+          console.error('Error in blown staggers filter:', err);
+          return false;
+        }
+      });
+    }
 
-  // Sort all nations by strength (descending - highest first) when multiple alliances are selected
-  if (additionalAllianceIds.length > 0) {
-    filteredNationWars = [...filteredNationWars].sort((a, b) => {
-      return b.nation.strength - a.nation.strength;
-    });
-  }
+    // Filter to show only nations where all wars end within X days
+    if (allWarsEndingInDays) {
+      filtered = filtered.filter(nationWar => {
+        // Get all wars (attacking + defending)
+        const allWars = [...nationWar.attackingWars, ...nationWar.defendingWars];
+        
+        // If no wars, exclude this nation
+        if (allWars.length === 0) {
+          return false;
+        }
+        
+        // Check if ALL wars end within the specified number of days
+        return allWars.every(war => {
+          const daysUntilExpiration = war.daysUntilExpiration ?? 0;
+          return daysUntilExpiration <= warsEndingInDays;
+        });
+      });
+    }
+
+    // Search filter: only show nations that:
+    // 1) have a war (attacking or defending)
+    // 2) are eligible for assignment (have recommendations)
+    // 3) match the search query (nation name, ruler name, or alliance - matches defending nation, assigned attackers, or any nation in war rows)
+    if (searchQuery.trim()) {
+      const lowerQuery = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(nationWar => {
+        // Check if nation has at least one war
+        const hasWar = nationWar.attackingWars.length > 0 || nationWar.defendingWars.length > 0;
+        
+        // Check if nation is eligible for assignment (has recommendations)
+        const hasRecommendations = staggerRecommendationsMap.has(nationWar.nation.id) && 
+                                    (staggerRecommendationsMap.get(nationWar.nation.id)?.length ?? 0) > 0;
+        
+        // Check if defending nation matches search query
+        const defendingMatches = 
+          nationWar.nation.name.toLowerCase().includes(lowerQuery) ||
+          nationWar.nation.ruler.toLowerCase().includes(lowerQuery) ||
+          nationWar.nation.alliance.toLowerCase().includes(lowerQuery);
+        
+        // Check if any assigned attacker matches search query
+        const recommendations = staggerRecommendationsMap.get(nationWar.nation.id) || [];
+        const assignmentMatches = recommendations.some(attacker => 
+          attacker.name?.toLowerCase().includes(lowerQuery) ||
+          attacker.ruler?.toLowerCase().includes(lowerQuery) ||
+          attacker.alliance?.toLowerCase().includes(lowerQuery)
+        );
+        
+        // Check if any nation in the attacking wars matches search query
+        const attackingWarMatches = nationWar.attackingWars.some(war => 
+          war.defendingNation.name.toLowerCase().includes(lowerQuery) ||
+          war.defendingNation.ruler.toLowerCase().includes(lowerQuery) ||
+          war.defendingNation.alliance.toLowerCase().includes(lowerQuery)
+        );
+        
+        // Check if any nation in the defending wars matches search query
+        const defendingWarMatches = nationWar.defendingWars.some(war => 
+          war.attackingNation.name.toLowerCase().includes(lowerQuery) ||
+          war.attackingNation.ruler.toLowerCase().includes(lowerQuery) ||
+          war.attackingNation.alliance.toLowerCase().includes(lowerQuery)
+        );
+        
+        const matchesQuery = defendingMatches || assignmentMatches || attackingWarMatches || defendingWarMatches;
+        
+        return hasWar && hasRecommendations && matchesQuery;
+      });
+    }
+
+    // Sort all nations by strength (descending - highest first) when multiple alliances are selected
+    if (additionalAllianceIds.length > 0) {
+      filtered = [...filtered].sort((a, b) => {
+        return b.nation.strength - a.nation.strength;
+      });
+    }
+
+    return filtered;
+  }, [
+    allNationWars,
+    additionalNationWars,
+    showPMNations,
+    needsStagger,
+    staggerOnly,
+    assignAllianceIds,
+    hideNonPriority,
+    needsNuke,
+    urgentTargets,
+    blownStaggers,
+    allWarsEndingInDays,
+    warsEndingInDays,
+    searchQuery,
+    staggerRecommendationsMap,
+    additionalAllianceIds,
+    isPriorityNation,
+    parseMmDdYyyy,
+    getCentralTodayYMD
+  ]);
 
   // Show loading indicator without hiding the entire interface
   if (loading && allNationWars.length === 0) {
