@@ -205,11 +205,12 @@ authRoutes.get('/google/callback', async (req: Request, res: Response) => {
  */
 authRoutes.post('/logout', (req: Request, res: Response) => {
   // Get cookie information before destroying the session
-  const sessionCookieName = req.session.cookie.name || 'connect.sid';
+  // Default session cookie name is 'connect.sid' (express-session default)
+  const sessionCookieName = 'connect.sid';
   const cookieOptions = {
     path: req.session.cookie.path || '/',
     domain: req.session.cookie.domain,
-    secure: req.session.cookie.secure || false,
+    secure: typeof req.session.cookie.secure === 'boolean' ? req.session.cookie.secure : false,
     sameSite: req.session.cookie.sameSite as boolean | 'lax' | 'strict' | 'none' | undefined,
     httpOnly: req.session.cookie.httpOnly || true,
   };
