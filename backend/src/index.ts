@@ -15,7 +15,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginEmbedderPolicy: false,
+  // Allow cookies to be set
+  contentSecurityPolicy: false,
+}));
 app.use(cors({
   origin: [
     'http://localhost:5173',

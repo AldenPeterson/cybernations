@@ -17,10 +17,21 @@ authRoutes.get('/google', (req: Request, res: Response) => {
     // Store state in session
     req.session.oauthState = state;
     
+    // Ensure cookie attributes are set correctly for cross-site requests
+    const cookieSecure = process.env.COOKIE_SECURE === 'true';
+    req.session.cookie.secure = cookieSecure;
+    req.session.cookie.sameSite = cookieSecure ? 'none' : 'lax';
+    // Don't set domain explicitly - let express-session use default (exact domain match)
+    // This ensures the cookie works for the backend domain
+    
     console.log('OAuth initiation:', {
       sessionId: req.sessionID,
       state: state.substring(0, 8) + '...', // Log first 8 chars for debugging
       hasOAuthState: !!req.session.oauthState,
+      cookieSecure: req.session.cookie.secure,
+      cookieSameSite: req.session.cookie.sameSite,
+      cookieDomain: req.session.cookie.domain,
+      cookiePath: req.session.cookie.path,
     });
     
     // Save session before redirect to ensure it's persisted
@@ -32,6 +43,10 @@ authRoutes.get('/google', (req: Request, res: Response) => {
           error: 'Failed to initiate authentication',
         });
       }
+      
+      // Log Set-Cookie header that will be sent
+      const setCookieHeader = res.getHeader('Set-Cookie');
+      console.log('Set-Cookie header:', setCookieHeader);
       
       // Generate OAuth URL with state
       const authUrl = getAuthUrl(state);
@@ -56,6 +71,16 @@ authRoutes.get('/google', (req: Request, res: Response) => {
 authRoutes.get('/google/callback', async (req: Request, res: Response) => {
   try {
     const { code, state } = req.query;
+
+    // Log incoming request details
+    console.log('OAuth callback received:', {
+      sessionId: req.sessionID,
+      hasCookies: !!req.headers.cookie,
+      cookieHeader: req.headers.cookie ? req.headers.cookie.substring(0, 50) + '...' : 'none',
+      sessionKeys: Object.keys(req.session),
+      cookieSecure: req.session.cookie?.secure,
+      cookieSameSite: req.session.cookie?.sameSite,
+    });
 
     // Verify state parameter
     if (!state) {
