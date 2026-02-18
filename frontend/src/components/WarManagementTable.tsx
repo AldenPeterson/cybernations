@@ -5,9 +5,10 @@ import FilterCheckbox from './FilterCheckbox';
 import NSPercentageBadge from './NSPercentageBadge';
 import AllianceMultiSelect from './AllianceMultiSelect';
 import WarchestHistoryDialog from './WarchestHistoryDialog';
-import { apiCall, API_ENDPOINTS } from '../utils/api';
+import { apiCall, apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import { tableClasses, EMPTY_CELL_BG } from '../styles/tableClasses';
 import { useAlliances } from '../contexts/AlliancesContext';
+import { useAuth, UserRole } from '../contexts/AuthContext';
 
 interface StaggerRecommendationsCellProps {
   rawRecommendations: any[]; // Pre-fetched recommendations passed from parent
@@ -16,6 +17,9 @@ interface StaggerRecommendationsCellProps {
   maxRecommendations: number;
   showForFullTargets: boolean;
   defendingWarsCount: number;
+  canAssign?: boolean;
+  onAssign?: (attacker: any) => void;
+  assignedAttackerIds?: number[];
 }
 
 const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({ 
@@ -24,7 +28,10 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
   assignOnlyPositive,
   maxRecommendations,
   showForFullTargets,
-  defendingWarsCount
+  defendingWarsCount,
+  canAssign,
+  onAssign,
+  assignedAttackerIds = [],
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -41,9 +48,15 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
     if (assignOnlyPositive) {
       filtered = filtered.filter(rec => rec.strengthRatio >= 1.0);
     }
+
+    // Hide attackers that already have assignments for this defender
+    if (assignedAttackerIds.length > 0) {
+      const assignedSet = new Set(assignedAttackerIds);
+      filtered = filtered.filter(rec => !assignedSet.has(rec.id));
+    }
     
     return filtered;
-  }, [rawRecommendations, includePeaceMode, assignOnlyPositive]);
+  }, [rawRecommendations, includePeaceMode, assignOnlyPositive, assignedAttackerIds]);
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
@@ -82,6 +95,15 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
       {displayedRecommendations.map((attacker) => (
         <div key={attacker.id} className={tableClasses.assignmentCell.row}>
           <div className={tableClasses.assignmentCell.nationName}>
+            {canAssign && onAssign && (
+              <button
+                type="button"
+                onClick={() => onAssign(attacker)}
+                className="mr-1 px-1.5 py-0.5 text-[9px] font-semibold rounded bg-blue-900/60 text-blue-200 border border-blue-500 hover:bg-blue-800/80"
+              >
+                Assign
+              </button>
+            )}
             <div className="flex items-center min-w-0">
               <a 
                 href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attacker.id}`}
@@ -206,6 +228,32 @@ interface WarManagementTableProps {
   allianceId: number;
 }
 
+interface WarAssignment {
+  id: number;
+  assignmentDate: string; // YYYY-MM-DD
+  note?: string | null;
+  isOutOfRange: boolean;
+  attackerNation: {
+    id: number;
+    name: string;
+    rulerName: string;
+    alliance: string;
+    allianceId: number;
+  };
+  defenderNation: {
+    id: number;
+    name: string;
+    rulerName: string;
+    alliance: string;
+    allianceId: number;
+  };
+  assignedBy: {
+    id: number;
+    email: string;
+    rulerName: string | null;
+  };
+}
+
 const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [allNationWars, setAllNationWars] = useState<NationWars[]>([]);
@@ -225,6 +273,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   const [allWarsEndingInDays, setAllWarsEndingInDays] = useState<boolean>(false);
   const [warsEndingInDays, setWarsEndingInDays] = useState<number>(7);
   const { alliances } = useAlliances();
+  const { user } = useAuth();
   const [assignAllianceIds, setAssignAllianceIds] = useState<number[]>([]);
   const [staggerRecommendationsMap, setStaggerRecommendationsMap] = useState<Map<number, any[]>>(new Map());
   const fetchingStaggerRecommendationsRef = useRef(false);
@@ -253,6 +302,34 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   const previousAllianceIdRef = useRef<number | undefined>(allianceId);
   const fetchingAdditionalAlliancesRef = useRef<Set<number>>(new Set());
   const lastFetchedAdditionalAlliancesRef = useRef<string>('');
+  const [assignmentsByDefenderId, setAssignmentsByDefenderId] = useState<Map<number, WarAssignment[]>>(new Map());
+  const lastSyncedAssignAllianceIdsRef = useRef<string>('');
+  const [assignmentDialog, setAssignmentDialog] = useState<{
+    isOpen: boolean;
+    defenderNation: NationWars['nation'] | null;
+    attackerNation: any | null;
+    date: string;
+    note: string;
+    isSubmitting: boolean;
+  }>({
+    isOpen: false,
+    defenderNation: null,
+    attackerNation: null,
+    date: '',
+    note: '',
+    isSubmitting: false,
+  });
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    assignment: WarAssignment | null;
+    defenderId: number;
+    isSubmitting: boolean;
+  }>({
+    isOpen: false,
+    assignment: null,
+    defenderId: 0,
+    isSubmitting: false,
+  });
 
   // Helper function to parse boolean from URL parameter
   const parseBooleanParam = (value: string | null, defaultValue: boolean = false): boolean => {
@@ -283,9 +360,163 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     setSearchParams(newSearchParams, { replace: true });
   }, [searchParams, setSearchParams]);
 
+  const canManageAssignments =
+    !!user && (user.role === UserRole.WAR_MANAGER || user.role === UserRole.ADMIN);
+
+  const fetchAssignments = useCallback(async () => {
+    if (!canManageAssignments || !allianceId) {
+      setAssignmentsByDefenderId(new Map());
+      return;
+    }
+    try {
+      const data = await apiCallWithErrorHandling(API_ENDPOINTS.warAssignments(allianceId));
+      if (data.success && Array.isArray(data.assignments)) {
+        const map = new Map<number, WarAssignment[]>();
+        (data.assignments as WarAssignment[]).forEach((assignment) => {
+          const defenderId = assignment.defenderNation.id;
+          const existing = map.get(defenderId) || [];
+          existing.push(assignment);
+          map.set(defenderId, existing);
+        });
+        setAssignmentsByDefenderId(map);
+      }
+    } catch (err) {
+      console.error('Failed to fetch war assignments:', err);
+      setAssignmentsByDefenderId(new Map());
+    }
+  }, [allianceId, canManageAssignments]);
+
+  useEffect(() => {
+    fetchAssignments();
+  }, [fetchAssignments]);
+
+  const openAssignmentDialog = useCallback(
+    (defenderNation: NationWars['nation'], attacker: any) => {
+      if (!canManageAssignments) return;
+      const today = new Date();
+      const y = today.getFullYear();
+      const m = String(today.getMonth() + 1).padStart(2, '0');
+      const d = String(today.getDate()).padStart(2, '0');
+      setAssignmentDialog({
+        isOpen: true,
+        defenderNation,
+        attackerNation: attacker,
+        date: `${y}-${m}-${d}`,
+        note: '',
+        isSubmitting: false,
+      });
+    },
+    [canManageAssignments]
+  );
+
+  const closeAssignmentDialog = useCallback(() => {
+    setAssignmentDialog((prev) => ({
+      ...prev,
+      isOpen: false,
+      isSubmitting: false,
+    }));
+  }, []);
+
+  const handleApproveAssignment = useCallback(async () => {
+    if (
+      !assignmentDialog.isOpen ||
+      !assignmentDialog.defenderNation ||
+      !assignmentDialog.attackerNation
+    ) {
+      return;
+    }
+    if (!assignmentDialog.date) {
+      return;
+    }
+
+    try {
+      setAssignmentDialog((prev) => ({ ...prev, isSubmitting: true }));
+      const body = {
+        attackerNationId: assignmentDialog.attackerNation.id,
+        defenderNationId: assignmentDialog.defenderNation.id,
+        assignmentDate: assignmentDialog.date,
+        note: assignmentDialog.note || undefined,
+      };
+      const data = await apiCallWithErrorHandling(API_ENDPOINTS.warAssignments(allianceId), {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      if (data.success && data.assignment) {
+        const assignment: WarAssignment = data.assignment;
+        setAssignmentsByDefenderId((prev) => {
+          const map = new Map(prev);
+          const defenderId = assignment.defenderNation.id;
+          const existing = map.get(defenderId) || [];
+          map.set(defenderId, [...existing, assignment]);
+          return map;
+        });
+      }
+    } catch (err) {
+      console.error('Failed to create war assignment:', err);
+    } finally {
+      closeAssignmentDialog();
+    }
+  }, [assignmentDialog, allianceId, closeAssignmentDialog]);
+
+  const openDeleteDialog = useCallback((assignment: WarAssignment, defenderId: number) => {
+    if (!canManageAssignments) return;
+    setDeleteDialog({
+      isOpen: true,
+      assignment,
+      defenderId,
+      isSubmitting: false,
+    });
+  }, [canManageAssignments]);
+
+  const closeDeleteDialog = useCallback(() => {
+    setDeleteDialog({
+      isOpen: false,
+      assignment: null,
+      defenderId: 0,
+      isSubmitting: false,
+    });
+  }, []);
+
+  const handleDeleteAssignment = useCallback(async () => {
+    if (!deleteDialog.isOpen || !deleteDialog.assignment) {
+      return;
+    }
+
+    const { assignment, defenderId } = deleteDialog;
+
+    try {
+      setDeleteDialog((prev) => ({ ...prev, isSubmitting: true }));
+      const data = await apiCallWithErrorHandling(
+        `${API_ENDPOINTS.warAssignments(allianceId)}/${assignment.id}`,
+        {
+          method: 'DELETE',
+        }
+      );
+      if (data.success) {
+        setAssignmentsByDefenderId((prev) => {
+          const map = new Map(prev);
+          const existing = map.get(defenderId) || [];
+          const filtered = existing.filter(a => a.id !== assignment.id);
+          if (filtered.length === 0) {
+            map.delete(defenderId);
+          } else {
+            map.set(defenderId, filtered);
+          }
+          return map;
+        });
+        closeDeleteDialog();
+      }
+    } catch (err) {
+      console.error('Failed to delete war assignment:', err);
+      setDeleteDialog((prev) => ({ ...prev, isSubmitting: false }));
+    }
+  }, [deleteDialog, allianceId, closeDeleteDialog]);
+
   // Handler for assign alliance selection changes (with URL update)
   const handleAssignAllianceChange = useCallback((selectedIds: number[]) => {
     setAssignAllianceIds(selectedIds);
+    // Update ref to prevent useEffect from overwriting this change
+    lastSyncedAssignAllianceIdsRef.current = selectedIds.sort().join(',');
     updateUrlParams({ 
       assignAlliances: selectedIds.length > 0 ? selectedIds.join(',') : null 
     });
@@ -338,9 +569,15 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     }
   }, []); // Empty dependency array - only run on mount
 
-  // Initialize assign alliances from URL (when alliances load or allianceId changes)
+  // Initialize assign alliances from URL (when alliances load, allianceId changes, or URL params change)
   useEffect(() => {
     const assignAllianceIdsParam = parseNumberArrayParam(searchParams.get('assignAlliances'));
+    const paramKey = assignAllianceIdsParam.sort().join(',');
+    
+    // Skip if we've already synced this exact value to avoid unnecessary updates
+    if (paramKey === lastSyncedAssignAllianceIdsRef.current) {
+      return;
+    }
     
     // Only filter alliances if we have alliances loaded, otherwise keep the URL params as-is
     // This prevents clearing selections during the initial load when alliances array is empty
@@ -351,7 +588,8 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
       : assignAllianceIdsParam; // Keep URL params during initial load
     
     setAssignAllianceIdsOnly(validAllianceIds);
-  }, [alliances, allianceId, setAssignAllianceIdsOnly]); // Remove searchParams from dependencies
+    lastSyncedAssignAllianceIdsRef.current = validAllianceIds.sort().join(',');
+  }, [alliances, allianceId, searchParams, setAssignAllianceIdsOnly]);
 
   // Initialize additional alliances from URL on mount (read immediately)
   useEffect(() => {
@@ -983,14 +1221,18 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     }
 
     // Search filter: only show nations that:
-    // 1) have a war (attacking or defending)
-    // 2) are eligible for assignment (have recommendations)
-    // 3) match the search query (nation name, ruler name, or alliance - matches defending nation, assigned attackers, or any nation in war rows)
+    // 1) have a war (attacking or defending) OR have assignments
+    // 2) are eligible for assignment (have recommendations) OR have existing assignments
+    // 3) match the search query (nation name, ruler name, or alliance - matches defending nation, assigned attackers, recommendations, or any nation in war rows)
     if (searchQuery.trim()) {
       const lowerQuery = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(nationWar => {
         // Check if nation has at least one war
         const hasWar = nationWar.attackingWars.length > 0 || nationWar.defendingWars.length > 0;
+        
+        // Check if nation has existing assignments
+        const assignments = assignmentsByDefenderId.get(nationWar.nation.id) || [];
+        const hasAssignments = assignments.length > 0;
         
         // Check if nation is eligible for assignment (has recommendations)
         const hasRecommendations = staggerRecommendationsMap.has(nationWar.nation.id) && 
@@ -1002,12 +1244,19 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
           nationWar.nation.ruler.toLowerCase().includes(lowerQuery) ||
           nationWar.nation.alliance.toLowerCase().includes(lowerQuery);
         
-        // Check if any assigned attacker matches search query
+        // Check if any recommended attacker matches search query
         const recommendations = staggerRecommendationsMap.get(nationWar.nation.id) || [];
-        const assignmentMatches = recommendations.some(attacker => 
+        const recommendationMatches = recommendations.some(attacker => 
           attacker.name?.toLowerCase().includes(lowerQuery) ||
           attacker.ruler?.toLowerCase().includes(lowerQuery) ||
           attacker.alliance?.toLowerCase().includes(lowerQuery)
+        );
+        
+        // Check if any assigned attacker matches search query
+        const assignmentMatches = assignments.some(assignment => 
+          assignment.attackerNation.name?.toLowerCase().includes(lowerQuery) ||
+          assignment.attackerNation.rulerName?.toLowerCase().includes(lowerQuery) ||
+          assignment.attackerNation.alliance?.toLowerCase().includes(lowerQuery)
         );
         
         // Check if any nation in the attacking wars matches search query
@@ -1024,9 +1273,10 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
           war.attackingNation.alliance.toLowerCase().includes(lowerQuery)
         );
         
-        const matchesQuery = defendingMatches || assignmentMatches || attackingWarMatches || defendingWarMatches;
+        const matchesQuery = defendingMatches || recommendationMatches || assignmentMatches || attackingWarMatches || defendingWarMatches;
         
-        return hasWar && hasRecommendations && matchesQuery;
+        // Show if: (has war OR has assignments) AND (has recommendations OR has assignments) AND matches query
+        return (hasWar || hasAssignments) && (hasRecommendations || hasAssignments) && matchesQuery;
       });
     }
 
@@ -1053,6 +1303,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     warsEndingInDays,
     searchQuery,
     staggerRecommendationsMap,
+    assignmentsByDefenderId,
     additionalAllianceIds,
     isPriorityNation,
     parseMmDdYyyy,
@@ -1442,7 +1693,10 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
                   <th className={headerClasses.center}>Defending War 3</th>
                   <th className={headerClasses.center}>Staggered</th>
                   <th className={headerClasses.center}>Should PM?</th>
-                  <th className={headerClasses.center}>Assignments</th>
+                  <th className={headerClasses.center}>Recommendations</th>
+                  {canManageAssignments && (
+                    <th className={headerClasses.center}>Assignments</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -1646,11 +1900,76 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
                           maxRecommendations={maxRecommendations}
                           showForFullTargets={showForFullTargets}
                           defendingWarsCount={nationWar.defendingWars.length}
+                          canAssign={canManageAssignments}
+                          onAssign={(attacker) => openAssignmentDialog(nationWar.nation, attacker)}
+                          assignedAttackerIds={
+                            (assignmentsByDefenderId.get(nationWar.nation.id) || []).map(
+                              (a) => a.attackerNation.id
+                            )
+                          }
                         />
                       ) : (
                         <span className="text-gray-400 text-[10px]">Select alliances</span>
                       )}
                     </td>
+                    {canManageAssignments && (
+                      <td className={columnClasses.assignments}>
+                        {(() => {
+                          const assignments = assignmentsByDefenderId.get(nationWar.nation.id) || [];
+                          if (assignments.length === 0) {
+                            return <span className="text-gray-400 text-[10px]">None</span>;
+                          }
+                          return (
+                            <div className="flex flex-wrap gap-1.5 items-start">
+                              {assignments.map((assignment) => (
+                                <div
+                                  key={assignment.id}
+                                  className={`px-1.5 py-1 rounded border text-[10px] relative w-[140px] flex-shrink-0 ${
+                                    assignment.isOutOfRange
+                                      ? 'border-red-500 bg-red-900/40 text-red-100'
+                                      : 'border-green-600 bg-green-900/30 text-green-100'
+                                  }`}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() => openDeleteDialog(assignment, nationWar.nation.id)}
+                                    className="absolute top-1 right-1 px-1 py-0.5 text-[8px] font-bold rounded bg-red-700/80 text-red-100 border border-red-500 hover:bg-red-600/90 transition-colors"
+                                    title="Remove assignment"
+                                  >
+                                    ×
+                                  </button>
+                                  <div className="font-semibold pr-6">
+                                    {assignment.attackerNation.rulerName} /{' '}
+                                    {assignment.attackerNation.name}
+                                  </div>
+                                  <div className="text-[9px] text-gray-200">
+                                    {assignment.attackerNation.alliance}
+                                  </div>
+                                  <div className="text-[9px] text-gray-300 mt-0.5">
+                                    Date: {assignment.assignmentDate}
+                                  </div>
+                                  {assignment.note && (
+                                    <div className="text-[9px] text-gray-200 mt-0.5 italic">
+                                      {assignment.note}
+                                    </div>
+                                  )}
+                                  <div className="text-[9px] text-gray-300 mt-0.5">
+                                    By:{' '}
+                                    {assignment.assignedBy.rulerName ||
+                                      assignment.assignedBy.email}
+                                  </div>
+                                  {assignment.isOutOfRange && (
+                                    <div className="text-[9px] font-bold text-red-200 mt-0.5">
+                                      OUT OF RANGE
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -1670,6 +1989,131 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
         nationName={warchestHistoryDialog.nationName}
         rulerName={warchestHistoryDialog.rulerName}
       />
+      {assignmentDialog.isOpen && assignmentDialog.defenderNation && assignmentDialog.attackerNation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-md rounded-lg bg-gray-900 border border-gray-700 p-4 shadow-xl">
+            <h3 className="text-lg font-bold text-gray-100 mb-3">Assign Target</h3>
+            <div className="text-sm text-gray-200 mb-2">
+              <div className="mb-1">
+                <span className="font-semibold">Defender:</span>{' '}
+                {assignmentDialog.defenderNation.ruler} / {assignmentDialog.defenderNation.name}{' '}
+                <span className="text-gray-400">
+                  ({assignmentDialog.defenderNation.alliance})
+                </span>
+              </div>
+              <div className="mb-2">
+                <span className="font-semibold">Attacker:</span>{' '}
+                {assignmentDialog.attackerNation.ruler} / {assignmentDialog.attackerNation.name}{' '}
+                <span className="text-gray-400">
+                  ({assignmentDialog.attackerNation.alliance})
+                </span>
+              </div>
+            </div>
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  Assignment date
+                </label>
+                <input
+                  type="date"
+                  value={assignmentDialog.date}
+                  onChange={(e) =>
+                    setAssignmentDialog((prev) => ({ ...prev, date: e.target.value }))
+                  }
+                  className="w-full px-2 py-1.5 rounded border border-gray-600 bg-gray-800 text-gray-100 text-sm focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/30"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  Note (optional)
+                </label>
+                <textarea
+                  value={assignmentDialog.note}
+                  onChange={(e) =>
+                    setAssignmentDialog((prev) => ({ ...prev, note: e.target.value }))
+                  }
+                  rows={3}
+                  className="w-full px-2 py-1.5 rounded border border-gray-600 bg-gray-800 text-gray-100 text-sm focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/30 resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeAssignmentDialog}
+                className="px-3 py-1.5 rounded border border-gray-600 text-sm text-gray-200 hover:bg-gray-800"
+                disabled={assignmentDialog.isSubmitting}
+              >
+                Deny
+              </button>
+              <button
+                type="button"
+                onClick={handleApproveAssignment}
+                className="px-3 py-1.5 rounded bg-green-700 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60"
+                disabled={assignmentDialog.isSubmitting || !assignmentDialog.date}
+              >
+                {assignmentDialog.isSubmitting ? 'Assigning...' : 'Approve & Assign'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {deleteDialog.isOpen && deleteDialog.assignment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-md rounded-lg bg-gray-900 border border-gray-700 p-4 shadow-xl">
+            <h3 className="text-lg font-bold text-gray-100 mb-3">Remove Assignment</h3>
+            <div className="text-sm text-gray-200 mb-4">
+              <p className="mb-3">Are you sure you want to remove this assignment?</p>
+              <div className="mb-2">
+                <span className="font-semibold">Defender:</span>{' '}
+                {deleteDialog.assignment.defenderNation.rulerName} / {deleteDialog.assignment.defenderNation.name}{' '}
+                <span className="text-gray-400">
+                  ({deleteDialog.assignment.defenderNation.alliance})
+                </span>
+              </div>
+              <div className="mb-2">
+                <span className="font-semibold">Attacker:</span>{' '}
+                {deleteDialog.assignment.attackerNation.rulerName} / {deleteDialog.assignment.attackerNation.name}{' '}
+                <span className="text-gray-400">
+                  ({deleteDialog.assignment.attackerNation.alliance})
+                </span>
+              </div>
+              <div className="mb-2">
+                <span className="font-semibold">Assignment Date:</span>{' '}
+                {deleteDialog.assignment.assignmentDate}
+              </div>
+              {deleteDialog.assignment.note && (
+                <div className="mb-2">
+                  <span className="font-semibold">Note:</span>{' '}
+                  <span className="text-gray-300 italic">{deleteDialog.assignment.note}</span>
+                </div>
+              )}
+              <div className="mb-2">
+                <span className="font-semibold">Assigned by:</span>{' '}
+                {deleteDialog.assignment.assignedBy.rulerName || deleteDialog.assignment.assignedBy.email}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeDeleteDialog}
+                className="px-3 py-1.5 rounded border border-gray-600 text-sm text-gray-200 hover:bg-gray-800"
+                disabled={deleteDialog.isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAssignment}
+                className="px-3 py-1.5 rounded bg-red-700 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-60"
+                disabled={deleteDialog.isSubmitting}
+              >
+                {deleteDialog.isSubmitting ? 'Removing...' : 'Remove Assignment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

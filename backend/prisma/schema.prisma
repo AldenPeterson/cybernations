@@ -55,6 +55,8 @@ model Nation {
   events                                                 Event[]
   casualtyRankingSnapshots                               CasualtyRankingSnapshot[]
   warchestSubmissions                                    WarchestSubmission[]
+  warAssignmentsAsAttacker                               WarAssignment[] @relation("WarAssignmentAttacker")
+  warAssignmentsAsDefender                               WarAssignment[] @relation("WarAssignmentDefender")
 
   @@index([allianceId])
   @@index([id])
@@ -150,6 +152,27 @@ model War {
   @@index([isActive])
   @@index([lastSeenAt])
   @@map("wars")
+}
+
+model WarAssignment {
+  id               Int       @id @default(autoincrement())
+  attackerNationId Int       @map("attacker_nation_id")
+  defenderNationId Int       @map("defender_nation_id")
+  assignmentDate   DateTime  @map("assignment_date") @db.Date
+  note             String?
+  createdByUserId  Int       @map("created_by_user_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  archivedAt       DateTime? @map("archived_at")
+
+  attackerNation Nation @relation("WarAssignmentAttacker", fields: [attackerNationId], references: [id])
+  defenderNation Nation @relation("WarAssignmentDefender", fields: [defenderNationId], references: [id])
+  createdByUser  User   @relation(fields: [createdByUserId], references: [id])
+
+  @@index([attackerNationId])
+  @@index([defenderNationId])
+  @@index([assignmentDate])
+  @@index([archivedAt])
+  @@map("war_assignments")
 }
 
 model NuclearHit {
@@ -280,6 +303,7 @@ model User {
   createdAt        DateTime             @default(now()) @map("created_at")
   updatedAt        DateTime             @updatedAt @map("updated_at")
   managedAlliances UserAllianceManager[]
+  warAssignments   WarAssignment[]
 
   @@map("users")
 }

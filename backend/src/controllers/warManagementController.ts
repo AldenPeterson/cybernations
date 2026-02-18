@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { WarManagementService } from '../services/warManagementService.js';
+import { WarAssignmentService } from '../services/warAssignmentService.js';
 
 export class WarManagementController {
   /**
@@ -39,6 +40,125 @@ export class WarManagementController {
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  /**
+   * Get active war assignments for an alliance
+   */
+  static async getWarAssignments(req: Request, res: Response) {
+    try {
+      const allianceId = parseInt(req.params.allianceId);
+      if (isNaN(allianceId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid alliance ID'
+        });
+      }
+
+      const assignments = await WarAssignmentService.listActiveAssignmentsForAlliance(allianceId);
+
+      res.json({
+        success: true,
+        assignments
+      });
+    } catch (error) {
+      console.error('Error in getWarAssignments:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch war assignments'
+      });
+    }
+  }
+
+  /**
+   * Create a new war assignment for an alliance
+   */
+  static async createWarAssignment(req: Request, res: Response) {
+    try {
+      const allianceId = parseInt(req.params.allianceId);
+      if (isNaN(allianceId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid alliance ID'
+        });
+      }
+
+      const userId = req.session.userId;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Authentication required'
+        });
+      }
+
+      const { attackerNationId, defenderNationId, assignmentDate, note } = req.body || {};
+
+      if (!attackerNationId || !defenderNationId || !assignmentDate) {
+        return res.status(400).json({
+          success: false,
+          error: 'attackerNationId, defenderNationId, and assignmentDate are required'
+        });
+      }
+
+      const assignment = await WarAssignmentService.createAssignment({
+        allianceId,
+        attackerNationId: Number(attackerNationId),
+        defenderNationId: Number(defenderNationId),
+        assignmentDate: String(assignmentDate),
+        note: note ? String(note) : undefined,
+        createdByUserId: userId
+      });
+
+      res.status(201).json({
+        success: true,
+        assignment
+      });
+    } catch (error: any) {
+      console.error('Error in createWarAssignment:', error);
+      const message = error instanceof Error ? error.message : 'Failed to create war assignment';
+      res.status(400).json({
+        success: false,
+        error: message
+      });
+    }
+  }
+
+  /**
+   * Delete a war assignment for an alliance
+   */
+  static async deleteWarAssignment(req: Request, res: Response) {
+    try {
+      const allianceId = parseInt(req.params.allianceId);
+      const assignmentId = parseInt(req.params.assignmentId);
+      
+      if (isNaN(allianceId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid alliance ID'
+        });
+      }
+
+      if (isNaN(assignmentId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid assignment ID'
+        });
+      }
+
+      await WarAssignmentService.deleteAssignment(assignmentId, allianceId);
+
+      res.json({
+        success: true,
+        message: 'Assignment deleted successfully'
+      });
+    } catch (error: any) {
+      console.error('Error in deleteWarAssignment:', error);
+      const message = error instanceof Error ? error.message : 'Failed to delete war assignment';
+      res.status(400).json({
+        success: false,
+        error: message
       });
     }
   }

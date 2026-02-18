@@ -90,6 +90,7 @@ export const API_ENDPOINTS = {
   nationWars: (id: number) => `/api/alliances/${id}/nation-wars`,
   defendingWarsStats: (id: number) => `/api/alliances/${id}/defending-wars-stats`,
   warCounts: (id: number) => `/api/alliances/${id}/war-counts`,
+  warAssignments: (id: number) => `/api/alliances/${id}/war-assignments`,
   staggerEligibility: '/api/stagger-eligibility',
   smallAidOffers: '/api/small-aid-offers',
   statsDecode: '/api/stats/decode',

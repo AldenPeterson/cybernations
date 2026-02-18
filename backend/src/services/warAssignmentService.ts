@@ -1,0 +1,281 @@
+import { isWarExpired } from '../utils/dateUtils.js';
+
+interface CreateAssignmentInput {
+  allianceId: number;
+  attackerNationId: number;
+  defenderNationId: number;
+  assignmentDate: string; // YYYY-MM-DD
+  note?: string;
+  createdByUserId: number;
+}
+
+export interface WarAssignmentDto {
+  id: number;
+  assignmentDate: string; // YYYY-MM-DD
+  note?: string | null;
+  isOutOfRange: boolean;
+  attackerNation: {
+    id: number;
+    name: string;
+    rulerName: string;
+    alliance: string;
+    allianceId: number;
+  };
+  defenderNation: {
+    id: number;
+    name: string;
+    rulerName: string;
+    alliance: string;
+    allianceId: number;
+  };
+  assignedBy: {
+    id: number;
+    email: string;
+    rulerName: string | null;
+  };
+}
+
+const toYmd = (date: Date): string => {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const isDateOutOfRange = (date: Date): boolean => {
+  const today = new Date();
+  const todayUtc = Date.UTC(
+    today.getUTCFullYear(),
+    today.getUTCMonth(),
+    today.getUTCDate()
+  );
+  const targetUtc = Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate()
+  );
+  // Out of range once the assignment date is before today
+  return targetUtc < todayUtc;
+};
+
+const mapAssignmentToDto = (assignment: any): WarAssignmentDto => {
+  const assignmentDate: Date = assignment.assignmentDate;
+  const attacker = assignment.attackerNation;
+  const defender = assignment.defenderNation;
+  const user = assignment.createdByUser;
+
+  return {
+    id: assignment.id,
+    assignmentDate: toYmd(assignmentDate),
+    note: assignment.note,
+    isOutOfRange: isDateOutOfRange(assignmentDate),
+    attackerNation: {
+      id: attacker.id,
+      name: attacker.nationName,
+      rulerName: attacker.rulerName,
+      alliance: attacker.alliance.name,
+      allianceId: attacker.allianceId,
+    },
+    defenderNation: {
+      id: defender.id,
+      name: defender.nationName,
+      rulerName: defender.rulerName,
+      alliance: defender.alliance.name,
+      allianceId: defender.allianceId,
+    },
+    assignedBy: {
+      id: user.id,
+      email: user.email,
+      rulerName: user.rulerName,
+    },
+  };
+};
+
+async function hasActiveWarBetween(
+  nationAId: number,
+  nationBId: number
+): Promise<boolean> {
+  const { prisma } = await import('../utils/prisma.js');
+  const wars = await prisma.war.findMany({
+    where: {
+      isActive: true,
+      status: {
+        notIn: ['Ended', 'Peace'],
+      },
+      OR: [
+        {
+          declaringNationId: nationAId,
+          receivingNationId: nationBId,
+        },
+        {
+          declaringNationId: nationBId,
+          receivingNationId: nationAId,
+        },
+      ],
+    },
+    select: {
+      warId: true,
+      endDate: true,
+    },
+  });
+
+  return wars.some((war) => {
+    try {
+      return !isWarExpired(war.endDate);
+    } catch {
+      return false;
+    }
+  });
+}
+
+export class WarAssignmentService {
+  static async createAssignment(input: CreateAssignmentInput): Promise<WarAssignmentDto> {
+    const { prisma } = await import('../utils/prisma.js');
+    const {
+      allianceId,
+      attackerNationId,
+      defenderNationId,
+      assignmentDate,
+      note,
+      createdByUserId,
+    } = input;
+
+    if (attackerNationId === defenderNationId) {
+      throw new Error('Attacker and defender must be different nations');
+    }
+
+    // Validate defender nation belongs to the specified alliance
+    const defender = await prisma.nation.findUnique({
+      where: { id: defenderNationId },
+      include: { alliance: true },
+    });
+    if (!defender || !defender.isActive) {
+      throw new Error('Defender nation not found or inactive');
+    }
+    if (defender.allianceId !== allianceId) {
+      throw new Error('Defender nation does not belong to this alliance');
+    }
+
+    // Validate attacker nation exists
+    const attacker = await prisma.nation.findUnique({
+      where: { id: attackerNationId },
+      include: { alliance: true },
+    });
+    if (!attacker || !attacker.isActive) {
+      throw new Error('Attacker nation not found or inactive');
+    }
+
+    // Parse assignment date (expecting YYYY-MM-DD)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(assignmentDate)) {
+      throw new Error('Invalid assignment date format, expected YYYY-MM-DD');
+    }
+    const date = new Date(`${assignmentDate}T00:00:00Z`);
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid assignment date');
+    }
+
+    // Ensure there is no active war between the nations
+    if (await hasActiveWarBetween(attackerNationId, defenderNationId)) {
+      throw new Error('There is already an active war between these nations');
+    }
+
+    const created = await prisma.warAssignment.create({
+      data: {
+        attackerNationId,
+        defenderNationId,
+        assignmentDate: date,
+        note: note ?? null,
+        createdByUserId,
+      },
+      include: {
+        attackerNation: {
+          include: { alliance: true },
+        },
+        defenderNation: {
+          include: { alliance: true },
+        },
+        createdByUser: true,
+      },
+    });
+
+    return mapAssignmentToDto(created);
+  }
+
+  static async listActiveAssignmentsForAlliance(
+    allianceId: number
+  ): Promise<WarAssignmentDto[]> {
+    const { prisma } = await import('../utils/prisma.js');
+    // Load all non-archived assignments where defender currently belongs to this alliance
+    const assignments = await prisma.warAssignment.findMany({
+      where: {
+        archivedAt: null,
+        defenderNation: {
+          allianceId,
+          isActive: true,
+        },
+      },
+      include: {
+        attackerNation: {
+          include: { alliance: true },
+        },
+        defenderNation: {
+          include: { alliance: true },
+        },
+        createdByUser: true,
+      },
+    });
+
+    const toArchiveIds: number[] = [];
+    const activeAssignments: any[] = [];
+
+    // Partition into those that now have an active war (to archive) vs still active
+    for (const assignment of assignments) {
+      const attackerId = assignment.attackerNationId;
+      const defenderId = assignment.defenderNationId;
+
+      if (await hasActiveWarBetween(attackerId, defenderId)) {
+        toArchiveIds.push(assignment.id);
+      } else {
+        activeAssignments.push(assignment);
+      }
+    }
+
+    if (toArchiveIds.length > 0) {
+      await prisma.warAssignment.updateMany({
+        where: { id: { in: toArchiveIds } },
+        data: { archivedAt: new Date() },
+      });
+    }
+
+    return activeAssignments.map(mapAssignmentToDto);
+  }
+
+  static async deleteAssignment(assignmentId: number, allianceId: number): Promise<void> {
+    const { prisma } = await import('../utils/prisma.js');
+    
+    // Verify the assignment exists and belongs to the alliance
+    const assignment = await prisma.warAssignment.findUnique({
+      where: { id: assignmentId },
+      include: {
+        defenderNation: {
+          include: { alliance: true },
+        },
+      },
+    });
+
+    if (!assignment) {
+      throw new Error('Assignment not found');
+    }
+
+    if (assignment.defenderNation.allianceId !== allianceId) {
+      throw new Error('Assignment does not belong to this alliance');
+    }
+
+    // Delete the assignment
+    await prisma.warAssignment.delete({
+      where: { id: assignmentId },
+    });
+  }
+}
+
+

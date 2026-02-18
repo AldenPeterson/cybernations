@@ -86,7 +86,7 @@ export const tableClasses = {
     war: 'p-[2px] md:p-0.5 px-0.5 md:px-1 border border-gray-600 text-center bg-gray-800 min-w-[85px] md:min-w-[120px] max-w-[110px] md:max-w-[150px] w-[95px] md:w-[135px]',
     staggered: 'px-0.5 md:px-1.5 py-0.5 md:py-1 border border-gray-600 text-center bg-gray-800 min-w-[40px] md:min-w-[60px] max-w-[55px] md:max-w-[80px] w-[45px] md:w-[70px]',
     pm: 'px-0.5 md:px-1.5 py-0.5 md:py-1 border border-gray-600 text-center bg-gray-800 min-w-[38px] md:min-w-[50px] max-w-[50px] md:max-w-[70px] w-[42px] md:w-[60px]',
-    assignments: 'px-0.5 md:px-1.5 py-0.5 md:py-1 border border-gray-600 text-center bg-gray-800 text-left'
+    assignments: 'px-0.5 md:px-1.5 py-0.5 md:py-1 border border-gray-600 text-center bg-gray-800 text-left min-w-[300px] md:min-w-[450px]'
   },
 
   // WarManagementTable header classes
