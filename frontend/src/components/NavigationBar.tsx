@@ -36,7 +36,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
 
   const warToolsItems = [
     { label: 'Wars', path: selectedAllianceId ? `/wars/${selectedAllianceId}` : '/wars' },
-    { label: 'Warchest Submission', path: '/warchest-submission' },
+    { label: 'Spy Operation Submission', path: '/warchest-submission' },
   ];
 
   const statsItems = [
@@ -97,7 +97,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         pageTitle = 'War Tools - Wars';
         break;
       case 'warchest-submission':
-        pageTitle = 'War Tools - Warchest Submission';
+        pageTitle = 'War Tools - Spy Operation Submission';
         break;
       case 'ns-comparisons':
         pageTitle = 'Utilities - NS Comparisons';
@@ -202,7 +202,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       case 'wars':
         return 'War Tools - Wars';
       case 'warchest-submission':
-        return 'War Tools - Warchest Submission';
+        return 'War Tools - Spy Operation Submission';
       case 'ns-comparisons':
         return 'Utilities - NS Comparisons';
       case 'shame-offers':

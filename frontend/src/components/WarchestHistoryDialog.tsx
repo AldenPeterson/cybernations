@@ -6,6 +6,12 @@ interface WarchestSubmission {
   nationId: number | null;
   nationName: string;
   totalMoney: number;
+  armyXP?: number | null;
+  navyXP?: number | null;
+  airForceXP?: number | null;
+  intelligenceXP?: number | null;
+  hasAssignedGenerals: boolean;
+  assignedGenerals?: string | null;
   capturedAt: string;
   createdAt: string;
 }
@@ -97,7 +103,7 @@ const WarchestHistoryDialog: React.FC<WarchestHistoryDialogProps> = ({
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50" onClick={onClose}>
       <div 
-        className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col"
+        className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -128,20 +134,56 @@ const WarchestHistoryDialog: React.FC<WarchestHistoryDialogProps> = ({
           )}
           
           {!loading && !error && submissions.length > 0 && (
-            <div className="space-y-2">
-              <table className="w-full border-collapse">
+            <div className="space-y-2 overflow-x-auto">
+              <table className="w-full border-collapse min-w-[600px]">
                 <thead>
                   <tr className="border-b border-gray-700">
-                    <th className="text-left p-2 text-gray-300 font-semibold text-sm">Date</th>
+                    <th className="text-left p-2 text-gray-300 font-semibold text-sm">Submitted</th>
                     <th className="text-right p-2 text-gray-300 font-semibold text-sm">Amount</th>
+                    <th className="text-left p-2 text-gray-300 font-semibold text-sm">XP</th>
+                    <th className="text-left p-2 text-gray-300 font-semibold text-sm">Generals</th>
                   </tr>
                 </thead>
                 <tbody>
                   {submissions.map((submission) => (
                     <tr key={submission.id} className="border-b border-gray-700/50 hover:bg-gray-700/30">
-                      <td className="p-2 text-gray-300 text-sm">{formatDate(submission.capturedAt)}</td>
+                      <td className="p-2 text-gray-300 text-sm">{formatDate(submission.createdAt)}</td>
                       <td className="p-2 text-green-400 text-sm font-semibold text-right">
                         {formatMoney(submission.totalMoney)}
+                      </td>
+                      <td className="p-2 text-gray-300 text-sm">
+                        {(submission.armyXP !== null && submission.armyXP !== undefined) ||
+                         (submission.navyXP !== null && submission.navyXP !== undefined) ||
+                         (submission.airForceXP !== null && submission.airForceXP !== undefined) ||
+                         (submission.intelligenceXP !== null && submission.intelligenceXP !== undefined) ? (
+                          <div className="text-xs space-y-0.5">
+                            {submission.armyXP !== null && submission.armyXP !== undefined && (
+                              <div>Army: {submission.armyXP}</div>
+                            )}
+                            {submission.navyXP !== null && submission.navyXP !== undefined && (
+                              <div>Navy: {submission.navyXP}</div>
+                            )}
+                            {submission.airForceXP !== null && submission.airForceXP !== undefined && (
+                              <div>Air: {submission.airForceXP}</div>
+                            )}
+                            {submission.intelligenceXP !== null && submission.intelligenceXP !== undefined && (
+                              <div>Intel: {submission.intelligenceXP}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="p-2 text-gray-300 text-sm">
+                        {submission.hasAssignedGenerals && submission.assignedGenerals ? (
+                          <div className="text-xs text-blue-300" title={submission.assignedGenerals}>
+                            {submission.assignedGenerals.length > 50 
+                              ? `${submission.assignedGenerals.substring(0, 50)}...`
+                              : submission.assignedGenerals}
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 text-xs">—</span>
+                        )}
                       </td>
                     </tr>
                   ))}

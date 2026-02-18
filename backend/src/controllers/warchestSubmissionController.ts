@@ -37,7 +37,13 @@ export class WarchestSubmissionController {
       const result = await createWarchestSubmission(
         parsed.nationName,
         parsed.totalMoney,
-        capturedDate
+        capturedDate,
+        parsed.armyXP,
+        parsed.navyXP,
+        parsed.airForceXP,
+        parsed.intelligenceXP,
+        parsed.hasAssignedGenerals,
+        parsed.assignedGenerals
       );
 
       return res.json({

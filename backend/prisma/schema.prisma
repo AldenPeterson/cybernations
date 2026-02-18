@@ -322,13 +322,19 @@ model UserAllianceManager {
 }
 
 model WarchestSubmission {
-  id          Int      @id @default(autoincrement())
-  nationId    Int?     @map("nation_id")
-  nationName  String   @map("nation_name")
-  totalMoney  Float    @map("total_money")
-  capturedAt  DateTime @map("captured_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  nation      Nation?  @relation(fields: [nationId], references: [id], onDelete: SetNull)
+  id              Int      @id @default(autoincrement())
+  nationId        Int?     @map("nation_id")
+  nationName      String   @map("nation_name")
+  totalMoney      Float    @map("total_money")
+  armyXP          Int?     @map("army_xp")
+  navyXP          Int?     @map("navy_xp")
+  airForceXP      Int?     @map("air_force_xp")
+  intelligenceXP  Int?     @map("intelligence_xp")
+  hasAssignedGenerals Boolean @default(false) @map("has_assigned_generals")
+  assignedGenerals String? @map("assigned_generals")
+  capturedAt      DateTime @map("captured_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  nation          Nation?  @relation(fields: [nationId], references: [id], onDelete: SetNull)
 
   @@index([nationId])
   @@index([nationName])

@@ -2,11 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { apiCallWithErrorHandling } from '../utils/api';
 import PageContainer from '../components/PageContainer';
 
-interface WarchestSubmission {
+interface SpyOperationSubmission {
   id: number;
   nationId: number | null;
   nationName: string;
   totalMoney: number;
+  armyXP?: number | null;
+  navyXP?: number | null;
+  airForceXP?: number | null;
+  intelligenceXP?: number | null;
+  hasAssignedGenerals: boolean;
+  assignedGenerals?: string | null;
   capturedAt: string;
   createdAt: string;
   nation?: {
@@ -20,12 +26,12 @@ interface WarchestSubmission {
   } | null;
 }
 
-const WarchestSubmissionPage: React.FC = () => {
+const SpyOperationSubmissionPage: React.FC = () => {
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [submissions, setSubmissions] = useState<WarchestSubmission[]>([]);
+  const [submissions, setSubmissions] = useState<SpyOperationSubmission[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
   // Load submissions on mount
@@ -77,15 +83,15 @@ const WarchestSubmissionPage: React.FC = () => {
       });
 
       if (response.success) {
-        setSuccess('Warchest submission created successfully!');
+        setSuccess('Spy operation submission created successfully!');
         setText('');
         // Reload submissions
         await loadSubmissions();
       } else {
-        setError(response.error || 'Failed to submit warchest data');
+        setError(response.error || 'Failed to submit spy operation data');
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred while submitting warchest data');
+      setError(err.message || 'An error occurred while submitting spy operation data');
     } finally {
       setSubmitting(false);
     }
@@ -107,14 +113,14 @@ const WarchestSubmissionPage: React.FC = () => {
   return (
     <PageContainer className="p-6 max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-200 mb-2">Warchest Submission</h1>
+        <h1 className="text-3xl font-bold text-gray-200 mb-2">Spy Operation Submission</h1>
         <p className="text-gray-400">
-          Paste spy operation text to extract and store warchest information.
+          Paste spy operation text to extract and store warchest, XP levels, and assigned generals information.
         </p>
       </div>
 
       <div className="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700 mb-6">
-        <h2 className="text-xl font-semibold text-gray-200 mb-4">Submit Warchest Data</h2>
+        <h2 className="text-xl font-semibold text-gray-200 mb-4">Submit Spy Operation Data</h2>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -167,7 +173,8 @@ const WarchestSubmissionPage: React.FC = () => {
                   <th className="text-left py-3 px-4 text-gray-300 font-semibold">Nation</th>
                   <th className="text-left py-3 px-4 text-gray-300 font-semibold">Alliance</th>
                   <th className="text-right py-3 px-4 text-gray-300 font-semibold">Total Money</th>
-                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Captured</th>
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">XP Levels</th>
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Assigned Generals</th>
                   <th className="text-left py-3 px-4 text-gray-300 font-semibold">Submitted</th>
                 </tr>
               </thead>
@@ -190,8 +197,40 @@ const WarchestSubmissionPage: React.FC = () => {
                     <td className="py-3 px-4 text-right text-gray-200 font-medium">
                       {formatMoney(submission.totalMoney)}
                     </td>
-                    <td className="py-3 px-4 text-gray-400 text-xs">
-                      {formatDate(submission.capturedAt)}
+                    <td className="py-3 px-4 text-gray-300">
+                      {(submission.armyXP !== null && submission.armyXP !== undefined) ||
+                       (submission.navyXP !== null && submission.navyXP !== undefined) ||
+                       (submission.airForceXP !== null && submission.airForceXP !== undefined) ||
+                       (submission.intelligenceXP !== null && submission.intelligenceXP !== undefined) ? (
+                        <div className="text-xs space-y-0.5">
+                          {submission.armyXP !== null && submission.armyXP !== undefined && (
+                            <div>Army: {submission.armyXP}</div>
+                          )}
+                          {submission.navyXP !== null && submission.navyXP !== undefined && (
+                            <div>Navy: {submission.navyXP}</div>
+                          )}
+                          {submission.airForceXP !== null && submission.airForceXP !== undefined && (
+                            <div>Air Force: {submission.airForceXP}</div>
+                          )}
+                          {submission.intelligenceXP !== null && submission.intelligenceXP !== undefined && (
+                            <div>Intelligence: {submission.intelligenceXP}</div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500 text-xs">-</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-gray-300">
+                      {submission.hasAssignedGenerals ? (
+                        <div className="text-xs">
+                          <span className="text-green-400 font-semibold">Yes</span>
+                          {submission.assignedGenerals && (
+                            <div className="text-gray-400 mt-1">{submission.assignedGenerals}</div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500 text-xs">No</span>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-gray-400 text-xs">
                       {formatDate(submission.createdAt)}
@@ -207,5 +246,5 @@ const WarchestSubmissionPage: React.FC = () => {
   );
 };
 
-export default WarchestSubmissionPage;
+export default SpyOperationSubmissionPage;
 

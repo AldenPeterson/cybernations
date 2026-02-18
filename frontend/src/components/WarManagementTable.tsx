@@ -1741,21 +1741,16 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
                       {nationWar.nation.warchest ? (
                         <div className="text-[9px] md:text-[11px]">
                           <div 
-                            className={nationWar.nation.warchest.count > 1 
-                              ? 'text-gray-800 font-semibold cursor-pointer hover:underline' 
-                              : 'text-gray-800 font-semibold'
-                            }
+                            className="text-blue-600 font-semibold cursor-pointer underline hover:text-blue-400 hover:no-underline transition-all"
                             onClick={() => {
-                              if (nationWar.nation.warchest && nationWar.nation.warchest.count > 1) {
-                                setWarchestHistoryDialog({
-                                  isOpen: true,
-                                  nationId: nationWar.nation.id,
-                                  nationName: nationWar.nation.name,
-                                  rulerName: nationWar.nation.ruler
-                                });
-                              }
+                              setWarchestHistoryDialog({
+                                isOpen: true,
+                                nationId: nationWar.nation.id,
+                                nationName: nationWar.nation.name,
+                                rulerName: nationWar.nation.ruler
+                              });
                             }}
-                            title={nationWar.nation.warchest.count > 1 ? `Click to view ${nationWar.nation.warchest.count} warchest entries` : undefined}
+                            title={nationWar.nation.warchest.count > 1 ? `Click to view ${nationWar.nation.warchest.count} warchest entries` : 'Click to view warchest details'}
                           >
                             {formatMoney(nationWar.nation.warchest.amount)}
                           </div>

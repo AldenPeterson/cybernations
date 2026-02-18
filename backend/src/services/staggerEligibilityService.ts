@@ -37,6 +37,67 @@ export interface StaggerEligibilityData {
 
 export class StaggerEligibilityService {
   /**
+   * Check if an attacker is currently eligible for a defender based on NS and rank ranges
+   * Same logic as used in the assignment column:
+   * - NS range: 75%-133% of defending nation's strength
+   * - Rank range: +/- 100 ranks
+   * 
+   * @param attacker - The attacking nation (must have strength and optionally rank, infrastructure, land)
+   * @param defender - The defending nation (must have strength and optionally rank)
+   * @param sellDownEnabled - Whether to consider sell-down eligibility (default: false)
+   * @param militaryNS - Fixed military NS to drop for sell-down calculation (default: 0)
+   * @param allNations - All nations for rank calculation if sell-down is enabled (optional)
+   * @returns true if attacker is eligible (within NS range OR rank range OR can sell down)
+   */
+  static isAttackerEligibleForDefender(
+    attacker: { strength: number; rank?: number | null; infrastructure?: string; land?: string; strengthRatio?: number },
+    defender: { strength: number; rank?: number | null },
+    sellDownEnabled: boolean = false,
+    militaryNS: number = 0,
+    allNations?: any[]
+  ): boolean {
+    // Check NS range (75%-133% of defender's strength)
+    const defenderStrength = defender.strength || 0;
+    
+    if (defenderStrength === 0) {
+      // Can't determine range if defender has no strength
+      return false;
+    }
+    
+    // Use pre-calculated strengthRatio if available, otherwise calculate it
+    // Apply militaryNS adjustment if sell-down is enabled
+    let strengthRatio: number;
+    if (attacker.strengthRatio !== undefined) {
+      // Use pre-calculated ratio (already adjusted for militaryNS if applicable)
+      strengthRatio = attacker.strengthRatio;
+    } else {
+      // Calculate from strength values, applying militaryNS adjustment if needed
+      const effectiveStrength = sellDownEnabled && militaryNS > 0 
+        ? (attacker.strength || 0) - militaryNS 
+        : (attacker.strength || 0);
+      strengthRatio = effectiveStrength / defenderStrength;
+    }
+    
+    const withinNSRange = strengthRatio >= 0.75 && strengthRatio <= 1.33;
+    
+    // Check rank range (+/- 100 ranks)
+    let withinRankRange = true;
+    if (attacker.rank && defender.rank) {
+      const rankDifference = Math.abs(attacker.rank - defender.rank);
+      withinRankRange = rankDifference <= 100;
+    }
+    
+    // Check sell-down eligibility if enabled
+    let canSellDown = false;
+    if (sellDownEnabled && allNations) {
+      canSellDown = this.canSellDownToTarget(attacker, defender, militaryNS, allNations);
+    }
+    
+    // Attacker is eligible if ANY of the three criteria are met
+    return withinNSRange || withinRankRange || canSellDown;
+  }
+
+  /**
    * Calculate if a nation can sell down infrastructure and land to become eligible
    * This includes both NS range eligibility and rank range eligibility
    * Infrastructure is worth 3 NS per unit, land is worth 1.5 NS per unit
@@ -367,28 +428,18 @@ export class StaggerEligibilityService {
           };
         })
         .filter(attacker => {
-          // Check 1: Are they within the NS range (75%-133%)?
-          const strengthRatio = attacker.strengthRatio;
-          const withinNSRange = strengthRatio >= 0.75 && strengthRatio <= 1.33;
+          // Check eligibility using the shared method
+          const allNations = sellDownEnabled 
+            ? [...attackingAllianceNations, ...defendingAllianceNations]
+            : undefined;
           
-          // Check 2: Are they within the rank range (+/- 100 ranks)?
-          let withinRankRange = true;
-          if (attacker.rank && defendingNation.rank) {
-            const rankDifference = Math.abs(attacker.rank - defendingNation.rank);
-            withinRankRange = rankDifference <= 100;
-          }
-          
-          // Check 3: Can they sell down (if sell-down toggle is enabled)?
-          let canSellDown = false;
-          if (sellDownEnabled) {
-            // Pass all nations from both alliances for rank calculation
-            const allNations = [...attackingAllianceNations, ...defendingAllianceNations];
-            canSellDown = this.canSellDownToTarget(attacker, defendingNation, militaryNS, allNations);
-            console.log(`Sell-down result for ${attacker.name}: ${canSellDown}`);
-          }
-          
-          // Include if ANY of the three criteria are met
-          const isEligible = withinNSRange || withinRankRange || canSellDown;
+          const isEligible = this.isAttackerEligibleForDefender(
+            attacker,
+            defendingNation,
+            sellDownEnabled,
+            militaryNS,
+            allNations
+          );
           
           if (!isEligible) {
             return false;

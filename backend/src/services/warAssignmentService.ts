@@ -1,4 +1,5 @@
 import { isWarExpired } from '../utils/dateUtils.js';
+import { StaggerEligibilityService } from './staggerEligibilityService.js';
 
 interface CreateAssignmentInput {
   allianceId: number;
@@ -58,17 +59,40 @@ const isDateOutOfRange = (date: Date): boolean => {
   return targetUtc < todayUtc;
 };
 
+/**
+ * Check if attacker is still in range based on stagger eligibility logic
+ * Uses the shared StaggerEligibilityService method to ensure consistency
+ */
+const isAttackerOutOfRange = (attacker: any, defender: any): boolean => {
+  // Use the shared eligibility check (without sell-down since we're checking current state)
+  const isEligible = StaggerEligibilityService.isAttackerEligibleForDefender(
+    attacker,
+    defender,
+    false, // Don't consider sell-down for assignment validation
+    0,     // No military NS adjustment
+    undefined // No need for all nations list
+  );
+  
+  // Attacker is out of range if not eligible
+  return !isEligible;
+};
+
 const mapAssignmentToDto = (assignment: any): WarAssignmentDto => {
   const assignmentDate: Date = assignment.assignmentDate;
   const attacker = assignment.attackerNation;
   const defender = assignment.defenderNation;
   const user = assignment.createdByUser;
 
+  // Check both date and range eligibility
+  const dateOutOfRange = isDateOutOfRange(assignmentDate);
+  const attackerOutOfRange = isAttackerOutOfRange(attacker, defender);
+  const isOutOfRange = dateOutOfRange || attackerOutOfRange;
+
   return {
     id: assignment.id,
     assignmentDate: toYmd(assignmentDate),
     note: assignment.note,
-    isOutOfRange: isDateOutOfRange(assignmentDate),
+    isOutOfRange,
     attackerNation: {
       id: attacker.id,
       name: attacker.nationName,
