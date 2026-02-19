@@ -24,6 +24,11 @@ export const apiRoutes = Router();
 // Auth routes (public - no authentication required for login)
 apiRoutes.use('/auth', authRoutes);
 
+// Cron job endpoints (protected by CRON_SECRET, not session auth - must be before other routes)
+apiRoutes.post('/cron/sync-all', CronController.syncAll);
+apiRoutes.post('/cron/sync-all-detailed', CronController.syncAllDetailed);
+apiRoutes.post('/cron/run-post-processing', CronController.runPostProcessing);
+
 // Dashboard API endpoints - register public routes first (no authentication required)
 apiRoutes.get('/alliances', AllianceController.getAlliances);
 apiRoutes.get('/alliances/:allianceId/stats', validateAllianceId, AllianceController.getAllianceStats);
@@ -63,7 +68,7 @@ apiRoutes.use('/', casualtiesRoutes);
 apiRoutes.use('/', userRoutes);
 
 // Admin routes (ADMIN only)
-apiRoutes.use('/', adminRoutes);
+apiRoutes.use('/admin', adminRoutes);
 
 // Warchest submission routes (authenticated users only)
 apiRoutes.use('/', warchestSubmissionRoutes);
@@ -78,11 +83,6 @@ apiRoutes.post('/sync/alliances', AllianceController.syncAlliances);
 
 // Aid efficiency endpoint
 apiRoutes.get('/aid-efficiency', AidEfficiencyController.getAidEfficiency);
-
-// Cron job endpoints (protected by CRON_SECRET)
-apiRoutes.post('/cron/sync-all', CronController.syncAll);
-apiRoutes.post('/cron/sync-all-detailed', CronController.syncAllDetailed);
-apiRoutes.post('/cron/run-post-processing', CronController.runPostProcessing);
 
 
 

@@ -11,17 +11,17 @@ adminRoutes.use(requireAuth);
 adminRoutes.use(requireRole([UserRole.ADMIN]));
 
 // Get all alliances (no filtering)
-adminRoutes.get('/admin/alliances', AllianceController.getAllAlliances);
+adminRoutes.get('/alliances', AllianceController.getAllAlliances);
 
 // Search nations
-adminRoutes.get('/admin/nations/search', AdminController.searchNations);
+adminRoutes.get('/nations/search', AdminController.searchNations);
 
 // Set nation targeting alliance override
-adminRoutes.put('/admin/nations/:nationId/targeting-alliance', AdminController.setNationTargetingAlliance);
+adminRoutes.put('/nations/:nationId/targeting-alliance', AdminController.setNationTargetingAlliance);
 
 // Search wars
-adminRoutes.get('/admin/wars/search', AdminController.searchWars);
+adminRoutes.get('/wars/search', AdminController.searchWars);
 
 // Update war alliance IDs
-adminRoutes.put('/admin/wars/:warId/alliance-ids', AdminController.updateWarAllianceIds);
+adminRoutes.put('/wars/:warId/alliance-ids', AdminController.updateWarAllianceIds);
 
