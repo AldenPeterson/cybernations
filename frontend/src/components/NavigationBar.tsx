@@ -271,7 +271,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-gray-900 border-b-2 border-gray-700 z-[1000] font-sans shadow-lg shadow-gray-900/50">
-      <div className="px-2 sm:px-4 py-3 flex justify-between items-center gap-2">
+      <div className="px-2 sm:px-4 py-3 flex justify-between items-center gap-1 sm:gap-2 min-w-0">
         {/* Hamburger Menu Button (Mobile Only) */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -309,20 +309,20 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
           )}
         </div>
 
-        {/* Mobile: Show current tab name - with flex-shrink to allow alliance selector space */}
-        <div className="lg:hidden text-white font-semibold text-sm sm:text-base flex-shrink min-w-0 text-center">
+        {/* Mobile: Show current tab name - hidden on very small screens to prevent overlap */}
+        <div className="hidden sm:block lg:hidden text-white font-semibold text-xs sm:text-sm flex-shrink min-w-0 text-center overflow-hidden text-ellipsis whitespace-nowrap px-1">
           {getCurrentTabName()}
         </div>
 
-        {/* Alliance Selector and Auth - flex-shrink-0 ensures it never shrinks */}
-        <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
+        {/* Alliance Selector and Auth - responsive sizing to prevent overlap */}
+        <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0 min-w-0">
           <label className="hidden md:block font-semibold text-xs lg:text-sm text-gray-300 whitespace-nowrap">
             Alliance:
           </label>
           <select
             value={selectedAllianceId || ''}
             onChange={(e) => handleAllianceChange(e.target.value ? parseInt(e.target.value) : null)}
-            className={`px-1.5 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2.5 text-xs sm:text-sm rounded-lg border-2 w-[160px] sm:w-[200px] lg:min-w-[280px] font-medium focus:outline-none transition-all duration-200 ${
+            className={`px-1 sm:px-2 lg:px-4 py-1.5 sm:py-2 lg:py-2.5 text-xs sm:text-sm rounded-lg border-2 w-[120px] sm:w-[160px] md:w-[200px] lg:min-w-[280px] font-medium focus:outline-none transition-all duration-200 flex-shrink-0 ${
               isAllianceRelevant()
                 ? 'border-gray-600 bg-gray-800 text-gray-200 hover:border-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer'
                 : 'border-gray-700 bg-gray-900 text-gray-500 cursor-not-allowed opacity-60'
@@ -344,7 +344,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
           )}
           
           {/* Auth Section */}
-          <div className="flex items-center gap-2 ml-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {authLoading ? (
               // Show nothing or a loading indicator while checking auth state
               <span className="hidden lg:inline text-xs text-gray-500">Loading...</span>
@@ -359,7 +359,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
                 </button>
                 <button
                   onClick={logout}
-                  className="px-3 py-1.5 text-xs sm:text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                  className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors whitespace-nowrap"
                 >
                   Logout
                 </button>
