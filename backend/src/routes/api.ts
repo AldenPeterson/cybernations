@@ -16,6 +16,7 @@ import { casualtiesRoutes } from './casualtiesRoutes.js';
 import { userRoutes } from './userRoutes.js';
 import { warchestSubmissionRoutes } from './warchestSubmissionRoutes.js';
 import { authRoutes } from './authRoutes.js';
+import { adminRoutes } from './adminRoutes.js';
 import { validateAllianceId } from '../middleware/validation.js';
 
 export const apiRoutes = Router();
@@ -60,6 +61,9 @@ apiRoutes.use('/', casualtiesRoutes);
 
 // User management routes (ADMIN only)
 apiRoutes.use('/', userRoutes);
+
+// Admin routes (ADMIN only)
+apiRoutes.use('/', adminRoutes);
 
 // Warchest submission routes (authenticated users only)
 apiRoutes.use('/', warchestSubmissionRoutes);

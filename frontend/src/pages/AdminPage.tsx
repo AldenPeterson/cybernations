@@ -5,28 +5,31 @@ import PageContainer from '../components/PageContainer';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { useAlliances } from '../contexts/AlliancesContext';
 
-interface User {
-  id: number;
-  email: string;
-  rulerName: string | null;
-  role: UserRole;
-  createdAt: string;
-  updatedAt: string;
-  managedAllianceIds: number[];
-}
-
 const AdminPage: React.FC = () => {
   const { user: currentUser, isAuthenticated, isLoading: authLoading } = useAuth();
-  const { alliances } = useAlliances();
+  const { alliances: defaultAlliances } = useAlliances();
   const navigate = useNavigate();
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [editingUserId, setEditingUserId] = useState<number | null>(null);
-  const [editedUsers, setEditedUsers] = useState<Map<number, Partial<User>>>(new Map());
-  const [saving, setSaving] = useState<number | null>(null);
-  const [allianceModalOpen, setAllianceModalOpen] = useState<number | null>(null);
-  const [allianceSearchQuery, setAllianceSearchQuery] = useState<string>('');
+  const [allAlliances, setAllAlliances] = useState<any[]>([]);
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'nations' | 'wars'>('nations');
+  const [nationSearchQuery, setNationSearchQuery] = useState<string>('');
+  const [nationSearchResults, setNationSearchResults] = useState<any[]>([]);
+  const [nationSearchLoading, setNationSearchLoading] = useState<boolean>(false);
+  const [selectedNation, setSelectedNation] = useState<any | null>(null);
+  const [targetingAllianceId, setTargetingAllianceId] = useState<string>('');
+  const [nationSaving, setNationSaving] = useState<boolean>(false);
+  
+  // War editing state
+  const [warSearchQuery, setWarSearchQuery] = useState<string>('');
+  const [warSearchResults, setWarSearchResults] = useState<any[]>([]);
+  const [warSearchLoading, setWarSearchLoading] = useState<boolean>(false);
+  const [warSearchActiveOnly, setWarSearchActiveOnly] = useState<boolean>(true);
+  const [selectedWar, setSelectedWar] = useState<any | null>(null);
+  const [warDeclaringAllianceId, setWarDeclaringAllianceId] = useState<string>('');
+  const [warReceivingAllianceId, setWarReceivingAllianceId] = useState<string>('');
+  const [warSaving, setWarSaving] = useState<boolean>(false);
 
   // Check if user is authenticated and is ADMIN
   useEffect(() => {
@@ -40,192 +43,179 @@ const AdminPage: React.FC = () => {
     }
   }, [isAuthenticated, currentUser, navigate, authLoading]);
 
-  // Fetch users
+  // Fetch all alliances for admin dropdowns
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchAllAlliances = async () => {
+      if (!isAuthenticated || currentUser?.role !== UserRole.ADMIN) {
+        return;
+      }
+
       try {
-        setLoading(true);
-        setError(null);
-        const response = await apiCallWithErrorHandling(API_ENDPOINTS.users);
+        const response = await apiCallWithErrorHandling(API_ENDPOINTS.adminAlliances);
         if (response.success) {
-          setUsers(response.users);
-        } else {
-          throw new Error(response.error || 'Failed to load users');
+          setAllAlliances(response.alliances);
         }
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Failed to load users';
-        setError(msg);
-      } finally {
-        setLoading(false);
+        console.error('Failed to fetch all alliances:', err);
+        // Fallback to default alliances if admin endpoint fails
+        setAllAlliances(defaultAlliances);
       }
     };
 
-    if (isAuthenticated && currentUser?.role === UserRole.ADMIN) {
-      fetchUsers();
+    fetchAllAlliances();
+  }, [isAuthenticated, currentUser, defaultAlliances]);
+
+  // Use allAlliances if available, otherwise fallback to defaultAlliances
+  const alliances = allAlliances.length > 0 ? allAlliances : defaultAlliances;
+
+  // Nation search handler
+  const handleNationSearch = async () => {
+    if (!nationSearchQuery.trim()) {
+      setNationSearchResults([]);
+      return;
     }
-  }, [isAuthenticated, currentUser]);
-
-  const handleEdit = (userId: number) => {
-    setEditingUserId(userId);
-    const user = users.find((u) => u.id === userId);
-    if (user) {
-      setEditedUsers(new Map([[userId, { ...user }]]));
-    }
-  };
-
-  const handleCancel = (userId: number) => {
-    setEditingUserId(null);
-    const newEdited = new Map(editedUsers);
-    newEdited.delete(userId);
-    setEditedUsers(newEdited);
-  };
-
-  const handleFieldChange = (userId: number, field: keyof User, value: any) => {
-    const newEdited = new Map(editedUsers);
-    const edited = newEdited.get(userId) || users.find((u) => u.id === userId)!;
-    newEdited.set(userId, { ...edited, [field]: value });
-    setEditedUsers(newEdited);
-  };
-
-  const handleSave = async (userId: number) => {
-    const edited = editedUsers.get(userId);
-    if (!edited) return;
 
     try {
-      setSaving(userId);
+      setNationSearchLoading(true);
+        setError(null);
+      const response = await apiCallWithErrorHandling(API_ENDPOINTS.adminSearchNations(nationSearchQuery.trim(), 20));
+        if (response.success) {
+        setNationSearchResults(response.nations);
+        } else {
+        throw new Error(response.error || 'Failed to search nations');
+        }
+      } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to search nations';
+        setError(msg);
+      setNationSearchResults([]);
+      } finally {
+      setNationSearchLoading(false);
+    }
+  };
+
+  // Set nation targeting alliance
+  const handleSetNationTargetingAlliance = async () => {
+    if (!selectedNation) return;
+
+    try {
+      setNationSaving(true);
+      setError(null);
+      const allianceId = targetingAllianceId.trim() === '' ? null : parseInt(targetingAllianceId.trim(), 10);
+      if (allianceId !== null && isNaN(allianceId)) {
+        throw new Error('Invalid alliance ID');
+      }
+
+      const response = await apiCallWithErrorHandling(
+        API_ENDPOINTS.adminSetNationTargetingAlliance(selectedNation.id),
+        {
+          method: 'PUT',
+          body: JSON.stringify({ targetingAllianceId: allianceId }),
+        }
+      );
+
+      if (response.success) {
+        setSelectedNation(response.nation);
+        setTargetingAllianceId(response.nation.targetingAllianceId ? String(response.nation.targetingAllianceId) : '');
+        // Refresh search results
+        await handleNationSearch();
+      } else {
+        throw new Error(response.error || 'Failed to set targeting alliance');
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to set targeting alliance';
+      setError(msg);
+    } finally {
+      setNationSaving(false);
+    }
+  };
+
+  // War search handler
+  const handleWarSearch = async () => {
+    if (!warSearchQuery.trim()) {
+      setWarSearchResults([]);
+      return;
+    }
+
+    try {
+      setWarSearchLoading(true);
+      setError(null);
+      const response = await apiCallWithErrorHandling(API_ENDPOINTS.adminSearchWars(warSearchQuery.trim(), 20, warSearchActiveOnly));
+      if (response.success) {
+        setWarSearchResults(response.wars);
+      } else {
+        throw new Error(response.error || 'Failed to search wars');
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to search wars';
+      setError(msg);
+      setWarSearchResults([]);
+    } finally {
+      setWarSearchLoading(false);
+    }
+  };
+
+  // Update war alliance IDs
+  const handleUpdateWarAllianceIds = async () => {
+    if (!selectedWar) return;
+
+    try {
+      setWarSaving(true);
       setError(null);
 
       const updateData: any = {};
-      const originalUser = users.find((u) => u.id === userId)!;
 
-      if (edited.email !== undefined && edited.email !== originalUser.email) {
-        updateData.email = edited.email;
+      // Handle declaring alliance ID
+      const declaringId = warDeclaringAllianceId.trim() === '' 
+        ? null 
+        : parseInt(warDeclaringAllianceId.trim(), 10);
+      if (declaringId !== null && isNaN(declaringId)) {
+        throw new Error('Invalid declaring alliance ID');
       }
-      if (edited.rulerName !== undefined && edited.rulerName !== originalUser.rulerName) {
-        updateData.rulerName = edited.rulerName || null;
-      }
-      if (edited.role !== undefined && edited.role !== originalUser.role) {
-        updateData.role = edited.role;
-      }
-      if (
-        edited.managedAllianceIds !== undefined &&
-        JSON.stringify(edited.managedAllianceIds.sort()) !==
-          JSON.stringify(originalUser.managedAllianceIds.sort())
-      ) {
-        updateData.managedAllianceIds = edited.managedAllianceIds;
+      // Only include if it's different from current value
+      if (declaringId !== selectedWar.declaringAllianceId) {
+        updateData.declaringAllianceId = declaringId;
       }
 
-      // Only send update if there are changes
+      // Handle receiving alliance ID
+      const receivingId = warReceivingAllianceId.trim() === '' 
+        ? null 
+        : parseInt(warReceivingAllianceId.trim(), 10);
+      if (receivingId !== null && isNaN(receivingId)) {
+        throw new Error('Invalid receiving alliance ID');
+      }
+      // Only include if it's different from current value
+      if (receivingId !== selectedWar.receivingAllianceId) {
+        updateData.receivingAllianceId = receivingId;
+      }
+
       if (Object.keys(updateData).length === 0) {
-        handleCancel(userId);
-        return;
+        throw new Error('No changes to save');
       }
 
-      const response = await apiCallWithErrorHandling(API_ENDPOINTS.updateUser(userId), {
+      const response = await apiCallWithErrorHandling(
+        API_ENDPOINTS.adminUpdateWarAllianceIds(selectedWar.warId),
+        {
         method: 'PUT',
         body: JSON.stringify(updateData),
-      });
+        }
+      );
 
       if (response.success) {
-        // Update the user in the list
-        setUsers(users.map((u) => (u.id === userId ? response.user : u)));
-        handleCancel(userId);
+        setSelectedWar(response.war);
+        setWarDeclaringAllianceId(response.war.declaringAllianceId ? String(response.war.declaringAllianceId) : '');
+        setWarReceivingAllianceId(response.war.receivingAllianceId ? String(response.war.receivingAllianceId) : '');
+        // Refresh search results
+        await handleWarSearch();
       } else {
-        throw new Error(response.error || 'Failed to update user');
+        throw new Error(response.error || 'Failed to update war alliance IDs');
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to update user';
+      const msg = err instanceof Error ? err.message : 'Failed to update war alliance IDs';
       setError(msg);
     } finally {
-      setSaving(null);
+      setWarSaving(false);
     }
   };
-
-  const toggleAlliance = (userId: number, allianceId: number) => {
-    const edited = editedUsers.get(userId) || users.find((u) => u.id === userId)!;
-    const currentIds = edited.managedAllianceIds || [];
-    const newIds = currentIds.includes(allianceId)
-      ? currentIds.filter((id) => id !== allianceId)
-      : [...currentIds, allianceId];
-    handleFieldChange(userId, 'managedAllianceIds', newIds);
-  };
-
-  const handleOpenAllianceModal = (userId: number) => {
-    setAllianceModalOpen(userId);
-    setAllianceSearchQuery('');
-    // Initialize edited user if not already editing
-    if (!editedUsers.has(userId)) {
-      const user = users.find((u) => u.id === userId);
-      if (user) {
-        setEditedUsers(new Map([[userId, { ...user }]]));
-      }
-    }
-  };
-
-  const handleCloseAllianceModal = () => {
-    setAllianceModalOpen(null);
-    setAllianceSearchQuery('');
-  };
-
-  const handleSaveAlliances = async (userId: number) => {
-    const edited = editedUsers.get(userId);
-    if (!edited) return;
-
-    try {
-      setSaving(userId);
-      setError(null);
-
-      const originalUser = users.find((u) => u.id === userId)!;
-      const updateData: any = {};
-
-      // Check if managedAllianceIds changed
-      if (
-        edited.managedAllianceIds !== undefined &&
-        JSON.stringify(edited.managedAllianceIds.sort()) !==
-          JSON.stringify(originalUser.managedAllianceIds.sort())
-      ) {
-        updateData.managedAllianceIds = edited.managedAllianceIds;
-      }
-
-      // If no changes, just close modal
-      if (Object.keys(updateData).length === 0) {
-        handleCloseAllianceModal();
-        return;
-      }
-
-      const response = await apiCallWithErrorHandling(API_ENDPOINTS.updateUser(userId), {
-        method: 'PUT',
-        body: JSON.stringify(updateData),
-      });
-
-      if (response.success) {
-        // Update the user in the list
-        setUsers(users.map((u) => (u.id === userId ? response.user : u)));
-        handleCloseAllianceModal();
-      } else {
-        throw new Error(response.error || 'Failed to update user');
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to update user';
-      setError(msg);
-    } finally {
-      setSaving(null);
-    }
-  };
-
-  const handleSelectAllAlliances = (userId: number) => {
-    const allAllianceIds = alliances.map((a) => a.id);
-    handleFieldChange(userId, 'managedAllianceIds', allAllianceIds);
-  };
-
-  const handleDeselectAllAlliances = (userId: number) => {
-    handleFieldChange(userId, 'managedAllianceIds', []);
-  };
-
-  // Filter alliances based on search query
-  const filteredAlliances = alliances.filter((alliance) =>
-    alliance.name.toLowerCase().includes(allianceSearchQuery.toLowerCase())
-  );
 
   // Show loading state while auth is being checked
   if (authLoading) {
@@ -251,263 +241,292 @@ const AdminPage: React.FC = () => {
           </div>
         )}
 
-        {loading ? (
-          <div className="text-center py-8 text-gray-400">Loading users...</div>
-        ) : (
-          <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-700">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">ID</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Email</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Ruler Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Role</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Managed Alliances</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Created</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-700">
-                  {users.map((user) => {
-                    const isEditing = editingUserId === user.id;
-                    const edited = editedUsers.get(user.id) || user;
-                    const isSaving = saving === user.id;
+        <h1 className="text-2xl font-bold text-gray-100 mb-6">Nation & War Management</h1>
 
-                    return (
-                      <tr key={user.id} className="hover:bg-gray-750">
-                        <td className="px-4 py-3 text-sm text-gray-300">{user.id}</td>
-                        <td className="px-4 py-3 text-sm">
-                          {isEditing ? (
-                            <input
-                              type="email"
-                              value={edited.email}
-                              onChange={(e) => handleFieldChange(user.id, 'email', e.target.value)}
-                              className="w-full px-2 py-1 bg-gray-700 text-gray-200 border border-gray-600 rounded focus:outline-none focus:border-primary"
-                            />
-                          ) : (
-                            <span className="text-gray-300">{user.email}</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          {isEditing ? (
+        {/* Tabs */}
+        <div className="mb-6 flex gap-2 border-b border-gray-700">
+          <button
+            onClick={() => setActiveTab('nations')}
+            className={`px-4 py-2 font-semibold transition-colors ${
+              activeTab === 'nations'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            Nation Alliance Override
+          </button>
+          <button
+            onClick={() => setActiveTab('wars')}
+            className={`px-4 py-2 font-semibold transition-colors ${
+              activeTab === 'wars'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            War Alliance IDs
+          </button>
+        </div>
+
+        {activeTab === 'nations' && (
+          <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden p-6">
+            <h2 className="text-xl font-semibold text-gray-100 mb-4">Nation Alliance Override</h2>
+            <p className="text-sm text-gray-400 mb-4">
+              Search for nations and set an alliance override for targeting purposes. Nations with an override will appear in the war management view for that alliance even if they're not actually in it.
+            </p>
+
+            {/* Search */}
+            <div className="mb-4">
+              <div className="flex gap-2">
                             <input
                               type="text"
-                              value={edited.rulerName || ''}
-                              onChange={(e) =>
-                                handleFieldChange(user.id, 'rulerName', e.target.value || null)
-                              }
-                              placeholder="Ruler name (optional)"
-                              className="w-full px-2 py-1 bg-gray-700 text-gray-200 border border-gray-600 rounded focus:outline-none focus:border-primary"
-                            />
-                          ) : (
-                            <span className="text-gray-300">{user.rulerName || '-'}</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          {isEditing ? (
-                            <select
-                              value={edited.role}
-                              onChange={(e) =>
-                                handleFieldChange(user.id, 'role', e.target.value as UserRole)
-                              }
-                              className="w-full px-2 py-1 bg-gray-700 text-gray-200 border border-gray-600 rounded focus:outline-none focus:border-primary"
-                            >
-                              <option value={UserRole.USER}>USER</option>
-                              <option value={UserRole.ALLIANCE_MANAGER}>ALLIANCE_MANAGER</option>
-                              <option value={UserRole.WAR_MANAGER}>WAR_MANAGER</option>
-                              <option value={UserRole.ADMIN}>ADMIN</option>
-                            </select>
-                          ) : (
-                            <span
-                              className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                                user.role === UserRole.ADMIN
-                                  ? 'bg-red-900/50 text-red-200'
-                                  : user.role === UserRole.ALLIANCE_MANAGER
-                                  ? 'bg-blue-900/50 text-blue-200'
-                                  : user.role === UserRole.WAR_MANAGER
-                                  ? 'bg-orange-900/50 text-orange-200'
-                                  : 'bg-gray-700 text-gray-300'
-                              }`}
-                            >
-                              {user.role}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <div className="flex flex-wrap gap-1 items-center">
-                            {user.managedAllianceIds.length > 0 ? (
-                              <>
-                                {user.managedAllianceIds.slice(0, 2).map((allianceId) => {
-                                  const alliance = alliances.find((a) => a.id === allianceId);
-                                  return (
-                                    <span
-                                      key={allianceId}
-                                      className="inline-block px-2 py-1 bg-blue-900/50 text-blue-200 rounded text-xs"
-                                    >
-                                      {alliance?.name || `Alliance ${allianceId}`}
-                                    </span>
-                                  );
-                                })}
-                                {user.managedAllianceIds.length > 2 && (
-                                  <span className="text-gray-400 text-xs">
-                                    +{user.managedAllianceIds.length - 2} more
-                                  </span>
-                                )}
-                              </>
-                            ) : (
-                              <span className="text-gray-500 text-xs">None</span>
-                            )}
-                            <button
-                              onClick={() => handleOpenAllianceModal(user.id)}
-                              className="ml-2 px-2 py-1 text-xs bg-gray-700 text-gray-300 rounded hover:bg-gray-600 transition-colors"
-                            >
-                              {isEditing ? 'Edit' : 'Manage'}
-                            </button>
+                  placeholder="Search by nation name or ruler name..."
+                  value={nationSearchQuery}
+                  onChange={(e) => setNationSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleNationSearch()}
+                  className="flex-1 px-3 py-2 bg-gray-700 text-gray-200 border border-gray-600 rounded focus:outline-none focus:border-primary"
+                />
+                <button
+                  onClick={handleNationSearch}
+                  disabled={nationSearchLoading}
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {nationSearchLoading ? 'Searching...' : 'Search'}
+                </button>
+              </div>
+            </div>
+
+            {/* Search Results */}
+            {nationSearchResults.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-300 mb-2">Search Results</h3>
+                <div className="border border-gray-600 rounded bg-gray-700 max-h-64 overflow-y-auto">
+                  {nationSearchResults.map((nation) => (
+                    <div
+                      key={nation.id}
+                      onClick={() => {
+                        setSelectedNation(nation);
+                        setTargetingAllianceId(nation.targetingAllianceId ? String(nation.targetingAllianceId) : '');
+                      }}
+                      className={`p-3 cursor-pointer hover:bg-gray-600 transition-colors ${
+                        selectedNation?.id === nation.id ? 'bg-gray-600' : ''
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-gray-200 font-medium">
+                            {nation.nationName} ({nation.rulerName})
                           </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-400">
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          {isEditing ? (
+                          <div className="text-xs text-gray-400">
+                            Alliance: {nation.allianceName} (ID: {nation.allianceId})
+                            {nation.targetingAllianceId && (
+                              <span className="ml-2 text-yellow-400">
+                                → Override: {nation.targetingAllianceName} (ID: {nation.targetingAllianceId})
+                                  </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          NS: {nation.strength.toLocaleString()} | Rank: {nation.rank || 'N/A'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Selected Nation Editor */}
+            {selectedNation && (
+              <div className="border border-gray-600 rounded bg-gray-700 p-4">
+                <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                  Set Targeting Alliance Override for {selectedNation.nationName}
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">
+                      Current Alliance: {selectedNation.allianceName} (ID: {selectedNation.allianceId})
+                    </label>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">
+                      Targeting Alliance Override
+                    </label>
+                    <select
+                      value={targetingAllianceId}
+                      onChange={(e) => setTargetingAllianceId(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-600 text-gray-200 border border-gray-500 rounded focus:outline-none focus:border-primary"
+                    >
+                      <option value="">None (clear override)</option>
+                      {alliances.map((alliance) => (
+                        <option key={alliance.id} value={String(alliance.id)}>
+                          {alliance.name} (ID: {alliance.id})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                             <div className="flex gap-2">
                               <button
-                                onClick={() => handleSave(user.id)}
-                                disabled={isSaving}
-                                className="px-3 py-1 bg-primary text-white rounded hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
-                              >
-                                {isSaving ? 'Saving...' : 'Save'}
+                      onClick={handleSetNationTargetingAlliance}
+                      disabled={nationSaving}
+                      className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {nationSaving ? 'Saving...' : 'Save'}
                               </button>
                               <button
-                                onClick={() => handleCancel(user.id)}
-                                disabled={isSaving}
-                                className="px-3 py-1 bg-gray-600 text-gray-200 rounded hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                      onClick={() => {
+                        setSelectedNation(null);
+                        setTargetingAllianceId('');
+                      }}
+                      className="px-4 py-2 bg-gray-600 text-gray-200 rounded hover:bg-gray-500"
                               >
                                 Cancel
                               </button>
                             </div>
-                          ) : (
-                            <button
-                              onClick={() => handleEdit(user.id)}
-                              className="px-3 py-1 bg-primary text-white rounded hover:bg-primary/80 text-xs"
-                            >
-                              Edit
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Managed Alliances Modal */}
-        {allianceModalOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
-              <div className="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-100">
-                  Manage Alliances for {users.find((u) => u.id === allianceModalOpen)?.email}
-                </h2>
+        {activeTab === 'wars' && (
+          <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden p-6">
+            <h2 className="text-xl font-semibold text-gray-100 mb-4">War Alliance ID Editor</h2>
+            <p className="text-sm text-gray-400 mb-4">
+              Search for wars and edit the declaring or receiving alliance IDs. Select an alliance from the dropdown to set it, or select "None" to clear.
+            </p>
+
+            {/* Search */}
+            <div className="mb-4">
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  placeholder="Search by war ID, nation name, or ruler name..."
+                  value={warSearchQuery}
+                  onChange={(e) => setWarSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleWarSearch()}
+                  className="flex-1 px-3 py-2 bg-gray-700 text-gray-200 border border-gray-600 rounded focus:outline-none focus:border-primary"
+                />
                 <button
-                  onClick={handleCloseAllianceModal}
-                  className="text-gray-400 hover:text-gray-200 transition-colors"
-                  disabled={saving === allianceModalOpen}
+                  onClick={handleWarSearch}
+                  disabled={warSearchLoading}
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  {warSearchLoading ? 'Searching...' : 'Search'}
                 </button>
               </div>
+              <label className="flex items-center gap-2 text-sm text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={warSearchActiveOnly}
+                  onChange={(e) => setWarSearchActiveOnly(e.target.checked)}
+                  className="rounded border-gray-500 text-primary focus:ring-primary w-4 h-4"
+                />
+                Active only
+              </label>
+            </div>
 
-              <div className="px-6 py-4 flex-1 overflow-hidden flex flex-col">
-                {/* Search and Actions */}
-                <div className="mb-4 space-y-2">
-                  <input
-                    type="text"
-                    placeholder="Search alliances..."
-                    value={allianceSearchQuery}
-                    onChange={(e) => setAllianceSearchQuery(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-700 text-gray-200 border border-gray-600 rounded focus:outline-none focus:border-primary"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleSelectAllAlliances(allianceModalOpen)}
-                      className="px-3 py-1 text-xs bg-gray-700 text-gray-300 rounded hover:bg-gray-600 transition-colors"
+            {/* Search Results */}
+            {warSearchResults.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-300 mb-2">Search Results</h3>
+                <div className="border border-gray-600 rounded bg-gray-700 max-h-[600px] overflow-y-auto">
+                  {warSearchResults.map((war) => (
+                    <div
+                      key={war.warId}
+                      onClick={() => {
+                        setSelectedWar(war);
+                        setWarDeclaringAllianceId(war.declaringAllianceId ? String(war.declaringAllianceId) : '');
+                        setWarReceivingAllianceId(war.receivingAllianceId ? String(war.receivingAllianceId) : '');
+                      }}
+                      className={`p-3 cursor-pointer hover:bg-gray-600 transition-colors ${
+                        selectedWar?.warId === war.warId ? 'bg-gray-600' : ''
+                      }`}
                     >
-                      Select All
-                    </button>
-                    <button
-                      onClick={() => handleDeselectAllAlliances(allianceModalOpen)}
-                      className="px-3 py-1 text-xs bg-gray-700 text-gray-300 rounded hover:bg-gray-600 transition-colors"
-                    >
-                      Deselect All
-                    </button>
-                    <div className="ml-auto text-sm text-gray-400">
-                      {editedUsers.get(allianceModalOpen)?.managedAllianceIds?.length || 0} of{' '}
-                      {alliances.length} selected
+                      <div className="text-sm text-gray-200">
+                        <div className="font-medium">War ID: {war.warId}</div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {war.declaringNationName} ({war.declaringRulerName}) → {war.receivingNationName} ({war.receivingRulerName})
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          Declaring Alliance: {war.declaringAllianceName || 'None'} (ID: {war.declaringAllianceId || 'None'}) | 
+                          Receiving Alliance: {war.receivingAllianceName || 'None'} (ID: {war.receivingAllianceId || 'None'})
+                        </div>
+                        <div className="text-xs text-gray-400">Status: {war.status} | Date: {war.date}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Selected War Editor */}
+            {selectedWar && (
+              <div className="border border-gray-600 rounded bg-gray-700 p-4">
+                <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                  Edit Alliance IDs for War {selectedWar.warId}
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs text-gray-400 mb-2">
+                      {selectedWar.declaringNationName} ({selectedWar.declaringRulerName}) → {selectedWar.receivingNationName} ({selectedWar.receivingRulerName})
                     </div>
                   </div>
-                </div>
-
-                {/* Alliances List */}
-                <div className="flex-1 overflow-y-auto border border-gray-600 rounded bg-gray-700 p-2">
-                  {filteredAlliances.length > 0 ? (
-                    <div className="space-y-1">
-                      {filteredAlliances.map((alliance) => {
-                        const edited = editedUsers.get(allianceModalOpen) || users.find((u) => u.id === allianceModalOpen)!;
-                        const isSelected = edited.managedAllianceIds?.includes(alliance.id) || false;
-                        return (
-                          <label
-                            key={alliance.id}
-                            className="flex items-center space-x-3 py-2 px-3 cursor-pointer hover:bg-gray-600 rounded transition-colors"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleAlliance(allianceModalOpen, alliance.id)}
-                              className="rounded border-gray-500 text-primary focus:ring-primary w-4 h-4"
-                            />
-                            <div className="flex-1">
-                              <span className="text-gray-200 font-medium">{alliance.name}</span>
-                              <span className="text-gray-400 text-xs ml-2">
-                                ({alliance.nationCount} nations)
-                              </span>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-400">
-                      No alliances found matching "{allianceSearchQuery}"
-                    </div>
-                  )}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">
+                      Declaring Alliance ID
+                    </label>
+                    <select
+                      value={warDeclaringAllianceId}
+                      onChange={(e) => setWarDeclaringAllianceId(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-600 text-gray-200 border border-gray-500 rounded focus:outline-none focus:border-primary"
+                    >
+                      <option value="">None (clear)</option>
+                      {alliances.map((alliance) => (
+                        <option key={alliance.id} value={String(alliance.id)}>
+                          {alliance.name} (ID: {alliance.id})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">
+                      Receiving Alliance ID
+                    </label>
+                    <select
+                      value={warReceivingAllianceId}
+                      onChange={(e) => setWarReceivingAllianceId(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-600 text-gray-200 border border-gray-500 rounded focus:outline-none focus:border-primary"
+                    >
+                      <option value="">None (clear)</option>
+                      {alliances.map((alliance) => (
+                        <option key={alliance.id} value={String(alliance.id)}>
+                          {alliance.name} (ID: {alliance.id})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleUpdateWarAllianceIds}
+                      disabled={warSaving}
+                      className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {warSaving ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedWar(null);
+                        setWarDeclaringAllianceId('');
+                        setWarReceivingAllianceId('');
+                      }}
+                      className="px-4 py-2 bg-gray-600 text-gray-200 rounded hover:bg-gray-500"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
-
-              {/* Footer Actions */}
-              <div className="px-6 py-4 border-t border-gray-700 flex justify-end gap-3">
-                <button
-                  onClick={handleCloseAllianceModal}
-                  disabled={saving === allianceModalOpen}
-                  className="px-4 py-2 bg-gray-600 text-gray-200 rounded hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleSaveAlliances(allianceModalOpen)}
-                  disabled={saving === allianceModalOpen}
-                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {saving === allianceModalOpen ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         )}
       </div>

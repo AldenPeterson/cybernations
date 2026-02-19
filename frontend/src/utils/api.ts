@@ -148,4 +148,21 @@ export const API_ENDPOINTS = {
   // User management endpoints (ADMIN only)
   users: '/api/users',
   updateUser: (id: number) => `/api/users/${id}`,
+  // Admin endpoints (ADMIN only)
+  adminAlliances: '/api/admin/alliances',
+  adminSearchNations: (query: string, limit?: number) => {
+    const params = new URLSearchParams();
+    params.set('q', query);
+    if (limit) params.set('limit', limit.toString());
+    return `/api/admin/nations/search?${params.toString()}`;
+  },
+  adminSetNationTargetingAlliance: (nationId: number) => `/api/admin/nations/${nationId}/targeting-alliance`,
+  adminSearchWars: (query: string, limit?: number, activeOnly?: boolean) => {
+    const params = new URLSearchParams();
+    params.set('q', query);
+    if (limit) params.set('limit', limit.toString());
+    if (activeOnly !== undefined) params.set('activeOnly', activeOnly.toString());
+    return `/api/admin/wars/search?${params.toString()}`;
+  },
+  adminUpdateWarAllianceIds: (warId: number) => `/api/admin/wars/${warId}/alliance-ids`,
 } as const;

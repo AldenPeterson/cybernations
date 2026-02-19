@@ -39,6 +39,7 @@ model Nation {
   warchest                                               Float?
   spyglassLastUpdated                                    Int?           @map("spyglass_last_updated")
   rank                                                   Int?
+  targetingAllianceId                                    Int?           @map("targeting_alliance_id")
   createdAt                                              DateTime       @default(now()) @map("created_at")
   updatedAt                                              DateTime       @updatedAt @map("updated_at")
   firstSeenAt                                            DateTime       @default(now()) @map("first_seen_at")
@@ -62,6 +63,7 @@ model Nation {
   @@index([id])
   @@index([isActive])
   @@index([lastSeenAt])
+  @@index([targetingAllianceId])
   @@map("nations")
 }
 

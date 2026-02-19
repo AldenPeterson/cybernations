@@ -55,6 +55,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
 
   const adminItems = [
     { label: 'User Management', path: '/admin/users' },
+    { label: 'Nation & War Management', path: '/admin' },
     // Only show Alliance Manager if user can manage nations
     ...(canManageNations ? [{ label: 'Alliance Manager', path: selectedAllianceId ? `/nations/${selectedAllianceId}` : '/nations', devOnly: true }] : []),
   ];
@@ -81,6 +82,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   useEffect(() => {
     const pathParts = location.pathname.split('/');
     const tabName = pathParts[1];
+    const subPath = pathParts[2];
     
     let pageTitle: string;
     switch(tabName) {
@@ -127,7 +129,9 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         pageTitle = 'Events';
         break;
       case 'admin':
-        pageTitle = 'Admin - User Management';
+        pageTitle = subPath === 'users' 
+          ? 'Admin - User Management'
+          : 'Admin - Nation & War Management';
         break;
       default:
         pageTitle = 'CyberNations';
@@ -191,6 +195,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   const getCurrentTabName = (): string => {
     const pathParts = location.pathname.split('/');
     const tabName = pathParts[1];
+    const subPath = pathParts[2];
     
     switch(tabName) {
       case 'aid':
@@ -222,7 +227,9 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       case 'events':
         return 'Events';
       case 'admin':
-        return 'Admin - User Management';
+        return subPath === 'users'
+          ? 'Admin - User Management'
+          : 'Admin - Nation & War Management';
       default:
         return 'CyberNations';
     }

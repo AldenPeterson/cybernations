@@ -120,6 +120,65 @@ export class AllianceController {
   }
 
   /**
+   * Get all alliances (admin only - no filtering)
+   */
+  static async getAllAlliances(req: Request, res: Response) {
+    try {
+      const { prisma } = await import('../utils/prisma.js');
+      
+      // Query all alliances without filtering
+      const alliances = await prisma.alliance.findMany({
+        where: {
+          id: { gt: 0 },
+          name: { not: '' }
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+        orderBy: {
+          name: 'asc'
+        }
+      });
+      
+      // Count active nations for each alliance
+      const alliancesWithCounts = await Promise.all(
+        alliances.map(async (alliance) => {
+          const activeNationCount = await prisma.nation.count({
+            where: {
+              allianceId: alliance.id,
+              isActive: true
+            }
+          });
+          return {
+            id: alliance.id,
+            name: alliance.name,
+            nationCount: activeNationCount
+          };
+        })
+      );
+      
+      // Filter out empty names but don't filter by nation count
+      const allAlliances = alliancesWithCounts
+        .filter(alliance => alliance.name && alliance.name.trim() !== '')
+        .sort((a, b) => a.name.localeCompare(b.name));
+      
+      console.log(`Loaded ${allAlliances.length} alliances (all alliances, no filtering)`);
+      
+      res.json({
+        success: true,
+        alliances: allAlliances
+      });
+    } catch (error) {
+      console.error('Error in getAllAlliances:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch all alliances'
+      });
+    }
+  }
+
+  /**
    * Get alliance statistics
    */
   static async getAllianceStats(req: Request, res: Response) {

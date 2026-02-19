@@ -168,7 +168,7 @@ export class WarAssignmentService {
       throw new Error('Attacker and defender must be different nations');
     }
 
-    // Validate defender nation belongs to the specified alliance
+    // Validate defender nation belongs to the specified alliance (or has targeting override)
     const defender = await prisma.nation.findUnique({
       where: { id: defenderNationId },
       include: { alliance: true },
@@ -176,7 +176,8 @@ export class WarAssignmentService {
     if (!defender || !defender.isActive) {
       throw new Error('Defender nation not found or inactive');
     }
-    if (defender.allianceId !== allianceId) {
+    const effectiveAllianceId = defender.targetingAllianceId || defender.allianceId;
+    if (effectiveAllianceId !== allianceId) {
       throw new Error('Defender nation does not belong to this alliance');
     }
 
@@ -229,12 +230,16 @@ export class WarAssignmentService {
     allianceId: number
   ): Promise<WarAssignmentDto[]> {
     const { prisma } = await import('../utils/prisma.js');
-    // Load all non-archived assignments where defender currently belongs to this alliance
+    // Load all non-archived assignments where defender belongs to this alliance
+    // OR has targeting alliance override set to this alliance
     const assignments = await prisma.warAssignment.findMany({
       where: {
         archivedAt: null,
         defenderNation: {
-          allianceId,
+          OR: [
+            { allianceId },
+            { targetingAllianceId: allianceId }
+          ],
           isActive: true,
         },
       },
@@ -291,7 +296,8 @@ export class WarAssignmentService {
       throw new Error('Assignment not found');
     }
 
-    if (assignment.defenderNation.allianceId !== allianceId) {
+    const effectiveAllianceId = assignment.defenderNation.targetingAllianceId || assignment.defenderNation.allianceId;
+    if (effectiveAllianceId !== allianceId) {
       throw new Error('Assignment does not belong to this alliance');
     }
 

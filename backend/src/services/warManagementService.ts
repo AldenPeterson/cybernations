@@ -13,10 +13,13 @@ export class WarManagementService {
   static async getNationWars(allianceId: number, includePeaceMode: boolean = false, needsStagger: boolean = false) {
     const { prisma } = await import('../utils/prisma.js');
     
-    // Query only nations in this alliance
+    // Query nations in this alliance OR with targeting alliance override set to this alliance
     const allianceNationRecords = await prisma.nation.findMany({
       where: { 
-        allianceId,
+        OR: [
+          { allianceId },
+          { targetingAllianceId: allianceId }
+        ],
         isActive: true,
         ...(includePeaceMode ? {} : { inWarMode: true })
       },

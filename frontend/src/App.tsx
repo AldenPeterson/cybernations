@@ -17,6 +17,7 @@ import EventsPage from './pages/EventsPage'
 import WarStatsPage from './pages/WarStatsPage'
 import CasualtiesPage from './pages/CasualtiesPage'
 import AdminPage from './pages/AdminPage'
+import UserManagementPage from './pages/UserManagementPage'
 import UpdateRulerNamePage from './pages/UpdateRulerNamePage'
 import SpyOperationSubmissionPage from './pages/SpyOperationSubmissionPage'
 import { useAuth } from './contexts/AuthContext'
@@ -153,8 +154,8 @@ function App() {
         <Route path="/shame-offers" element={<ShameOffersPage />} />
         
         {/* Admin routes */}
-        <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
-        <Route path="/admin/users" element={<AdminPage />} />
+        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/users" element={<UserManagementPage />} />
         
         {/* Ruler name update page */}
         <Route path="/update-rulername" element={<UpdateRulerNamePage />} />
