@@ -35,9 +35,9 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   ];
 
   const warToolsItems = [
-    { label: 'Wars', path: selectedAllianceId ? `/wars/${selectedAllianceId}` : '/wars' },
     { label: 'Spy Operation Submission', path: '/warchest-submission' },
-  ];
+    { label: 'Wars', path: selectedAllianceId ? `/wars/${selectedAllianceId}` : '/wars' },
+  ].sort((a, b) => a.label.localeCompare(b.label));
 
   const statsItems = [
     { label: 'Aid Efficiency', path: '/aid-efficiency' },
@@ -46,7 +46,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     { label: 'Global Wars', path: '/global-wars' },
     { label: 'Nation Aid Efficiency', path: '/nation-aid-efficiency' },
     { label: 'Nuclear', path: '/nuclear-stats' },
-  ];
+  ].sort((a, b) => a.label.localeCompare(b.label));
 
   const utilitiesItems = [
     { label: 'NS Comparisons', path: '/ns-comparisons' },
@@ -58,7 +58,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     { label: 'Nation & War Management', path: '/admin' },
     // Only show Alliance Manager if user can manage nations
     ...(canManageNations ? [{ label: 'Alliance Manager', path: selectedAllianceId ? `/nations/${selectedAllianceId}` : '/nations', devOnly: true }] : []),
-  ];
+  ].sort((a, b) => a.label.localeCompare(b.label));
 
   useEffect(() => {
     // Set Doombrella as default if it exists and no alliance is already selected
