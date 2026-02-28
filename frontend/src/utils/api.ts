@@ -89,7 +89,13 @@ export const API_ENDPOINTS = {
   updateNationSlots: (allianceId: number, nationId: number) => `/api/alliances/${allianceId}/nations/${nationId}`,
   nationWars: (id: number) => `/api/alliances/${id}/nation-wars`,
   defendingWarsStats: (id: number) => `/api/alliances/${id}/defending-wars-stats`,
-  warCounts: (id: number) => `/api/alliances/${id}/war-counts`,
+  warCounts: (id: number, params?: { includeExpired?: boolean; startDate?: string }) => {
+    const search = new URLSearchParams();
+    if (params?.includeExpired !== undefined) search.set('includeExpired', String(params.includeExpired));
+    if (params?.startDate) search.set('startDate', params.startDate);
+    const q = search.toString();
+    return `/api/alliances/${id}/war-counts${q ? `?${q}` : ''}`;
+  },
   warAssignments: (id: number) => `/api/alliances/${id}/war-assignments`,
   staggerEligibility: '/api/stagger-eligibility',
   smallAidOffers: '/api/small-aid-offers',

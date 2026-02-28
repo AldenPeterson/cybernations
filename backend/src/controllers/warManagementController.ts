@@ -236,6 +236,7 @@ export class WarManagementController {
     try {
       const allianceId = parseInt(req.params.allianceId);
       const includeExpired = req.query.includeExpired === 'true';
+      const startDate = req.query.startDate as string | undefined;
 
       if (isNaN(allianceId)) {
         return res.status(400).json({
@@ -244,7 +245,7 @@ export class WarManagementController {
         });
       }
 
-      const stats = await WarManagementService.getDefendingWarsStats(allianceId, includeExpired);
+      const stats = await WarManagementService.getDefendingWarsStats(allianceId, includeExpired, startDate);
 
       // Merge attacking/defending counts by opposing alliance
       const byAllianceMap = new Map<number, { allianceId: number; allianceName: string; attacking: number; defending: number; total: number }>();
@@ -265,7 +266,7 @@ export class WarManagementController {
 
       const byAlliance = Array.from(byAllianceMap.values()).sort((a, b) => b.total - a.total);
 
-      console.log(`[API] getAllianceWarCounts (allianceId: ${allianceId}, includeExpired: ${includeExpired}): ${stats.totalDefendingWars} defending wars, ${stats.totalAttackingWars} attacking wars, ${stats.totalActiveWars} total active wars, ${byAlliance.length} opposing alliances`);
+      console.log(`[API] getAllianceWarCounts (allianceId: ${allianceId}, includeExpired: ${includeExpired}${startDate ? `, startDate: ${startDate}` : ''}): ${stats.totalDefendingWars} defending wars, ${stats.totalAttackingWars} attacking wars, ${stats.totalActiveWars} total active wars, ${byAlliance.length} opposing alliances`);
 
       res.json({
         success: true,
@@ -276,7 +277,8 @@ export class WarManagementController {
           activeTotal: stats.totalActiveWars,
           byAlliance
         },
-        includeExpired
+        includeExpired,
+        ...(startDate ? { startDate } : {})
       });
     } catch (error) {
       console.error('Error fetching alliance war counts:', error);

@@ -38,14 +38,27 @@ type AllianceRow = {
 type SortColumn = 'alliance' | 'attacking' | 'defending' | 'total' | 'nations';
 type SortDirection = 'asc' | 'desc';
 
+// Same default start date as Damage tab (wars declared after this date)
+const DEFAULT_START_DATE = '2026-02-05';
+
+/** Format YYYY-MM-DD to MM/DD/YYYY for API */
+function formatStartDateForApi(isoDate: string): string {
+  if (!isoDate) return '';
+  const [y, m, d] = isoDate.split('-');
+  return `${m}/${d}/${y}`;
+}
+
 const GlobalWarsPage: React.FC = () => {
   const [rows, setRows] = useState<AllianceRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<string>(DEFAULT_START_DATE);
   const [includeExpired, setIncludeExpired] = useState<boolean>(false);
   const [avgPerNation, setAvgPerNation] = useState<boolean>(false);
   const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const startDateForApi = formatStartDateForApi(startDate);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,13 +75,15 @@ const GlobalWarsPage: React.FC = () => {
         // Initialize rows
         setRows(alliances.map(a => ({ alliance: a, expanded: false })));
 
+        const params = (incExp: boolean) => ({ includeExpired: incExp, ...(startDateForApi ? { startDate: startDateForApi } : {}) });
+
         // Fetch war counts (both active-only and includeExpired) in parallel, chunked to avoid overwhelming server
         const chunkSize = 10;
         for (let i = 0; i < alliances.length; i += chunkSize) {
           const chunk = alliances.slice(i, i + chunkSize);
           const [activeResults, allResults] = await Promise.all([
-            Promise.allSettled(chunk.map(a => apiCallWithErrorHandling(`${API_ENDPOINTS.warCounts(a.id)}?includeExpired=false`))),
-            Promise.allSettled(chunk.map(a => apiCallWithErrorHandling(`${API_ENDPOINTS.warCounts(a.id)}?includeExpired=true`)))
+            Promise.allSettled(chunk.map(a => apiCallWithErrorHandling(API_ENDPOINTS.warCounts(a.id, params(false))))),
+            Promise.allSettled(chunk.map(a => apiCallWithErrorHandling(API_ENDPOINTS.warCounts(a.id, params(true)))))
           ]);
           if (cancelled) return;
 
@@ -101,7 +116,7 @@ const GlobalWarsPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [startDateForApi]);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -228,9 +243,19 @@ const GlobalWarsPage: React.FC = () => {
 
   return (
     <PageContainer className="px-4 sm:px-6 lg:px-8">
-      <div className="mb-4 flex items-center justify-between gap-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-xl sm:text-2xl font-bold text-white">Global Wars</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-gray-300">
+            <span className="whitespace-nowrap">Start date:</span>
+            <input
+              type="date"
+              className="form-input rounded border border-gray-600 bg-gray-800 text-gray-200 px-2 py-1.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary/30"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              title="Only count wars declared after this date (same as Damage tab default)"
+            />
+          </label>
           <label className="flex items-center gap-2 text-sm text-gray-300">
             <input
               type="checkbox"
@@ -240,7 +265,7 @@ const GlobalWarsPage: React.FC = () => {
             />
             Include expired
           </label>
-          <label className="flex items-center gap-2 text-sm text-gray-300 ml-3">
+          <label className="flex items-center gap-2 text-sm text-gray-300">
             <input
               type="checkbox"
               className="form-checkbox h-4 w-4 text-primary focus:ring-primary/30 border-gray-600 bg-gray-800 rounded"
@@ -251,7 +276,11 @@ const GlobalWarsPage: React.FC = () => {
           </label>
         </div>
       </div>
-      <p className="text-gray-400 text-sm mb-2">{includeExpired ? 'Including ended/expired wars.' : 'Only active wars (excluding ended/expired).'}{avgPerNation ? ' Showing averages per nation.' : ''}</p>
+      <p className="text-gray-400 text-sm mb-2">
+        {startDateForApi ? `Wars declared after ${startDateForApi}. ` : ''}
+        {includeExpired ? 'Including ended/expired wars.' : 'Only active wars (excluding ended/expired).'}
+        {avgPerNation ? ' Showing averages per nation.' : ''}
+      </p>
 
       {error && (
         <div className="mb-3 text-error">{error}</div>

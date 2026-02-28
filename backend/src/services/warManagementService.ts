@@ -421,8 +421,9 @@ export class WarManagementService {
 
   /**
    * Get defending wars statistics for an alliance
+   * @param startDate - Optional MM/DD/YYYY; only count wars declared after this date (same cutoff as damage tab when 2/5/2026)
    */
-  static async getDefendingWarsStats(allianceId: number, includeExpired: boolean = false) {
+  static async getDefendingWarsStats(allianceId: number, includeExpired: boolean = false, startDate?: string) {
     const { prisma } = await import('../utils/prisma.js');
     
     // Query only nations in this alliance
@@ -464,7 +465,7 @@ export class WarManagementService {
     });
     
     // Filter out expired wars by date if not including expired
-    const allianceWars = includeExpired 
+    let allianceWars = includeExpired 
       ? warRecords 
       : warRecords.filter((war: any) => {
           try {
@@ -474,6 +475,26 @@ export class WarManagementService {
             return false;
           }
         });
+
+    // Filter by start date (wars declared after startDate), matching damage tab semantics
+    if (startDate && startDate.trim()) {
+      let startTime: number;
+      try {
+        startTime = parseCentralTimeDate(`${startDate.trim()} 12:00:00 AM`).getTime();
+      } catch (e) {
+        console.warn('Invalid war-counts startDate, ignoring:', startDate);
+        startTime = 0;
+      }
+      if (startTime > 0) {
+        allianceWars = allianceWars.filter((war: any) => {
+          try {
+            return parseCentralTimeDate(war.date).getTime() > startTime;
+          } catch {
+            return false;
+          }
+        });
+      }
+    }
 
     const defendingWars = allianceWars.filter((war: any) => allianceNationIds.includes(war.receivingNationId));
     const attackingWars = allianceWars.filter((war: any) => allianceNationIds.includes(war.declaringNationId));
