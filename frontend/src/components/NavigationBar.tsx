@@ -54,7 +54,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   const adminItems = [
     ...(user && hasCapability('manage_users') ? [{ label: 'User Management', path: '/admin/users' }, { label: 'Role Capabilities', path: '/admin/role-capabilities' }] : []),
     ...(user && hasCapability('manage_all_alliance') ? [{ label: 'Nation & War Management', path: '/admin' }] : []),
-    ...(canManageNations ? [{ label: 'Alliance Manager', path: selectedAllianceId ? `/nations/${selectedAllianceId}` : '/nations', devOnly: true }] : []),
+    ...(canManageNations ? [{ label: 'Alliance Manager', path: selectedAllianceId ? `/nations/${selectedAllianceId}` : '/nations' }] : []),
   ].sort((a, b) => a.label.localeCompare(b.label));
 
   useEffect(() => {
