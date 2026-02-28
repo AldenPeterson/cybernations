@@ -14,7 +14,7 @@ export type UserRole = typeof UserRole[keyof typeof UserRole];
 export interface User {
   id: number;
   email: string;
-  role: UserRole;
+  roles: UserRole[];
   rulerName: string | null;
   capabilities: string[];
   managedAllianceIds: number[];
@@ -28,6 +28,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   fetchAuthState: () => Promise<void>;
   getUserRole: () => UserRole | null;
+  getUserRoles: () => UserRole[];
   hasCapability: (capability: string, allianceId?: number) => boolean;
   isAllianceManager: (allianceId: number) => boolean;
 }
@@ -64,6 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (u) {
           setUser({
             ...u,
+            roles: Array.isArray(u.roles) ? u.roles : [],
             capabilities: Array.isArray(u.capabilities) ? u.capabilities : [],
           });
         } else {
@@ -101,7 +103,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const getUserRole = (): UserRole | null => {
-    return user?.role || null;
+    if (!user?.roles?.length) return null;
+    // Primary = highest role (ADMIN > ALLIANCE_MANAGER > WAR_MANAGER > USER)
+    const order: UserRole[] = [UserRole.ADMIN, UserRole.ALLIANCE_MANAGER, UserRole.WAR_MANAGER, UserRole.USER];
+    for (const r of order) {
+      if (user.roles.includes(r)) return r;
+    }
+    return user.roles[0] ?? null;
+  };
+
+  const getUserRoles = (): UserRole[] => {
+    return user?.roles ?? [];
   };
 
   const hasCapability = (capability: string, allianceId?: number): boolean => {
@@ -153,6 +165,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     fetchAuthState,
     getUserRole,
+    getUserRoles,
     hasCapability,
     isAllianceManager,
   };

@@ -1,6 +1,6 @@
 import { prisma } from '../utils/prisma.js';
 import { UserRole } from '@prisma/client';
-import { getCapabilitiesForRole } from './capabilityService.js';
+import { getCapabilitiesForRoles } from './capabilityService.js';
 
 export interface GoogleProfile {
   sub: string; // Google ID
@@ -35,7 +35,9 @@ export async function findOrCreateUser(profile: GoogleProfile) {
           googleId,
           email,
           // rulerName is not set - will be manually configured
-          role: UserRole.USER,
+          roleAssignments: {
+            create: [{ role: UserRole.USER }],
+          },
         },
       });
     } catch (error) {
@@ -74,19 +76,14 @@ export async function findOrCreateUser(profile: GoogleProfile) {
 }
 
 /**
- * Get user role from database
+ * Get user roles from database
  */
-export async function getUserRole(userId: number): Promise<UserRole> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+export async function getUserRoles(userId: number): Promise<UserRole[]> {
+  const assignments = await prisma.userRoleAssignment.findMany({
+    where: { userId },
     select: { role: true },
   });
-
-  if (!user) {
-    throw new Error('User not found');
-  }
-
-  return user.role;
+  return assignments.map((a) => a.role);
 }
 
 /**
@@ -153,7 +150,7 @@ export async function removeAllianceManager(
 }
 
 /**
- * Check if user has a capability. For unscoped capabilities, checks role's capabilities from DB.
+ * Check if user has a capability. For unscoped capabilities, checks all roles' capabilities from DB.
  * For manage_alliance with allianceId, returns true if user has manage_all_alliance or is alliance manager for that alliance.
  */
 export async function hasCapability(
@@ -161,8 +158,8 @@ export async function hasCapability(
   capability: string,
   options?: { allianceId?: number }
 ): Promise<boolean> {
-  const role = await getUserRole(userId);
-  const roleCapabilities = await getCapabilitiesForRole(role);
+  const roles = await getUserRoles(userId);
+  const roleCapabilities = await getCapabilitiesForRoles(roles);
 
   if (capability === 'manage_alliance' && options?.allianceId != null) {
     const allianceId = options.allianceId;
@@ -183,11 +180,11 @@ export async function getEffectiveCapabilities(userId: number): Promise<{
   capabilities: string[];
   managedAllianceIds: number[];
 }> {
-  const [role, managedAllianceIds] = await Promise.all([
-    getUserRole(userId),
+  const [roles, managedAllianceIds] = await Promise.all([
+    getUserRoles(userId),
     getManagedAlliances(userId),
   ]);
-  const capabilities = await getCapabilitiesForRole(role);
+  const capabilities = await getCapabilitiesForRoles(roles);
   return { capabilities, managedAllianceIds };
 }
 

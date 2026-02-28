@@ -318,17 +318,29 @@ model RoleCapability {
 }
 
 model User {
-  id               Int                  @id @default(autoincrement())
-  googleId         String               @unique @map("google_id")
-  email            String               @unique
-  rulerName        String?              @unique @map("ruler_name")
-  role             UserRole             @default(USER)
-  createdAt        DateTime             @default(now()) @map("created_at")
-  updatedAt        DateTime             @updatedAt @map("updated_at")
+  id               Int                   @id @default(autoincrement())
+  googleId         String                @unique @map("google_id")
+  email            String                @unique
+  rulerName        String?               @unique @map("ruler_name")
+  createdAt        DateTime              @default(now()) @map("created_at")
+  updatedAt        DateTime              @updatedAt @map("updated_at")
+  roleAssignments  UserRoleAssignment[]
   managedAlliances UserAllianceManager[]
   warAssignments   WarAssignment[]
 
   @@map("users")
+}
+
+model UserRoleAssignment {
+  userId   Int      @map("user_id")
+  role     UserRole @map("role")
+  createdAt DateTime @default(now()) @map("created_at")
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, role])
+  @@index([userId])
+  @@index([role])
+  @@map("user_role_assignments")
 }
 
 model UserAllianceManager {

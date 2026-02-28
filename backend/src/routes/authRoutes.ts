@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { findOrCreateUser, getEffectiveCapabilities } from '../services/authService.js';
+import { findOrCreateUser, getEffectiveCapabilities, getUserRoles } from '../services/authService.js';
 import { getAuthUrl, generateState, getTokens, getUserInfo } from '../config/googleOAuth.js';
 import { prisma } from '../utils/prisma.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
@@ -142,7 +142,6 @@ authRoutes.get('/me', async (req: Request, res: Response) => {
       select: {
         id: true,
         email: true,
-        role: true,
         rulerName: true,
       },
     });
@@ -156,15 +155,18 @@ authRoutes.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const { capabilities, managedAllianceIds } = await getEffectiveCapabilities(userId);
+    const [roles, { capabilities, managedAllianceIds }] = await Promise.all([
+      getUserRoles(userId),
+      getEffectiveCapabilities(userId),
+    ]);
 
     res.json({
       success: true,
       user: {
         id: user.id,
         email: user.email,
-        role: user.role,
         rulerName: user.rulerName,
+        roles,
         capabilities,
         managedAllianceIds,
       },
@@ -233,20 +235,22 @@ authRoutes.post('/update-rulername', requireAuth, async (req: Request, res: Resp
         select: {
           id: true,
           email: true,
-          role: true,
           rulerName: true,
         },
       });
 
-      const { capabilities, managedAllianceIds } = await getEffectiveCapabilities(userId);
+      const [roles, { capabilities, managedAllianceIds }] = await Promise.all([
+        getUserRoles(userId),
+        getEffectiveCapabilities(userId),
+      ]);
 
       res.json({
         success: true,
         user: {
           id: updatedUser.id,
           email: updatedUser.email,
-          role: updatedUser.role,
           rulerName: updatedUser.rulerName,
+          roles,
           capabilities,
           managedAllianceIds,
         },

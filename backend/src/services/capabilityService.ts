@@ -11,3 +11,16 @@ export async function getCapabilitiesForRole(role: UserRole): Promise<string[]> 
   });
   return rows.map((r) => r.capability.name);
 }
+
+/**
+ * Get capability names for multiple roles (union, deduplicated).
+ */
+export async function getCapabilitiesForRoles(roles: UserRole[]): Promise<string[]> {
+  if (roles.length === 0) return [];
+  const rows = await prisma.roleCapability.findMany({
+    where: { role: { in: roles } },
+    select: { capability: { select: { name: true } } },
+  });
+  const names = new Set(rows.map((r) => r.capability.name));
+  return Array.from(names);
+}

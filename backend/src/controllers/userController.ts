@@ -14,9 +14,9 @@ export class UserController {
           id: true,
           email: true,
           rulerName: true,
-          role: true,
           createdAt: true,
           updatedAt: true,
+          roleAssignments: { select: { role: true } },
           managedAlliances: {
             select: {
               allianceId: true,
@@ -34,12 +34,12 @@ export class UserController {
         },
       });
 
-      // Transform the data to include managedAllianceIds
+      // Transform the data to include managedAllianceIds and roles
       const usersWithAllianceIds = users.map((user) => ({
         id: user.id,
         email: user.email,
         rulerName: user.rulerName,
-        role: user.role,
+        roles: user.roleAssignments.map((r) => r.role),
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         managedAllianceIds: user.managedAlliances.map((ma) => ma.allianceId),
@@ -72,14 +72,25 @@ export class UserController {
         });
       }
 
-      const { email, rulerName, role, managedAllianceIds } = req.body;
+      const { email, rulerName, roles, managedAllianceIds } = req.body;
 
-      // Validate role if provided
-      if (role && !Object.values(UserRole).includes(role)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid role',
-        });
+      // Validate roles if provided
+      if (roles !== undefined) {
+        if (!Array.isArray(roles)) {
+          return res.status(400).json({
+            success: false,
+            error: 'roles must be an array',
+          });
+        }
+        const validRoles = Object.values(UserRole);
+        for (const r of roles) {
+          if (!validRoles.includes(r)) {
+            return res.status(400).json({
+              success: false,
+              error: `Invalid role: ${r}`,
+            });
+          }
+        }
       }
 
       // Check if user exists
@@ -98,21 +109,25 @@ export class UserController {
       const updateData: any = {};
       if (email !== undefined) updateData.email = email;
       if (rulerName !== undefined) updateData.rulerName = rulerName || null; // Allow clearing rulerName
-      if (role !== undefined) updateData.role = role;
 
       // Update user
-      const updatedUser = await prisma.user.update({
+      await prisma.user.update({
         where: { id: userId },
         data: updateData,
-        select: {
-          id: true,
-          email: true,
-          rulerName: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-        },
       });
+
+      // Update role assignments if provided
+      if (roles !== undefined) {
+        await prisma.userRoleAssignment.deleteMany({
+          where: { userId },
+        });
+        if (roles.length > 0) {
+          await prisma.userRoleAssignment.createMany({
+            data: roles.map((role: UserRole) => ({ userId, role })),
+            skipDuplicates: true,
+          });
+        }
+      }
 
       // Update managed alliances if provided
       if (managedAllianceIds !== undefined) {
@@ -133,16 +148,16 @@ export class UserController {
         }
       }
 
-      // Fetch updated user with managed alliances
+      // Fetch updated user with roles and managed alliances
       const userWithAlliances = await prisma.user.findUnique({
         where: { id: userId },
         select: {
           id: true,
           email: true,
           rulerName: true,
-          role: true,
           createdAt: true,
           updatedAt: true,
+          roleAssignments: { select: { role: true } },
           managedAlliances: {
             select: {
               allianceId: true,
@@ -157,7 +172,7 @@ export class UserController {
           id: userWithAlliances!.id,
           email: userWithAlliances!.email,
           rulerName: userWithAlliances!.rulerName,
-          role: userWithAlliances!.role,
+          roles: userWithAlliances!.roleAssignments.map((r) => r.role),
           createdAt: userWithAlliances!.createdAt,
           updatedAt: userWithAlliances!.updatedAt,
           managedAllianceIds: userWithAlliances!.managedAlliances.map(

@@ -5,11 +5,18 @@ import PageContainer from '../components/PageContainer';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { useAlliances } from '../contexts/AlliancesContext';
 
+const ALL_ROLES: UserRole[] = [
+  UserRole.USER,
+  UserRole.ALLIANCE_MANAGER,
+  UserRole.WAR_MANAGER,
+  UserRole.ADMIN,
+];
+
 interface User {
   id: number;
   email: string;
   rulerName: string | null;
-  role: UserRole;
+  roles: UserRole[];
   createdAt: string;
   updatedAt: string;
   managedAllianceIds: number[];
@@ -99,8 +106,12 @@ const UserManagementPage: React.FC = () => {
       if (edited.rulerName !== undefined && edited.rulerName !== originalUser.rulerName) {
         updateData.rulerName = edited.rulerName || null;
       }
-      if (edited.role !== undefined && edited.role !== originalUser.role) {
-        updateData.role = edited.role;
+      if (
+        edited.roles !== undefined &&
+        JSON.stringify([...edited.roles].sort()) !==
+          JSON.stringify([...originalUser.roles].sort())
+      ) {
+        updateData.roles = edited.roles;
       }
       if (
         edited.managedAllianceIds !== undefined &&
@@ -259,7 +270,7 @@ const UserManagementPage: React.FC = () => {
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">ID</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Email</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Ruler Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Role</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Roles</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Managed Alliances</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Created</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Actions</th>
@@ -303,32 +314,54 @@ const UserManagementPage: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 text-sm">
                           {isEditing ? (
-                            <select
-                              value={edited.role}
-                              onChange={(e) =>
-                                handleFieldChange(user.id, 'role', e.target.value as UserRole)
-                              }
-                              className="w-full px-2 py-1 bg-gray-700 text-gray-200 border border-gray-600 rounded focus:outline-none focus:border-primary"
-                            >
-                              <option value={UserRole.USER}>USER</option>
-                              <option value={UserRole.ALLIANCE_MANAGER}>ALLIANCE_MANAGER</option>
-                              <option value={UserRole.WAR_MANAGER}>WAR_MANAGER</option>
-                              <option value={UserRole.ADMIN}>ADMIN</option>
-                            </select>
+                            <div className="flex flex-wrap gap-2">
+                              {ALL_ROLES.map((role) => {
+                                const currentRoles = edited.roles ?? user.roles;
+                                const checked = currentRoles.includes(role);
+                                return (
+                                  <label
+                                    key={role}
+                                    className="inline-flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={() => {
+                                        const next = checked
+                                          ? currentRoles.filter((r) => r !== role)
+                                          : [...currentRoles, role];
+                                        handleFieldChange(user.id, 'roles', next);
+                                      }}
+                                      className="rounded border-gray-500 bg-gray-700 text-primary focus:ring-primary"
+                                    />
+                                    <span className="text-gray-300 text-xs">{role}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
                           ) : (
-                            <span
-                              className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                                user.role === UserRole.ADMIN
-                                  ? 'bg-red-900/50 text-red-200'
-                                  : user.role === UserRole.ALLIANCE_MANAGER
-                                  ? 'bg-blue-900/50 text-blue-200'
-                                  : user.role === UserRole.WAR_MANAGER
-                                  ? 'bg-orange-900/50 text-orange-200'
-                                  : 'bg-gray-700 text-gray-300'
-                              }`}
-                            >
-                              {user.role}
-                            </span>
+                            <div className="flex flex-wrap gap-1">
+                              {user.roles.length === 0 ? (
+                                <span className="text-gray-500 text-xs">None</span>
+                              ) : (
+                                user.roles.map((role) => (
+                                  <span
+                                    key={role}
+                                    className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                                      role === UserRole.ADMIN
+                                        ? 'bg-red-900/50 text-red-200'
+                                        : role === UserRole.ALLIANCE_MANAGER
+                                        ? 'bg-blue-900/50 text-blue-200'
+                                        : role === UserRole.WAR_MANAGER
+                                        ? 'bg-orange-900/50 text-orange-200'
+                                        : 'bg-gray-700 text-gray-300'
+                                    }`}
+                                  >
+                                    {role}
+                                  </span>
+                                ))
+                              )}
+                            </div>
                           )}
                         </td>
                         <td className="px-4 py-3 text-sm">
