@@ -18,6 +18,7 @@ import WarStatsPage from './pages/WarStatsPage'
 import CasualtiesPage from './pages/CasualtiesPage'
 import AdminPage from './pages/AdminPage'
 import UserManagementPage from './pages/UserManagementPage'
+import RoleCapabilitiesPage from './pages/RoleCapabilitiesPage'
 import UpdateRulerNamePage from './pages/UpdateRulerNamePage'
 import SpyOperationSubmissionPage from './pages/SpyOperationSubmissionPage'
 import { useAuth } from './contexts/AuthContext'
@@ -156,6 +157,7 @@ function App() {
         {/* Admin routes */}
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/admin/users" element={<UserManagementPage />} />
+        <Route path="/admin/role-capabilities" element={<RoleCapabilitiesPage />} />
         
         {/* Ruler name update page */}
         <Route path="/update-rulername" element={<UpdateRulerNamePage />} />

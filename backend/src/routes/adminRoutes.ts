@@ -1,14 +1,20 @@
 import { Router } from 'express';
 import { AdminController } from '../controllers/adminController.js';
 import { AllianceController } from '../controllers/allianceController.js';
-import { requireAuth, requireRole } from '../middleware/authMiddleware.js';
-import { UserRole } from '@prisma/client';
+import { RoleCapabilityController } from '../controllers/roleCapabilityController.js';
+import { requireAuth, requireCapability } from '../middleware/authMiddleware.js';
 
 export const adminRoutes = Router();
 
-// All admin routes require authentication and ADMIN role
 adminRoutes.use(requireAuth);
-adminRoutes.use(requireRole([UserRole.ADMIN]));
+
+// Role capabilities (manage_users) - backend protects these routes
+adminRoutes.get('/capabilities', requireCapability('manage_users'), RoleCapabilityController.listCapabilities);
+adminRoutes.get('/roles/:role/capabilities', requireCapability('manage_users'), RoleCapabilityController.getRoleCapabilities);
+adminRoutes.put('/roles/:role/capabilities', requireCapability('manage_users'), RoleCapabilityController.setRoleCapabilities);
+
+// Rest of admin routes require manage_all_alliance capability
+adminRoutes.use(requireCapability('manage_all_alliance'));
 
 // Get all alliances (no filtering)
 adminRoutes.get('/alliances', AllianceController.getAllAlliances);

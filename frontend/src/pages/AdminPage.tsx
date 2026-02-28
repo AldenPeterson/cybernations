@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import PageContainer from '../components/PageContainer';
-import { useAuth, UserRole } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useAlliances } from '../contexts/AlliancesContext';
 
 const AdminPage: React.FC = () => {
-  const { user: currentUser, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, hasCapability } = useAuth();
   const { alliances: defaultAlliances } = useAlliances();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
@@ -31,24 +31,16 @@ const AdminPage: React.FC = () => {
   const [warReceivingAllianceId, setWarReceivingAllianceId] = useState<string>('');
   const [warSaving, setWarSaving] = useState<boolean>(false);
 
-  // Check if user is authenticated and is ADMIN
   useEffect(() => {
-    // Wait for auth to load before redirecting
-    if (authLoading) {
-      return;
-    }
-
-    if (!isAuthenticated || currentUser?.role !== UserRole.ADMIN) {
+    if (authLoading) return;
+    if (!isAuthenticated || !hasCapability('manage_all_alliance')) {
       navigate('/aid');
     }
-  }, [isAuthenticated, currentUser, navigate, authLoading]);
+  }, [isAuthenticated, hasCapability, authLoading, navigate]);
 
-  // Fetch all alliances for admin dropdowns
   useEffect(() => {
     const fetchAllAlliances = async () => {
-      if (!isAuthenticated || currentUser?.role !== UserRole.ADMIN) {
-        return;
-      }
+      if (!isAuthenticated || !hasCapability('manage_all_alliance')) return;
 
       try {
         const response = await apiCallWithErrorHandling(API_ENDPOINTS.adminAlliances);
@@ -63,7 +55,7 @@ const AdminPage: React.FC = () => {
     };
 
     fetchAllAlliances();
-  }, [isAuthenticated, currentUser, defaultAlliances]);
+  }, [isAuthenticated, hasCapability, defaultAlliances]);
 
   // Use allAlliances if available, otherwise fallback to defaultAlliances
   const alliances = allAlliances.length > 0 ? allAlliances : defaultAlliances;
@@ -228,7 +220,7 @@ const AdminPage: React.FC = () => {
     );
   }
 
-  if (!isAuthenticated || currentUser?.role !== UserRole.ADMIN) {
+  if (!isAuthenticated || !hasCapability('manage_all_alliance')) {
     return null;
   }
 

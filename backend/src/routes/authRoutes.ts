@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { findOrCreateUser, getManagedAlliances } from '../services/authService.js';
+import { findOrCreateUser, getEffectiveCapabilities } from '../services/authService.js';
 import { getAuthUrl, generateState, getTokens, getUserInfo } from '../config/googleOAuth.js';
 import { prisma } from '../utils/prisma.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
@@ -156,8 +156,7 @@ authRoutes.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    // Get managed alliance IDs
-    const managedAllianceIds = await getManagedAlliances(userId);
+    const { capabilities, managedAllianceIds } = await getEffectiveCapabilities(userId);
 
     res.json({
       success: true,
@@ -166,6 +165,7 @@ authRoutes.get('/me', async (req: Request, res: Response) => {
         email: user.email,
         role: user.role,
         rulerName: user.rulerName,
+        capabilities,
         managedAllianceIds,
       },
     });
@@ -222,8 +222,10 @@ authRoutes.post('/update-rulername', requireAuth, async (req: Request, res: Resp
     }
 
     const userId = req.session.userId;
+    if (userId == null) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
 
-    // Update only the rulerName field
     try {
       const updatedUser = await prisma.user.update({
         where: { id: userId },
@@ -236,6 +238,8 @@ authRoutes.post('/update-rulername', requireAuth, async (req: Request, res: Resp
         },
       });
 
+      const { capabilities, managedAllianceIds } = await getEffectiveCapabilities(userId);
+
       res.json({
         success: true,
         user: {
@@ -243,6 +247,8 @@ authRoutes.post('/update-rulername', requireAuth, async (req: Request, res: Resp
           email: updatedUser.email,
           role: updatedUser.role,
           rulerName: updatedUser.rulerName,
+          capabilities,
+          managedAllianceIds,
         },
       });
     } catch (error: any) {

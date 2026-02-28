@@ -1,5 +1,6 @@
 import { prisma } from '../utils/prisma.js';
 import { UserRole } from '@prisma/client';
+import { getCapabilitiesForRole } from './capabilityService.js';
 
 export interface GoogleProfile {
   sub: string; // Google ID
@@ -149,5 +150,44 @@ export async function removeAllianceManager(
       },
     },
   });
+}
+
+/**
+ * Check if user has a capability. For unscoped capabilities, checks role's capabilities from DB.
+ * For manage_alliance with allianceId, returns true if user has manage_all_alliance or is alliance manager for that alliance.
+ */
+export async function hasCapability(
+  userId: number,
+  capability: string,
+  options?: { allianceId?: number }
+): Promise<boolean> {
+  const role = await getUserRole(userId);
+  const roleCapabilities = await getCapabilitiesForRole(role);
+
+  if (capability === 'manage_alliance' && options?.allianceId != null) {
+    const allianceId = options.allianceId;
+    if (roleCapabilities.includes('manage_all_alliance')) return true;
+    if (roleCapabilities.includes('manage_alliance')) {
+      return isAllianceManager(userId, allianceId);
+    }
+    return false;
+  }
+
+  return roleCapabilities.includes(capability);
+}
+
+/**
+ * Get effective capabilities and managed alliance IDs for /me and UI.
+ */
+export async function getEffectiveCapabilities(userId: number): Promise<{
+  capabilities: string[];
+  managedAllianceIds: number[];
+}> {
+  const [role, managedAllianceIds] = await Promise.all([
+    getUserRole(userId),
+    getManagedAlliances(userId),
+  ]);
+  const capabilities = await getCapabilitiesForRole(role);
+  return { capabilities, managedAllianceIds };
 }
 

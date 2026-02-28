@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAlliances } from '../contexts/AlliancesContext';
-import { useAuth, UserRole } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface AllianceRedirectProps {
   tabName: string;
@@ -8,11 +8,9 @@ interface AllianceRedirectProps {
 
 const AllianceRedirect: React.FC<AllianceRedirectProps> = ({ tabName }) => {
   const { alliances, loading } = useAlliances();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, hasCapability } = useAuth();
 
-  // For nations tab, check authentication and permissions
   if (tabName === 'nations') {
-    // Wait for auth to load
     if (isLoading) {
       return (
         <div className="text-center p-10 text-gray-600 mt-20">
@@ -20,27 +18,18 @@ const AllianceRedirect: React.FC<AllianceRedirectProps> = ({ tabName }) => {
         </div>
       );
     }
-
-    // If not authenticated, redirect to nations page which will show error
     if (!isAuthenticated || !user) {
       return <Navigate to="/nations" replace />;
     }
-
-    // Check if user is admin or has manageable alliances
-    const isAdmin = user.role === UserRole.ADMIN;
-    const hasManageableAlliances = user.managedAllianceIds.length > 0;
-
-    if (!isAdmin && !hasManageableAlliances) {
-      // User can't manage any alliances, redirect to nations page which will show error
+    const canManageAll = hasCapability('manage_all_alliance');
+    const managedIds = user.managedAllianceIds ?? [];
+    const hasManageableAlliances = canManageAll || managedIds.length > 0;
+    if (!hasManageableAlliances) {
       return <Navigate to="/nations" replace />;
     }
-
-    // If user can only manage one alliance, redirect to it
-    if (!isAdmin && user.managedAllianceIds.length === 1) {
-      return <Navigate to={`/${tabName}/${user.managedAllianceIds[0]}`} replace />;
+    if (!canManageAll && managedIds.length === 1) {
+      return <Navigate to={`/${tabName}/${managedIds[0]}`} replace />;
     }
-
-    // For admins or users with multiple manageable alliances, continue with default behavior
   }
 
   // If alliances are still loading, show a loading state

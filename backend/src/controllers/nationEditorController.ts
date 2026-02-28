@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import { AllianceService } from '../services/allianceService.js';
 import { updateDiscordHandle, getDiscordHandle } from '../utils/nationDiscordHandles.js';
-import { getUserRole, isAllianceManager } from '../services/authService.js';
-import { UserRole } from '@prisma/client';
+import { hasCapability } from '../services/authService.js';
 
 export class NationEditorController {
   /**
@@ -30,16 +29,12 @@ export class NationEditorController {
 
       // Verify user can manage this alliance (defense in depth)
       const userId = req.session.userId;
-      const userRole = await getUserRole(userId);
-      
-      if (userRole !== UserRole.ADMIN) {
-        const canManage = await isAllianceManager(userId, allianceId);
-        if (!canManage) {
-          return res.status(403).json({
-            success: false,
-            error: 'You do not have permission to manage this alliance'
-          });
-        }
+      const canManage = await hasCapability(userId, 'manage_alliance', { allianceId });
+      if (!canManage) {
+        return res.status(403).json({
+          success: false,
+          error: 'You do not have permission to manage this alliance'
+        });
       }
 
       const config = await AllianceService.getNationsConfig(allianceId);
@@ -88,16 +83,12 @@ export class NationEditorController {
 
       // Verify user can manage this alliance (defense in depth)
       const userId = req.session.userId;
-      const userRole = await getUserRole(userId);
-      
-      if (userRole !== UserRole.ADMIN) {
-        const canManage = await isAllianceManager(userId, allianceId);
-        if (!canManage) {
-          return res.status(403).json({
-            success: false,
-            error: 'You do not have permission to manage this alliance'
-          });
-        }
+      const canManage = await hasCapability(userId, 'manage_alliance', { allianceId });
+      if (!canManage) {
+        return res.status(403).json({
+          success: false,
+          error: 'You do not have permission to manage this alliance'
+        });
       }
 
       const { discord_handle, has_dra, notes, slots } = req.body;

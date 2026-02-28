@@ -12,6 +12,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:seed": "prisma db seed",
     "migrate:json": "tsx scripts/migrate-json.ts"
   },
   "dependencies": {
@@ -43,5 +44,8 @@
     "tsx": "^4.6.0",
     "typescript": "^5.3.0",
     "vitest": "^1.0.0"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { useAlliances } from '../contexts/AlliancesContext';
-import { useAuth, UserRole } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import LoginButton from './LoginButton';
 import NavigationDropdown, { MobileNavigationDropdown } from './NavigationDropdown';
 import UpdateRulerNameModal from './UpdateRulerNameModal';
@@ -17,16 +17,14 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   setSelectedAllianceId 
 }) => {
   const { alliances, loading, error } = useAlliances();
-  const { isAuthenticated, user, logout, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, user, logout, isLoading: authLoading, hasCapability } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showRulerNameModal, setShowRulerNameModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Check if user can manage nations (admin or has manageable alliances)
-  const canManageNations = isAuthenticated && user && (
-    user.role === UserRole.ADMIN || user.managedAllianceIds.length > 0
-  );
+  const canManageNations = isAuthenticated && user && (hasCapability('manage_all_alliance') || (user.managedAllianceIds?.length ?? 0) > 0);
+  const showAdminMenu = isAuthenticated && user && (hasCapability('manage_users') || hasCapability('manage_all_alliance') || canManageNations);
 
   // Define navigation structure
   const aidToolsItems = [
@@ -54,9 +52,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   ];
 
   const adminItems = [
-    { label: 'User Management', path: '/admin/users' },
-    { label: 'Nation & War Management', path: '/admin' },
-    // Only show Alliance Manager if user can manage nations
+    ...(user && hasCapability('manage_users') ? [{ label: 'User Management', path: '/admin/users' }, { label: 'Role Capabilities', path: '/admin/role-capabilities' }] : []),
+    ...(user && hasCapability('manage_all_alliance') ? [{ label: 'Nation & War Management', path: '/admin' }] : []),
     ...(canManageNations ? [{ label: 'Alliance Manager', path: selectedAllianceId ? `/nations/${selectedAllianceId}` : '/nations', devOnly: true }] : []),
   ].sort((a, b) => a.label.localeCompare(b.label));
 
@@ -129,9 +126,11 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         pageTitle = 'Events';
         break;
       case 'admin':
-        pageTitle = subPath === 'users' 
+        pageTitle = subPath === 'users'
           ? 'Admin - User Management'
-          : 'Admin - Nation & War Management';
+          : subPath === 'role-capabilities'
+            ? 'Admin - Role Capabilities'
+            : 'Admin - Nation & War Management';
         break;
       default:
         pageTitle = 'CyberNations';
@@ -259,18 +258,12 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
 
   // Get filtered alliances based on current page and user permissions
   const getFilteredAlliances = () => {
-    // If on nations page, filter to only show manageable alliances
     if (isOnNationsPage() && isAuthenticated && user) {
-      const isAdmin = user.role === UserRole.ADMIN;
-      if (isAdmin) {
-        // Admins can see all alliances
+      if (hasCapability('manage_all_alliance')) {
         return alliances;
-      } else {
-        // Non-admins can only see alliances they manage
-        return alliances.filter(alliance => user.managedAllianceIds.includes(alliance.id));
       }
+      return alliances.filter((alliance) => (user.managedAllianceIds ?? []).includes(alliance.id));
     }
-    // For other pages, show all alliances
     return alliances;
   };
 
@@ -311,7 +304,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
           >
             Events
           </Link>
-          {isAuthenticated && user?.role === UserRole.ADMIN && (
+          {showAdminMenu && (
             <NavigationDropdown label="Admin" items={adminItems} />
           )}
         </div>
@@ -414,7 +407,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             >
               Events
             </Link>
-            {isAuthenticated && user?.role === UserRole.ADMIN && (
+            {showAdminMenu && (
               <MobileNavigationDropdown 
                 label="Admin" 
                 items={adminItems}

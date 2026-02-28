@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import { WarManagementController } from '../controllers/warManagementController.js';
 import { validateAllianceId } from '../middleware/validation.js';
-import { requireAuth, requireRole } from '../middleware/authMiddleware.js';
-import { UserRole } from '@prisma/client';
+import { requireAuth, requireCapability } from '../middleware/authMiddleware.js';
 
 export const warManagementRoutes = Router();
 
@@ -15,12 +14,12 @@ warManagementRoutes.get('/alliances/:allianceId/defending-wars', validateAllianc
 // Get defending wars statistics for an alliance
 warManagementRoutes.get('/alliances/:allianceId/defending-wars-stats', validateAllianceId, WarManagementController.getDefendingWarsStats);
 
-// War assignments for an alliance (WAR_MANAGER/ADMIN only)
+// War assignments for an alliance (manage_war_assignments capability)
 warManagementRoutes.get(
   '/alliances/:allianceId/war-assignments',
   validateAllianceId,
   requireAuth,
-  requireRole([UserRole.WAR_MANAGER, UserRole.ADMIN]),
+  requireCapability('manage_war_assignments'),
   WarManagementController.getWarAssignments
 );
 
@@ -28,7 +27,7 @@ warManagementRoutes.post(
   '/alliances/:allianceId/war-assignments',
   validateAllianceId,
   requireAuth,
-  requireRole([UserRole.WAR_MANAGER, UserRole.ADMIN]),
+  requireCapability('manage_war_assignments'),
   WarManagementController.createWarAssignment
 );
 
@@ -36,7 +35,7 @@ warManagementRoutes.delete(
   '/alliances/:allianceId/war-assignments/:assignmentId',
   validateAllianceId,
   requireAuth,
-  requireRole([UserRole.WAR_MANAGER, UserRole.ADMIN]),
+  requireCapability('manage_war_assignments'),
   WarManagementController.deleteWarAssignment
 );
 

@@ -85,9 +85,20 @@ const NavigationDropdown: React.FC<NavigationDropdownProps> = ({ label, items })
       {isOpen && (
         <div className="absolute top-full left-0 mt-1 min-w-[200px] bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
           {filteredItems.map((item, index) => {
-            const isActive = location.pathname === item.path || 
-                            location.pathname.startsWith(item.path + '/');
-            
+            // Exact match → active. Prefix match → active only if no other item is a more specific match
+            // (avoids e.g. /admin and /admin/users both being active on /admin/users)
+            const isActive = (() => {
+              if (location.pathname === item.path) return true;
+              if (!location.pathname.startsWith(item.path + '/')) return false;
+              const hasMoreSpecificMatch = filteredItems.some(
+                (other) =>
+                  other.path !== item.path &&
+                  (location.pathname === other.path || location.pathname.startsWith(other.path + '/')) &&
+                  other.path.startsWith(item.path)
+              );
+              return !hasMoreSpecificMatch;
+            })();
+
             return (
               <Link
                 key={index}
@@ -166,9 +177,18 @@ export const MobileNavigationDropdown: React.FC<MobileDropdownProps> = ({
       {isExpanded && (
         <div className="ml-4 mt-1 space-y-1">
           {filteredItems.map((item, index) => {
-            const isActive = location.pathname === item.path || 
-                            location.pathname.startsWith(item.path + '/');
-            
+            const isActive = (() => {
+              if (location.pathname === item.path) return true;
+              if (!location.pathname.startsWith(item.path + '/')) return false;
+              const hasMoreSpecificMatch = filteredItems.some(
+                (other) =>
+                  other.path !== item.path &&
+                  (location.pathname === other.path || location.pathname.startsWith(other.path + '/')) &&
+                  other.path.startsWith(item.path)
+              );
+              return !hasMoreSpecificMatch;
+            })();
+
             return (
               <Link
                 key={index}

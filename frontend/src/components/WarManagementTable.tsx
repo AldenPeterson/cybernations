@@ -8,7 +8,7 @@ import WarchestHistoryDialog from './WarchestHistoryDialog';
 import { apiCall, apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import { tableClasses, EMPTY_CELL_BG } from '../styles/tableClasses';
 import { useAlliances } from '../contexts/AlliancesContext';
-import { useAuth, UserRole } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface StaggerRecommendationsCellProps {
   rawRecommendations: any[]; // Pre-fetched recommendations passed from parent
@@ -273,7 +273,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   const [allWarsEndingInDays, setAllWarsEndingInDays] = useState<boolean>(false);
   const [warsEndingInDays, setWarsEndingInDays] = useState<number>(7);
   const { alliances } = useAlliances();
-  const { user } = useAuth();
+  const { user, hasCapability } = useAuth();
   const [assignAllianceIds, setAssignAllianceIds] = useState<number[]>([]);
   const [staggerRecommendationsMap, setStaggerRecommendationsMap] = useState<Map<number, any[]>>(new Map());
   const fetchingStaggerRecommendationsRef = useRef(false);
@@ -360,8 +360,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     setSearchParams(newSearchParams, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  const canManageAssignments =
-    !!user && (user.role === UserRole.WAR_MANAGER || user.role === UserRole.ADMIN);
+  const canManageAssignments = !!user && hasCapability('manage_war_assignments');
 
   const fetchAssignments = useCallback(async () => {
     if (!canManageAssignments || !allianceId) {

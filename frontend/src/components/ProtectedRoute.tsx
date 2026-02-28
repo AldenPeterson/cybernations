@@ -1,19 +1,21 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth, UserRole } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: UserRole[];
+  requiredCapability?: string | string[];
+  requiredCapabilityAllianceId?: number;
   requireAllianceManager?: number;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  requiredRole,
+  requiredCapability,
+  requiredCapabilityAllianceId,
   requireAllianceManager,
 }) => {
-  const { isAuthenticated, isLoading, user, isAllianceManager } = useAuth();
+  const { isAuthenticated, isLoading, user, hasCapability, isAllianceManager } = useAuth();
 
   if (isLoading) {
     return (
@@ -27,8 +29,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/" replace />;
   }
 
-  if (requiredRole && user) {
-    if (!requiredRole.includes(user.role)) {
+  if (requiredCapability && user) {
+    const caps = Array.isArray(requiredCapability) ? requiredCapability : [requiredCapability];
+    const hasOne = caps.some((cap) =>
+      requiredCapabilityAllianceId != null
+        ? hasCapability(cap, requiredCapabilityAllianceId)
+        : hasCapability(cap)
+    );
+    if (!hasOne) {
       return (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-lg text-red-600">Insufficient permissions</div>

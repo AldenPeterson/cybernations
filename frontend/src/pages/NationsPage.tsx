@@ -2,51 +2,30 @@ import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import NationEditor from '../components/NationEditor';
 import PageContainer from '../components/PageContainer';
-import { useAuth, UserRole } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const NationsPage: React.FC = () => {
   const { allianceId } = useParams<{ allianceId: string }>();
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading, isAllianceManager } = useAuth();
+  const { user, isAuthenticated, isLoading, hasCapability, isAllianceManager } = useAuth();
 
-  // Check authentication and permissions
   useEffect(() => {
-    if (isLoading) return;
-
-    // If not authenticated, show error (handled in render)
-    if (!isAuthenticated || !user) {
-      return;
-    }
-
-    // Check if user is admin or has manageable alliances
-    const isAdmin = user.role === UserRole.ADMIN;
-    const hasManageableAlliances = user.managedAllianceIds.length > 0;
-
-    if (!isAdmin && !hasManageableAlliances) {
-      // User is logged in but can't manage any alliances
-      return;
-    }
-
-    // If no allianceId in URL, handle redirect
+    if (isLoading || !isAuthenticated || !user) return;
+    const canManageAll = hasCapability('manage_all_alliance');
+    const managedIds = user.managedAllianceIds ?? [];
+    const hasManageableAlliances = canManageAll || managedIds.length > 0;
+    if (!hasManageableAlliances) return;
     if (!allianceId) {
-      // If user can only manage one alliance, redirect to it
-      if (!isAdmin && user.managedAllianceIds.length === 1) {
-        navigate(`/nations/${user.managedAllianceIds[0]}`, { replace: true });
-        return;
+      if (!canManageAll && managedIds.length === 1) {
+        navigate(`/nations/${managedIds[0]}`, { replace: true });
       }
-      // Otherwise, let the component show the "select alliance" message
       return;
     }
-
-    // If allianceId is provided, check if user can manage it
     const allianceIdNum = parseInt(allianceId);
-    if (!isNaN(allianceIdNum)) {
-      if (!isAdmin && !isAllianceManager(allianceIdNum)) {
-        // User cannot manage this alliance - error will be shown in render
-        return;
-      }
+    if (!isNaN(allianceIdNum) && !hasCapability('manage_alliance', allianceIdNum)) {
+      return;
     }
-  }, [isLoading, isAuthenticated, user, allianceId, navigate, isAllianceManager]);
+  }, [isLoading, isAuthenticated, user, allianceId, navigate, hasCapability, isAllianceManager]);
 
   // Show loading state while checking auth
   if (isLoading) {
@@ -77,11 +56,8 @@ const NationsPage: React.FC = () => {
     );
   }
 
-  // Check if user is admin or has manageable alliances
-  const isAdmin = user.role === UserRole.ADMIN;
-  const hasManageableAlliances = user.managedAllianceIds.length > 0;
-
-  if (!isAdmin && !hasManageableAlliances) {
+  const hasManageableAlliances = hasCapability('manage_all_alliance') || (user.managedAllianceIds?.length ?? 0) > 0;
+  if (!hasManageableAlliances) {
     return (
       <PageContainer className="text-center p-10">
         <div className="max-w-md mx-auto">
@@ -103,9 +79,8 @@ const NationsPage: React.FC = () => {
     );
   }
 
-  // Check if user can manage this specific alliance
   const allianceIdNum = parseInt(allianceId);
-  if (!isNaN(allianceIdNum) && !isAdmin && !isAllianceManager(allianceIdNum)) {
+  if (!isNaN(allianceIdNum) && !hasCapability('manage_alliance', allianceIdNum)) {
     return (
       <PageContainer className="text-center p-10">
         <div className="max-w-md mx-auto">
@@ -113,9 +88,9 @@ const NationsPage: React.FC = () => {
           <p className="text-gray-400 mb-6">
             You do not have permission to manage this alliance.
           </p>
-          {user.managedAllianceIds.length > 0 && (
+          {(user.managedAllianceIds?.length ?? 0) > 0 && (
             <button
-              onClick={() => navigate(`/nations/${user.managedAllianceIds[0]}`)}
+              onClick={() => navigate(`/nations/${user.managedAllianceIds![0]}`)}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
               Go to Your Alliance

@@ -297,6 +297,26 @@ enum UserRole {
   USER
 }
 
+model Capability {
+  id          Int             @id @default(autoincrement())
+  name        String          @unique
+  description String?
+  roles       RoleCapability[]
+
+  @@map("capabilities")
+}
+
+model RoleCapability {
+  role        UserRole    @map("role")
+  capabilityId Int         @map("capability_id")
+  capability   Capability @relation(fields: [capabilityId], references: [id], onDelete: Cascade)
+
+  @@id([role, capabilityId])
+  @@index([role])
+  @@index([capabilityId])
+  @@map("role_capabilities")
+}
+
 model User {
   id               Int                  @id @default(autoincrement())
   googleId         String               @unique @map("google_id")

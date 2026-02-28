@@ -16,6 +16,7 @@ export interface User {
   email: string;
   role: UserRole;
   rulerName: string | null;
+  capabilities: string[];
   managedAllianceIds: number[];
 }
 
@@ -27,6 +28,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   fetchAuthState: () => Promise<void>;
   getUserRole: () => UserRole | null;
+  hasCapability: (capability: string, allianceId?: number) => boolean;
   isAllianceManager: (allianceId: number) => boolean;
 }
 
@@ -58,8 +60,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (response.success) {
-        // response.user will be null if not authenticated, or user object if authenticated
-        setUser(response.user || null);
+        const u = response.user;
+        if (u) {
+          setUser({
+            ...u,
+            capabilities: Array.isArray(u.capabilities) ? u.capabilities : [],
+          });
+        } else {
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
@@ -95,12 +104,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return user?.role || null;
   };
 
-  const isAllianceManager = (allianceId: number): boolean => {
+  const hasCapability = (capability: string, allianceId?: number): boolean => {
     if (!user) return false;
-    // Admins can manage all alliances
-    if (user.role === UserRole.ADMIN) return true;
-    // Check if user manages this specific alliance
-    return user.managedAllianceIds.includes(allianceId);
+    const caps = user.capabilities ?? [];
+    if (capability === 'manage_alliance' && allianceId != null) {
+      return caps.includes('manage_all_alliance') || (caps.includes('manage_alliance') && (user.managedAllianceIds ?? []).includes(allianceId));
+    }
+    return caps.includes(capability);
+  };
+
+  const isAllianceManager = (allianceId: number): boolean => {
+    return hasCapability('manage_alliance', allianceId);
   };
 
   // Check auth state on mount
@@ -139,6 +153,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     fetchAuthState,
     getUserRole,
+    hasCapability,
     isAllianceManager,
   };
 

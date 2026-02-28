@@ -16,7 +16,7 @@ interface User {
 }
 
 const UserManagementPage: React.FC = () => {
-  const { user: currentUser, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, hasCapability } = useAuth();
   const { alliances } = useAlliances();
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
@@ -28,17 +28,12 @@ const UserManagementPage: React.FC = () => {
   const [allianceModalOpen, setAllianceModalOpen] = useState<number | null>(null);
   const [allianceSearchQuery, setAllianceSearchQuery] = useState<string>('');
 
-  // Check if user is authenticated and is ADMIN
   useEffect(() => {
-    // Wait for auth to load before redirecting
-    if (authLoading) {
-      return;
-    }
-
-    if (!isAuthenticated || currentUser?.role !== UserRole.ADMIN) {
+    if (authLoading) return;
+    if (!isAuthenticated || !hasCapability('manage_users')) {
       navigate('/aid');
     }
-  }, [isAuthenticated, currentUser, navigate, authLoading]);
+  }, [isAuthenticated, hasCapability, authLoading, navigate]);
 
   // Fetch users
   useEffect(() => {
@@ -60,10 +55,10 @@ const UserManagementPage: React.FC = () => {
       }
     };
 
-    if (isAuthenticated && currentUser?.role === UserRole.ADMIN) {
+    if (isAuthenticated && hasCapability('manage_users')) {
       fetchUsers();
     }
-  }, [isAuthenticated, currentUser]);
+  }, [isAuthenticated, hasCapability]);
 
   const handleEdit = (userId: number) => {
     setEditingUserId(userId);
@@ -238,7 +233,7 @@ const UserManagementPage: React.FC = () => {
     );
   }
 
-  if (!isAuthenticated || currentUser?.role !== UserRole.ADMIN) {
+  if (!isAuthenticated || !hasCapability('manage_users')) {
     return null;
   }
 
