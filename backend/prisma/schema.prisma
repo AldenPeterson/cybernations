@@ -34,6 +34,7 @@ model Nation {
   nuclearWeapons                                         Int            @default(0) @map("nuclear_weapons")
   governmentType                                         String         @map("government_type")
   inWarMode                                              Boolean        @default(false) @map("in_war_mode")
+  defcon                                                 Int?           @map("defcon")
   attackingCasualties                                    Int?           @map("attacking_casualties")
   defensiveCasualties                                    Int?           @map("defensive_casualties")
   warchest                                               Float?

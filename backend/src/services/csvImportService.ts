@@ -40,12 +40,14 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
           const strength = parseFloat(row.strength?.replace(/,/g, '') || '0');
           const attackingCasualties = row.attackingCasualties ? parseInt(row.attackingCasualties) : null;
           const defensiveCasualties = row.defensiveCasualties ? parseInt(row.defensiveCasualties) : null;
-          
+          const defconRaw = row.defcon != null && row.defcon !== '' ? parseInt(row.defcon) : null;
+          const defcon = (defconRaw != null && !isNaN(defconRaw) && defconRaw >= 1 && defconRaw <= 5) ? defconRaw : null;
+
           // Skip if ID is invalid
           if (isNaN(id)) {
             return;
           }
-          
+
           nations.push({
             id,
             rulerName: decodeHtmlEntities(row.rulerName),
@@ -62,6 +64,7 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
             nuclearWeapons: parseInt(row.nukes) || 0,
             governmentType: row.governmentType || '',
             inWarMode: row.warStatus === 'War Mode',
+            defcon,
             attackingCasualties: (attackingCasualties && !isNaN(attackingCasualties)) ? attackingCasualties : null,
             defensiveCasualties: (defensiveCasualties && !isNaN(defensiveCasualties)) ? defensiveCasualties : null,
           });
@@ -134,16 +137,17 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
         
         console.log(`Processing ${validNations.length} valid nations...`);
         
-        // Fetch existing nation IDs and allianceIds in one batch query for comparison
-        const existingNationsData = await prisma.nation.findMany({
+        // Fetch existing nation IDs, allianceIds, inWarMode, and defcon for comparison
+        type ExistingNationRow = { id: number; allianceId: number; inWarMode: boolean; defcon: number | null };
+        const existingNationsData = (await prisma.nation.findMany({
           where: { id: { in: Array.from(nationIds) } },
-          select: { id: true, allianceId: true }
-        });
-        
-        const existingNationIds = new Set(existingNationsData.map((n: { id: number }) => n.id));
-        const existingAllianceMap = new Map(
-          existingNationsData.map((n: { id: number; allianceId: number }) => [n.id, n.allianceId])
-        );
+          select: { id: true, allianceId: true, inWarMode: true, defcon: true },
+        })) as unknown as ExistingNationRow[];
+
+        const existingNationIds = new Set(existingNationsData.map(n => n.id));
+        const existingAllianceMap = new Map(existingNationsData.map(n => [n.id, n.allianceId]));
+        const existingWarModeMap = new Map(existingNationsData.map(n => [n.id, n.inWarMode]));
+        const existingDefconMap = new Map(existingNationsData.map(n => [n.id, n.defcon]));
         
         // Split into new and existing nations
         const newNations = validNations.filter(n => !existingNationIds.has(n.id));
@@ -219,7 +223,11 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
               const batchPromises = batch.map(async nation => {
                 const oldAllianceId = existingAllianceMap.get(nation.id);
                 const newAllianceId = nation.allianceId;
-                
+                const oldInWarMode = existingWarModeMap.get(nation.id);
+                const newInWarMode = nation.inWarMode;
+                const oldDefcon = existingDefconMap.get(nation.id) ?? null;
+                const newDefcon = nation.defcon ?? null;
+
                 const updateResult = await prisma.nation.update({
                   where: { id: nation.id },
                   data: {
@@ -235,6 +243,7 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
                     nuclearWeapons: nation.nuclearWeapons,
                     governmentType: nation.governmentType,
                     inWarMode: nation.inWarMode,
+                    ...(nation.defcon !== undefined && { defcon: nation.defcon }),
                     attackingCasualties: nation.attackingCasualties,
                     defensiveCasualties: nation.defensiveCasualties,
                     rank: nation.rank,
@@ -243,14 +252,20 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
                   }
                 }).catch((error: any) => {
                   console.warn(`Error updating nation ${nation.id}: ${error.message}`);
-                  return { updateResult: null, allianceChanged: null }; // Continue processing other updates
+                  return { updateResult: null, allianceChanged: null, warModeChanged: null, defconChanged: null };
                 });
-                
-                // Track alliance changes for later batch processing (don't process immediately to avoid blocking)
-                if (updateResult && oldAllianceId !== undefined && oldAllianceId !== newAllianceId && nation.strength >= 1000) {
-                  return { updateResult, allianceChanged: { nationId: nation.id, oldAllianceId, newAllianceId } };
-                }
-                return { updateResult, allianceChanged: null };
+
+                const allianceChanged = updateResult && oldAllianceId !== undefined && oldAllianceId !== newAllianceId && nation.strength >= 1000
+                  ? { nationId: nation.id, oldAllianceId, newAllianceId }
+                  : null;
+                const warModeChanged = updateResult && oldInWarMode !== undefined && oldInWarMode !== newInWarMode
+                  ? { nationId: nation.id, oldInWarMode, newInWarMode }
+                  : null;
+                const defconChanged = updateResult && oldDefcon !== newDefcon
+                  ? { nationId: nation.id, oldDefcon, newDefcon }
+                  : null;
+
+                return { updateResult, allianceChanged, warModeChanged, defconChanged };
               });
               
               updatePromises.push(...batchPromises);
@@ -271,12 +286,43 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
             
             if (allianceChanges.length > 0) {
               const { detectAllianceChangeEvent } = await import('./eventService.js');
-              // Process in parallel batches
-              const batchSize = 50;
-              for (let i = 0; i < allianceChanges.length; i += batchSize) {
-                const batch = allianceChanges.slice(i, i + batchSize);
+              const eventBatchSize = 50;
+              for (let i = 0; i < allianceChanges.length; i += eventBatchSize) {
+                const eventBatch = allianceChanges.slice(i, i + eventBatchSize);
                 await Promise.all(
-                  batch.map(change => detectAllianceChangeEvent(change.nationId, change.oldAllianceId, change.newAllianceId))
+                  eventBatch.map(change => detectAllianceChangeEvent(change.nationId, change.oldAllianceId, change.newAllianceId))
+                );
+              }
+            }
+
+            const warModeChanges = results
+              .filter((r): r is { warModeChanged: { nationId: number; oldInWarMode: boolean; newInWarMode: boolean } } =>
+                r !== null && r.warModeChanged != null
+              )
+              .map(r => r.warModeChanged);
+            if (warModeChanges.length > 0) {
+              const { detectWarModeChangeEvent } = await import('./eventService.js');
+              const eventBatchSize = 50;
+              for (let i = 0; i < warModeChanges.length; i += eventBatchSize) {
+                const eventBatch = warModeChanges.slice(i, i + eventBatchSize);
+                await Promise.all(
+                  eventBatch.map(change => detectWarModeChangeEvent(change.nationId, change.oldInWarMode, change.newInWarMode))
+                );
+              }
+            }
+
+            const defconChanges = results
+              .filter((r): r is { defconChanged: { nationId: number; oldDefcon: number | null; newDefcon: number | null } } =>
+                r !== null && r.defconChanged != null
+              )
+              .map(r => r.defconChanged);
+            if (defconChanges.length > 0) {
+              const { detectDefconChangeEvent } = await import('./eventService.js');
+              const eventBatchSize = 50;
+              for (let i = 0; i < defconChanges.length; i += eventBatchSize) {
+                const eventBatch = defconChanges.slice(i, i + eventBatchSize);
+                await Promise.all(
+                  eventBatch.map(change => detectDefconChangeEvent(change.nationId, change.oldDefcon, change.newDefcon))
                 );
               }
             }

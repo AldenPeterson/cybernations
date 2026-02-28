@@ -55,7 +55,7 @@ type EventsResponse = {
 };
 
 type FilterType = 'all' | 'nation' | 'alliance' | 'stats';
-type EventTypeFilter = 'all' | 'new_nation' | 'nation_inactive' | 'alliance_change' | 'casualty_ranking_entered' | 'casualty_ranking_exited' | 'casualty_ranking_changed';
+type EventTypeFilter = 'all' | 'new_nation' | 'nation_inactive' | 'alliance_change' | 'war_mode_change' | 'defcon_change' | 'casualty_ranking_entered' | 'casualty_ranking_exited' | 'casualty_ranking_changed';
 
 const EventsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -91,14 +91,14 @@ const EventsPage: React.FC = () => {
   const getValidEventTypes = (type: FilterType): EventTypeFilter[] => {
     switch (type) {
       case 'nation':
-        return ['all', 'new_nation', 'nation_inactive', 'alliance_change'];
+        return ['all', 'new_nation', 'nation_inactive', 'alliance_change', 'war_mode_change', 'defcon_change'];
       case 'stats':
         return ['all', 'casualty_ranking_entered', 'casualty_ranking_exited', 'casualty_ranking_changed'];
       case 'alliance':
         return ['all']; // Alliance events would go here if we add them
       case 'all':
       default:
-        return ['all', 'new_nation', 'nation_inactive', 'alliance_change', 'casualty_ranking_entered', 'casualty_ranking_exited', 'casualty_ranking_changed'];
+        return ['all', 'new_nation', 'nation_inactive', 'alliance_change', 'war_mode_change', 'defcon_change', 'casualty_ranking_entered', 'casualty_ranking_exited', 'casualty_ranking_changed'];
     }
   };
 
@@ -293,6 +293,10 @@ const EventsPage: React.FC = () => {
         return 'Nation Inactive';
       case 'alliance_change':
         return 'Alliance Change';
+      case 'war_mode_change':
+        return 'War Mode Change';
+      case 'defcon_change':
+        return 'DEFCON Change';
       case 'casualty_ranking_entered':
         return 'Casualty Ranking Entered';
       case 'casualty_ranking_exited':
@@ -312,6 +316,10 @@ const EventsPage: React.FC = () => {
         return 'bg-red-600';
       case 'alliance_change':
         return 'bg-blue-600';
+      case 'war_mode_change':
+        return 'bg-amber-600';
+      case 'defcon_change':
+        return 'bg-rose-600';
       case 'casualty_ranking_entered':
         return 'bg-purple-600';
       case 'casualty_ranking_exited':

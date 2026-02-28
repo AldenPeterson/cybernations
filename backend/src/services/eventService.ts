@@ -9,6 +9,8 @@ export const NATION_EVENT_TYPES = {
   NEW_NATION: 'new_nation',
   NATION_INACTIVE: 'nation_inactive',
   ALLIANCE_CHANGE: 'alliance_change',
+  WAR_MODE_CHANGE: 'war_mode_change',
+  DEFCON_CHANGE: 'defcon_change',
 } as const;
 
 /**
@@ -222,6 +224,99 @@ export async function detectAllianceChangeEvent(
   } catch (error: any) {
     console.error(`Error creating alliance change event for nation ${nationId}:`, error.message);
     // Don't throw - event creation failure shouldn't break the import
+  }
+}
+
+/**
+ * Detect and create events when a nation's war mode status changes (inWarMode)
+ * Called when nation data is updated and inWarMode differs from previous value
+ */
+export async function detectWarModeChangeEvent(
+  nationId: number,
+  oldInWarMode: boolean,
+  newInWarMode: boolean
+): Promise<void> {
+  if (oldInWarMode === newInWarMode) {
+    return;
+  }
+
+  try {
+    const nation = await prisma.nation.findUnique({
+      where: { id: nationId },
+      include: { alliance: true },
+    });
+
+    if (!nation) {
+      return;
+    }
+
+    const status = newInWarMode ? 'entered war mode' : 'left war mode';
+    await prisma.event.create({
+      data: {
+        type: 'nation',
+        eventType: NATION_EVENT_TYPES.WAR_MODE_CHANGE,
+        nationId,
+        allianceId: nation.allianceId,
+        description: `${nation.rulerName} (${nation.nationName}) from ${nation.alliance.name} ${status}`,
+        metadata: {
+          strength: nation.strength,
+          rulerName: nation.rulerName,
+          nationName: nation.nationName,
+          allianceName: nation.alliance.name,
+          oldInWarMode,
+          newInWarMode,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error(`Error creating war mode change event for nation ${nationId}:`, error.message);
+  }
+}
+
+/**
+ * Detect and create events when a nation's DEFCON level changes
+ * Called when nation data is updated and defcon differs from previous value
+ */
+export async function detectDefconChangeEvent(
+  nationId: number,
+  oldDefcon: number | null,
+  newDefcon: number | null
+): Promise<void> {
+  if (oldDefcon === newDefcon) {
+    return;
+  }
+
+  try {
+    const nation = await prisma.nation.findUnique({
+      where: { id: nationId },
+      include: { alliance: true },
+    });
+
+    if (!nation) {
+      return;
+    }
+
+    const oldStr = oldDefcon != null ? `DEFCON ${oldDefcon}` : 'unknown';
+    const newStr = newDefcon != null ? `DEFCON ${newDefcon}` : 'unknown';
+    await prisma.event.create({
+      data: {
+        type: 'nation',
+        eventType: NATION_EVENT_TYPES.DEFCON_CHANGE,
+        nationId,
+        allianceId: nation.allianceId,
+        description: `${nation.rulerName} (${nation.nationName}) from ${nation.alliance.name} changed from ${oldStr} to ${newStr}`,
+        metadata: {
+          strength: nation.strength,
+          rulerName: nation.rulerName,
+          nationName: nation.nationName,
+          allianceName: nation.alliance.name,
+          oldDefcon,
+          newDefcon,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error(`Error creating DEFCON change event for nation ${nationId}:`, error.message);
   }
 }
 
