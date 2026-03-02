@@ -35,6 +35,7 @@ WITH recent_wars AS (
     LEFT JOIN alliances da ON w.declaring_alliance_id = da.id
     LEFT JOIN alliances ra ON w.receiving_alliance_id = ra.id
     WHERE TO_DATE(SPLIT_PART(w.date, ' ', 1), 'MM/DD/YYYY') > TO_DATE('2/5/2026', 'MM/DD/YYYY')
+      AND w.excluded_from_stats = FALSE
 ),
 declaring_totals AS (
     SELECT 

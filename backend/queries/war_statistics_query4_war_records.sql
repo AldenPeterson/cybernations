@@ -40,6 +40,7 @@ SELECT * FROM (
     WHERE 
         TO_DATE(SPLIT_PART(w.date, ' ', 1), 'MM/DD/YYYY') > TO_DATE('2/5/2026', 'MM/DD/YYYY')
         AND w.declaring_alliance_id IS NOT NULL
+        AND w.excluded_from_stats = FALSE
 
     UNION ALL
 
@@ -80,6 +81,7 @@ SELECT * FROM (
     WHERE 
         TO_DATE(SPLIT_PART(w.date, ' ', 1), 'MM/DD/YYYY') > TO_DATE('2/5/2026', 'MM/DD/YYYY')
         AND w.receiving_alliance_id IS NOT NULL
+        AND w.excluded_from_stats = FALSE
 ) AS war_records
 ORDER BY 
     alliance_id,

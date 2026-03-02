@@ -31,3 +31,6 @@ adminRoutes.get('/wars/search', AdminController.searchWars);
 // Update war alliance IDs
 adminRoutes.put('/wars/:warId/alliance-ids', AdminController.updateWarAllianceIds);
 
+// Update war excluded-from-stats flag
+adminRoutes.put('/wars/:warId/excluded-from-stats', AdminController.setWarExcludedFromStats);
+

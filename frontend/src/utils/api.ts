@@ -171,6 +171,7 @@ export const API_ENDPOINTS = {
     return `/api/admin/wars/search?${params.toString()}`;
   },
   adminUpdateWarAllianceIds: (warId: number) => `/api/admin/wars/${warId}/alliance-ids`,
+  adminSetWarExcludedFromStats: (warId: number) => `/api/admin/wars/${warId}/excluded-from-stats`,
   // Role capabilities (manage_users)
   adminCapabilities: '/api/admin/capabilities',
   adminRoleCapabilities: (role: string) => `/api/admin/roles/${role}/capabilities`,

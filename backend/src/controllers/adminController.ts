@@ -111,7 +111,7 @@ export class AdminController {
   static async updateWarAllianceIds(req: Request, res: Response) {
     try {
       const warId = parseInt(req.params.warId);
-      const { declaringAllianceId, receivingAllianceId } = req.body;
+      const { declaringAllianceId, receivingAllianceId, excludedFromStats } = req.body;
 
       if (isNaN(warId)) {
         return res.status(400).json({
@@ -147,18 +147,35 @@ export class AdminController {
         }
       }
 
+      // Parse excludedFromStats flag (optional)
+      let parsedExcludedFromStats: boolean | undefined = undefined;
+      if (excludedFromStats !== undefined) {
+        if (typeof excludedFromStats !== 'boolean') {
+          return res.status(400).json({
+            success: false,
+            error: 'excludedFromStats must be a boolean'
+          });
+        }
+        parsedExcludedFromStats = excludedFromStats;
+      }
+
       // At least one field must be provided
-      if (parsedDeclaringAllianceId === undefined && parsedReceivingAllianceId === undefined) {
+      if (
+        parsedDeclaringAllianceId === undefined &&
+        parsedReceivingAllianceId === undefined &&
+        parsedExcludedFromStats === undefined
+      ) {
         return res.status(400).json({
           success: false,
-          error: 'At least one alliance ID (declaringAllianceId or receivingAllianceId) must be provided'
+          error: 'At least one field (declaringAllianceId, receivingAllianceId, or excludedFromStats) must be provided'
         });
       }
 
       const result = await AdminService.updateWarAllianceIds(
         warId,
         parsedDeclaringAllianceId,
-        parsedReceivingAllianceId
+        parsedReceivingAllianceId,
+        parsedExcludedFromStats
       );
 
       res.json({
@@ -170,6 +187,46 @@ export class AdminController {
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to update war alliance IDs'
+      });
+    }
+  }
+
+  /**
+   * Set or clear the excludedFromStats flag for a war
+   */
+  static async setWarExcludedFromStats(req: Request, res: Response) {
+    try {
+      const warId = parseInt(req.params.warId);
+      const { excludedFromStats } = req.body as { excludedFromStats?: boolean };
+
+      if (isNaN(warId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid war ID'
+        });
+      }
+
+      if (typeof excludedFromStats !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          error: 'excludedFromStats must be a boolean'
+        });
+      }
+
+      const result = await AdminService.setWarExcludedFromStats(
+        warId,
+        excludedFromStats
+      );
+
+      res.json({
+        success: true,
+        war: result
+      });
+    } catch (error) {
+      console.error('Error in setWarExcludedFromStats:', error);
+      res.status(400).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update excludedFromStats'
       });
     }
   }

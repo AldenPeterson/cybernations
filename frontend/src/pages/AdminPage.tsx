@@ -29,6 +29,7 @@ const AdminPage: React.FC = () => {
   const [selectedWar, setSelectedWar] = useState<any | null>(null);
   const [warDeclaringAllianceId, setWarDeclaringAllianceId] = useState<string>('');
   const [warReceivingAllianceId, setWarReceivingAllianceId] = useState<string>('');
+  const [warExcludedFromStats, setWarExcludedFromStats] = useState<boolean>(false);
   const [warSaving, setWarSaving] = useState<boolean>(false);
 
   useEffect(() => {
@@ -146,7 +147,7 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  // Update war alliance IDs
+  // Update war alliance IDs and excluded-from-stats flag
   const handleUpdateWarAllianceIds = async () => {
     if (!selectedWar) return;
 
@@ -180,6 +181,11 @@ const AdminPage: React.FC = () => {
         updateData.receivingAllianceId = receivingId;
       }
 
+      // Handle excluded-from-stats flag
+      if (warExcludedFromStats !== !!selectedWar.excludedFromStats) {
+        updateData.excludedFromStats = warExcludedFromStats;
+      }
+
       if (Object.keys(updateData).length === 0) {
         throw new Error('No changes to save');
       }
@@ -196,6 +202,7 @@ const AdminPage: React.FC = () => {
         setSelectedWar(response.war);
         setWarDeclaringAllianceId(response.war.declaringAllianceId ? String(response.war.declaringAllianceId) : '');
         setWarReceivingAllianceId(response.war.receivingAllianceId ? String(response.war.receivingAllianceId) : '');
+        setWarExcludedFromStats(response.war.excludedFromStats ?? false);
         // Refresh search results
         await handleWarSearch();
       } else {
@@ -429,6 +436,7 @@ const AdminPage: React.FC = () => {
                         setSelectedWar(war);
                         setWarDeclaringAllianceId(war.declaringAllianceId ? String(war.declaringAllianceId) : '');
                         setWarReceivingAllianceId(war.receivingAllianceId ? String(war.receivingAllianceId) : '');
+                        setWarExcludedFromStats(!!war.excludedFromStats);
                       }}
                       className={`p-3 cursor-pointer hover:bg-gray-600 transition-colors ${
                         selectedWar?.warId === war.warId ? 'bg-gray-600' : ''
@@ -444,6 +452,9 @@ const AdminPage: React.FC = () => {
                           Receiving Alliance: {war.receivingAllianceName || 'None'} (ID: {war.receivingAllianceId || 'None'})
                         </div>
                         <div className="text-xs text-gray-400">Status: {war.status} | Date: {war.date}</div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          Excluded from damage stats: {war.excludedFromStats ? 'Yes' : 'No'}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -497,6 +508,20 @@ const AdminPage: React.FC = () => {
                       ))}
                     </select>
                   </div>
+                  <div>
+                    <label className="flex items-center gap-2 text-sm text-gray-400">
+                      <input
+                        type="checkbox"
+                        checked={warExcludedFromStats}
+                        onChange={(e) => setWarExcludedFromStats(e.target.checked)}
+                        className="rounded border-gray-500 text-primary focus:ring-primary w-4 h-4"
+                      />
+                      Exclude this war from damage statistics
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      When checked, this war will be omitted from the damage stats page calculations.
+                    </p>
+                  </div>
                   <div className="flex gap-2">
                     <button
                       onClick={handleUpdateWarAllianceIds}
@@ -510,6 +535,7 @@ const AdminPage: React.FC = () => {
                         setSelectedWar(null);
                         setWarDeclaringAllianceId('');
                         setWarReceivingAllianceId('');
+                        setWarExcludedFromStats(false);
                       }}
                       className="px-4 py-2 bg-gray-600 text-gray-200 rounded hover:bg-gray-500"
                     >

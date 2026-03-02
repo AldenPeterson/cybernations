@@ -27,6 +27,7 @@ export interface WarSearchResult {
   status: string;
   date: string;
   endDate: string;
+  excludedFromStats: boolean;
 }
 
 export class AdminService {
@@ -220,7 +221,8 @@ export class AdminService {
         : null,
       status: w.status,
       date: w.date,
-      endDate: w.endDate
+      endDate: w.endDate,
+      excludedFromStats: w.excludedFromStats,
     }));
   }
 
@@ -230,7 +232,8 @@ export class AdminService {
   static async updateWarAllianceIds(
     warId: number,
     declaringAllianceId: number | null | undefined,
-    receivingAllianceId: number | null | undefined
+    receivingAllianceId: number | null | undefined,
+    excludedFromStats?: boolean
   ): Promise<WarSearchResult> {
     // Verify war exists
     const war = await prisma.war.findUnique({
@@ -272,6 +275,7 @@ export class AdminService {
     const updateData: {
       declaringAllianceId?: number | null;
       receivingAllianceId?: number | null;
+      excludedFromStats?: boolean;
     } = {};
 
     if (declaringAllianceId !== undefined) {
@@ -279,6 +283,9 @@ export class AdminService {
     }
     if (receivingAllianceId !== undefined) {
       updateData.receivingAllianceId = receivingAllianceId;
+    }
+    if (excludedFromStats !== undefined) {
+      updateData.excludedFromStats = excludedFromStats;
     }
 
     // Update the war
@@ -328,7 +335,83 @@ export class AdminService {
       receivingAllianceName,
       status: updated.status,
       date: updated.date,
-      endDate: updated.endDate
+      endDate: updated.endDate,
+      excludedFromStats: updated.excludedFromStats,
+    };
+  }
+
+  /**
+   * Set or clear the excludedFromStats flag for a war
+   */
+  static async setWarExcludedFromStats(
+    warId: number,
+    excludedFromStats: boolean
+  ): Promise<WarSearchResult> {
+    // Verify war exists
+    const war = await prisma.war.findUnique({
+      where: { warId },
+      include: {
+        declaringNation: {
+          include: { alliance: true }
+        },
+        receivingNation: {
+          include: { alliance: true }
+        }
+      }
+    });
+
+    if (!war) {
+      throw new Error('War not found');
+    }
+
+    const updated = await prisma.war.update({
+      where: { warId },
+      data: { excludedFromStats },
+      include: {
+        declaringNation: {
+          include: { alliance: true }
+        },
+        receivingNation: {
+          include: { alliance: true }
+        }
+      }
+    });
+
+    // Get alliance names - look up by the alliance IDs stored on the war
+    let declaringAllianceName: string | null = null;
+    if (updated.declaringAllianceId) {
+      const alliance = await prisma.alliance.findUnique({
+        where: { id: updated.declaringAllianceId },
+        select: { name: true }
+      });
+      declaringAllianceName = alliance?.name || null;
+    }
+
+    let receivingAllianceName: string | null = null;
+    if (updated.receivingAllianceId) {
+      const alliance = await prisma.alliance.findUnique({
+        where: { id: updated.receivingAllianceId },
+        select: { name: true }
+      });
+      receivingAllianceName = alliance?.name || null;
+    }
+
+    return {
+      warId: updated.warId,
+      declaringNationId: updated.declaringNationId,
+      declaringNationName: updated.declaringNation.nationName,
+      declaringRulerName: updated.declaringNation.rulerName,
+      declaringAllianceId: updated.declaringAllianceId,
+      declaringAllianceName,
+      receivingNationId: updated.receivingNationId,
+      receivingNationName: updated.receivingNation.nationName,
+      receivingRulerName: updated.receivingNation.rulerName,
+      receivingAllianceId: updated.receivingAllianceId,
+      receivingAllianceName,
+      status: updated.status,
+      date: updated.date,
+      endDate: updated.endDate,
+      excludedFromStats: updated.excludedFromStats,
     };
   }
 }

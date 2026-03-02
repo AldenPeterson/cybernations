@@ -21,6 +21,7 @@ recent_wars AS (
     LEFT JOIN alliances ra ON w.receiving_alliance_id = ra.id
     CROSS JOIN date_filter df
     WHERE TO_DATE(SPLIT_PART(w.date, ' ', 1), 'MM/DD/YYYY') > df.cutoff_date
+        AND w.excluded_from_stats = FALSE
         -- Filter by alliance name if parameter provided (placeholder: $1)
         -- Backend will replace this or add WHERE clause dynamically
 ),
