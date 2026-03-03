@@ -43,7 +43,7 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
     if (!includePeaceMode) {
       filtered = filtered.filter(rec => rec.inWarMode);
     }
-    
+
     // Apply "Assign only positive" filter - only show attackers with >= 100% NS
     if (assignOnlyPositive) {
       filtered = filtered.filter(rec => rec.strengthRatio >= 1.0);

@@ -81,8 +81,9 @@ export class StaggerEligibilityService {
     const withinNSRange = strengthRatio >= 0.75 && strengthRatio <= 1.33;
     
     // Check rank range (+/- 100 ranks)
-    let withinRankRange = true;
-    if (attacker.rank && defender.rank) {
+    // If either rank is missing/null, we DO NOT treat it as within range
+    let withinRankRange = false;
+    if (attacker.rank != null && defender.rank != null) {
       const rankDifference = Math.abs(attacker.rank - defender.rank);
       withinRankRange = rankDifference <= 100;
     }
@@ -155,7 +156,7 @@ export class StaggerEligibilityService {
       // Check 2: Can they get within rank range by selling down?
       let canGetWithinRankRange = false;
       
-      if (attacker.rank && defendingNation.rank && allNations) {
+      if (attacker.rank != null && defendingNation.rank != null && allNations) {
         const currentRankDifference = Math.abs(attacker.rank - defendingNation.rank);
         console.log(`Current rank difference: ${currentRankDifference}`);
         
