@@ -109,7 +109,11 @@ const StaggerRecommendationsCell: React.FC<StaggerRecommendationsCellProps> = ({
                 href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${attacker.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 no-underline font-bold hover:underline overflow-hidden overflow-ellipsis whitespace-nowrap flex-1 min-w-0"
+                className={`no-underline font-bold hover:underline overflow-hidden overflow-ellipsis whitespace-nowrap flex-1 min-w-0 ${
+                  attacker.governmentType && attacker.governmentType.toLowerCase() === 'anarchy'
+                    ? 'text-red-500'
+                    : 'text-blue-400'
+                }`}
                 title={`${attacker.name} / ${attacker.ruler}`}
               >
                 {attacker.name} / {attacker.ruler}
@@ -260,6 +264,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [includePeaceMode, setIncludePeaceMode] = useState<boolean>(false);
+  const [includeAnarchy, setIncludeAnarchy] = useState<boolean>(true);
   const [needsStagger, setNeedsStagger] = useState<boolean>(false);
   const [hideNonPriority, setHideNonPriority] = useState<boolean>(false);
   const [needsNuke, setNeedsNuke] = useState<boolean>(false);
@@ -295,7 +300,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   const [isLegendExpanded, setIsLegendExpanded] = useState<boolean>(false);
   const [isTargetAssignmentExpanded, setIsTargetAssignmentExpanded] = useState<boolean>(true);
   const [isDefendingNationsExpanded, setIsDefendingNationsExpanded] = useState<boolean>(true);
-  const [isAdditionalAlliancesExpanded, setIsAdditionalAlliancesExpanded] = useState<boolean>(true);
+  const [isAdditionalAlliancesExpanded, setIsAdditionalAlliancesExpanded] = useState<boolean>(false);
   const [additionalAllianceIds, setAdditionalAllianceIds] = useState<number[]>([]);
   const [additionalNationWars, setAdditionalNationWars] = useState<NationWars[]>([]);
   const hasInitializedAdditionalAlliances = useRef(false);
@@ -530,6 +535,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
   // Initialize boolean parameters from URL (only once on mount)
   useEffect(() => {
     setIncludePeaceMode(parseBooleanParam(searchParams.get('includePeaceMode')));
+    setIncludeAnarchy(parseBooleanParam(searchParams.get('includeAnarchy'), true)); // default true
     setNeedsStagger(parseBooleanParam(searchParams.get('needsStagger')));
     setHideNonPriority(parseBooleanParam(searchParams.get('hideNonPriority')));
     setNeedsNuke(parseBooleanParam(searchParams.get('needsNuke')));
@@ -671,7 +677,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
       const defendingAllianceIds = [allianceId, ...additionalAllianceIds];
 
       // Create a stable key for the current fetch parameters
-      const fetchKey = `${allianceId}-${[...additionalAllianceIds].sort().join(',')}-${[...assignAllianceIds].sort().join(',')}-${sellDownEnabled}-${militaryNS}`;
+      const fetchKey = `${allianceId}-${[...additionalAllianceIds].sort().join(',')}-${[...assignAllianceIds].sort().join(',')}-${sellDownEnabled}-${militaryNS}-${includeAnarchy}`;
       
       // Skip if we're already fetching or have already fetched with these exact parameters
       if (fetchingStaggerRecommendationsRef.current || fetchKey === lastStaggerFetchKeyRef.current) {
@@ -688,7 +694,8 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
         for (const assignAllianceId of assignAllianceIds) {
           for (const defendingAllianceId of defendingAllianceIds) {
             try {
-              const url = `${API_ENDPOINTS.staggerEligibility}/${assignAllianceId}/${defendingAllianceId}?hideAnarchy=true&hidePeaceMode=false&hideNonPriority=false&includeFullTargets=true&sellDownEnabled=${sellDownEnabled}&militaryNS=${militaryNS}`;
+              const hideAnarchy = !includeAnarchy;
+              const url = `${API_ENDPOINTS.staggerEligibility}/${assignAllianceId}/${defendingAllianceId}?hideAnarchy=${hideAnarchy}&hidePeaceMode=false&hideNonPriority=false&includeFullTargets=true&sellDownEnabled=${sellDownEnabled}&militaryNS=${militaryNS}`;
               const response = await apiCall(url);
               const data = await response.json();
 
@@ -733,7 +740,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
     };
 
     fetchAllStaggerRecommendations();
-  }, [assignAllianceIds, allianceId, additionalAllianceIds, sellDownEnabled, militaryNS]);
+  }, [assignAllianceIds, allianceId, additionalAllianceIds, sellDownEnabled, militaryNS, includeAnarchy]);
 
   // Helper function to parse date string and return timestamp for sorting
   const parseDateForSorting = useCallback((dateStr: string): number => {
@@ -1486,6 +1493,14 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
                 onChange={(checked) => {
                   setAssignOnlyPositive(checked);
                   updateUrlParams({ assignOnlyPositive: checked.toString() });
+                }}
+              />
+              <FilterCheckbox
+                label="Include Anarchied?"
+                checked={includeAnarchy}
+                onChange={(checked) => {
+                  setIncludeAnarchy(checked);
+                  updateUrlParams({ includeAnarchy: checked.toString() });
                 }}
               />
               <FilterCheckbox
