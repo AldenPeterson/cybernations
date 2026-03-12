@@ -134,6 +134,12 @@ export const API_ENDPOINTS = {
   casualties: '/api/casualties',
   casualtiesAlliances: '/api/casualties/alliances',
   casualtiesAllianceMembers: (allianceId: number) => `/api/casualties/alliance/${allianceId}`,
+  topStrength: (limit?: number) => {
+    if (!limit) return '/api/top-strength';
+    const params = new URLSearchParams();
+    params.set('limit', limit.toString());
+    return `/api/top-strength?${params.toString()}`;
+  },
   warchestSubmissions: (nationId?: number) => {
     const query = nationId ? `?nationId=${nationId}` : '';
     return `/api/warchest-submissions${query}`;

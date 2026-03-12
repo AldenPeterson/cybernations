@@ -44,6 +44,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     { label: 'Global Wars', path: '/global-wars' },
     { label: 'Nation Aid Efficiency', path: '/nation-aid-efficiency' },
     { label: 'Nuclear', path: '/nuclear-stats' },
+    { label: 'Top NS by Alliance', path: '/top-strength' },
   ].sort((a, b) => a.label.localeCompare(b.label));
 
   const utilitiesItems = [
@@ -109,6 +110,9 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         break;
       case 'nuclear-stats':
         pageTitle = 'Stats - Nuclear';
+        break;
+      case 'top-strength':
+        pageTitle = 'Stats - Top NS by Alliance';
         break;
       case 'aid-efficiency':
         pageTitle = 'Stats - Aid Efficiency';
@@ -215,6 +219,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         return 'Stats - Global Wars';
       case 'nuclear-stats':
         return 'Stats - Nuclear';
+      case 'top-strength':
+        return 'Stats - Top NS by Alliance';
       case 'aid-efficiency':
         return 'Stats - Aid Efficiency';
       case 'nation-aid-efficiency':

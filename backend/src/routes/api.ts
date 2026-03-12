@@ -13,6 +13,7 @@ import { csvRoutes } from './csvRoutes.js';
 import { eventsRoutes } from './eventsRoutes.js';
 import { warStatisticsRoutes } from './warStatisticsRoutes.js';
 import { casualtiesRoutes } from './casualtiesRoutes.js';
+import { topStrengthRoutes } from './topStrengthRoutes.js';
 import { userRoutes } from './userRoutes.js';
 import { warchestSubmissionRoutes } from './warchestSubmissionRoutes.js';
 import { authRoutes } from './authRoutes.js';
@@ -63,6 +64,9 @@ apiRoutes.use('/', warStatisticsRoutes);
 
 // Casualties routes
 apiRoutes.use('/', casualtiesRoutes);
+
+// Top strength routes
+apiRoutes.use('/', topStrengthRoutes);
 
 // User management routes (ADMIN only)
 apiRoutes.use('/', userRoutes);

@@ -11,6 +11,7 @@ import WarManagementPage from './pages/WarManagementPage'
 import ShameOffersPage from './pages/ShameOffersPage'
 import NSComparisonsPage from './pages/NSComparisonsPage.tsx'
 import NuclearStatsPage from './pages/NuclearStatsPage'
+import TopStrengthPage from './pages/TopStrengthPage'
 import AidEfficiencyPage from './pages/AidEfficiencyPage'
 import NationAidEfficiencyPage from './pages/NationAidEfficiencyPage'
 import EventsPage from './pages/EventsPage'
@@ -147,6 +148,7 @@ function App() {
         <Route path="/global-wars" element={<GlobalWarsPage />} />
         <Route path="/ns-comparisons" element={<NSComparisonsPage />} />
         <Route path="/nuclear-stats" element={<NuclearStatsPage />} />
+        <Route path="/top-strength" element={<TopStrengthPage />} />
         <Route path="/aid-efficiency" element={<AidEfficiencyPage />} />
         <Route path="/nation-aid-efficiency" element={<NationAidEfficiencyPage />} />
         <Route path="/events" element={<EventsPage />} />
