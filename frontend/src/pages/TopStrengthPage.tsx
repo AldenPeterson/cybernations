@@ -158,9 +158,6 @@ const TopStrengthPage: React.FC = () => {
               <thead>
                 <tr className="bg-gray-700">
                   <th className="p-3 border border-gray-600 text-center text-white font-bold w-10"></th>
-                  <th className="p-3 border border-gray-600 text-center text-white font-bold">
-                    Rank
-                  </th>
                   <th className="p-3 border border-gray-600 text-left text-white font-bold">
                     Alliance
                   </th>
@@ -190,9 +187,6 @@ const TopStrengthPage: React.FC = () => {
                             <span className="text-xs">{isExpanded ? '▼' : '▶'}</span>
                           )}
                         </td>
-                        <td className="p-2 border border-gray-700 text-center font-semibold text-gray-200">
-                          {row.rank}
-                        </td>
                         <td className="p-2 border border-gray-700 font-bold text-gray-200">
                           {row.alliance_name}
                         </td>
@@ -208,7 +202,7 @@ const TopStrengthPage: React.FC = () => {
                       </tr>
                       {isExpanded && allianceNations.length > 0 && (
                         <tr className="bg-gray-900/30">
-                          <td colSpan={6} className="p-0 border border-gray-700">
+                          <td colSpan={5} className="p-0 border border-gray-700">
                             <div className="overflow-x-auto">
                               <table className="w-full border-collapse text-xs bg-gray-900">
                                 <thead>
@@ -281,9 +275,6 @@ const TopStrengthPage: React.FC = () => {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <span className="text-xs font-semibold text-gray-300 flex-shrink-0">
-                            #{row.rank}
-                          </span>
                           <div className="min-w-0 flex-1">
                             <div className="text-primary font-bold truncate text-sm">
                               {row.alliance_name}
