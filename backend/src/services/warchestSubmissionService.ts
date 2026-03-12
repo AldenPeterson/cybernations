@@ -2,13 +2,14 @@ import { prisma } from '../utils/prisma.js';
 
 export interface ParsedWarchestData {
   nationName: string;
-  totalMoney: number;
+  totalMoney?: number;
   armyXP?: number;
   navyXP?: number;
   airForceXP?: number;
   intelligenceXP?: number;
   hasAssignedGenerals: boolean;
   assignedGenerals?: string;
+  killedGenerals?: string;
 }
 
 /**
@@ -23,15 +24,23 @@ export function parseSpyOperationText(text: string): ParsedWarchestData | null {
     }
     const nationName = nationMatch[1].trim();
 
-    // Extract total money - look for pattern like "Total Money: $X"
+    // Detect different operation types
     const moneyMatch = text.match(/Total Money:\s*\$?([\d,]+)/i);
-    if (!moneyMatch) {
+    const isAssassinationOperation = /assassinate a .*general/i.test(text);
+
+    // If we don't have money info and it's not an assassination-style spy op, bail out
+    if (!moneyMatch && !isAssassinationOperation) {
       return null;
     }
-    // Remove commas and parse as float
-    const totalMoney = parseFloat(moneyMatch[1].replace(/,/g, ''));
-    if (isNaN(totalMoney)) {
-      return null;
+
+    // Extract total money when available
+    let totalMoney: number | undefined;
+    if (moneyMatch) {
+      const parsedMoney = parseFloat(moneyMatch[1].replace(/,/g, ''));
+      if (isNaN(parsedMoney)) {
+        return null;
+      }
+      totalMoney = parsedMoney;
     }
 
     // Extract XP levels - look for pattern like "Military XP Ratings: Army XP: 6, Navy XP: 3, Air Force XP: 124, Intelligence XP: 5"
@@ -73,6 +82,28 @@ export function parseSpyOperationText(text: string): ParsedWarchestData | null {
       }
     }
 
+    // Extract killed generals from assassination-style spy operation text
+    // Example:
+    // "In the attack Kelton Stokes of the Intelligence branch with an XP level of 84 was killed."
+    let killedGenerals: string | undefined;
+    if (isAssassinationOperation) {
+      const killedMatch = text.match(
+        /In the attack\s+(.+?)\s+of the\s+(.+?)\s+branch\s+with an XP level of\s+(\d+)\s+was killed\./i
+      );
+      if (killedMatch) {
+        const name = killedMatch[1].trim();
+        const branch = killedMatch[2].trim();
+        const xpLevel = parseInt(killedMatch[3], 10);
+        if (name) {
+          if (!isNaN(xpLevel)) {
+            killedGenerals = `${name} (${branch}, XP ${xpLevel})`;
+          } else {
+            killedGenerals = `${name} (${branch})`;
+          }
+        }
+      }
+    }
+
     return {
       nationName,
       totalMoney,
@@ -82,6 +113,7 @@ export function parseSpyOperationText(text: string): ParsedWarchestData | null {
       intelligenceXP,
       hasAssignedGenerals,
       assignedGenerals,
+      killedGenerals,
     };
   } catch (error) {
     console.error('Error parsing spy operation text:', error);
@@ -125,7 +157,8 @@ export async function createWarchestSubmission(
   airForceXP?: number,
   intelligenceXP?: number,
   hasAssignedGenerals: boolean = false,
-  assignedGenerals?: string
+  assignedGenerals?: string,
+  killedGenerals?: string
 ): Promise<{ id: number; nationId: number | null }> {
   // Try to find the nation
   const nationId = await findNationByName(nationName);
@@ -142,6 +175,7 @@ export async function createWarchestSubmission(
       intelligenceXP,
       hasAssignedGenerals,
       assignedGenerals,
+      killedGenerals,
     },
   });
 
@@ -149,6 +183,57 @@ export async function createWarchestSubmission(
     id: submission.id,
     nationId: submission.nationId,
   };
+}
+
+/**
+ * Update killed generals on the most recent warchest submission for a nation
+ * without changing the stored total money.
+ */
+export async function updateKilledGeneralsForNation(
+  nationName: string,
+  killedGenerals: string
+): Promise<{ id: number; nationId: number | null } | null> {
+  try {
+    const nationId = await findNationByName(nationName);
+
+    const whereClause: any = {};
+    if (nationId) {
+      whereClause.nationId = nationId;
+    } else {
+      whereClause.nationName = {
+        equals: nationName,
+        mode: 'insensitive',
+      };
+    }
+
+    const latestSubmission = await prisma.warchestSubmission.findFirst({
+      where: whereClause,
+      orderBy: {
+        capturedAt: 'desc',
+      },
+    });
+
+    if (!latestSubmission) {
+      return null;
+    }
+
+    const updated = await prisma.warchestSubmission.update({
+      where: {
+        id: latestSubmission.id,
+      },
+      data: {
+        killedGenerals,
+      },
+    });
+
+    return {
+      id: updated.id,
+      nationId: updated.nationId,
+    };
+  } catch (error) {
+    console.error('Error updating killed generals for nation:', error);
+    return null;
+  }
 }
 
 /**

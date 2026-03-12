@@ -3,6 +3,7 @@ import {
   parseSpyOperationText,
   createWarchestSubmission,
   getWarchestSubmissions,
+  updateKilledGeneralsForNation,
 } from '../services/warchestSubmissionService.js';
 
 export class WarchestSubmissionController {
@@ -26,29 +27,60 @@ export class WarchestSubmissionController {
       if (!parsed) {
         return res.status(400).json({
           success: false,
-          error: 'Could not parse spy operation text. Please ensure it contains nation name and total money.',
+          error: 'Could not parse spy operation text. Please ensure it contains a recognizable format.',
         });
       }
 
-      // Use provided capturedAt or default to now
-      const capturedDate = capturedAt ? new Date(capturedAt) : new Date();
+      // If we have totalMoney, treat this as a full warchest submission (existing behavior)
+      if (typeof parsed.totalMoney === 'number') {
+        // Use provided capturedAt or default to now
+        const capturedDate = capturedAt ? new Date(capturedAt) : new Date();
 
-      // Create the submission
-      const result = await createWarchestSubmission(
-        parsed.nationName,
-        parsed.totalMoney,
-        capturedDate,
-        parsed.armyXP,
-        parsed.navyXP,
-        parsed.airForceXP,
-        parsed.intelligenceXP,
-        parsed.hasAssignedGenerals,
-        parsed.assignedGenerals
-      );
+        const result = await createWarchestSubmission(
+          parsed.nationName,
+          parsed.totalMoney,
+          capturedDate,
+          parsed.armyXP,
+          parsed.navyXP,
+          parsed.airForceXP,
+          parsed.intelligenceXP,
+          parsed.hasAssignedGenerals,
+          parsed.assignedGenerals,
+          parsed.killedGenerals
+        );
 
-      return res.json({
-        success: true,
-        data: result,
+        return res.json({
+          success: true,
+          data: result,
+        });
+      }
+
+      // Otherwise, if this is an assassination-style op with killed generals but no money,
+      // update the most recent submission for that nation without changing totalMoney.
+      if (parsed.killedGenerals) {
+        const updated = await updateKilledGeneralsForNation(
+          parsed.nationName,
+          parsed.killedGenerals
+        );
+
+        if (!updated) {
+          return res.status(400).json({
+            success: false,
+            error:
+              'Could not find an existing warchest submission for this nation to attach the killed general to.',
+          });
+        }
+
+        return res.json({
+          success: true,
+          data: updated,
+        });
+      }
+
+      // Fallback if we parsed but neither money nor killed general is present in a usable way
+      return res.status(400).json({
+        success: false,
+        error: 'Parsed spy operation text but did not find total money or killed general information.',
       });
     } catch (error) {
       console.error('Error creating warchest submission:', error);

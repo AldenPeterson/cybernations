@@ -13,6 +13,7 @@ interface SpyOperationSubmission {
   intelligenceXP?: number | null;
   hasAssignedGenerals: boolean;
   assignedGenerals?: string | null;
+   killedGenerals?: string | null;
   capturedAt: string;
   createdAt: string;
   nation?: {
@@ -174,7 +175,7 @@ const SpyOperationSubmissionPage: React.FC = () => {
                   <th className="text-left py-3 px-4 text-gray-300 font-semibold">Alliance</th>
                   <th className="text-right py-3 px-4 text-gray-300 font-semibold">Total Money</th>
                   <th className="text-left py-3 px-4 text-gray-300 font-semibold">XP Levels</th>
-                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Assigned Generals</th>
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Generals</th>
                   <th className="text-left py-3 px-4 text-gray-300 font-semibold">Submitted</th>
                 </tr>
               </thead>
@@ -221,15 +222,24 @@ const SpyOperationSubmissionPage: React.FC = () => {
                       )}
                     </td>
                     <td className="py-3 px-4 text-gray-300">
-                      {submission.hasAssignedGenerals ? (
-                        <div className="text-xs">
-                          <span className="text-green-400 font-semibold">Yes</span>
-                          {submission.assignedGenerals && (
-                            <div className="text-gray-400 mt-1">{submission.assignedGenerals}</div>
+                      {(submission.hasAssignedGenerals && submission.assignedGenerals) ||
+                       submission.killedGenerals ? (
+                        <div className="text-xs space-y-1">
+                          {submission.hasAssignedGenerals && submission.assignedGenerals && (
+                            <div>
+                              <span className="text-green-400 font-semibold">Assigned:</span>{' '}
+                              <span className="text-gray-400">{submission.assignedGenerals}</span>
+                            </div>
+                          )}
+                          {submission.killedGenerals && (
+                            <div>
+                              <span className="text-red-400 font-semibold">Killed:</span>{' '}
+                              <span className="text-gray-400">{submission.killedGenerals}</span>
+                            </div>
                           )}
                         </div>
                       ) : (
-                        <span className="text-gray-500 text-xs">No</span>
+                        <span className="text-gray-500 text-xs">None</span>
                       )}
                     </td>
                     <td className="py-3 px-4 text-gray-400 text-xs">

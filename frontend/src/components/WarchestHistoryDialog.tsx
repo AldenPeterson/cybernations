@@ -12,6 +12,7 @@ interface WarchestSubmission {
   intelligenceXP?: number | null;
   hasAssignedGenerals: boolean;
   assignedGenerals?: string | null;
+  killedGenerals?: string | null;
   capturedAt: string;
   createdAt: string;
 }
@@ -175,11 +176,29 @@ const WarchestHistoryDialog: React.FC<WarchestHistoryDialogProps> = ({
                         )}
                       </td>
                       <td className="p-2 text-gray-300 text-sm">
-                        {submission.hasAssignedGenerals && submission.assignedGenerals ? (
-                          <div className="text-xs text-blue-300" title={submission.assignedGenerals}>
-                            {submission.assignedGenerals.length > 50 
-                              ? `${submission.assignedGenerals.substring(0, 50)}...`
-                              : submission.assignedGenerals}
+                        {(submission.hasAssignedGenerals && submission.assignedGenerals) ||
+                         submission.killedGenerals ? (
+                          <div className="text-xs space-y-1">
+                            {submission.hasAssignedGenerals && submission.assignedGenerals && (
+                              <div
+                                className="text-blue-300"
+                                title={submission.assignedGenerals}
+                              >
+                                {submission.assignedGenerals.length > 50
+                                  ? `${submission.assignedGenerals.substring(0, 50)}...`
+                                  : submission.assignedGenerals}
+                              </div>
+                            )}
+                            {submission.killedGenerals && (
+                              <div
+                                className="text-red-300"
+                                title={submission.killedGenerals}
+                              >
+                                {submission.killedGenerals.length > 50
+                                  ? `${submission.killedGenerals.substring(0, 50)}...`
+                                  : submission.killedGenerals}
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <span className="text-gray-500 text-xs">—</span>

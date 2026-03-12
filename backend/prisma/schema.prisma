@@ -369,6 +369,7 @@ model WarchestSubmission {
   intelligenceXP  Int?     @map("intelligence_xp")
   hasAssignedGenerals Boolean @default(false) @map("has_assigned_generals")
   assignedGenerals String? @map("assigned_generals")
+  killedGenerals   String? @map("killed_generals")
   capturedAt      DateTime @map("captured_at")
   createdAt       DateTime @default(now()) @map("created_at")
   nation          Nation?  @relation(fields: [nationId], references: [id], onDelete: SetNull)
