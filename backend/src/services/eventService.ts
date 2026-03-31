@@ -11,7 +11,67 @@ export const NATION_EVENT_TYPES = {
   ALLIANCE_CHANGE: 'alliance_change',
   WAR_MODE_CHANGE: 'war_mode_change',
   DEFCON_CHANGE: 'defcon_change',
+  POSSIBLE_DONATION: 'possible_donation',
 } as const;
+
+/**
+ * PayPal donation bundles (highest USD listed first for `findHighestDonationTierAtLeast`).
+ * A tick is a suspected donation when each delta is at least the tier’s minimum (handles stacked aid on tech, etc.).
+ */
+export const DONATION_TIERS = [
+  { usd: 30, deltaInfrastructure: 2000, deltaLand: 2000, deltaTechnology: 200 },
+  { usd: 25, deltaInfrastructure: 1500, deltaLand: 1500, deltaTechnology: 150 },
+  { usd: 20, deltaInfrastructure: 1250, deltaLand: 1250, deltaTechnology: 125 },
+  { usd: 15, deltaInfrastructure: 1000, deltaLand: 1000, deltaTechnology: 100 },
+  { usd: 10, deltaInfrastructure: 750, deltaLand: 750, deltaTechnology: 75 },
+  { usd: 5, deltaInfrastructure: 500, deltaLand: 500, deltaTechnology: 50 },
+] as const;
+
+export type DonationTier = (typeof DONATION_TIERS)[number];
+
+export function parseNationStatField(value: string | null | undefined): number {
+  if (value == null || value === '') return 0;
+  const n = parseFloat(String(value).replace(/,/g, ''));
+  return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * Highest-USD tier such that infra/land/tech deltas are all >= that tier’s package amounts.
+ * `DONATION_TIERS` is ordered by descending USD.
+ */
+export function findHighestDonationTierAtLeast(
+  dInfra: number,
+  dLand: number,
+  dTech: number
+): DonationTier | null {
+  if (dInfra <= 0 || dLand <= 0 || dTech <= 0) {
+    return null;
+  }
+  for (const tier of DONATION_TIERS) {
+    if (
+      dInfra >= tier.deltaInfrastructure &&
+      dLand >= tier.deltaLand &&
+      dTech >= tier.deltaTechnology
+    ) {
+      return tier;
+    }
+  }
+  return null;
+}
+
+export type PossibleDonationEventInput = {
+  nationId: number;
+  beforeInfrastructure: number;
+  afterInfrastructure: number;
+  beforeLand: number;
+  afterLand: number;
+  beforeTechnology: number;
+  afterTechnology: number;
+  deltaInfrastructure: number;
+  deltaLand: number;
+  deltaTechnology: number;
+  tier: DonationTier;
+};
 
 /**
  * Top-level event type for stats events
@@ -317,6 +377,86 @@ export async function detectDefconChangeEvent(
     });
   } catch (error: any) {
     console.error(`Error creating DEFCON change event for nation ${nationId}:`, error.message);
+  }
+}
+
+/**
+ * Heuristic: one-tick deltas meet or exceed a known donation package on all three stats (highest qualifying USD tier).
+ */
+export async function detectPossibleDonationEvent(input: PossibleDonationEventInput): Promise<void> {
+  const {
+    nationId,
+    beforeInfrastructure,
+    afterInfrastructure,
+    beforeLand,
+    afterLand,
+    beforeTechnology,
+    afterTechnology,
+    deltaInfrastructure,
+    deltaLand,
+    deltaTechnology,
+    tier,
+  } = input;
+
+  try {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recent = await prisma.event.findMany({
+      where: {
+        nationId,
+        eventType: NATION_EVENT_TYPES.POSSIBLE_DONATION,
+        createdAt: { gte: oneHourAgo },
+      },
+      select: { metadata: true },
+    });
+    const isDup = recent.some((e) => {
+      const m = e.metadata as Record<string, unknown> | null;
+      if (!m) return false;
+      return m.suspectedDonationUsd === tier.usd;
+    });
+    if (isDup) {
+      return;
+    }
+
+    const nation = await prisma.nation.findUnique({
+      where: { id: nationId },
+      include: { alliance: true },
+    });
+
+    if (!nation) {
+      return;
+    }
+
+    const label = `$${tier.usd.toFixed(2)} tier`;
+    await prisma.event.create({
+      data: {
+        type: 'nation',
+        eventType: NATION_EVENT_TYPES.POSSIBLE_DONATION,
+        nationId,
+        allianceId: nation.allianceId,
+        description: `${nation.rulerName} (${nation.nationName}) from ${nation.alliance.name}: possible donation (${label}, ≥ tier mins) — infra/land/tech +${deltaInfrastructure}/+${deltaLand}/+${deltaTechnology}`,
+        metadata: {
+          strength: nation.strength,
+          rulerName: nation.rulerName,
+          nationName: nation.nationName,
+          allianceName: nation.alliance.name,
+          suspectedDonationUsd: tier.usd,
+          tierMinimumInfrastructure: tier.deltaInfrastructure,
+          tierMinimumLand: tier.deltaLand,
+          tierMinimumTechnology: tier.deltaTechnology,
+          deltaInfrastructure,
+          deltaLand,
+          deltaTechnology,
+          beforeInfrastructure,
+          afterInfrastructure,
+          beforeLand,
+          afterLand,
+          beforeTechnology,
+          afterTechnology,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error(`Error creating possible donation event for nation ${nationId}:`, error.message);
   }
 }
 

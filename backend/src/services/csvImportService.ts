@@ -4,6 +4,7 @@ import { createReadStream } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { prisma } from '../utils/prisma.js';
+import type { PossibleDonationEventInput } from './eventService.js';
 import { invalidateDataCache } from './dataProcessingService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -137,17 +138,39 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
         
         console.log(`Processing ${validNations.length} valid nations...`);
         
-        // Fetch existing nation IDs, allianceIds, inWarMode, and defcon for comparison
-        type ExistingNationRow = { id: number; allianceId: number; inWarMode: boolean; defcon: number | null };
+        // Fetch existing nation IDs, allianceIds, inWarMode, defcon, and stats for comparison
+        type ExistingNationRow = {
+          id: number;
+          allianceId: number;
+          inWarMode: boolean;
+          defcon: number | null;
+          technology: string;
+          infrastructure: string;
+          land: string;
+        };
         const existingNationsData = (await prisma.nation.findMany({
           where: { id: { in: Array.from(nationIds) } },
-          select: { id: true, allianceId: true, inWarMode: true, defcon: true },
+          select: {
+            id: true,
+            allianceId: true,
+            inWarMode: true,
+            defcon: true,
+            technology: true,
+            infrastructure: true,
+            land: true,
+          },
         })) as unknown as ExistingNationRow[];
 
         const existingNationIds = new Set(existingNationsData.map(n => n.id));
         const existingAllianceMap = new Map(existingNationsData.map(n => [n.id, n.allianceId]));
         const existingWarModeMap = new Map(existingNationsData.map(n => [n.id, n.inWarMode]));
         const existingDefconMap = new Map(existingNationsData.map(n => [n.id, n.defcon]));
+        const existingStatsMap = new Map(
+          existingNationsData.map((n) => [
+            n.id,
+            { technology: n.technology, infrastructure: n.infrastructure, land: n.land },
+          ])
+        );
         
         // Split into new and existing nations
         const newNations = validNations.filter(n => !existingNationIds.has(n.id));
@@ -212,6 +235,8 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
         // Each update is atomic, so this is safe
         if (existingNations.length > 0) {
           try {
+            const { findHighestDonationTierAtLeast, parseNationStatField } = await import('./eventService.js');
+
             // Process updates in parallel batches for better performance
             const batchSize = 100; // Process in batches to avoid overwhelming the connection pool
             const updatePromises: Promise<any>[] = [];
@@ -252,7 +277,7 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
                   }
                 }).catch((error: any) => {
                   console.warn(`Error updating nation ${nation.id}: ${error.message}`);
-                  return { updateResult: null, allianceChanged: null, warModeChanged: null, defconChanged: null };
+                  return null;
                 });
 
                 const allianceChanged = updateResult && oldAllianceId !== undefined && oldAllianceId !== newAllianceId && nation.strength >= 1000
@@ -265,7 +290,37 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
                   ? { nationId: nation.id, oldDefcon, newDefcon }
                   : null;
 
-                return { updateResult, allianceChanged, warModeChanged, defconChanged };
+                let possibleDonation: PossibleDonationEventInput | null = null;
+                const oldStats = existingStatsMap.get(nation.id);
+                if (updateResult && oldStats) {
+                  const beforeInfrastructure = parseNationStatField(oldStats.infrastructure);
+                  const beforeLand = parseNationStatField(oldStats.land);
+                  const beforeTechnology = parseNationStatField(oldStats.technology);
+                  const afterInfrastructure = parseNationStatField(nation.infrastructure);
+                  const afterLand = parseNationStatField(nation.land);
+                  const afterTechnology = parseNationStatField(nation.technology);
+                  const deltaInfrastructure = Math.round(afterInfrastructure - beforeInfrastructure);
+                  const deltaLand = Math.round(afterLand - beforeLand);
+                  const deltaTechnology = Math.round(afterTechnology - beforeTechnology);
+                  const tier = findHighestDonationTierAtLeast(deltaInfrastructure, deltaLand, deltaTechnology);
+                  if (tier) {
+                    possibleDonation = {
+                      nationId: nation.id,
+                      beforeInfrastructure,
+                      afterInfrastructure,
+                      beforeLand,
+                      afterLand,
+                      beforeTechnology,
+                      afterTechnology,
+                      deltaInfrastructure,
+                      deltaLand,
+                      deltaTechnology,
+                      tier,
+                    };
+                  }
+                }
+
+                return { updateResult, allianceChanged, warModeChanged, defconChanged, possibleDonation };
               });
               
               updatePromises.push(...batchPromises);
@@ -324,6 +379,21 @@ export async function importNationsFromCsv(filePath: string): Promise<{ imported
                 await Promise.all(
                   eventBatch.map(change => detectDefconChangeEvent(change.nationId, change.oldDefcon, change.newDefcon))
                 );
+              }
+            }
+
+            const possibleDonations = results
+              .filter(
+                (r): r is NonNullable<typeof r> & { possibleDonation: PossibleDonationEventInput } =>
+                  r !== null && r.possibleDonation !== null
+              )
+              .map((r) => r.possibleDonation);
+            if (possibleDonations.length > 0) {
+              const { detectPossibleDonationEvent } = await import('./eventService.js');
+              const eventBatchSize = 50;
+              for (let i = 0; i < possibleDonations.length; i += eventBatchSize) {
+                const eventBatch = possibleDonations.slice(i, i + eventBatchSize);
+                await Promise.all(eventBatch.map((input) => detectPossibleDonationEvent(input)));
               }
             }
           } catch (error: any) {

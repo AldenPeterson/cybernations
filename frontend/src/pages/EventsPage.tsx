@@ -55,7 +55,17 @@ type EventsResponse = {
 };
 
 type FilterType = 'all' | 'nation' | 'alliance' | 'stats';
-type EventTypeFilter = 'all' | 'new_nation' | 'nation_inactive' | 'alliance_change' | 'war_mode_change' | 'defcon_change' | 'casualty_ranking_entered' | 'casualty_ranking_exited' | 'casualty_ranking_changed';
+type EventTypeFilter =
+  | 'all'
+  | 'new_nation'
+  | 'nation_inactive'
+  | 'alliance_change'
+  | 'war_mode_change'
+  | 'defcon_change'
+  | 'possible_donation'
+  | 'casualty_ranking_entered'
+  | 'casualty_ranking_exited'
+  | 'casualty_ranking_changed';
 
 const EventsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -91,14 +101,33 @@ const EventsPage: React.FC = () => {
   const getValidEventTypes = (type: FilterType): EventTypeFilter[] => {
     switch (type) {
       case 'nation':
-        return ['all', 'new_nation', 'nation_inactive', 'alliance_change', 'war_mode_change', 'defcon_change'];
+        return [
+          'all',
+          'new_nation',
+          'nation_inactive',
+          'alliance_change',
+          'war_mode_change',
+          'defcon_change',
+          'possible_donation',
+        ];
       case 'stats':
         return ['all', 'casualty_ranking_entered', 'casualty_ranking_exited', 'casualty_ranking_changed'];
       case 'alliance':
         return ['all']; // Alliance events would go here if we add them
       case 'all':
       default:
-        return ['all', 'new_nation', 'nation_inactive', 'alliance_change', 'war_mode_change', 'defcon_change', 'casualty_ranking_entered', 'casualty_ranking_exited', 'casualty_ranking_changed'];
+        return [
+          'all',
+          'new_nation',
+          'nation_inactive',
+          'alliance_change',
+          'war_mode_change',
+          'defcon_change',
+          'possible_donation',
+          'casualty_ranking_entered',
+          'casualty_ranking_exited',
+          'casualty_ranking_changed',
+        ];
     }
   };
 
@@ -297,6 +326,8 @@ const EventsPage: React.FC = () => {
         return 'War Mode Change';
       case 'defcon_change':
         return 'DEFCON Change';
+      case 'possible_donation':
+        return 'Possible Donation';
       case 'casualty_ranking_entered':
         return 'Casualty Ranking Entered';
       case 'casualty_ranking_exited':
@@ -320,6 +351,8 @@ const EventsPage: React.FC = () => {
         return 'bg-amber-600';
       case 'defcon_change':
         return 'bg-rose-600';
+      case 'possible_donation':
+        return 'bg-emerald-700';
       case 'casualty_ranking_entered':
         return 'bg-purple-600';
       case 'casualty_ranking_exited':
@@ -403,6 +436,23 @@ const EventsPage: React.FC = () => {
           );
         }
       }
+    }
+
+    if (event.eventType === 'possible_donation' && event.metadata) {
+      const m = event.metadata;
+      const usd =
+        typeof m.suspectedDonationUsd === 'number'
+          ? `$${m.suspectedDonationUsd.toFixed(2)}`
+          : '';
+      const line = usd ? `Suspected ${usd} tier` : '';
+      return (
+        <>
+          {line ? <span className="text-amber-200 font-medium">{line}</span> : null}
+          {event.description ? (
+            <span className="block mt-1 text-gray-300">{formatNSInDescription(event.description)}</span>
+          ) : null}
+        </>
+      );
     }
     
     return formatNSInDescription(event.description);
@@ -586,6 +636,44 @@ const EventsPage: React.FC = () => {
                           {event.metadata.strength && (
                             <span className="ml-2">({formatNSValue(event.metadata.strength)} NS)</span>
                           )}
+                        </div>
+                      )}
+
+                      {event.eventType === 'possible_donation' && event.metadata && (
+                        <div className="text-sm text-gray-400 mt-2 space-y-1 font-mono">
+                          {typeof event.metadata.tierMinimumInfrastructure === 'number' &&
+                            typeof event.metadata.tierMinimumLand === 'number' &&
+                            typeof event.metadata.tierMinimumTechnology === 'number' && (
+                            <div className="text-gray-500 mb-2">
+                              Tier floor (≥ match): infra {event.metadata.tierMinimumInfrastructure}, land{' '}
+                              {event.metadata.tierMinimumLand}, tech {event.metadata.tierMinimumTechnology}
+                            </div>
+                          )}
+                          <div>
+                            Infrastructure:{' '}
+                            <span className="text-gray-300">
+                              {event.metadata.beforeInfrastructure} → {event.metadata.afterInfrastructure}
+                            </span>{' '}
+                            <span className="text-emerald-400/90">
+                              (+{event.metadata.deltaInfrastructure})
+                            </span>
+                          </div>
+                          <div>
+                            Land:{' '}
+                            <span className="text-gray-300">
+                              {event.metadata.beforeLand} → {event.metadata.afterLand}
+                            </span>{' '}
+                            <span className="text-emerald-400/90">(+{event.metadata.deltaLand})</span>
+                          </div>
+                          <div>
+                            Technology:{' '}
+                            <span className="text-gray-300">
+                              {event.metadata.beforeTechnology} → {event.metadata.afterTechnology}
+                            </span>{' '}
+                            <span className="text-emerald-400/90">
+                              (+{event.metadata.deltaTechnology})
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>
