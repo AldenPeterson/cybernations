@@ -101,8 +101,8 @@ function App() {
         searchParams.set('alliance1', selectedAllianceId.toString());
         navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
         hasInitializedNationAidEfficiency.current = true;
-      } else if (selectedAllianceId && !hasInitializedNationAidEfficiency.current) {
-        // For other pages (nation-aid-efficiency, events), use allianceId param
+      } else if (selectedAllianceId && !hasInitializedNationAidEfficiency.current && tabName === 'nation-aid-efficiency') {
+        // For nation-aid-efficiency, use allianceId param
         searchParams.set('allianceId', selectedAllianceId.toString());
         navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
         hasInitializedNationAidEfficiency.current = true;
