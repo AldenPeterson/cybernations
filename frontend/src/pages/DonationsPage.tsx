@@ -14,6 +14,7 @@ interface NationDonationSummary {
   nationName: string;
   counts: Record<string, Record<string, number>>;
   deltas: Record<string, Record<string, DeltaBucket>>;
+  dates: Record<string, Record<string, string>>;
 }
 
 interface AllianceDonationSummary {
@@ -76,6 +77,7 @@ interface NationDonation {
   rulerName: string;
   tier: number;
   deltas: DeltaBucket;
+  date: string | null; // YYYY-MM-DD (UTC); null if unknown
 }
 
 interface AlliancePopoverContent {
@@ -94,6 +96,7 @@ interface NationPopoverContent {
   title: string;
   subtitle: string;
   monthLabel: string;
+  dateLabel: string | null; // formatted donation date, if known
   nationId: number;
   tier: number;
   deltas: DeltaBucket;
@@ -181,6 +184,17 @@ const formatMonthLabel = (month: string): string => {
   const [year, m] = month.split('-');
   const date = new Date(Date.UTC(parseInt(year, 10), parseInt(m, 10) - 1, 1));
   return date.toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+};
+
+const formatDonationDate = (isoDate: string): string => {
+  const [y, m, d] = isoDate.split('-');
+  const date = new Date(Date.UTC(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10)));
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
 };
 
 const rollupCounts = (
@@ -341,15 +355,24 @@ const DonationsPage: React.FC = () => {
         const nd = sumDeltasForMonth(nation.deltas[month], tiers);
         // One donation per month per nation: take the (single) tier from the breakdown.
         const tier = nb.tiers[0]?.tier ?? 0;
+        const date = nation.dates?.[month]?.[String(tier)] ?? null;
         nations.push({
           nationId: nation.nationId,
           nationName: nation.nationName,
           rulerName: nation.rulerName,
           tier,
           deltas: nd,
+          date,
         });
       }
-      nations.sort((a, b) => b.tier - a.tier || a.nationName.localeCompare(b.nationName));
+      // Sort by date desc when available, then tier desc, then name.
+      nations.sort((a, b) => {
+        if (a.date && b.date && a.date !== b.date) return a.date < b.date ? 1 : -1;
+        if (a.date && !b.date) return -1;
+        if (!a.date && b.date) return 1;
+        if (b.tier !== a.tier) return b.tier - a.tier;
+        return a.nationName.localeCompare(b.nationName);
+      });
 
       return {
         scope: 'alliance',
@@ -375,11 +398,13 @@ const DonationsPage: React.FC = () => {
       const tb = buildTierBreakdown(nation.counts[month], tiers);
       if (tb.totalCount === 0) return null;
       const tier = tb.tiers[0]?.tier ?? 0;
+      const isoDate = nation.dates?.[month]?.[String(tier)] ?? null;
       return {
         scope: 'nation',
         title: nation.nationName,
         subtitle: `${nation.rulerName} • ${alliance.allianceName}`,
         monthLabel: formatMonthLabel(month),
+        dateLabel: isoDate ? formatDonationDate(isoDate) : null,
         nationId: nation.nationId,
         tier,
         deltas: sumDeltasForMonth(nation.deltas[month], tiers),
@@ -809,7 +834,7 @@ const DonationsPage: React.FC = () => {
                 <div className="font-bold text-gray-100 truncate">{c.title}</div>
                 <div className="text-[11px] text-gray-400 truncate">
                   {c.scope === 'nation'
-                    ? `${c.subtitle} • ${c.monthLabel}`
+                    ? `${c.subtitle} • ${c.dateLabel ?? c.monthLabel}`
                     : `${c.monthLabel} • ${c.contributingNations} nation${c.contributingNations === 1 ? '' : 's'}`}
                 </div>
               </div>
@@ -884,7 +909,9 @@ const DonationsPage: React.FC = () => {
                             >
                               {n.nationName}
                             </a>
-                            <div className="text-[10px] text-gray-500 truncate">{n.rulerName}</div>
+                            <div className="text-[10px] text-gray-500 truncate">
+                              {n.date ? `${formatDonationDate(n.date)} • ${n.rulerName}` : n.rulerName}
+                            </div>
                           </div>
                           <span className="text-emerald-400 font-semibold whitespace-nowrap text-xs">
                             ${n.tier}

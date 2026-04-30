@@ -15,6 +15,9 @@ interface NationDonationSummary {
   counts: Record<string, Record<string, number>>;
   // summed actual stat gains keyed by month then tier (USD as string)
   deltas: Record<string, Record<string, DeltaBucket>>;
+  // event timestamp keyed by month then tier (YYYY-MM-DD).
+  // Donations are once per (nation, month, tier), so a single date is sufficient.
+  dates: Record<string, Record<string, string>>;
 }
 
 interface AllianceDonationSummary {
@@ -123,6 +126,7 @@ export class DonationsController {
               nationName,
               counts: {},
               deltas: {},
+              dates: {},
             };
             nationMap.set(event.nationId, nation);
           }
@@ -142,6 +146,14 @@ export class DonationsController {
           tierDeltas.tech += dTech;
           monthDeltas[tierKey] = tierDeltas;
           nation.deltas[month] = monthDeltas;
+
+          const dateStr = event.createdAt.toISOString().slice(0, 10);
+          const monthDates = nation.dates[month] || {};
+          // Defensive: if multiple events somehow occur for the same bucket, keep the most recent.
+          if (!monthDates[tierKey] || monthDates[tierKey] < dateStr) {
+            monthDates[tierKey] = dateStr;
+          }
+          nation.dates[month] = monthDates;
         }
       }
 
