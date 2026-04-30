@@ -536,9 +536,7 @@ const DonationsPage: React.FC = () => {
           <p className="text-sm text-amber-100">
             <span className="font-semibold">Estimates only.</span> Figures are derived from a heuristic that
             flags one-tick infrastructure / land / technology gains matching known PayPal donation tiers
-            ($5, $10, $15, $20, $25, $30). Real donations may go undetected (when stats grow more slowly than
-            tier minimums) and stacked aid can occasionally trigger false positives. Treat totals as a lower
-            bound, not a precise audit.
+            ($5, $10, $15, $20, $25, $30). It is possible for false positives if a nation buys infra/land concurrent to receiving tech.
           </p>
         </div>
 
