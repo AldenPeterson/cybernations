@@ -11,6 +11,7 @@ import staggerEligibilityRoutes from './staggerEligibilityRoutes.js';
 import { nuclearHitsRoutes } from './nuclearHitsRoutes.js';
 import { csvRoutes } from './csvRoutes.js';
 import { eventsRoutes } from './eventsRoutes.js';
+import { donationsRoutes } from './donationsRoutes.js';
 import { warStatisticsRoutes } from './warStatisticsRoutes.js';
 import { casualtiesRoutes } from './casualtiesRoutes.js';
 import { topStrengthRoutes } from './topStrengthRoutes.js';
@@ -59,6 +60,9 @@ apiRoutes.use('/', csvRoutes);
 
 // Events routes
 apiRoutes.use('/', eventsRoutes);
+
+// Donations routes
+apiRoutes.use('/', donationsRoutes);
 
 // War statistics routes
 apiRoutes.use('/', warStatisticsRoutes);

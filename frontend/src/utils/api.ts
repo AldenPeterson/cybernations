@@ -119,6 +119,7 @@ export const API_ENDPOINTS = {
     const query = queryParams.toString();
     return `/api/events${query ? `?${query}` : ''}`;
   },
+  donationSummary: '/api/donations/summary',
   warStatisticsAllianceTotals: (filter?: string) => {
     const query = filter ? `?filter=${encodeURIComponent(filter)}` : '';
     return `/api/war-statistics/alliance-totals${query}`;

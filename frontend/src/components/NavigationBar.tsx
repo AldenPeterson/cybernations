@@ -41,6 +41,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     { label: 'Aid Efficiency', path: '/aid-efficiency' },
     { label: 'Casualties', path: '/casualties' },
     { label: 'Damage', path: '/war-stats' },
+    { label: 'Donations (Estimated)', path: '/donations' },
     { label: 'Global Wars', path: '/global-wars' },
     { label: 'Nation Aid Efficiency', path: '/nation-aid-efficiency' },
     { label: 'Nuclear', path: '/nuclear-stats' },
@@ -125,6 +126,9 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         break;
       case 'casualties':
         pageTitle = 'Stats - Casualties';
+        break;
+      case 'donations':
+        pageTitle = 'Stats - Donations (Estimated)';
         break;
       case 'events':
         pageTitle = 'Events';
@@ -229,6 +233,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         return 'Stats - Damage';
       case 'casualties':
         return 'Stats - Casualties';
+      case 'donations':
+        return 'Stats - Donations (Estimated)';
       case 'events':
         return 'Events';
       case 'admin':

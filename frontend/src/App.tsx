@@ -15,6 +15,7 @@ import TopStrengthPage from './pages/TopStrengthPage'
 import AidEfficiencyPage from './pages/AidEfficiencyPage'
 import NationAidEfficiencyPage from './pages/NationAidEfficiencyPage'
 import EventsPage from './pages/EventsPage'
+import DonationsPage from './pages/DonationsPage'
 import WarStatsPage from './pages/WarStatsPage'
 import CasualtiesPage from './pages/CasualtiesPage'
 import AdminPage from './pages/AdminPage'
@@ -152,6 +153,7 @@ function App() {
         <Route path="/aid-efficiency" element={<AidEfficiencyPage />} />
         <Route path="/nation-aid-efficiency" element={<NationAidEfficiencyPage />} />
         <Route path="/events" element={<EventsPage />} />
+        <Route path="/donations" element={<DonationsPage />} />
         <Route path="/war-stats" element={<WarStatsPage />} />
         <Route path="/casualties" element={<CasualtiesPage selectedAllianceId={selectedAllianceId} />} />
         <Route path="/shame-offers" element={<ShameOffersPage />} />
