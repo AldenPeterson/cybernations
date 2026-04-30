@@ -86,7 +86,6 @@ interface AlliancePopoverContent {
   totalUsd: number;
   contributingNations: number;
   tiers: TierBreakdown[]; // tier mix across nations
-  deltas: DeltaBucket;
   nations: NationDonation[];
 }
 
@@ -335,15 +334,11 @@ const DonationsPage: React.FC = () => {
       const tierBreakdown = buildTierBreakdown(alliance.counts[month], tiers);
       if (tierBreakdown.totalCount === 0) return null;
 
-      const allianceDeltas: DeltaBucket = { infra: 0, land: 0, tech: 0 };
       const nations: NationDonation[] = [];
       for (const nation of alliance.nations) {
         const nb = buildTierBreakdown(nation.counts[month], tiers);
         if (nb.totalCount === 0) continue;
         const nd = sumDeltasForMonth(nation.deltas[month], tiers);
-        allianceDeltas.infra += nd.infra;
-        allianceDeltas.land += nd.land;
-        allianceDeltas.tech += nd.tech;
         // One donation per month per nation: take the (single) tier from the breakdown.
         const tier = nb.tiers[0]?.tier ?? 0;
         nations.push({
@@ -364,7 +359,6 @@ const DonationsPage: React.FC = () => {
         totalUsd: tierBreakdown.totalUsd,
         contributingNations: nations.length,
         tiers: tierBreakdown.tiers,
-        deltas: allianceDeltas,
         nations,
       };
     },
@@ -872,20 +866,6 @@ const DonationsPage: React.FC = () => {
                         .map((t) => `$${t.tier}×${t.count}`)
                         .join(' · ')}
                     </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-gray-800/60 border border-gray-700 rounded p-2 text-center">
-                      <div className="text-[10px] uppercase tracking-wide text-gray-500">Infra</div>
-                      <div className="text-emerald-400 font-semibold">+{formatStatGain(c.deltas.infra)}</div>
-                    </div>
-                    <div className="bg-gray-800/60 border border-gray-700 rounded p-2 text-center">
-                      <div className="text-[10px] uppercase tracking-wide text-gray-500">Land</div>
-                      <div className="text-emerald-400 font-semibold">+{formatStatGain(c.deltas.land)}</div>
-                    </div>
-                    <div className="bg-gray-800/60 border border-gray-700 rounded p-2 text-center">
-                      <div className="text-[10px] uppercase tracking-wide text-gray-500">Tech</div>
-                      <div className="text-emerald-400 font-semibold">+{formatStatGain(c.deltas.tech)}</div>
-                    </div>
                   </div>
                   <div>
                     <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-1">
