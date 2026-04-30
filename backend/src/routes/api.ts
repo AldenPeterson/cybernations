@@ -32,6 +32,7 @@ apiRoutes.post('/cron/run-post-processing', CronController.runPostProcessing);
 
 // Dashboard API endpoints - register public routes first (no authentication required)
 apiRoutes.get('/alliances', AllianceController.getAlliances);
+apiRoutes.get('/alliance-nation-stats', AllianceController.getAllianceNationStats);
 apiRoutes.get('/alliances/:allianceId/stats', validateAllianceId, AllianceController.getAllianceStats);
 apiRoutes.get('/alliances/:allianceId/nuclear-stats', validateAllianceId, AllianceController.getNuclearWeaponStats);
 

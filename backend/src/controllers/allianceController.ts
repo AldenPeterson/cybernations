@@ -233,6 +233,76 @@ export class AllianceController {
 
 
   /**
+   * Get lightweight per-nation strength/technology stats for one or more alliances.
+   * Public endpoint used by comparison/visualization pages.
+   * Query: ?allianceIds=1,2,3
+   */
+  static async getAllianceNationStats(req: Request, res: Response) {
+    try {
+      const raw = typeof req.query.allianceIds === 'string' ? req.query.allianceIds : '';
+      const allianceIds = raw
+        .split(',')
+        .map(s => parseInt(s.trim(), 10))
+        .filter(n => Number.isFinite(n) && n > 0);
+
+      if (allianceIds.length === 0) {
+        return res.json({ success: true, alliances: {} });
+      }
+
+      // Cap to prevent abuse
+      const MAX_ALLIANCES = 100;
+      const capped = allianceIds.slice(0, MAX_ALLIANCES);
+
+      const { prisma } = await import('../utils/prisma.js');
+      const nations = await prisma.nation.findMany({
+        where: {
+          allianceId: { in: capped },
+          isActive: true,
+        },
+        select: {
+          id: true,
+          rulerName: true,
+          nationName: true,
+          allianceId: true,
+          strength: true,
+          technology: true,
+          inWarMode: true,
+        },
+      });
+
+      type NationStatRow = {
+        nation_id: number;
+        ruler_name: string;
+        nation_name: string;
+        strength: number;
+        technology: number;
+        in_war_mode: boolean;
+      };
+      const grouped: Record<number, NationStatRow[]> = {};
+      for (const id of capped) grouped[id] = [];
+      for (const n of nations) {
+        const tech = parseFloat((n.technology || '0').replace(/,/g, ''));
+        grouped[n.allianceId]?.push({
+          nation_id: n.id,
+          ruler_name: n.rulerName,
+          nation_name: n.nationName,
+          strength: n.strength,
+          technology: Number.isFinite(tech) ? tech : 0,
+          in_war_mode: n.inWarMode,
+        });
+      }
+
+      res.json({ success: true, alliances: grouped });
+    } catch (error) {
+      console.error('Error fetching alliance nation stats:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  /**
    * Get nuclear weapon statistics for an alliance
    */
   static async getNuclearWeaponStats(req: Request, res: Response) {
