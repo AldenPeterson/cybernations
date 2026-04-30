@@ -119,6 +119,7 @@ const NSComparisonsPage: React.FC = () => {
   const [hoverPoint, setHoverPoint] = useState<{
     side: GroupKey;
     nation: NationStat;
+    allianceId: number;
     allianceName: string;
     cx: number;
     cy: number;
@@ -744,6 +745,15 @@ const BarTooltip: React.FC<{
   const sideColor = side === 'A' ? 'text-coalition-blue' : 'text-coalition-red';
   const shown = nations.slice(0, TOOLTIP_NATION_LIMIT);
   const more = nations.length - shown.length;
+
+  const allianceBreakdown = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const n of nations) {
+      map.set(n.alliance_name, (map.get(n.alliance_name) ?? 0) + 1);
+    }
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+  }, [nations]);
+
   return (
     <div
       className="pointer-events-none absolute bg-gray-900 border border-gray-600 rounded shadow-lg p-2.5 text-xs text-gray-100 z-20"
@@ -753,6 +763,15 @@ const BarTooltip: React.FC<{
         <span className={`font-semibold ${sideColor}`}>{sideLabel} · {metricLabel} {bucket.label}</span>
         <span className="text-gray-400 tabular-nums">{nations.length} nation{nations.length === 1 ? '' : 's'}</span>
       </div>
+      {allianceBreakdown.length > 1 && (
+        <div className="flex flex-wrap gap-1 mb-1.5 pb-1.5 border-b border-gray-700">
+          {allianceBreakdown.map(([name, count]) => (
+            <span key={name} className="px-1.5 py-0.5 bg-gray-800 text-gray-300 rounded text-[11px]">
+              {name} <span className="text-gray-500 tabular-nums">{count}</span>
+            </span>
+          ))}
+        </div>
+      )}
       <div className="grid grid-cols-[1fr_auto_auto] gap-x-2 gap-y-0.5">
         <span className="text-gray-400">Ruler / Alliance</span>
         <span className="text-gray-400 text-right">NS</span>
@@ -786,8 +805,8 @@ const Scatterplot: React.FC<{
   yMax: number;
   logScale: boolean;
   onToggleLogScale: () => void;
-  hoverPoint: { side: GroupKey; nation: NationStat; allianceName: string; cx: number; cy: number } | null;
-  setHoverPoint: React.Dispatch<React.SetStateAction<{ side: GroupKey; nation: NationStat; allianceName: string; cx: number; cy: number } | null>>;
+  hoverPoint: { side: GroupKey; nation: NationStat; allianceId: number; allianceName: string; cx: number; cy: number } | null;
+  setHoverPoint: React.Dispatch<React.SetStateAction<{ side: GroupKey; nation: NationStat; allianceId: number; allianceName: string; cx: number; cy: number } | null>>;
 }> = ({ points, xMax, yMax, logScale, onToggleLogScale, hoverPoint, setHoverPoint }) => {
   const width = 900;
   const height = 460;
@@ -795,6 +814,16 @@ const Scatterplot: React.FC<{
   const plotW = width - margin.left - margin.right;
   const plotH = height - margin.top - margin.bottom;
   const r = 3.5;
+
+  // Count nations per alliance across the full selection so the tooltip can show
+  // "X of Y in this alliance" context for the hovered point.
+  const allianceCounts = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const p of points) {
+      map.set(p.alliance_id, (map.get(p.alliance_id) ?? 0) + 1);
+    }
+    return map;
+  }, [points]);
 
   // Compute log-friendly bounds (avoid log(0)).
   const xLogMin = 1;
@@ -929,6 +958,7 @@ const Scatterplot: React.FC<{
                       setHoverPoint({
                         side: p.side,
                         nation: p,
+                        allianceId: p.alliance_id,
                         allianceName: p.alliance_name,
                         cx: rect ? e.clientX - rect.left : cx,
                         cy: rect ? e.clientY - rect.top : cy,
@@ -958,7 +988,10 @@ const Scatterplot: React.FC<{
           >
             <div className="font-semibold text-gray-100">{hoverPoint.nation.nation_name}</div>
             <div className="text-gray-400">{hoverPoint.nation.ruler_name}</div>
-            <div className="text-gray-400 mt-0.5">{hoverPoint.allianceName}</div>
+            <div className="text-gray-400 mt-0.5">
+              {hoverPoint.allianceName}
+              <span className="text-gray-500"> · {allianceCounts.get(hoverPoint.allianceId) ?? 0} in selection</span>
+            </div>
             <div className="mt-1.5 grid grid-cols-2 gap-x-3">
               <span className="text-gray-400">NS</span>
               <span className="text-right tabular-nums">{formatNumber(hoverPoint.nation.strength)}</span>
