@@ -13,7 +13,7 @@ export type UserRole = typeof UserRole[keyof typeof UserRole];
 
 export interface User {
   id: number;
-  email: string;
+  discordUsername: string | null;
   roles: UserRole[];
   rulerName: string | null;
   capabilities: string[];
@@ -86,7 +86,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = () => {
     // Redirect to backend OAuth endpoint
     const backendUrl = getApiBaseUrl();
-    window.location.href = `${backendUrl}/api/auth/google`;
+    window.location.href = `${backendUrl}/api/auth/discord`;
   };
 
   const logout = async () => {

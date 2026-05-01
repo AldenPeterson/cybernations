@@ -31,7 +31,7 @@ export interface WarAssignmentDto {
   };
   assignedBy: {
     id: number;
-    email: string;
+    discordUsername: string | null;
     rulerName: string | null;
   };
 }
@@ -109,7 +109,7 @@ const mapAssignmentToDto = (assignment: any): WarAssignmentDto => {
     },
     assignedBy: {
       id: user.id,
-      email: user.email,
+      discordUsername: user.discordUsername,
       rulerName: user.rulerName,
     },
   };

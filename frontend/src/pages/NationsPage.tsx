@@ -46,8 +46,8 @@ const NationsPage: React.FC = () => {
             You must be logged in to access the Alliance Manager.
           </p>
           <button
-            onClick={() => window.location.href = '/api/auth/google'}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            onClick={() => window.location.href = '/api/auth/discord'}
+            className="px-4 py-2 bg-[#5865F2] text-white rounded hover:bg-[#4752C4]"
           >
             Log In
           </button>

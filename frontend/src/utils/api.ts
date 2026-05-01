@@ -158,7 +158,7 @@ export const API_ENDPOINTS = {
   authMe: '/api/auth/me',
   authLogout: '/api/auth/logout',
   authVerify: '/api/auth/verify',
-  authGoogle: '/api/auth/google',
+  authDiscord: '/api/auth/discord',
   // User management endpoints (ADMIN only)
   users: '/api/users',
   updateUser: (id: number) => `/api/users/${id}`,

@@ -12,7 +12,8 @@ export class UserController {
       const users = await prisma.user.findMany({
         select: {
           id: true,
-          email: true,
+          discordId: true,
+          discordUsername: true,
           rulerName: true,
           createdAt: true,
           updatedAt: true,
@@ -37,7 +38,8 @@ export class UserController {
       // Transform the data to include managedAllianceIds and roles
       const usersWithAllianceIds = users.map((user) => ({
         id: user.id,
-        email: user.email,
+        discordId: user.discordId,
+        discordUsername: user.discordUsername,
         rulerName: user.rulerName,
         roles: user.roleAssignments.map((r) => r.role),
         createdAt: user.createdAt,
@@ -72,7 +74,7 @@ export class UserController {
         });
       }
 
-      const { email, rulerName, roles, managedAllianceIds } = req.body;
+      const { rulerName, roles, managedAllianceIds } = req.body;
 
       // Validate roles if provided
       if (roles !== undefined) {
@@ -107,7 +109,6 @@ export class UserController {
 
       // Prepare update data
       const updateData: any = {};
-      if (email !== undefined) updateData.email = email;
       if (rulerName !== undefined) updateData.rulerName = rulerName || null; // Allow clearing rulerName
 
       // Update user
@@ -153,7 +154,8 @@ export class UserController {
         where: { id: userId },
         select: {
           id: true,
-          email: true,
+          discordId: true,
+          discordUsername: true,
           rulerName: true,
           createdAt: true,
           updatedAt: true,
@@ -170,7 +172,8 @@ export class UserController {
         success: true,
         user: {
           id: userWithAlliances!.id,
-          email: userWithAlliances!.email,
+          discordId: userWithAlliances!.discordId,
+          discordUsername: userWithAlliances!.discordUsername,
           rulerName: userWithAlliances!.rulerName,
           roles: userWithAlliances!.roleAssignments.map((r) => r.role),
           createdAt: userWithAlliances!.createdAt,

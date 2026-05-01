@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { findOrCreateUser, getEffectiveCapabilities, getUserRoles } from '../services/authService.js';
-import { getAuthUrl, generateState, getTokens, getUserInfo } from '../config/googleOAuth.js';
+import { getAuthUrl, generateState, getTokens, getUserInfo } from '../config/discordOAuth.js';
 import { prisma } from '../utils/prisma.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { getClearCookieOptions } from '../utils/cookieConfig.js';
@@ -8,17 +8,12 @@ import { getClearCookieOptions } from '../utils/cookieConfig.js';
 export const authRoutes = Router();
 
 /**
- * Initiate Google OAuth flow
+ * Initiate Discord OAuth flow
  */
-authRoutes.get('/google', (req: Request, res: Response) => {
+authRoutes.get('/discord', (req: Request, res: Response) => {
   try {
-    // Generate random state parameter for CSRF protection
     const state = generateState();
-    
-    // Store state in session
     req.session.oauthState = state;
-    
-    // Generate OAuth URL with state and redirect
     const authUrl = getAuthUrl(state);
     res.redirect(authUrl);
   } catch (error) {
@@ -31,13 +26,13 @@ authRoutes.get('/google', (req: Request, res: Response) => {
 });
 
 /**
- * Handle Google OAuth callback
+ * Handle Discord OAuth callback
  */
-authRoutes.get('/google/callback', async (req: Request, res: Response) => {
+authRoutes.get('/discord/callback', async (req: Request, res: Response) => {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   try {
     const { code, state } = req.query;
 
-    // Verify state parameter
     if (!state) {
       console.error('OAuth callback missing state parameter');
       return res.status(400).json({
@@ -46,7 +41,6 @@ authRoutes.get('/google/callback', async (req: Request, res: Response) => {
       });
     }
 
-    // Check if session has oauthState
     if (!req.session.oauthState) {
       console.error('OAuth callback: Session missing oauthState');
       return res.status(400).json({
@@ -70,29 +64,41 @@ authRoutes.get('/google/callback', async (req: Request, res: Response) => {
       });
     }
 
-    // Exchange code for tokens
     const tokens = await getTokens(code);
+    const discordUser = await getUserInfo(tokens);
 
-    // Get user info from Google
-    const googleProfile = await getUserInfo(tokens);
+    const user = await findOrCreateUser({
+      id: discordUser.id,
+      username: discordUser.username,
+      global_name: discordUser.global_name,
+    });
 
-    // Find or create user in database
-    const user = await findOrCreateUser(googleProfile);
-
-    // Store user ID in session
     req.session.userId = user.id;
-
-    // Clear OAuth state
     delete req.session.oauthState;
 
-    // Redirect to frontend with success
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     res.redirect(`${frontendUrl}?auth=success`);
   } catch (error) {
     console.error('Error in OAuth callback:', error);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    res.redirect(`${frontendUrl}?auth=error&message=${encodeURIComponent(error instanceof Error ? error.message : 'Unknown error')}`);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    res.redirect(`${frontendUrl}?auth=error&message=${encodeURIComponent(message)}`);
   }
+});
+
+/**
+ * Legacy Google OAuth entrypoints — gone. Tell the client to use Discord.
+ */
+authRoutes.get('/google', (_req: Request, res: Response) => {
+  res.status(410).json({
+    success: false,
+    error: 'Google sign-in has been replaced by Discord. Please sign in with Discord.',
+  });
+});
+
+authRoutes.get('/google/callback', (_req: Request, res: Response) => {
+  res.status(410).json({
+    success: false,
+    error: 'Google sign-in has been replaced by Discord. Please sign in with Discord.',
+  });
 });
 
 /**
@@ -141,7 +147,7 @@ authRoutes.get('/me', async (req: Request, res: Response) => {
       where: { id: userId },
       select: {
         id: true,
-        email: true,
+        discordUsername: true,
         rulerName: true,
       },
     });
@@ -164,7 +170,7 @@ authRoutes.get('/me', async (req: Request, res: Response) => {
       success: true,
       user: {
         id: user.id,
-        email: user.email,
+        discordUsername: user.discordUsername,
         rulerName: user.rulerName,
         roles,
         capabilities,
@@ -234,7 +240,7 @@ authRoutes.post('/update-rulername', requireAuth, async (req: Request, res: Resp
         data: { rulerName: trimmedRulerName },
         select: {
           id: true,
-          email: true,
+          discordUsername: true,
           rulerName: true,
         },
       });
@@ -248,7 +254,7 @@ authRoutes.post('/update-rulername', requireAuth, async (req: Request, res: Resp
         success: true,
         user: {
           id: updatedUser.id,
-          email: updatedUser.email,
+          discordUsername: updatedUser.discordUsername,
           rulerName: updatedUser.rulerName,
           roles,
           capabilities,

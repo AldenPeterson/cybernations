@@ -367,7 +367,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
                   className="hidden lg:inline text-xs text-gray-300 hover:text-white cursor-pointer transition-colors underline decoration-dotted underline-offset-2"
                   title="Click to update your ruler name"
                 >
-                  {user?.rulerName || user?.email || 'Set Ruler Name'}
+                  {user?.rulerName || user?.discordUsername || 'Set Ruler Name'}
                 </button>
                 <button
                   onClick={logout}

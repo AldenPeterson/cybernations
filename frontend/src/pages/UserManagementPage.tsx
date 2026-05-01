@@ -14,7 +14,8 @@ const ALL_ROLES: UserRole[] = [
 
 interface User {
   id: number;
-  email: string;
+  discordId: string | null;
+  discordUsername: string | null;
   rulerName: string | null;
   roles: UserRole[];
   createdAt: string;
@@ -100,9 +101,6 @@ const UserManagementPage: React.FC = () => {
       const updateData: any = {};
       const originalUser = users.find((u) => u.id === userId)!;
 
-      if (edited.email !== undefined && edited.email !== originalUser.email) {
-        updateData.email = edited.email;
-      }
       if (edited.rulerName !== undefined && edited.rulerName !== originalUser.rulerName) {
         updateData.rulerName = edited.rulerName || null;
       }
@@ -268,7 +266,7 @@ const UserManagementPage: React.FC = () => {
                 <thead className="bg-gray-700">
                   <tr>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">ID</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Email</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Discord</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Ruler Name</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Roles</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">Managed Alliances</th>
@@ -286,15 +284,9 @@ const UserManagementPage: React.FC = () => {
                       <tr key={user.id} className="hover:bg-gray-750">
                         <td className="px-4 py-3 text-sm text-gray-300">{user.id}</td>
                         <td className="px-4 py-3 text-sm">
-                          {isEditing ? (
-                            <input
-                              type="email"
-                              value={edited.email}
-                              onChange={(e) => handleFieldChange(user.id, 'email', e.target.value)}
-                              className="w-full px-2 py-1 bg-gray-700 text-gray-200 border border-gray-600 rounded focus:outline-none focus:border-primary"
-                            />
-                          ) : (
-                            <span className="text-gray-300">{user.email}</span>
+                          <div className="text-gray-300">{user.discordUsername ?? '—'}</div>
+                          {user.discordId && (
+                            <div className="text-xs text-gray-500 font-mono">{user.discordId}</div>
                           )}
                         </td>
                         <td className="px-4 py-3 text-sm">
@@ -441,7 +433,7 @@ const UserManagementPage: React.FC = () => {
             <div className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
               <div className="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-100">
-                  Manage Alliances for {users.find((u) => u.id === allianceModalOpen)?.email}
+                  Manage Alliances for {(() => { const u = users.find((u) => u.id === allianceModalOpen); return u?.discordUsername ?? u?.rulerName ?? `User #${allianceModalOpen}`; })()}
                 </h2>
                 <button
                   onClick={handleCloseAllianceModal}

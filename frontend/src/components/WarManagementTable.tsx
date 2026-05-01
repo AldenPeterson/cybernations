@@ -253,7 +253,7 @@ interface WarAssignment {
   };
   assignedBy: {
     id: number;
-    email: string;
+    discordUsername: string | null;
     rulerName: string | null;
   };
 }
@@ -1965,7 +1965,8 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
                                   <div className="text-[9px] text-gray-300 mt-0.5">
                                     By:{' '}
                                     {assignment.assignedBy.rulerName ||
-                                      assignment.assignedBy.email}
+                                      assignment.assignedBy.discordUsername ||
+                                      '—'}
                                   </div>
                                   {assignment.isOutOfRange && (
                                     <div className="text-[9px] font-bold text-red-200 mt-0.5">
@@ -2099,7 +2100,7 @@ const WarManagementTable: React.FC<WarManagementTableProps> = ({ allianceId }) =
               )}
               <div className="mb-2">
                 <span className="font-semibold">Assigned by:</span>{' '}
-                {deleteDialog.assignment.assignedBy.rulerName || deleteDialog.assignment.assignedBy.email}
+                {deleteDialog.assignment.assignedBy.rulerName || deleteDialog.assignment.assignedBy.discordUsername || '—'}
               </div>
             </div>
             <div className="flex justify-end gap-2">

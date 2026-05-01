@@ -2,77 +2,40 @@ import { prisma } from '../utils/prisma.js';
 import { UserRole } from '@prisma/client';
 import { getCapabilitiesForRoles } from './capabilityService.js';
 
-export interface GoogleProfile {
-  sub: string; // Google ID
-  email: string;
-  email_verified: boolean;
-  name?: string;
-  picture?: string;
+export interface DiscordProfile {
+  id: string; // Discord snowflake
+  username: string;
+  global_name?: string | null;
 }
 
 /**
- * Find existing user or create new one from Google profile
+ * Find existing user by discordId or create a new one. Identity is keyed on
+ * discordId; email is not requested from Discord.
  */
-export async function findOrCreateUser(profile: GoogleProfile) {
-  const { sub: googleId, email } = profile;
+export async function findOrCreateUser(profile: DiscordProfile) {
+  const { id: discordId, username, global_name } = profile;
+  const discordUsername = global_name || username;
 
-  // Try to find existing user
-  let user;
-  try {
-    user = await prisma.user.findUnique({
-      where: { googleId },
-    });
-  } catch (error: any) {
-    console.error('Error finding user by googleId:', error.message);
-    throw error;
-  }
-
-  // If user doesn't exist, create new one
-  if (!user) {
-    try {
-      user = await prisma.user.create({
-        data: {
-          googleId,
-          email,
-          // rulerName is not set - will be manually configured
-          roleAssignments: {
-            create: [{ role: UserRole.USER }],
-          },
-        },
-      });
-    } catch (error) {
-      console.error('Error creating user:', error);
-      // If creation fails due to unique constraint (email or rulerName), try to find by email
-      if (error instanceof Error && error.message.includes('Unique constraint')) {
-        user = await prisma.user.findUnique({
-          where: { email },
-        });
-        if (user) {
-          // Update googleId if it was missing
-          if (!user.googleId) {
-            user = await prisma.user.update({
-              where: { id: user.id },
-              data: { googleId },
-            });
-          }
-        } else {
-          throw error; // Re-throw if we can't find or create
-        }
-      } else {
-        throw error; // Re-throw other errors
-      }
-    }
-  } else {
-    // Update email if it changed (rulerName is manually set, don't update from Google)
-    if (user.email !== email) {
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { email },
+  const existing = await prisma.user.findUnique({ where: { discordId } });
+  if (existing) {
+    if (existing.discordUsername !== discordUsername) {
+      return prisma.user.update({
+        where: { id: existing.id },
+        data: { discordUsername },
       });
     }
+    return existing;
   }
 
-  return user;
+  return prisma.user.create({
+    data: {
+      discordId,
+      discordUsername,
+      roleAssignments: {
+        create: [{ role: UserRole.USER }],
+      },
+    },
+  });
 }
 
 /**
