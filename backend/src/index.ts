@@ -57,6 +57,7 @@ app.use(
     name: sessionName,
     resave: false,
     saveUninitialized: false,
+    rolling: true,
     cookie: cookieConfig,
   })
 );

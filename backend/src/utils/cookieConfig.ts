@@ -17,7 +17,7 @@ export interface CookieOptions {
  */
 export function getCookieConfig(): CookieOptions {
   const cookieSecure = process.env.COOKIE_SECURE === 'true';
-  const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE || '604800000', 10); // 7 days default
+  const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE || '2592000000', 10); // 30 days default
 
   return {
     maxAge: sessionMaxAge,
