@@ -1,14 +1,13 @@
 // API configuration and utility functions
-declare const __API_BASE_URL__: string;
 
-// Get the base URL for API calls
+// Get the base URL for API calls.
+// In both dev and prod, use relative URLs so requests are same-origin:
+//   - dev: Vite proxy in vite.config.ts forwards /api -> http://localhost:3001
+//   - prod: Vercel rewrite in vercel.json forwards /api -> backend
+// Same-origin is required so the session cookie is sent on mobile Safari /
+// any browser that blocks third-party cookies.
 export const getApiBaseUrl = (): string => {
-  // In development, use relative URLs (proxy handles routing)
-  // In production, use the environment variable
-  if (import.meta.env.DEV) {
-    return '';
-  }
-  return __API_BASE_URL__ || 'https://cybernations-backend.vercel.app';
+  return '';
 };
 
 // Helper function to make API calls

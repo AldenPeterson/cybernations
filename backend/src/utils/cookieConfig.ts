@@ -23,7 +23,7 @@ export function getCookieConfig(): CookieOptions {
     maxAge: sessionMaxAge,
     httpOnly: true,
     secure: cookieSecure,
-    sameSite: cookieSecure ? 'none' : 'lax',
+    sameSite: 'lax',
     path: '/',
   };
 }
