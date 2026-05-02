@@ -44,6 +44,32 @@ interface MobilizationResponse {
   totalNations: number;
 }
 
+interface WarModeHistoryPoint {
+  date: string;
+  warMode: number;
+  peaceMode: number;
+  total: number;
+  warModeNations: NationRef[];
+  peaceModeNations: NationRef[];
+}
+
+interface NationRef {
+  nationId: number;
+  nationName: string;
+  rulerName: string;
+  strength: number;
+}
+
+interface WarModeHistoryResponse {
+  success: boolean;
+  allianceId: number;
+  allianceName: string;
+  startDate: string;
+  endDate: string;
+  earliestEventDate: string | null;
+  series: WarModeHistoryPoint[];
+}
+
 type CategoryKey = 'enteredWarMode' | 'defconDown' | 'defconUp' | 'leftWarMode';
 
 interface CategoryDef {
@@ -154,11 +180,24 @@ const getDefaultDates = (): { startDate: string; endDate: string } => {
   return { startDate: toYmd(start), endDate: toYmd(today) };
 };
 
-interface PopoverContent {
+interface EventPopoverContent {
+  scope: 'event';
   date: string;
-  category: (typeof CATEGORIES)[number];
+  category: CategoryDef;
   nations: MobilizationNation[];
 }
+
+interface StatePopoverContent {
+  scope: 'state';
+  date: string;
+  label: string;
+  color: string;
+  count: number;
+  totalActive: number;
+  nations: NationRef[];
+}
+
+type PopoverContent = EventPopoverContent | StatePopoverContent;
 
 interface PopoverState {
   content: PopoverContent;
@@ -184,6 +223,9 @@ const MobilizationEventsPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [history, setHistory] = useState<WarModeHistoryResponse | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
   const [popover, setPopover] = useState<PopoverState | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const hoverOpenTimerRef = useRef<number | null>(null);
@@ -206,18 +248,39 @@ const MobilizationEventsPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const response: MobilizationResponse = await apiCallWithErrorHandling(
-          API_ENDPOINTS.mobilization(allianceId, debouncedStart, debouncedEnd)
-        );
+        setHistoryError(null);
+        const [mobResult, histResult] = await Promise.allSettled([
+          apiCallWithErrorHandling(
+            API_ENDPOINTS.mobilization(allianceId, debouncedStart, debouncedEnd)
+          ) as Promise<MobilizationResponse>,
+          apiCallWithErrorHandling(
+            API_ENDPOINTS.warModeHistory(allianceId, debouncedStart, debouncedEnd)
+          ) as Promise<WarModeHistoryResponse>,
+        ]);
         if (cancelled) return;
-        if (response.success) {
-          setData(response);
+
+        if (mobResult.status === 'fulfilled' && mobResult.value.success) {
+          setData(mobResult.value);
         } else {
-          setError('Failed to load mobilization data');
+          const msg =
+            mobResult.status === 'rejected'
+              ? mobResult.reason instanceof Error
+                ? mobResult.reason.message
+                : 'Failed to load mobilization data'
+              : 'Failed to load mobilization data';
+          setError(msg);
         }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load mobilization data');
+
+        if (histResult.status === 'fulfilled' && histResult.value.success) {
+          setHistory(histResult.value);
+        } else {
+          const msg =
+            histResult.status === 'rejected'
+              ? histResult.reason instanceof Error
+                ? histResult.reason.message
+                : 'Failed to load war/peace history'
+              : 'Failed to load war/peace history';
+          setHistoryError(msg);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -503,9 +566,57 @@ const MobilizationEventsPage: React.FC = () => {
         </div>
       )}
 
+      {/* Reconstructed war/peace history (prototype) */}
+      {!loading && (history || historyError) && (
+        <div className="mt-8">
+          <div className="flex items-baseline justify-between flex-wrap gap-2 mb-2">
+            <h2 className="text-lg font-semibold text-gray-200">
+              Reconstructed War / Peace Counts
+            </h2>
+            {history?.earliestEventDate && (
+              <span className="text-xs text-gray-500">
+                Reliable from {history.earliestEventDate} onward
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mb-3">
+            Walks event log backward from current state. Use to spot-check the data;
+            see notes in <code>warModeHistoryController.ts</code> for caveats.
+          </p>
+          {historyError && (
+            <div className="bg-red-900/30 border border-red-700 text-red-200 px-4 py-3 rounded mb-3 text-sm">
+              {historyError}
+            </div>
+          )}
+          {history && history.series.length > 0 && (
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 overflow-x-auto">
+              <WarModeHistoryChart
+                series={history.series}
+                onSegmentEnter={handleSegmentEnter}
+                onSegmentLeave={handleSegmentLeave}
+                onSegmentClick={handleSegmentClick}
+              />
+            </div>
+          )}
+          {history && history.series.length === 0 && !historyError && (
+            <div className="text-center text-gray-400 text-sm">
+              No history available for this range.
+            </div>
+          )}
+        </div>
+      )}
+
       {popover && (() => {
         const pos = computePopoverPosition(popover.anchorRect);
         const c = popover.content;
+        const headerLabel = c.scope === 'event' ? c.category.label : c.label;
+        const headerColor = c.scope === 'event' ? c.category.color : c.color;
+        const subtitle =
+          c.scope === 'event'
+            ? `${formatLongDateLabel(c.date)} • ${c.nations.length} nation${c.nations.length === 1 ? '' : 's'}`
+            : `${formatLongDateLabel(c.date)} • ${c.count} of ${c.totalActive} (${
+                c.totalActive > 0 ? ((c.count / c.totalActive) * 100).toFixed(1) : '0.0'
+              }%)`;
         return (
           <div
             ref={popoverRef}
@@ -524,14 +635,11 @@ const MobilizationEventsPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span
                     className="inline-block w-2.5 h-2.5 rounded-sm"
-                    style={{ backgroundColor: c.category.color }}
+                    style={{ backgroundColor: headerColor }}
                   />
-                  <span className="font-bold text-gray-100">{c.category.label}</span>
+                  <span className="font-bold text-gray-100">{headerLabel}</span>
                 </div>
-                <div className="text-[11px] text-gray-400 mt-0.5">
-                  {formatLongDateLabel(c.date)} • {c.nations.length} nation
-                  {c.nations.length === 1 ? '' : 's'}
-                </div>
+                <div className="text-[11px] text-gray-400 mt-0.5">{subtitle}</div>
               </div>
               {popover.locked && (
                 <button
@@ -546,9 +654,12 @@ const MobilizationEventsPage: React.FC = () => {
             </div>
 
             <div className="p-3 space-y-1.5">
+              {c.nations.length === 0 && (
+                <div className="text-xs text-gray-500 text-center py-2">No nations</div>
+              )}
               {c.nations.map((n) => (
                 <div
-                  key={`${n.nationId}-${n.createdAt}`}
+                  key={n.nationId}
                   className="flex items-baseline justify-between gap-2 bg-gray-800/40 border border-gray-700/60 rounded px-2 py-1.5"
                 >
                   <div className="min-w-0 flex-1">
@@ -564,9 +675,11 @@ const MobilizationEventsPage: React.FC = () => {
                       {n.rulerName} • NS {Math.round(n.strength).toLocaleString()}
                     </div>
                   </div>
-                  {c.category.key === 'defconDown' || c.category.key === 'defconUp' ? (
+                  {c.scope === 'event' &&
+                  (c.category.key === 'defconDown' || c.category.key === 'defconUp') ? (
                     <span className="text-[11px] font-semibold whitespace-nowrap text-gray-200">
-                      DEFCON {n.oldDefcon ?? '?'} → {n.newDefcon ?? '?'}
+                      DEFCON {(n as MobilizationNation).oldDefcon ?? '?'} →{' '}
+                      {(n as MobilizationNation).newDefcon ?? '?'}
                     </span>
                   ) : null}
                 </div>
@@ -734,6 +847,7 @@ const MobilizationChart: React.FC<MobilizationChartProps> = ({
                 aboveStack += cell.count;
                 const segHeight = Math.max(1, yBottom - yTop);
                 const content: PopoverContent = {
+                  scope: 'event',
                   date: b.date,
                   category: cat,
                   nations: cell.nations,
@@ -763,6 +877,7 @@ const MobilizationChart: React.FC<MobilizationChartProps> = ({
                 belowStack += cell.count;
                 const segHeight = Math.max(1, yBottom - yTop);
                 const content: PopoverContent = {
+                  scope: 'event',
                   date: b.date,
                   category: cat,
                   nations: cell.nations,
@@ -828,6 +943,194 @@ const MobilizationChart: React.FC<MobilizationChartProps> = ({
           fontWeight="bold"
         >
           DEFCON
+        </text>
+      </g>
+    </svg>
+  );
+};
+
+interface WarModeHistoryChartProps {
+  series: WarModeHistoryPoint[];
+  onSegmentEnter: (e: React.MouseEvent<Element>, content: PopoverContent) => void;
+  onSegmentLeave: () => void;
+  onSegmentClick: (e: React.MouseEvent<Element>, content: PopoverContent) => void;
+}
+
+const WAR_COLOR = '#10b981';
+const PEACE_COLOR = '#ef4444';
+
+const WarModeHistoryChart: React.FC<WarModeHistoryChartProps> = ({
+  series,
+  onSegmentEnter,
+  onSegmentLeave,
+  onSegmentClick,
+}) => {
+  const margin = { top: 16, right: 24, bottom: 56, left: 44 };
+  const minWidth = 720;
+  const widthPerBar = 28;
+  const width = Math.max(minWidth, margin.left + margin.right + series.length * widthPerBar);
+  const height = 280;
+  const plotWidth = width - margin.left - margin.right;
+  const plotHeight = height - margin.top - margin.bottom;
+
+  const xScale = (i: number) => {
+    if (series.length === 0) return 0;
+    const slot = plotWidth / series.length;
+    return i * slot + slot / 2;
+  };
+  const barWidth = Math.max(8, (plotWidth / Math.max(1, series.length)) * 0.7);
+
+  const yTicks = [0, 25, 50, 75, 100];
+  const yScale = (pct: number) => plotHeight - (pct / 100) * plotHeight;
+
+  const xLabelIndices = (() => {
+    const n = series.length;
+    if (n === 0) return [] as number[];
+    const max = 12;
+    const step = Math.max(1, Math.ceil(n / max));
+    const out: number[] = [];
+    for (let i = 0; i < n; i += step) out.push(i);
+    if (out[out.length - 1] !== n - 1) out.push(n - 1);
+    return out;
+  })();
+
+  return (
+    <svg width={width} height={height} className="block">
+      <g transform={`translate(${margin.left},${margin.top})`}>
+        {/* Grid + y ticks (percentage axis) */}
+        {yTicks.map((t, i) => (
+          <g key={`yt-${i}`}>
+            <line
+              x1={0}
+              y1={yScale(t)}
+              x2={plotWidth}
+              y2={yScale(t)}
+              stroke="#374151"
+              strokeWidth={1}
+              strokeDasharray={i === 0 || i === yTicks.length - 1 ? undefined : '2,3'}
+            />
+            <text
+              x={-8}
+              y={yScale(t)}
+              textAnchor="end"
+              dominantBaseline="middle"
+              fontSize={11}
+              fill="#9ca3af"
+            >
+              {t}%
+            </text>
+          </g>
+        ))}
+
+        {/* Bars: each bar is 100% tall, split into peace (bottom) and war (top) */}
+        {series.map((p, i) => {
+          const x = xScale(i) - barWidth / 2;
+          if (p.total === 0) {
+            // Show a thin gray placeholder so the day isn't visually blank.
+            return (
+              <rect
+                key={`empty-${p.date}`}
+                x={x}
+                y={yScale(100) - 1}
+                width={barWidth}
+                height={1}
+                fill="#4b5563"
+              />
+            );
+          }
+          const warPct = (p.warMode / p.total) * 100;
+          const peacePct = 100 - warPct;
+          const peaceY = yScale(peacePct);
+          const warY = yScale(100);
+          const peaceHeight = Math.max(0, plotHeight - peaceY);
+          const warHeight = Math.max(0, peaceY - warY);
+
+          const peaceContent: PopoverContent = {
+            scope: 'state',
+            date: p.date,
+            label: 'Peace mode',
+            color: PEACE_COLOR,
+            count: p.peaceMode,
+            totalActive: p.total,
+            nations: p.peaceModeNations,
+          };
+          const warContent: PopoverContent = {
+            scope: 'state',
+            date: p.date,
+            label: 'War mode',
+            color: WAR_COLOR,
+            count: p.warMode,
+            totalActive: p.total,
+            nations: p.warModeNations,
+          };
+
+          return (
+            <g key={p.date}>
+              {peaceHeight > 0 && (
+                <rect
+                  x={x}
+                  y={peaceY}
+                  width={barWidth}
+                  height={peaceHeight}
+                  fill={PEACE_COLOR}
+                  stroke="#111827"
+                  strokeWidth={0.5}
+                  className="cursor-pointer transition-opacity hover:opacity-80"
+                  onMouseEnter={(e) => onSegmentEnter(e, peaceContent)}
+                  onMouseLeave={onSegmentLeave}
+                  onClick={(e) => onSegmentClick(e, peaceContent)}
+                />
+              )}
+              {warHeight > 0 && (
+                <rect
+                  x={x}
+                  y={warY}
+                  width={barWidth}
+                  height={warHeight}
+                  fill={WAR_COLOR}
+                  stroke="#111827"
+                  strokeWidth={0.5}
+                  className="cursor-pointer transition-opacity hover:opacity-80"
+                  onMouseEnter={(e) => onSegmentEnter(e, warContent)}
+                  onMouseLeave={onSegmentLeave}
+                  onClick={(e) => onSegmentClick(e, warContent)}
+                />
+              )}
+            </g>
+          );
+        })}
+
+        {/* X labels */}
+        {xLabelIndices.map((i) => {
+          const p = series[i];
+          if (!p) return null;
+          const x = xScale(i);
+          return (
+            <g key={`xl-${i}`} transform={`translate(${x}, ${plotHeight + 6})`}>
+              <line x1={0} y1={-6} x2={0} y2={0} stroke="#9ca3af" strokeWidth={1} />
+              <text
+                x={0}
+                y={14}
+                textAnchor="middle"
+                fontSize={10}
+                fill="#d1d5db"
+                transform="rotate(-45) translate(-12, 8)"
+              >
+                {formatDateLabel(p.date)}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Y axis label */}
+        <text
+          transform={`translate(${-32}, ${plotHeight / 2}) rotate(-90)`}
+          textAnchor="middle"
+          fontSize={11}
+          fill="#9ca3af"
+          fontWeight="bold"
+        >
+          Share
         </text>
       </g>
     </svg>

@@ -127,6 +127,13 @@ export const API_ENDPOINTS = {
     const query = params.toString();
     return `/api/alliances/${allianceId}/mobilization${query ? `?${query}` : ''}`;
   },
+  warModeHistory: (allianceId: number, startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (startDate) params.set('startDate', startDate);
+    if (endDate) params.set('endDate', endDate);
+    const query = params.toString();
+    return `/api/alliances/${allianceId}/war-mode-history${query ? `?${query}` : ''}`;
+  },
   warStatisticsAllianceTotals: (filter?: string) => {
     const query = filter ? `?filter=${encodeURIComponent(filter)}` : '';
     return `/api/war-statistics/alliance-totals${query}`;
