@@ -33,6 +33,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   ];
 
   const warToolsItems = [
+    { label: 'Mobilization Events', path: selectedAllianceId ? `/mobilization/${selectedAllianceId}` : '/mobilization' },
     { label: 'Spy Operation Submission', path: '/warchest-submission' },
     { label: 'Wars', path: selectedAllianceId ? `/wars/${selectedAllianceId}` : '/wars' },
   ].sort((a, b) => a.label.localeCompare(b.label));
@@ -66,7 +67,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
       const pathParts = location.pathname.split('/');
       const tabName = pathParts[1];
       const allianceIdParam = pathParts[2];
-      const isOnAllianceSpecificPage = allianceIdParam && ['aid', 'nations', 'wars'].includes(tabName);
+      const isOnAllianceSpecificPage = allianceIdParam && ['aid', 'nations', 'wars', 'mobilization'].includes(tabName);
       
       const doombrella = alliances.find((alliance: any) => 
         alliance.name.toLowerCase().includes('doombrella')
@@ -96,6 +97,9 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         break;
       case 'wars':
         pageTitle = 'War Tools - Wars';
+        break;
+      case 'mobilization':
+        pageTitle = 'War Tools - Mobilization Events';
         break;
       case 'warchest-submission':
         pageTitle = 'War Tools - Spy Operation Submission';
@@ -160,7 +164,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     const tabName = pathParts[1];
     const searchParams = new URLSearchParams(location.search);
     
-    if (allianceId && tabName && ['aid', 'nations', 'wars'].includes(tabName)) {
+    if (allianceId && tabName && ['aid', 'nations', 'wars', 'mobilization'].includes(tabName)) {
       navigate(`/${tabName}/${allianceId}`);
     } else if (allianceId && tabName === 'aid') {
       navigate(`/${tabName}/${allianceId}`);
@@ -213,6 +217,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         return 'Admin - Alliance Manager';
       case 'wars':
         return 'War Tools - Wars';
+      case 'mobilization':
+        return 'War Tools - Mobilization Events';
       case 'warchest-submission':
         return 'War Tools - Spy Operation Submission';
       case 'ns-comparisons':
@@ -259,7 +265,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     }
     
     // Only these pages use the alliance selector (events has its own filter, so excluded)
-    return ['aid', 'nations', 'wars', 'nation-aid-efficiency', 'interalliance-aid'].includes(tabName);
+    return ['aid', 'nations', 'wars', 'mobilization', 'nation-aid-efficiency', 'interalliance-aid'].includes(tabName);
   };
 
   // Check if we're on the nations page

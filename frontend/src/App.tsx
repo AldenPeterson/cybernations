@@ -23,6 +23,7 @@ import UserManagementPage from './pages/UserManagementPage'
 import RoleCapabilitiesPage from './pages/RoleCapabilitiesPage'
 import UpdateRulerNamePage from './pages/UpdateRulerNamePage'
 import SpyOperationSubmissionPage from './pages/SpyOperationSubmissionPage'
+import MobilizationEventsPage from './pages/MobilizationEventsPage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -57,12 +58,12 @@ function App() {
     const allianceIdParam = pathParts[2];
     
     // Check if we're on an alliance-specific page with an alliance ID in the URL
-    if (allianceIdParam && ['aid', 'nations', 'wars'].includes(tabName)) {
+    if (allianceIdParam && ['aid', 'nations', 'wars', 'mobilization'].includes(tabName)) {
       const allianceId = parseInt(allianceIdParam);
       if (!isNaN(allianceId)) {
         setSelectedAllianceId(allianceId);
       }
-    } else if (!allianceIdParam && ['aid', 'nations', 'wars'].includes(tabName)) {
+    } else if (!allianceIdParam && ['aid', 'nations', 'wars', 'mobilization'].includes(tabName)) {
       // If we're on an alliance-specific page but no alliance ID in URL, clear selection
       setSelectedAllianceId(null);
     } else if (tabName === 'casualties') {
@@ -137,6 +138,9 @@ function App() {
         
         <Route path="/wars/:allianceId" element={<WarManagementPage />} />
         <Route path="/wars" element={<AllianceRedirect tabName="wars" />} />
+
+        <Route path="/mobilization/:allianceId" element={<MobilizationEventsPage />} />
+        <Route path="/mobilization" element={<AllianceRedirect tabName="mobilization" />} />
         
         {/* Spy Operation Submission - authenticated users only */}
         <Route path="/warchest-submission" element={<SpyOperationSubmissionPage />} />
