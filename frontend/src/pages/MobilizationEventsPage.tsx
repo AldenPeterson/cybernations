@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiCallWithErrorHandling, API_ENDPOINTS } from '../utils/api';
 import TableContainer from '../components/TableContainer';
@@ -231,6 +231,10 @@ const MobilizationEventsPage: React.FC = () => {
   const hoverOpenTimerRef = useRef<number | null>(null);
   const closeTimerRef = useRef<number | null>(null);
 
+  const mobilizationScrollRef = useRef<HTMLDivElement | null>(null);
+  const historyScrollRef = useRef<HTMLDivElement | null>(null);
+  const isSyncingScrollRef = useRef<boolean>(false);
+
   // Debounce date changes so dragging the date picker doesn't spam the API.
   useEffect(() => {
     const t = setTimeout(() => {
@@ -291,6 +295,37 @@ const MobilizationEventsPage: React.FC = () => {
       cancelled = true;
     };
   }, [allianceId, debouncedStart, debouncedEnd]);
+
+  // Keep the two chart timelines in lockstep when one is scrolled.
+  useEffect(() => {
+    const a = mobilizationScrollRef.current;
+    const b = historyScrollRef.current;
+    if (!a || !b) return;
+    const sync = (from: HTMLDivElement, to: HTMLDivElement) => () => {
+      if (isSyncingScrollRef.current) return;
+      isSyncingScrollRef.current = true;
+      to.scrollLeft = from.scrollLeft;
+      requestAnimationFrame(() => {
+        isSyncingScrollRef.current = false;
+      });
+    };
+    const onA = sync(a, b);
+    const onB = sync(b, a);
+    a.addEventListener('scroll', onA);
+    b.addEventListener('scroll', onB);
+    return () => {
+      a.removeEventListener('scroll', onA);
+      b.removeEventListener('scroll', onB);
+    };
+  }, [data, history]);
+
+  // Default to showing the most recent dates by snapping the scroll to the right edge.
+  useLayoutEffect(() => {
+    const a = mobilizationScrollRef.current;
+    const b = historyScrollRef.current;
+    if (a && data) a.scrollLeft = a.scrollWidth;
+    if (b && history) b.scrollLeft = b.scrollWidth;
+  }, [data, history]);
 
   const closePopover = useCallback(() => setPopover(null), []);
 
@@ -540,20 +575,32 @@ const MobilizationEventsPage: React.FC = () => {
           </div>
 
           {/* Chart */}
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 overflow-x-auto">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2 px-1">
               <span className="text-xs uppercase tracking-wide text-gray-400">
                 ↑ War / Peace Mode &nbsp;·&nbsp; ↓ DEFCON
               </span>
+              <span className="text-[10px] text-gray-400 italic flex items-center gap-1">
+                <span aria-hidden>←</span> Scroll for earlier dates · newest shown <span aria-hidden>→</span>
+              </span>
             </div>
-            <MobilizationChart
-              buckets={data.buckets}
-              aboveKeys={WAR_MODE_KEYS}
-              belowKeys={DEFCON_KEYS}
-              onSegmentEnter={handleSegmentEnter}
-              onSegmentLeave={handleSegmentLeave}
-              onSegmentClick={handleSegmentClick}
-            />
+            <div className="relative">
+              <div
+                ref={mobilizationScrollRef}
+                className="overflow-x-auto chart-scroll"
+              >
+                <MobilizationChart
+                  buckets={data.buckets}
+                  aboveKeys={WAR_MODE_KEYS}
+                  belowKeys={DEFCON_KEYS}
+                  onSegmentEnter={handleSegmentEnter}
+                  onSegmentLeave={handleSegmentLeave}
+                  onSegmentClick={handleSegmentClick}
+                />
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-gray-800 to-transparent" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-gray-800 to-transparent" />
+            </div>
           </div>
         </>
       )}
@@ -589,13 +636,27 @@ const MobilizationEventsPage: React.FC = () => {
             </div>
           )}
           {history && history.series.length > 0 && (
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 overflow-x-auto">
-              <WarModeHistoryChart
-                series={history.series}
-                onSegmentEnter={handleSegmentEnter}
-                onSegmentLeave={handleSegmentLeave}
-                onSegmentClick={handleSegmentClick}
-              />
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+              <div className="flex flex-wrap items-center justify-end gap-2 mb-2 px-1">
+                <span className="text-[10px] text-gray-400 italic flex items-center gap-1">
+                  <span aria-hidden>←</span> Scrolls in sync with the chart above <span aria-hidden>→</span>
+                </span>
+              </div>
+              <div className="relative">
+                <div
+                  ref={historyScrollRef}
+                  className="overflow-x-auto chart-scroll"
+                >
+                  <WarModeHistoryChart
+                    series={history.series}
+                    onSegmentEnter={handleSegmentEnter}
+                    onSegmentLeave={handleSegmentLeave}
+                    onSegmentClick={handleSegmentClick}
+                  />
+                </div>
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-gray-800 to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-gray-800 to-transparent" />
+              </div>
             </div>
           )}
           {history && history.series.length === 0 && !historyError && (

@@ -95,4 +95,26 @@
     @apply opacity-60 cursor-not-allowed;
     transform: none;
   }
+
+  /* Always-visible horizontal scrollbar for charts so the scroll affordance
+     is obvious on mobile / touch devices that otherwise hide it. */
+  .chart-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #6b7280 #1f2937;
+    -webkit-overflow-scrolling: touch;
+  }
+  .chart-scroll::-webkit-scrollbar {
+    height: 10px;
+  }
+  .chart-scroll::-webkit-scrollbar-track {
+    background: #1f2937;
+    border-radius: 4px;
+  }
+  .chart-scroll::-webkit-scrollbar-thumb {
+    background: #6b7280;
+    border-radius: 4px;
+  }
+  .chart-scroll::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
 }
