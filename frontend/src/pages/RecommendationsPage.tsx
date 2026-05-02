@@ -290,13 +290,37 @@ const RecommendationsPage: React.FC = () => {
 
   const copyDiscordText = async () => {
     const text = generateDiscordText();
-    
+
     try {
       await navigator.clipboard.writeText(text);
     } catch (err) {
       console.error('Failed to copy text: ', err);
       alert('Failed to copy text to clipboard');
     }
+  };
+
+  const generateSenderAidText = (sender: AidRecommendation['sender'], recipients: AidRecommendation[]): string => {
+    const entries = recipients.map(rec => {
+      let aidType = 'UNKNOWN';
+      if (rec.type) {
+        if (rec.type.includes('cash')) aidType = 'CASH';
+        else if (rec.type.includes('tech')) aidType = 'TECH';
+      }
+      const crossAllianceIndicator = rec.type && rec.type.includes('cross_alliance') ? ' (Cross-Alliance)' : '';
+      const aidUrl = `https://www.cybernations.net/aid_form.asp?Nation_ID=${rec.recipient.id}&bynation=${sender.id}`;
+      return `send ${aidType} to ${rec.recipient.rulerName}: ${aidUrl}${crossAllianceIndicator}`;
+    });
+    return ['Aid recipient list:', '', ...entries.flatMap((entry, i) => i < entries.length - 1 ? [entry, ''] : [entry])].join('\n');
+  };
+
+  const sendMessageToNation = async (sender: AidRecommendation['sender'], recipients: AidRecommendation[]) => {
+    const text = generateSenderAidText(sender, recipients);
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+    window.open(`https://www.cybernations.net/send_message.asp?Nation_ID=${sender.id}`, '_blank', 'noopener,noreferrer');
   };
 
   if (loading) {
@@ -384,19 +408,28 @@ const RecommendationsPage: React.FC = () => {
                   return Object.values(groupedBySender).map((group, groupIndex) => (
                     <tr key={groupIndex} className="bg-gray-800 hover:bg-gray-700">
                       <td className="p-2 border border-gray-700 text-gray-200 bg-gray-800 align-top w-[30%]">
-                        <div>
-                          <strong>
-                            <a 
-                              href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${group.sender.id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary no-underline hover:underline"
-                            >
-                              {group.sender.nationName}
-                            </a>
-                          </strong>
-                          <br />
-                          <small className="text-gray-400">{group.sender.rulerName}</small>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <strong>
+                              <a
+                                href={`https://www.cybernations.net/nation_drill_display.asp?Nation_ID=${group.sender.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary no-underline hover:underline"
+                              >
+                                {group.sender.nationName}
+                              </a>
+                            </strong>
+                            <br />
+                            <small className="text-gray-400">{group.sender.rulerName}</small>
+                          </div>
+                          <button
+                            onClick={() => sendMessageToNation(group.sender, group.recipients)}
+                            title="Open message page and copy aid assignments"
+                            className="bg-blue-600 text-white border-none px-2 py-1 rounded cursor-pointer text-xs font-bold flex items-center gap-1 hover:bg-blue-700 transition-colors flex-shrink-0"
+                          >
+                            ✉️ Message in-game
+                          </button>
                         </div>
                       </td>
                       <td className="p-2 border border-gray-700 text-gray-200 bg-gray-800 align-top">
